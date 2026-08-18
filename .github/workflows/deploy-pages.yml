@@ -29,6 +29,13 @@ jobs:
       - run: npm ci
       - run: npm run build
       - uses: actions/configure-pages@v5
+        with:
+          # First run had no Pages site to configure yet (repo Settings →
+          # Pages had never been touched) and failed with "Get Pages site
+          # failed... verify Pages is enabled". This creates the Pages site
+          # via the API on first run instead of requiring that one manual
+          # click — safe to leave on for every run after too.
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
