@@ -18,6 +18,15 @@ export type Domain =
 
 export type Echelon = "strategic" | "operational" | "tactical";
 
+/**
+ * Coarse toggleable grouping — "turn off everything that isn't air defense."
+ * Deliberately separate from `category` (which stays granular, e.g.
+ * "air-defense-long-range"): `group` is the taxonomy the show/hide toolbar
+ * filters on, `category` is the specific thing an asset is. Defined in
+ * data/groups.json so the toolbar's chips, colors and labels are data too.
+ */
+export type AssetGroup = string;
+
 export type ConnectionType =
   | "supply"        // ammo, fuel, parts
   | "data_c2"       // sensor feed, targeting data, command link
@@ -48,18 +57,44 @@ export interface AssetConnection {
   description: string;          // short — shown on hover/click of the line
 }
 
+/** Always-present, comparable across every asset — the point of the field is
+ *  that it survives even when reporting is thin: use `confidence` to say so
+ *  rather than omitting the number or presenting a guess as a hard figure. */
+export interface AssetCost {
+  unit_cost_usd: number | null;          // null when genuinely too variable/unknown to give one number
+  display: string;                       // human string shown in the UI, e.g. "~$1.1M per launcher unit"
+  confidence: "reported" | "estimated" | "unknown";
+}
+
+/** Exactly three, author-chosen per asset — the three facts worth knowing at
+ *  a glance beyond cost (which has its own guaranteed stat tile). A crew
+ *  count matters for a howitzer and means nothing for a satellite; this is
+ *  where that difference lives, while cost stays the one constant. */
+export type KeyFact = { label: string; value: string };
+
 export interface Asset {
   id: string;                            // stable slug, e.g. "side_a-air-defense-long-patriot"
   name: string;                          // display name, e.g. "Patriot (PAC-3 MSE)"
   side: Side;
   domain: Domain;
   echelon: Echelon;
+  group: AssetGroup;                     // references a groups.json entry — the show/hide taxonomy
   distance_km_from_zero: number;         // representative placement, not literal intel
-  band_id: string;                       // references DistanceBand.id
+  /** Typical employment envelope, distinct from the single representative
+   *  point above. Optional because not every category has a meaningful range
+   *  (a fixed power plant doesn't "operate" at a distance). When present, it
+   *  draws a bracket on the ruler and is what an edit should move first. */
+  operating_range_km?: { min_km: number; max_km: number } | null;
+  band_id: string;                       // written for convenience/back-compat; the app recomputes
+                                          // this live from distance_km_from_zero against the current
+                                          // (possibly user-edited) bands rather than trusting it blindly
   category: string;                      // e.g. "air-defense-long-range"
   representative_system: string;         // real-world system used as the example
   icon_image: string;                    // path/URL to the small map icon
   gallery_images: string[];              // path/URL(s) for the detail panel
+
+  cost: AssetCost;
+  key_facts: KeyFact[];                  // exactly 3
 
   short_role: string;                    // 1 sentence, shown on hover
   characteristics: string[];             // bullet facts (range, crew, etc.)

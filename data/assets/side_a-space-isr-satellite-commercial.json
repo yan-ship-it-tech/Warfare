@@ -1,0 +1,45 @@
+{
+  "id": "side_a-space-isr-satellite-commercial",
+  "name": "Commercial SAR/Optical ISR Constellation",
+  "side": "side_a",
+  "domain": "space",
+  "echelon": "strategic",
+  "group": "space",
+  "distance_km_from_zero": 300,
+  "operating_range_km": null,
+  "band_id": "strategic_rear",
+  "category": "space-isr",
+  "representative_system": "Composite: ICEYE SAR constellation + Maxar/Planet/BlackSky optical imagery",
+  "icon_image": "/icons/isr-satellite.png",
+  "gallery_images": [],
+
+  "cost": {
+    "unit_cost_usd": 17000000,
+    "display": "~$17M crowdfunded to buy Ukraine dedicated access to an ICEYE satellite; commercial tasking/subscription access runs separately (the US alone pays Maxar ~$300M/year for archive + tasking access)",
+    "confidence": "reported"
+  },
+  "key_facts": [
+    { "label": "Coverage", "value": "Global, on-demand tasking — not tied to airspace or front-line risk" },
+    { "label": "SAR advantage", "value": "Radar imaging works through cloud cover and at night" },
+    { "label": "Access model", "value": "Mostly commercial subscription/tasking, not a dedicated military constellation" }
+  ],
+
+  "short_role": "Commercial imaging satellites — synthetic-aperture radar and optical — providing wide-area, all-weather intelligence without risking a crewed aircraft.",
+  "characteristics": [
+    "SAR imaging (e.g. ICEYE) sees through cloud cover and at night, unlike optical-only imagery",
+    "No dedicated military constellation required — access is bought/subscribed from commercial operators",
+    "Feeds targeting, battle-damage assessment and the slower, multi-day pattern-of-life picture, not just single strikes",
+    "Access has proven politically contingent: a provider restricting access can degrade capability on short notice"
+  ],
+  "employment_notes": "The map's horizontal placement here is a convention, not a literal position — a satellite doesn't sit at a fixed distance from the front. It's placed in the strategic-rear band because that's the echelon it's tasked and analyzed from, not because of orbital geometry. In practice it feeds everything from single-strike targeting to the multi-day pattern-of-life picture that locates enemy positions.",
+  "contrast_vs_traditional": "Wide-area, persistent overhead intelligence used to require a state actually operating a military reconnaissance satellite constellation — a capability only a handful of countries had. Access to commercial SAR and optical imagery has made a comparable capability available to a much smaller actor through subscription and crowdfunding rather than a national space program, while also making that access dependent on a commercial provider's business and political decisions in a way a sovereign satellite never would be.",
+
+  "connections": [],
+
+  "sources": [
+    { "label": "Kyiv Independent — Ukrainian charity buys satellite for the army", "url": "https://kyivindependent.com/ukrainian-charity-buys-satellite-for-the-army-how-will-it-help-fight-against-russia/" },
+    { "label": "ICEYE — ICEYE Provides Ukraine with Access to Its SAR Satellite Constellation", "url": "https://www.iceye.com/newsroom/press-releases/iceye-signs-contract-to-provide-government-of-ukraine-with-access-to-its-sar-satellite-constellation" },
+    { "label": "SpaceNews — Commercial spy satellites put Russia's Ukraine invasion in the public eye", "url": "https://spacenews.com/satellite-imaging-companies-increase-profile-as-they-track-russias-invasion-of-ukraine/" }
+  ],
+  "editable": true
+}

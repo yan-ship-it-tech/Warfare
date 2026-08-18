@@ -2,13 +2,17 @@ import type { WorldModel } from "../data/model";
 import type { ConnectionType, Side } from "../types";
 import { CONNECTION_STYLE, SIDE_ACCENT, SIDE_LABELS } from "../config/ui";
 import { ALL_CONNECTION_TYPES, useViewState } from "../state/viewState";
+import { useOverrides } from "../state/overridesState";
+import { CategoryFilterMenu } from "./CategoryFilterMenu";
 
 export function Toolbar({ world }: { world: WorldModel }) {
   const view = useViewState();
+  const overrides = useOverrides();
   const errors = world.issues.filter((i) => i.severity === "error").length;
   const warnings = world.issues.filter((i) => i.severity === "warning").length;
 
   const typesInUse = new Set<ConnectionType>(world.connections.map((c) => c.type));
+  const hiddenGroupCount = view.hiddenGroups.size;
 
   return (
     <header className="toolbar">
@@ -34,6 +38,31 @@ export function Toolbar({ world }: { world: WorldModel }) {
             {SIDE_LABELS[s].short}
           </button>
         ))}
+      </div>
+
+      <div className="toolbar__group" role="group" aria-label="Categories">
+        <span className="toolbar__legend">Show</span>
+        <div className="category-menu-anchor">
+          <button
+            type="button"
+            className={`chip chip--panel${view.openPanel === "categories" ? " is-on" : ""}${hiddenGroupCount ? " has-filter" : ""}`}
+            onClick={() => view.setOpenPanel(view.openPanel === "categories" ? null : "categories")}
+            title="Show or hide whole asset categories (UAVs, air defense, armor, ...)"
+          >
+            Categories
+            {hiddenGroupCount > 0 && <em className="chip__count">{hiddenGroupCount} hidden</em>}
+          </button>
+          <CategoryFilterMenu world={world} />
+        </div>
+        <button
+          type="button"
+          className={`chip chip--panel${view.openPanel === "bands" ? " is-on" : ""}`}
+          onClick={() => view.setOpenPanel(view.openPanel === "bands" ? null : "bands")}
+          title="Edit the distance-band cutoffs the map is built on"
+        >
+          Distance bands
+          {overrides.bandsAreCustom && <em className="chip__count">edited</em>}
+        </button>
       </div>
 
       <div className="toolbar__group" role="group" aria-label="Overlays">

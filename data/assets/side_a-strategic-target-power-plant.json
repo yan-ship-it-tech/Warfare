@@ -1,0 +1,42 @@
+{
+  "id": "side_a-strategic-target-power-plant",
+  "name": "Power Generation & Grid Node",
+  "side": "side_a",
+  "domain": "land",
+  "echelon": "strategic",
+  "group": "strategic_target",
+  "distance_km_from_zero": 220,
+  "operating_range_km": null,
+  "band_id": "strategic_rear",
+  "category": "strategic-infrastructure-target",
+  "representative_system": "Composite — a generic thermal/hydro generation plant and grid substation, not a named facility",
+  "icon_image": "/icons/power-plant.png",
+  "gallery_images": [],
+
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Not a procured unit — infrastructure whose value is measured in grid capacity and repair cost after a strike, not a purchase price",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    { "label": "Why it matters", "value": "One node can cascade outages across a wide grid area" },
+    { "label": "Defended by", "value": "Layered air defense (SAM, gun-CUAS, MANPADS) rather than any organic defense" },
+    { "label": "Repair tempo", "value": "Repeated strikes outpace repair during sustained campaigns" }
+  ],
+
+  "short_role": "Representative strategic-rear infrastructure target — power generation and grid nodes, alongside bridges, fuel depots and warehousing at similar depth.",
+  "characteristics": [
+    "A single generation or transformer node failure can cascade into outages well beyond the immediate facility",
+    "Has no offensive capability of its own — its only 'connection' to the fight is being defended and repaired",
+    "Sits at strategic-rear depth precisely because that is the band deep-strike systems (cruise missiles, one-way-attack drones) are built to reach"
+  ],
+  "employment_notes": "This node exists on the map to represent the category the master brief calls out explicitly — strategic/operational/tactical targets at varying depth (power plants, logistics hubs, bridges, warehousing) — rather than one named facility. It sits inside the layered air-defense picture (Patriot, IADS network) as something those systems exist partly to protect.",
+  "contrast_vs_traditional": "Strategic infrastructure has always been a wartime target; what changed is the volume and cost asymmetry of what can now reach it. A saturation raid of cheap one-way-attack drones forces exactly the same expensive interceptor-per-shot economics discussed elsewhere in this doctrine set, this time defending fixed civilian-facing infrastructure rather than a military position.",
+
+  "connections": [],
+
+  "sources": [
+    { "label": "Composite/illustrative — no single named facility; category per master prompt asset list", "url": "" }
+  ],
+  "editable": true
+}

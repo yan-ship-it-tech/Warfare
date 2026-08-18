@@ -4,12 +4,25 @@
   "side": "side_a",
   "domain": "land",
   "echelon": "tactical",
+  "group": "artillery",
   "distance_km_from_zero": 12,
+  "operating_range_km": { "min_km": 8, "max_km": 22 },
   "band_id": "op_near",
   "category": "artillery",
   "representative_system": "M777A2 (BAE Systems), firing M795 / M982 Excalibur precision rounds",
   "icon_image": "/icons/m777.png",
   "gallery_images": ["/gallery/m777-firing.jpg", "/gallery/m777-towed.jpg"],
+
+  "cost": {
+    "unit_cost_usd": 3700000,
+    "display": "~$3.7M per gun (estimates range $2.5–4.4M depending on whether life-cycle costs are included); a single M982 Excalibur precision round runs ~$100K",
+    "confidence": "estimated"
+  },
+  "key_facts": [
+    { "label": "Max range", "value": "~40 km with M982 Excalibur precision rounds" },
+    { "label": "Crew", "value": "7–8" },
+    { "label": "Rate of fire", "value": "2–5 rounds/min sustained" }
+  ],
 
   "short_role": "Towed 155mm howitzer providing indirect fire support; titanium construction keeps it light enough for helicopter/vehicle relocation.",
   "characteristics": [
@@ -35,7 +48,8 @@
 
   "sources": [
     { "label": "Wikipedia — M777 howitzer", "url": "https://en.wikipedia.org/wiki/M777_howitzer" },
-    { "label": "Defense Express — American M777 Howitzers in Ukraine in All Details", "url": "https://en.defence-ua.com/weapon_and_tech/american_m777_howitzers_in_ukraine_in_all_details_from_projectiles_to_fire_control_system-2925.html" }
+    { "label": "Defense Express — American M777 Howitzers in Ukraine in All Details", "url": "https://en.defence-ua.com/weapon_and_tech/american_m777_howitzers_in_ukraine_in_all_details_from_projectiles_to_fire_control_system-2925.html" },
+    { "label": "HistoryNet — M777 Howitzer: US Artillery Pounding Russians in Ukraine (cost figures, general reporting)", "url": "https://historynet.com/m777-howitzer/" }
   ],
   "editable": true
 }

@@ -1,6 +1,7 @@
 [
-  { "id": "tactical",        "label": "Tactical (0–5 km)",           "echelon": "tactical",     "min_km": 0,   "max_km": 5,   "side": "both" },
-  { "id": "op_near",         "label": "Operational – Near (5–30 km)", "echelon": "operational",  "min_km": 5,   "max_km": 30,  "side": "both" },
-  { "id": "op_deep",         "label": "Operational – Deep (30–150 km)", "echelon": "operational","min_km": 30,  "max_km": 150, "side": "both" },
-  { "id": "strategic_rear",  "label": "Strategic Rear (150 km+)",    "echelon": "strategic",    "min_km": 150, "max_km": 100000, "side": "both" }
+  { "id": "tactical",        "label": "Tactical (0–5 km)",              "echelon": "tactical",     "min_km": 0,    "max_km": 5,    "side": "both" },
+  { "id": "op_near",         "label": "Operational – Near (5–30 km)",   "echelon": "operational",  "min_km": 5,    "max_km": 30,   "side": "both" },
+  { "id": "op_deep",         "label": "Operational – Deep (30–150 km)", "echelon": "operational",  "min_km": 30,   "max_km": 150,  "side": "both" },
+  { "id": "strategic_rear",  "label": "Strategic Rear (150–500 km)",    "echelon": "strategic",    "min_km": 150,  "max_km": 500,  "side": "both" },
+  { "id": "deep_strategic",  "label": "Deep Strategic / Cross-Border (500+ km)", "echelon": "strategic", "min_km": 500, "max_km": 100000, "side": "both" }
 ]

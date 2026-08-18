@@ -42,16 +42,17 @@ export function Scene({ world, replayNonce }: Props) {
   );
 
   const nodes = useMemo<SceneNode[]>(() => {
-    const list: SceneNode[] = world.assets.map((asset) => ({
-      kind: "asset" as const,
-      id: asset.id,
-      asset,
-    }));
+    const list: SceneNode[] = world.assets
+      .filter((asset) => !view.hiddenGroups.has(asset.group))
+      .map((asset) => ({ kind: "asset" as const, id: asset.id, asset }));
+    // Pending stubs aren't categorized (they're inferred placeholders, not
+    // authored assets), so the category filter doesn't touch them — only the
+    // side filter and the pending-targets toggle do.
     if (view.showPending) {
       for (const stub of world.stubs) list.push({ kind: "stub", id: stub.id, stub });
     }
     return list.filter((n) => view.visibleSides.has(nodeSide(n)));
-  }, [world.assets, world.stubs, view.showPending, view.visibleSides]);
+  }, [world.assets, world.stubs, view.showPending, view.visibleSides, view.hiddenGroups]);
 
   const placed = useMemo(() => placeNodes(nodes, proj), [nodes, proj]);
 

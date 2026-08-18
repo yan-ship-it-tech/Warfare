@@ -1,0 +1,44 @@
+{
+  "id": "side_a-logistics-hub-op-deep",
+  "name": "Forward Distribution Hub",
+  "side": "side_a",
+  "domain": "logistics",
+  "echelon": "operational",
+  "group": "logistics",
+  "distance_km_from_zero": 80,
+  "operating_range_km": null,
+  "band_id": "op_deep",
+  "category": "logistics-hub",
+  "representative_system": "Generic brigade/divisional forward distribution point — composite, not a named facility",
+  "icon_image": "/icons/logistics-hub.png",
+  "gallery_images": [],
+
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Not a procured unit — a facility/throughput node, not something with a per-unit price",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    { "label": "Function", "value": "Breaks down national-level supply into brigade/battalion loads" },
+    { "label": "Throughput", "value": "Ammunition, fuel, spares, medical resupply" },
+    { "label": "Typical depth", "value": "Operational-deep, beyond most counter-battery and short-range strike reach" }
+  ],
+
+  "short_role": "Forward distribution point that breaks bulk supply down into brigade- and battalion-sized loads for onward movement toward the line.",
+  "characteristics": [
+    "Sits beyond most FPV and short-range counter-battery reach, inside longer-range strike depth",
+    "Feeds forward via a rotating pool of soft-skin and armored logistics vehicles",
+    "A single hit here cascades into shortages across every unit it feeds — a higher-value target than any one gun"
+  ],
+  "employment_notes": "Dispersed and camouflaged rather than concentrated in one visible depot — the doctrine that punished massed Cold War-era supply dumps applies even more sharply now that reconnaissance drones and deep-strike systems can reach this depth. Convoys forward from here run on staggered schedules for the same reason artillery displaces after firing.",
+  "contrast_vs_traditional": "Traditional logistics doctrine could afford larger, more centralized rear depots because the depth at which they sat was genuinely safe from routine engagement. Persistent overhead ISR and medium/long-range strike systems have pushed that safety margin outward and made dispersion — smaller, more numerous, more mobile distribution points — the norm even at operational depth, not just at the front.",
+
+  "connections": [
+    { "target_id": "side_a-logistics-hub-strategic-rear", "type": "supply", "description": "Bulk resupply from the national-level strategic-rear depot." }
+  ],
+
+  "sources": [
+    { "label": "Composite/illustrative — no single named facility; force-structure pattern per doctrine reference §6", "url": "" }
+  ],
+  "editable": true
+}

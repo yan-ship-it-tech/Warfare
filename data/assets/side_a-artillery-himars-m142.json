@@ -1,0 +1,54 @@
+{
+  "id": "side_a-artillery-himars-m142",
+  "name": "HIMARS (M142)",
+  "side": "side_a",
+  "domain": "land",
+  "echelon": "operational",
+  "group": "artillery",
+  "distance_km_from_zero": 25,
+  "operating_range_km": { "min_km": 15, "max_km": 70 },
+  "band_id": "op_near",
+  "category": "artillery-rocket-deep-strike",
+  "representative_system": "M142 HIMARS, firing GMLRS / ER GMLRS / ATACMS",
+  "icon_image": "/icons/himars.png",
+  "gallery_images": ["/gallery/himars-launch.jpg"],
+
+  "cost": {
+    "unit_cost_usd": 5300000,
+    "display": "~$3.5–5.3M per launcher (rising over production lots); a single GMLRS rocket runs ~$170K, ER GMLRS ~$434K, and an ATACMS missile over $1M",
+    "confidence": "reported"
+  },
+  "key_facts": [
+    { "label": "Reach", "value": "~70 km (ER GMLRS); ATACMS variants to ~300 km" },
+    { "label": "Crew", "value": "3" },
+    { "label": "Reload", "value": "Self-loads a fresh 6-rocket pod in minutes" }
+  ],
+
+  "short_role": "Wheeled, truck-mounted rocket artillery used for deep, precision strikes on command posts, logistics and ammunition depots well behind the immediate line.",
+  "characteristics": [
+    "Fires GMLRS-family guided rockets (~70 km with ER GMLRS) or ATACMS ballistic missiles (up to ~300 km)",
+    "GPS/INS-guided rounds land within a few meters, unlike unguided tube artillery at that range",
+    "High road speed and a short reload cycle support the same 'shoot and scoot' discipline as towed artillery",
+    "Compatible with the next-generation Precision Strike Missile, extending reach beyond 500 km"
+  ],
+  "employment_notes": "Used deliberately, not continuously — each launch is expensive enough that targets are pre-vetted against ISR (drone and satellite imagery) rather than fired reactively the way a howitzer answers a call for fire. It has been used against ammunition depots, command posts and bridges at depths conventional tube artillery cannot reach.",
+  "contrast_vs_traditional": "Traditional deep-strike capability belonged almost exclusively to air power. A truck-mounted rocket system that a small crew can hide, move and fire from the operational-near band gives a much smaller force the ability to hold operational-depth targets at risk — but at a cost per shot high enough that, unlike the FPV drones flooding the front, every launch is a deliberate, ISR-cued decision rather than a routine one.",
+
+  "reactive_behavior": {
+    "animation_id": "artillery_fire_mission",
+    "description": "On select: launcher elevates, fires a rocket pod, brief downrange flight and impact marker."
+  },
+
+  "connections": [
+    { "target_id": "side_a-uav-reconnaissance-tactical", "type": "data_c2", "description": "Target cueing and battle-damage confirmation." },
+    { "target_id": "side_a-logistics-hub-op-deep", "type": "supply", "description": "GMLRS/ATACMS rocket pod resupply." },
+    { "target_id": "side_a-space-isr-satellite-commercial", "type": "data_c2", "description": "Commercial satellite imagery used to vet high-value targets before committing a launch." }
+  ],
+
+  "sources": [
+    { "label": "Wikipedia — M142 HIMARS", "url": "https://en.wikipedia.org/wiki/M142_HIMARS" },
+    { "label": "Military Machine — How Much Does HIMARS Cost? Launchers, Rockets & Reloads", "url": "https://militarymachine.com/himars-cost" },
+    { "label": "Newsweek — Who Makes HIMARS and How Much Do Missile Launchers Cost?", "url": "https://www.newsweek.com/who-makes-himars-cost-launch-missile-fire-manufacture-1752295" }
+  ],
+  "editable": true
+}

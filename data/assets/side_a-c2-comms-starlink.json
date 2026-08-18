@@ -1,0 +1,44 @@
+{
+  "id": "side_a-c2-comms-starlink",
+  "name": "Starlink Terminal",
+  "side": "side_a",
+  "domain": "c2_comms",
+  "echelon": "tactical",
+  "group": "c2",
+  "distance_km_from_zero": 3,
+  "operating_range_km": { "min_km": 0, "max_km": 500 },
+  "band_id": "tactical",
+  "category": "satcom-comms",
+  "representative_system": "SpaceX Starlink (military/field-deployed terminal)",
+  "icon_image": "/icons/starlink.png",
+  "gallery_images": ["/gallery/starlink-terminal-field.jpg"],
+
+  "cost": {
+    "unit_cost_usd": 700,
+    "display": "~$385–700 per terminal; ~$50–100/month subscription (over 150,000 terminals reportedly in use across Ukraine, front and rear)",
+    "confidence": "reported"
+  },
+  "key_facts": [
+    { "label": "Latency", "value": "Low-earth-orbit — tens of milliseconds, usable for real-time video/control" },
+    { "label": "Deployment", "value": "Man-portable, no fixed ground infrastructure needed" },
+    { "label": "Used from", "value": "Front-line dugouts through rear headquarters" }
+  ],
+
+  "short_role": "Low-earth-orbit satellite internet terminal that gives front-line units resilient connectivity independent of local infrastructure.",
+  "characteristics": [
+    "Low latency relative to older geostationary satellite links — usable for real-time video and even some drone control links",
+    "No cell towers or fiber needed — works from a dugout, a vehicle, or a headquarters equally",
+    "Deployed at every echelon, not just the rear — this entry represents its front-line use specifically"
+  ],
+  "employment_notes": "Used everywhere from frontline positions relaying drone video to rear headquarters running battle-management software — a single commercial technology now underpins a large share of both tactical and operational communications, which concentrates real operational risk in one vendor's service decisions and ground-station footprint.",
+  "contrast_vs_traditional": "Military communications used to mean purpose-built, hardened, service-specific radio and satellite networks built to survive jamming and destruction. A big share of this war's comms backbone is instead a commercial internet service never designed as a weapon system — which is exactly why EW is described as the invisible battlefield everything else depends on: lose reliable comms and the fast kill chains built on top of it, from drone feeds to fire missions, collapse back toward the old multi-hour model.",
+
+  "connections": [],
+
+  "sources": [
+    { "label": "Engadget — Starlink nearly doubles satellite internet terminal prices in Ukraine", "url": "https://www.engadget.com/starlink-price-hike-in-ukraine-144623737.html" },
+    { "label": "GlobalSecurity.org — Starlink in Ukraine", "url": "https://www.globalsecurity.org/space/world/ukraine/starlink.htm" },
+    { "label": "Mind.ua — Starlink in Ukraine: How to connect, what are the costs", "url": "https://mind.ua/en/publications/20249580-starlink-in-ukraine-how-to-connect-what-are-the-costs-traps-and-pitfalls" }
+  ],
+  "editable": true
+}

@@ -168,6 +168,62 @@ const NAVAL = svg(
   </>,
 );
 
+const UGV = svg(
+  <>
+    <rect x="10" y="20" width="24" height="12" rx="2" fill="currentColor" fillOpacity={0.16} />
+    <path d="M10 20V15h24v5" />
+    <circle cx="14" cy="34" r="3.4" />
+    <circle cx="22" cy="34" r="3.4" />
+    <circle cx="30" cy="34" r="3.4" />
+    <path d="M17 15v-4h10v4" />
+    <path d="M36 24h4l2 4-2 3h-4" opacity={0.7} />
+  </>,
+);
+
+const POWER_PLANT = svg(
+  <>
+    <path d="M8 40V22l7-9 7 9v18" fill="currentColor" fillOpacity={0.12} />
+    <path d="M24 40V26l6-7 6 7v14" fill="currentColor" fillOpacity={0.2} />
+    <path d="M8 40h34" />
+    <path d="M13 22c-2-3-1-6 2-7-1 3 1 5 3 4-1 4-3 5-5 3z" opacity={0.55} />
+    <path d="M31 20c-2-3-1-6 2-7-1 3 1 5 3 4-1 4-3 5-5 3z" opacity={0.4} />
+  </>,
+);
+
+const BARRACKS = svg(
+  <>
+    <path d="M6 22 24 10l18 12" />
+    <path d="M9 22v18h30V22" fill="currentColor" fillOpacity={0.12} />
+    <path d="M20 40V28h8v12" />
+    <path d="M14 26h4v4h-4zM30 26h4v4h-4z" opacity={0.6} />
+  </>,
+);
+
+const TRAINING_TARGET = svg(
+  <>
+    <circle cx="24" cy="24" r="15" fill="currentColor" fillOpacity={0.06} />
+    <circle cx="24" cy="24" r="10" />
+    <circle cx="24" cy="24" r="4" fill="currentColor" fillOpacity={0.35} />
+    <path d="M24 3v6M24 39v6M3 24h6M39 24h6" opacity={0.6} />
+  </>,
+);
+
+const CHECKPOINT = svg(
+  <>
+    <path d="M8 40V12h4v28" />
+    <path d="M12 14h26l-5 6 5 6H12z" fill="currentColor" fillOpacity={0.2} />
+    <path d="M4 40h30" />
+  </>,
+);
+
+const CIVILIAN_SUPPORT = svg(
+  <>
+    <path d="M16 22a6 6 0 1 1 12 0" />
+    <path d="M9 40c1-8 6-12 15-12s14 4 15 12" fill="currentColor" fillOpacity={0.12} />
+    <path d="M18 30c1 3 3 4 6 4" opacity={0.7} />
+  </>,
+);
+
 const GENERIC = svg(
   <>
     <path d="M24 8 40 17v18L24 44 8 35V17z" fill="currentColor" fillOpacity={0.12} />
@@ -213,8 +269,34 @@ const BY_DOMAIN: Record<Domain, Icon> = {
   c2_comms: C2_NODE,
 };
 
+/** `group` (data/groups.json) is the most reliable signal once an asset has
+ *  one — it's an authored, closed taxonomy rather than a regex guess. Tried
+ *  first; category/keyword/domain remain the fallback chain for pending
+ *  stubs, which don't carry a group. */
+const BY_GROUP: Record<string, Icon> = {
+  uav: RECON_UAV,
+  air_defense: SAM_LAUNCHER,
+  armor: TANK,
+  artillery: HOWITZER,
+  ground_robots: UGV,
+  logistics: LOGISTICS_HUB,
+  medical: MEDICAL,
+  ew: EW,
+  c2: C2_NODE,
+  infantry: INFANTRY_POSITION,
+  naval: NAVAL,
+  space: SATELLITE,
+  air_force: AIRCRAFT,
+  strategic_target: POWER_PLANT,
+  training: TRAINING_TARGET,
+  border_control: CHECKPOINT,
+  soldier_accommodation: BARRACKS,
+  civilian_support: CIVILIAN_SUPPORT,
+};
+
 /** Picks the best symbol for an asset or a pending stub. */
-export function resolveIcon(opts: { category?: string; id?: string; domain: Domain }): Icon {
+export function resolveIcon(opts: { group?: string; category?: string; id?: string; domain: Domain }): Icon {
+  if (opts.group && BY_GROUP[opts.group]) return BY_GROUP[opts.group];
   if (opts.category && BY_CATEGORY[opts.category]) return BY_CATEGORY[opts.category];
   const haystack = `${opts.category ?? ""} ${opts.id ?? ""}`.toLowerCase().replace(/_/g, "-");
   for (const [re, icon] of KEYWORD_RULES) {

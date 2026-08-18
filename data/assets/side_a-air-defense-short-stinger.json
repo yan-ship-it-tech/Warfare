@@ -1,0 +1,45 @@
+{
+  "id": "side_a-air-defense-short-stinger",
+  "name": "FIM-92 Stinger",
+  "side": "side_a",
+  "domain": "air",
+  "echelon": "tactical",
+  "group": "air_defense",
+  "distance_km_from_zero": 2,
+  "operating_range_km": { "min_km": 0, "max_km": 5 },
+  "band_id": "tactical",
+  "category": "air-defense-short-range",
+  "representative_system": "FIM-92 Stinger MANPADS",
+  "icon_image": "/icons/stinger.png",
+  "gallery_images": [],
+
+  "cost": {
+    "unit_cost_usd": 150000,
+    "display": "~$120–150K per missile at current production (NATO bulk-buy pricing has run far higher, ~$830K/round, reflecting scarce production capacity)",
+    "confidence": "reported"
+  },
+  "key_facts": [
+    { "label": "Range", "value": "~4.8 km, up to ~3.8 km altitude" },
+    { "label": "Crew", "value": "1 gunner" },
+    { "label": "Guidance", "value": "Infrared homing, man-portable" }
+  ],
+
+  "short_role": "Shoulder-fired, infrared-homing short-range air defense missile — the last-ditch layer against low, fast, close-in air threats.",
+  "characteristics": [
+    "One-person portable and operable, no vehicle required",
+    "Infrared seeker homes on the heat signature of an aircraft or helicopter, less effective against small cold drone airframes",
+    "Fielded in large numbers relative to its cost, giving infantry units organic short-range air defense"
+  ],
+  "employment_notes": "Sits at the bottom of the layered air-defense stack, covering the close-in gap between longer-range SAMs and gun-based CUAS — genuinely effective against helicopters and fixed-wing aircraft, but a poor tool against small, low-heat-signature FPV and loitering-munition drones, which is why it is paired with gun-based CUAS rather than relied on alone against the drone threat.",
+  "contrast_vs_traditional": "Stinger was built for a Cold War threat picture (attack helicopters, low-flying jets) and remains genuinely effective against exactly that threat. What changed is what shares its airspace: infantry now also need organic defense against a mass of cheap drones the Stinger's infrared seeker isn't well suited to, which is why short-range air defense has diversified into a mixed missile-and-gun layer rather than staying a single-system solution.",
+
+  "connections": [
+    { "target_id": "side_a-c2-integrated-air-defense-network", "type": "data_c2", "description": "Receives early-warning cueing on inbound low-altitude tracks." }
+  ],
+
+  "sources": [
+    { "label": "Wikipedia — FIM-92 Stinger", "url": "https://en.wikipedia.org/wiki/FIM-92_Stinger" },
+    { "label": "Global Military — FIM-92 Stinger Missile: Range, Speed & Specs", "url": "https://www.globalmilitary.net/missiles/fim-92-stinger/" }
+  ],
+  "editable": true
+}

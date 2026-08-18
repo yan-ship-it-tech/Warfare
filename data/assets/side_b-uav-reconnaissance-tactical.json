@@ -1,0 +1,48 @@
+{
+  "id": "side_b-uav-reconnaissance-tactical",
+  "name": "Orlan-10",
+  "side": "side_b",
+  "domain": "air",
+  "echelon": "tactical",
+  "group": "uav",
+  "distance_km_from_zero": 4,
+  "operating_range_km": { "min_km": 1, "max_km": 5 },
+  "band_id": "tactical",
+  "category": "uav-reconnaissance",
+  "representative_system": "STC Orlan-10",
+  "icon_image": "/icons/orlan-10.png",
+  "gallery_images": ["/gallery/orlan-10-field.jpg"],
+
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "No confirmed unit price — widely reported as inexpensive relative to Western equivalents, built partly from commercial off-the-shelf components",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    { "label": "Endurance", "value": "Up to ~16 hours airborne" },
+    { "label": "Control range", "value": "~100–140 km from a ground station" },
+    { "label": "Roles", "value": "ISR, artillery spotting, and an EW/SIGINT variant" }
+  ],
+
+  "short_role": "The most widely fielded Russian tactical ISR drone — spots targets, adjusts artillery fire, and hands strike targets to Lancet crews.",
+  "characteristics": [
+    "Modular design also supports SIGINT/EW payload variants",
+    "Launched via bungee catapult, recovered by parachute",
+    "Built substantially from commercial hobbyist-grade components, which keeps unit cost low"
+  ],
+  "employment_notes": "Runs as the search half of the classic recon-strike pairing described in Russian FPV employment patterns: an Orlan-10 finds and confirms a target, hands it to a Lancet or an FPV operator, and often stays overhead afterward to document the strike. Like its counterparts on the other side, its crew and launch site are findable via the same 'follow it home' pattern over a few days of observation.",
+  "contrast_vs_traditional": "This is the 'classic' pattern in the tactical FPV taxonomy: a dedicated recon drone finds a target, hands off to a strike asset, then documents the result — collapsing what used to be a multi-step reporting chain into a single sortie pair. It also means both sides' reconnaissance crews are now legitimate high-value targets in their own right, not just passive observers, since removing the spotter degrades an entire strike chain at once.",
+
+  "reactive_behavior": {
+    "animation_id": "recon_uav_orbit",
+    "description": "On select: drone launches via catapult, orbits, marks a target and hands off to a strike asset."
+  },
+
+  "connections": [],
+
+  "sources": [
+    { "label": "Wikipedia — STC Orlan-10", "url": "https://en.wikipedia.org/wiki/Orlan-10" },
+    { "label": "Combat Operators — Orlan-10: A UAV for reconnaissance and electronic warfare", "url": "https://combatoperators.com/vehicles/air/uav/orlan-10/" }
+  ],
+  "editable": true
+}

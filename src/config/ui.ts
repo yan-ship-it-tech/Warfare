@@ -38,11 +38,17 @@ export const VIEW = {
     op_near: 440,
     op_deep: 460,
     strategic_rear: 360,
+    deep_strategic: 420,
   } as Record<string, number>,
-  /** Fallback width for any band id not listed above. */
+  /** Fallback width for any band id not listed above — matters once bands are
+   *  user-edited, since a renamed or newly added band has no entry here. */
   defaultBandWidthPx: 400,
-  /** Open-ended bands (max_km 100000) are drawn up to this cap and labelled "+". */
-  openEndedDisplayCapKm: 400,
+  /** Open-ended bands (max_km ≥ 10,000) are drawn up to this cap and labelled
+   *  "+". Set to roughly the distance of a genuine cross-border deep-strike
+   *  example (Ukraine's "Spiderweb" operation reached targets ~4,300 km from
+   *  the front) so that category of asset has room to sit meaningfully far
+   *  out rather than pinned to the band's near edge. */
+  openEndedDisplayCapKm: 4300,
   /** Dead zone straddling the zero line. */
   zeroGutterPx: 132,
   /** Vertical spacing between domain lanes. */

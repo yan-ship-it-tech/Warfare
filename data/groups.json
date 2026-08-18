@@ -1,0 +1,20 @@
+[
+  { "id": "uav", "label": "UAVs", "description": "Strike, reconnaissance and ISR drones, all ranges.", "color": "#5aa9e6" },
+  { "id": "air_defense", "label": "Air Defense / CUAS", "description": "Long/mid/short-range SAM systems and counter-UAS.", "color": "#7fc4e0" },
+  { "id": "armor", "label": "Armor", "description": "Tanks, IFVs, APCs.", "color": "#c2a25a" },
+  { "id": "artillery", "label": "Artillery & Mortars", "description": "Tube and rocket indirect fire.", "color": "#d98b4a" },
+  { "id": "ground_robots", "label": "Ground Robots (UGV)", "description": "Logistics, mine-laying and combat unmanned ground vehicles.", "color": "#a68a5a" },
+  { "id": "logistics", "label": "Logistics", "description": "Sourcing, hubs, forward distribution.", "color": "#7f9a6a" },
+  { "id": "medical", "label": "Medical / Casevac", "description": "Point of injury through definitive care.", "color": "#d3697a" },
+  { "id": "ew", "label": "Electronic Warfare", "description": "Jamming, SIGINT, spoofing.", "color": "#b07fd4" },
+  { "id": "c2", "label": "C2 & Communications", "description": "Battle management, data links, SATCOM.", "color": "#57bfa8" },
+  { "id": "infantry", "label": "Infantry & Fortification", "description": "Positions, trenches, obstacles.", "color": "#9a8f7a" },
+  { "id": "naval", "label": "Naval / Maritime", "description": "Surface fleet, USVs, corridors.", "color": "#4d93a8" },
+  { "id": "space", "label": "Space", "description": "ISR satellites, SATCOM, PNT.", "color": "#8b93d6" },
+  { "id": "air_force", "label": "Air Force", "description": "Airfields, helicopters, fixed-wing, jets.", "color": "#6f9fd8" },
+  { "id": "strategic_target", "label": "Strategic Targets", "description": "Infrastructure and deep-strike objectives.", "color": "#d0655a" },
+  { "id": "training", "label": "Training", "description": "Training grounds at varying depth and stage.", "color": "#8f9779" },
+  { "id": "border_control", "label": "Border Control", "description": "Border security and screening.", "color": "#7a8ca0" },
+  { "id": "soldier_accommodation", "label": "Soldier Accommodation", "description": "Rear barracks through near-front underground positions.", "color": "#8a7f6a" },
+  { "id": "civilian_support", "label": "Civilian Volunteer Support", "description": "Civil-side logistics and support networks.", "color": "#8fae7f" }
+]

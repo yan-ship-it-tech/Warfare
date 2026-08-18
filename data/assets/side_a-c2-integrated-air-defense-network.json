@@ -1,0 +1,45 @@
+{
+  "id": "side_a-c2-integrated-air-defense-network",
+  "name": "Integrated Air Defense C2 Network",
+  "side": "side_a",
+  "domain": "c2_comms",
+  "echelon": "operational",
+  "group": "c2",
+  "distance_km_from_zero": 60,
+  "operating_range_km": null,
+  "band_id": "op_deep",
+  "category": "c2-battle-management",
+  "representative_system": "IBCS-style integrated air/missile defense battle command (Northrop Grumman IBCS pattern)",
+  "icon_image": "/icons/iads-c2.png",
+  "gallery_images": [],
+
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Program-level cost, not a per-unit price — the US IBCS program has run well into the billions across development and fielding",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    { "label": "Function", "value": "Fuses radar, EW and passive-acoustic sensor tracks into one air picture" },
+    { "label": "Feeds", "value": "Cues Patriot, short-range SAMs and CUAS off a shared track" },
+    { "label": "Redundancy", "value": "Designed to keep functioning if any single sensor node is lost" }
+  ],
+
+  "short_role": "The sensor-fusion and battle-management layer that turns separate radars, EW sensors and SAM batteries into one shared air picture.",
+  "characteristics": [
+    "Fuses early-warning radar, Patriot/short-range SAM radars, and passive acoustic/EW sensors into a single track picture",
+    "Lets any connected shooter engage off any connected sensor's track, not just its own radar",
+    "A software/network layer more than a single deployed 'box' — represented here as one node for legibility"
+  ],
+  "employment_notes": "Sits well back from the line as a network hub rather than a single vulnerable position — the point is that no single sensor or shooter loss breaks the whole air picture. Relies on resilient comms (including satellite links) to keep functioning when terrestrial networks are jammed or physically cut.",
+  "contrast_vs_traditional": "Traditional ground-based air defense fought largely as isolated batteries, each cueing off its own radar. Facing a mixed threat of ballistic/hypersonic missiles and mass cheap-drone raids, a single battery's radar and magazine can't cover everything — so the fight has shifted to a networked stack where sensors and shooters are decoupled, any node can cue any other, and losing one piece degrades rather than blinds the whole system.",
+
+  "connections": [
+    { "target_id": "side_a-c2-comms-starlink", "type": "data_c2", "description": "Uses satellite links as a resilient backbone when terrestrial networks are degraded." }
+  ],
+
+  "sources": [
+    { "label": "Northrop Grumman — Integrated Air and Missile Defense Battle Command System (IBCS)", "url": "https://www.northropgrumman.com/what-we-do/land/integrated-air-and-missile-defense-battle-command-system-ibcs" },
+    { "label": "Composite representation of a networked IADS pattern, not a specific fielded Ukrainian system", "url": "" }
+  ],
+  "editable": true
+}

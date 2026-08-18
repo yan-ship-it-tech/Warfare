@@ -7,7 +7,7 @@
 // the working checklist while categories are being filled in.
 // ─────────────────────────────────────────────────────────────────────────
 import type { Asset, ConnectionType, DistanceBand, Domain, DomainLayer, Echelon, Side } from "../types";
-import type { DataIssue } from "./model";
+import type { DataIssue, GroupDef } from "./model";
 
 const SIDES: Side[] = ["side_a", "side_b"];
 const ECHELONS: Echelon[] = ["strategic", "operational", "tactical"];
@@ -47,6 +47,7 @@ export function validateAsset(
   source: string,
   bands: DistanceBand[],
   domains: DomainLayer[],
+  groups: GroupDef[],
 ): ValidationResult {
   const issues: DataIssue[] = [];
   const push = (severity: DataIssue["severity"], message: string, subject?: string) =>
@@ -108,6 +109,53 @@ export function validateAsset(
 
   if (typeof a.echelon !== "string" || !ECHELONS.includes(a.echelon as Echelon)) {
     push("warning", `\`echelon\` must be one of ${ECHELONS.join(" | ")}; got ${JSON.stringify(a.echelon)}.`, subject);
+  }
+
+  // ── group (the show/hide taxonomy) ──────────────────────────────────────
+  const groupIds = groups.map((g) => g.id);
+  if (typeof a.group !== "string" || !groupIds.includes(a.group)) {
+    push(
+      "warning",
+      `\`group\` ${JSON.stringify(a.group)} does not match an entry in groups.json (${groupIds.join(", ")}). The asset still renders but won't respond to the category show/hide filter correctly.`,
+      subject,
+    );
+  }
+
+  // ── operating range, if given ───────────────────────────────────────────
+  if (a.operating_range_km !== undefined && a.operating_range_km !== null) {
+    const r = a.operating_range_km as Record<string, unknown>;
+    if (typeof r?.min_km !== "number" || typeof r?.max_km !== "number") {
+      push("warning", "`operating_range_km` is present but missing numeric min_km/max_km.", subject);
+    } else if (r.min_km > r.max_km) {
+      push("warning", `\`operating_range_km\` has min_km (${r.min_km}) greater than max_km (${r.max_km}).`, subject);
+    }
+  }
+
+  // ── cost (always shown, so always checked) ──────────────────────────────
+  const cost = a.cost as Record<string, unknown> | undefined;
+  if (!cost || typeof cost !== "object") {
+    push("warning", "`cost` is missing — the detail panel's cost tile will show as unset.", subject);
+  } else {
+    if (typeof cost.display !== "string" || cost.display.trim() === "") {
+      push("warning", "`cost.display` is missing — there is nothing to show in the cost tile.", subject);
+    }
+    if (cost.unit_cost_usd !== null && typeof cost.unit_cost_usd !== "number") {
+      push("warning", "`cost.unit_cost_usd` must be a number or null.", subject);
+    }
+    if (!["reported", "estimated", "unknown"].includes(cost.confidence as string)) {
+      push("info", `\`cost.confidence\` should be reported | estimated | unknown; got ${JSON.stringify(cost.confidence)}.`, subject);
+    }
+  }
+
+  // ── key facts (exactly three, by convention) ────────────────────────────
+  if (!Array.isArray(a.key_facts)) {
+    push("warning", "`key_facts` is missing — the detail panel's key-facts row will be empty.", subject);
+  } else if (a.key_facts.length !== 3) {
+    push(
+      "info",
+      `\`key_facts\` has ${a.key_facts.length} entries; the convention is exactly 3 for cross-asset comparability.`,
+      subject,
+    );
   }
 
   // ── content fields ────────────────────────────────────────────────────

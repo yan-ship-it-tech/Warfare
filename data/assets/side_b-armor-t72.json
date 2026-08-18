@@ -4,12 +4,25 @@
   "side": "side_b",
   "domain": "land",
   "echelon": "tactical",
+  "group": "armor",
   "distance_km_from_zero": 4,
+  "operating_range_km": { "min_km": 1, "max_km": 8 },
   "band_id": "tactical",
   "category": "armor-main-battle-tank",
   "representative_system": "T-72B3 / T-72B3M",
   "icon_image": "/icons/t72.png",
   "gallery_images": ["/gallery/t72-field.jpg"],
+
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "No clean unit price exists — most T-72B3s are Soviet-era hulls overhauled/modernized, not newly built. Export-market quotes for comparable variants run roughly $200K–$1M+ depending on modernization level.",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    { "label": "Main armament", "value": "125mm smoothbore, autoloader" },
+    { "label": "Crew", "value": "3" },
+    { "label": "Protection", "value": "Composite + ERA on modernized variants" }
+  ],
 
   "short_role": "Main battle tank used for direct-fire support, breakthrough attempts, and defensive strongpoints; the most numerous armor type in the conflict.",
   "characteristics": [
@@ -28,11 +41,14 @@
 
   "connections": [
     { "target_id": "side_b-logistics-hub-op-near", "type": "supply", "description": "Fuel and ammunition resupply from a near-rear logistics point." },
-    { "target_id": "side_b-medical-casevac-chain", "type": "casevac", "description": "Crew casualties routed into the tactical casevac chain." }
+    { "target_id": "side_b-medical-casevac-chain", "type": "casevac", "description": "Crew casualties routed into the tactical casevac chain." },
+    { "target_id": "side_b-c2-comms-strelets", "type": "data_c2", "description": "Target designation and fire calls relayed via squad-level terminal." }
   ],
 
   "sources": [
-    { "label": "General open-source order-of-battle reporting on modernized T-72 variants in the Russo-Ukrainian war (spot-check specific figures before publishing)", "url": "" }
+    { "label": "General open-source order-of-battle reporting on modernized T-72 variants in the Russo-Ukrainian war (spot-check specific figures before publishing)", "url": "" },
+    { "label": "GlobalSecurity.org — T-72B3 Medium Tank", "url": "https://www.globalsecurity.org/military/world/russia/t-72b3.htm" },
+    { "label": "Cost figures are market/export estimates, not a confirmed production price — treat as directional only", "url": "" }
   ],
   "editable": true
 }

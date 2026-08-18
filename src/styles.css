@@ -1060,3 +1060,227 @@ code { font-family: var(--mono); font-size: 0.92em; }
   .toolbar__group--types { display: none; }
   .bench__stages { grid-template-columns: 1fr; }
 }
+
+/* ── key facts + placement (added for cost/category/editable-bands pass) ── */
+.key-facts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  margin: 18px 0 14px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.key-facts__tile {
+  position: relative;
+  background: var(--panel);
+  padding: 9px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.key-facts__tile--cost {
+  grid-column: 1 / -1;
+  background: linear-gradient(180deg, rgba(217, 164, 65, 0.1), var(--panel) 70%);
+}
+
+.key-facts .k {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+}
+
+.key-facts .v {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.key-facts .v--unknown { color: var(--text-3); font-style: italic; }
+.key-facts__tile .tag { position: absolute; top: 8px; right: 10px; }
+
+.placement-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 10px 0 14px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 14px;
+}
+
+.placement-row__stats { display: flex; gap: 20px; flex-wrap: wrap; }
+.placement-row__stats > div { display: flex; flex-direction: column; gap: 2px; }
+.placement-row__stats .k { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-3); }
+.placement-row__stats .v { font-size: 12.5px; color: var(--text); }
+
+.placement-row__edit {
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-2);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.placement-row__edit:hover { color: var(--text); border-color: var(--line-2); }
+
+.placement-row--editing { flex-direction: column; align-items: stretch; }
+
+.placement-row__form { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.placement-row__form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  flex: 1 1 140px;
+}
+
+.placement-row__form input {
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line-2);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--text);
+}
+
+.placement-row__actions { display: flex; gap: 8px; margin-top: 4px; }
+
+.btn--danger { border-color: color-mix(in srgb, var(--err) 60%, transparent); color: var(--err); }
+
+/* ── categories popover ────────────────────────────────────────────────── */
+.category-menu-anchor { position: relative; }
+
+.chip.has-filter { border-color: color-mix(in srgb, var(--warn) 55%, transparent); }
+
+.category-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 60;
+  width: 280px;
+  max-height: 60vh;
+  overflow-y: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--line-2);
+  background: rgba(14, 18, 26, 0.98);
+  box-shadow: 0 20px 46px rgba(0, 0, 0, 0.55);
+}
+
+.category-menu__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+}
+
+.category-menu__quick { display: flex; gap: 6px; }
+
+.category-menu__quick button {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--text-2);
+  font-size: 10.5px;
+  cursor: pointer;
+}
+
+.category-menu__quick button:disabled { opacity: 0.35; cursor: not-allowed; }
+.category-menu__quick button:hover:not(:disabled) { color: var(--text); border-color: var(--line-2); }
+
+.category-menu__list { list-style: none; margin: 0; padding: 6px; display: flex; flex-direction: column; gap: 2px; }
+
+.category-menu__row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  border: none;
+  background: none;
+  color: var(--text-3);
+  cursor: pointer;
+  text-align: left;
+}
+
+.category-menu__row:hover { background: rgba(255, 255, 255, 0.045); }
+.category-menu__row.is-on { color: var(--text); }
+.category-menu__row.is-empty { opacity: 0.45; }
+
+.category-menu__swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  flex: 0 0 auto;
+  opacity: 0.5;
+}
+
+.category-menu__row.is-on .category-menu__swatch { opacity: 1; }
+.category-menu__label { flex: 1 1 auto; font-size: 12.5px; }
+.category-menu__count { font-family: var(--mono); font-size: 10.5px; color: var(--text-3); }
+
+/* ── bands editor table ────────────────────────────────────────────────── */
+.bands-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+
+.bands-table th {
+  text-align: left;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+  padding: 0 8px 8px;
+}
+
+.bands-table td { padding: 4px 8px; }
+
+.bands-table__input {
+  width: 100%;
+  font: inherit;
+  font-size: 12.5px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+}
+
+.bands-table__input:focus { outline: none; border-color: var(--line-2); background: rgba(255, 255, 255, 0.06); }
+.bands-table__input--label { min-width: 220px; }
+.bands-table__input--num { width: 90px; font-family: var(--mono); }
+
+.bands-table__remove {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--text-3);
+  cursor: pointer;
+}
+
+.bands-table__remove:hover:not(:disabled) { color: var(--err); border-color: color-mix(in srgb, var(--err) 50%, transparent); }
+.bands-table__remove:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.bands-editor__actions { display: flex; align-items: center; margin-top: 16px; }
+.bands-editor__spacer { flex: 1 1 auto; }

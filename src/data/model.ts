@@ -5,6 +5,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 import type {
   Asset,
+  AssetGroup,
   ConnectionType,
   DistanceBand,
   Domain,
@@ -73,10 +74,19 @@ export interface LowerSkyControl {
   without_control: { closest_deploy_km: number; note: string };
 }
 
+export interface GroupDef {
+  id: AssetGroup;
+  label: string;
+  description: string;
+  color: string;
+}
+
 /** Everything the scene renders from, assembled once at load. */
 export interface WorldModel {
   bands: DistanceBand[];
   domains: DomainLayer[];
+  groups: GroupDef[];
+  groupsById: Map<string, GroupDef>;
   assets: Asset[];
   assetsById: Map<string, Asset>;
   stubs: PendingStub[];
@@ -85,6 +95,22 @@ export interface WorldModel {
   doctrineMarkers: DoctrineMarker[];
   lowerSky: LowerSkyControl | null;
   issues: DataIssue[];
+}
+
+/**
+ * The band whose [min_km, max_km) contains `km`, falling back to whichever
+ * band edge is nearest when nothing contains it (bands are user-editable, so
+ * gaps and out-of-range values are a normal transient state, not a bug).
+ * This is the single source of truth for "which band is an asset in" — the
+ * stored `band_id` on an asset is informational only; placement and display
+ * both derive from distance against the *current* bands.
+ */
+export function resolveBand(km: number, bands: DistanceBand[]): DistanceBand | undefined {
+  if (bands.length === 0) return undefined;
+  const hit = bands.find((b) => km >= b.min_km && km <= b.max_km);
+  if (hit) return hit;
+  const sorted = [...bands].sort((a, b) => a.min_km - b.min_km);
+  return km < sorted[0].min_km ? sorted[0] : sorted[sorted.length - 1];
 }
 
 /** Either kind of node the scene can place and the overlay can connect. */

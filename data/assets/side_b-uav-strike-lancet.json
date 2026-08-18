@@ -4,12 +4,25 @@
   "side": "side_b",
   "domain": "air",
   "echelon": "tactical",
+  "group": "uav",
   "distance_km_from_zero": 3,
+  "operating_range_km": { "min_km": 1, "max_km": 10 },
   "band_id": "tactical",
   "category": "uav-strike",
   "representative_system": "ZALA Lancet (Lancet-1 / Lancet-3)",
   "icon_image": "/icons/lancet.png",
   "gallery_images": ["/gallery/lancet-launch.jpg", "/gallery/lancet-inflight.jpg"],
+
+  "cost": {
+    "unit_cost_usd": 35000,
+    "display": "~$35,000 per unit (export listing cites ~3M RUB / ~$37,000 for Lancet-3)",
+    "confidence": "reported"
+  },
+  "key_facts": [
+    { "label": "Control/strike radius", "value": "~40–50 km from launch point" },
+    { "label": "Endurance", "value": "~30–40 min airborne" },
+    { "label": "Warhead", "value": "1 kg (Lancet-1) or 3 kg (Lancet-3), HE/frag/shaped-charge" }
+  ],
 
   "short_role": "Catapult-launched loitering munition used for combined reconnaissance and precision strike against vehicles, artillery, and personnel near the line.",
   "characteristics": [
@@ -29,12 +42,14 @@
 
   "connections": [
     { "target_id": "side_b-uav-reconnaissance-tactical", "type": "data_c2", "description": "Cued onto targets by a paired reconnaissance UAV feed." },
-    { "target_id": "side_b-logistics-hub-op-near", "type": "supply", "description": "Airframes and batteries resupplied from a near-rear logistics point." }
+    { "target_id": "side_b-logistics-hub-op-near", "type": "supply", "description": "Airframes and batteries resupplied from a near-rear logistics point." },
+    { "target_id": "side_b-c2-comms-strelets", "type": "data_c2", "description": "Receives target designation from a squad-level fire-control terminal." }
   ],
 
   "sources": [
     { "label": "Wikipedia — ZALA Lancet", "url": "https://en.wikipedia.org/wiki/ZALA_Lancet" },
-    { "label": "Kyiv Post — Russian Lancet Kamikaze Drone in Ukraine: An Overview", "url": "https://www.kyivpost.com/analysis/23923" }
+    { "label": "Kyiv Post — Russian Lancet Kamikaze Drone in Ukraine: An Overview", "url": "https://www.kyivpost.com/analysis/23923" },
+    { "label": "Ukrainska Pravda — Prices of Russian loitering munitions revealed", "url": "https://www.pravda.com.ua/eng/news/2026/05/08/8033872/" }
   ],
   "editable": true
 }

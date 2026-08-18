@@ -1,0 +1,53 @@
+{
+  "id": "side_a-armor-leopard2",
+  "name": "Leopard 2A6",
+  "side": "side_a",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "armor",
+  "distance_km_from_zero": 3,
+  "operating_range_km": { "min_km": 1, "max_km": 7 },
+  "band_id": "tactical",
+  "category": "armor-main-battle-tank",
+  "representative_system": "Leopard 2A6",
+  "icon_image": "/icons/leopard2.png",
+  "gallery_images": ["/gallery/leopard2-field.jpg"],
+
+  "cost": {
+    "unit_cost_usd": 9000000,
+    "display": "~$9–10M per new-build unit (secondhand/refurbished transfers have run far lower, e.g. ~€2M/tank in bulk surplus deals)",
+    "confidence": "estimated"
+  },
+  "key_facts": [
+    { "label": "Main armament", "value": "120mm L/55 smoothbore" },
+    { "label": "Crew", "value": "4" },
+    { "label": "Protection", "value": "Composite armor; add-on/anti-drone cage kits fielded in Ukraine" }
+  ],
+
+  "short_role": "Western-supplied main battle tank used for direct-fire support and defensive strongpoints; more sophisticated but far less numerous than Soviet-legacy armor.",
+  "characteristics": [
+    "Crew of 4 (loader, unlike autoloader-equipped Soviet-pattern tanks)",
+    "120mm smoothbore main gun, advanced fire-control and thermal sights",
+    "Composite armor plus improvised anti-drone cage kits added in the field",
+    "Small fielded numbers relative to Soviet-legacy armor mean each loss is proportionally more significant"
+  ],
+  "employment_notes": "The doctrine-grounded finding that matters most here isn't the tank's specs — it's who controls the air above it. With genuine local air/drone superiority, armor can push as close as roughly 1–1.5 km from the line and use direct-fire positions; without it, the same asset is pushed back to roughly 7 km and restricted to indirect/overwatch roles. Which of those two postures this tank is actually in is a bigger factor in survivability than any armor upgrade.",
+  "contrast_vs_traditional": "Cold War doctrine planned massed armored breakthroughs under an assumed friendly air umbrella. Persistent drone reconnaissance has made that umbrella conditional and local rather than general — control of the lower sky, not doctrine, now sets how close a tank can sit to the line, which is a fundamentally different planning factor than anything Cold War armor doctrine accounted for.",
+
+  "reactive_behavior": {
+    "animation_id": "tank_move_fire",
+    "description": "On select: short movement, turret traverse, main gun fires."
+  },
+
+  "connections": [
+    { "target_id": "side_a-logistics-hub-op-deep", "type": "supply", "description": "Fuel, 120mm ammunition, and running-gear spares." },
+    { "target_id": "side_a-medical-casevac-chain", "type": "casevac", "description": "Crew casualties evacuated via the tactical casevac chain." },
+    { "target_id": "side_a-uav-reconnaissance-tactical", "type": "data_c2", "description": "Receives threat warning and target cueing from tactical reconnaissance drones." }
+  ],
+
+  "sources": [
+    { "label": "Wikipedia — Leopard 2", "url": "https://en.wikipedia.org/wiki/Leopard_2" },
+    { "label": "Military Machine — How Much Does a Leopard 2 Tank Cost?", "url": "https://militarymachine.com/leopard-2-cost" }
+  ],
+  "editable": true
+}

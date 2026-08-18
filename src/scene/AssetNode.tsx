@@ -36,7 +36,8 @@ export function AssetNode({
   const category = isStub ? undefined : node.asset.category;
   const iconPath = isStub ? "" : node.asset.icon_image;
 
-  const Icon = resolveIcon({ category, id: node.id, domain });
+  const group = isStub ? undefined : node.asset.group;
+  const Icon = resolveIcon({ group, category, id: node.id, domain });
   const [imageFailed, setImageFailed] = useState(false);
   const [playing, setPlaying] = useState(false);
 

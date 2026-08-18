@@ -1,0 +1,46 @@
+{
+  "id": "side_b-air-defense-short-pantsir",
+  "name": "Pantsir-S1",
+  "side": "side_b",
+  "domain": "air",
+  "echelon": "operational",
+  "group": "air_defense",
+  "distance_km_from_zero": 7,
+  "operating_range_km": { "min_km": 2, "max_km": 20 },
+  "band_id": "op_near",
+  "category": "air-defense-short-range",
+  "representative_system": "Pantsir-S1 (combined gun/missile point-defense system)",
+  "icon_image": "/icons/pantsir-s1.png",
+  "gallery_images": [],
+
+  "cost": {
+    "unit_cost_usd": 14000000,
+    "display": "~$13–15M per unit on the export market",
+    "confidence": "reported"
+  },
+  "key_facts": [
+    { "label": "Armament", "value": "12 SAMs + twin 30mm autocannons on one chassis" },
+    { "label": "Engagement range", "value": "~20 km (missile), shorter for the guns" },
+    { "label": "Role", "value": "Point defense for high-value sites and maneuver units" }
+  ],
+
+  "short_role": "Combined gun-and-missile point-defense system protecting high-value sites and forward units from aircraft, missiles and drones.",
+  "characteristics": [
+    "12 ready-to-fire short-range SAMs plus twin 30mm autocannons on a single vehicle",
+    "Radar and optical tracking for engagement at multiple altitudes and speeds",
+    "A high-value, expensive-per-unit system that has itself become a target for cheap strike drones",
+    "Several units reportedly lost to drone strikes at a small fraction of the Pantsir's own unit cost"
+  ],
+  "employment_notes": "Deployed to protect specific high-value sites and forward troop concentrations rather than blanket the whole line — its own cost and relative scarcity mean it is positioned selectively, and losing one to a strike drone costing a tiny fraction of its price is a stark illustration of the cost-asymmetry running through this whole battlefield.",
+  "contrast_vs_traditional": "A premium multi-million-dollar point-defense system was designed against aircraft and cruise missiles, the threats it remains genuinely effective against. It is considerably less cost-efficient against the mass cheap-drone threat that now accounts for 60–70% of equipment losses on this battlefield — the same asymmetry problem Western Patriot batteries and Gepard guns face from the other direction, just with different unit economics on this side.",
+
+  "connections": [
+    { "target_id": "side_b-logistics-hub-op-near", "type": "supply", "description": "Missile and 30mm gun ammunition resupply." }
+  ],
+
+  "sources": [
+    { "label": "Wikipedia — Pantsir missile system", "url": "https://en.wikipedia.org/wiki/Pantsir_missile_system" },
+    { "label": "Forbes — APKWS And Pantsir-S1s: Saudi Arabia Acquiring More Cost-Effective Defenses Against Drones", "url": "https://www.forbes.com/sites/pauliddon/2025/04/01/apkws-and-pantsir-s1s-saudi-arabia-acquiring-more-cost-effective-defenses-against-drones/" }
+  ],
+  "editable": true
+}

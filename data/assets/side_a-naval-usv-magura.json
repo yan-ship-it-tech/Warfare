@@ -1,0 +1,53 @@
+{
+  "id": "side_a-naval-usv-magura",
+  "name": "Magura V5",
+  "side": "side_a",
+  "domain": "sea",
+  "echelon": "operational",
+  "group": "naval",
+  "distance_km_from_zero": 120,
+  "operating_range_km": { "min_km": 0, "max_km": 800 },
+  "band_id": "op_deep",
+  "category": "naval-usv-strike",
+  "representative_system": "Magura V5 uncrewed surface vessel",
+  "icon_image": "/icons/magura-v5.png",
+  "gallery_images": ["/gallery/magura-v5.jpg"],
+
+  "cost": {
+    "unit_cost_usd": 275000,
+    "display": "~$250–300K per unit — against warships worth tens to hundreds of millions",
+    "confidence": "reported"
+  },
+  "key_facts": [
+    { "label": "Range", "value": "Up to ~800 km" },
+    { "label": "Payload", "value": "~350 kg explosive charge — enough to sink a warship" },
+    { "label": "Confirmed record", "value": "First USV to sink a warship in combat (Feb 2024)" }
+  ],
+
+  "short_role": "One-way-attack uncrewed surface vessel that has forced a conventional navy back from an entire sea, without a comparable fleet of its own.",
+  "characteristics": [
+    "Low-profile, high-speed hull, remotely piloted via satellite link well beyond radio horizon",
+    "~350 kg payload — enough to critically damage or sink a corvette or landing ship",
+    "Reportedly credited with damage to 18 Russian Navy vessels over the war, several with irreversible losses",
+    "Estimated $500M+ in cumulative damage to the Black Sea Fleet at a unit cost in the low hundreds of thousands"
+  ],
+  "employment_notes": "Operated from Ukrainian-controlled coastline against a fleet with no comparable force to counter it at sea — the fight has been waged almost entirely with shore-based missiles, USVs and drones rather than a rival navy, because the side without a fleet built an asymmetric answer instead of trying to build one.",
+  "contrast_vs_traditional": "Naval power used to mean a battle fleet contesting another battle fleet. A country with essentially no traditional navy used cheap, remotely piloted attack boats to sink and damage enough of a full-sized fleet that it was pushed out of the western Black Sea and ultimately forced to relocate its remaining ships further east — the same 'expensive asset can't survive near a cheap persistent threat' logic driving tank and aircraft losses elsewhere on this battlefield, applied at sea.",
+
+  "reactive_behavior": {
+    "animation_id": "usv_strike_run",
+    "description": "On select: USV accelerates toward a point target, brief impact vignette."
+  },
+
+  "connections": [
+    { "target_id": "side_a-c2-comms-starlink", "type": "data_c2", "description": "Carries the remote operator control link beyond radio horizon." },
+    { "target_id": "side_a-logistics-hub-op-deep", "type": "maintenance", "description": "Recovery, rearming and airframe repair between sorties." }
+  ],
+
+  "sources": [
+    { "label": "Kyiv Post — Ukraine-Built MAGURA V5 Naval Drones Sink Russian Patrol Ship Sergey Kotov", "url": "https://www.kyivpost.com/post/29016" },
+    { "label": "USNI Proceedings — Ukraine's Magura Naval Drones: Black Sea Equalizers", "url": "https://www.usni.org/magazines/proceedings/2025/september/ukraines-magura-naval-drones-black-sea-equalizers" },
+    { "label": "Army Recognition — Ukrainian MAGURA V5 drone paralyzes Russian Black Sea Fleet, damages 18 ships", "url": "https://www.armyrecognition.com/news/navy-news/2024/ukrainian-magura-v5-drone-paralyzes-russian-black-sea-fleet-damages-18-ships-in-18-months" }
+  ],
+  "editable": true
+}

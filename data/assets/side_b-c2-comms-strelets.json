@@ -1,0 +1,45 @@
+{
+  "id": "side_b-c2-comms-strelets",
+  "name": "Strelets Reconnaissance-Fire Terminal",
+  "side": "side_b",
+  "domain": "c2_comms",
+  "echelon": "tactical",
+  "group": "c2",
+  "distance_km_from_zero": 4,
+  "operating_range_km": { "min_km": 0, "max_km": 8 },
+  "band_id": "tactical",
+  "category": "c2-squad-level",
+  "representative_system": "Sozvezdie-M2 'Strelets' automated reconnaissance and fire-control terminal",
+  "icon_image": "/icons/strelets-terminal.png",
+  "gallery_images": [],
+
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Not publicly disclosed — a soldier-portable terminal, not a major platform, so pricing is not broken out in open reporting",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    { "label": "Function", "value": "Target designation and fire-mission request from squad level" },
+    { "label": "Form factor", "value": "Soldier-portable ruggedized terminal" },
+    { "label": "Effect", "value": "Pushes call-for-fire authority down to small units" }
+  ],
+
+  "short_role": "Soldier-portable terminal that lets a small unit designate a target and request fire directly, without routing through a higher headquarters first.",
+  "characteristics": [
+    "Ruggedized handheld/portable terminal used by reconnaissance and infantry sub-units",
+    "Passes target coordinates and imagery toward supporting fires with minimal intermediate handling",
+    "Part of a wider push to equip small units with their own targeting and communications tools rather than relying solely on higher-echelon assets"
+  ],
+  "employment_notes": "Represents the squad-level end of the distributed kill chain described in force-structure reporting on this war: infantry and reconnaissance sub-units increasingly find, decide and call fire using their own organic tools rather than only consuming targeting products pushed down from higher headquarters.",
+  "contrast_vs_traditional": "Traditional fire support ran up a chain from observer to headquarters to guns. Pushing a targeting and fire-request terminal down to squad level is a concrete example of the kill chain becoming distributed rather than concentrated at higher headquarters — a structural change in who gets to call for fire, not just a faster version of the old process.",
+
+  "connections": [
+    { "target_id": "side_b-training-center-op-deep", "type": "personnel", "description": "Operator training pipeline for squad-level fire-control terminal crews." }
+  ],
+
+  "sources": [
+    { "label": "Small Wars Journal — Distributed Combat Power (referenced in doctrine reference §1)", "url": "" },
+    { "label": "Composite representation of squad-level fire-control terminals reported in Russian force structure", "url": "" }
+  ],
+  "editable": true
+}

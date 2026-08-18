@@ -13,21 +13,28 @@ import type { Asset, ConnectionType, DistanceBand, Domain, DomainLayer, Side } f
 import type {
   DataIssue,
   DoctrineMarker,
+  GroupDef,
   LowerSkyControl,
   PendingStub,
   ResolvedConnection,
   WorldModel,
 } from "./model";
 import { validateAsset } from "./validate";
+import type { AssetOverride } from "../state/overridesState";
 
 import bandsJson from "../../data/bands.json";
 import domainsJson from "../../data/domains.json";
+import groupsJson from "../../data/groups.json";
 import connectionsJson from "../../data/connections.json";
 import doctrineJson from "../../data/doctrine_markers.json";
 
 const assetModules = import.meta.glob<{ default: unknown }>("../../data/assets/*.json", {
   eager: true,
 });
+
+/** Shipped defaults, exported so the bands editor can seed itself and offer
+ *  a real "reset to defaults" rather than just clearing to nothing. */
+export const DEFAULT_BANDS = bandsJson as DistanceBand[];
 
 interface FlatConnection {
   source_id: string;
@@ -70,6 +77,7 @@ const BAND_HINTS: [RegExp, string][] = [
   [/\b(tactical|zero|front|forward)\b/, "tactical"],
   [/\bop[-_]near\b/, "op_near"],
   [/\bop[-_]deep\b/, "op_deep"],
+  [/\b(cross[-_]border|deep[-_]strategic)\b/, "deep_strategic"],
   [/\b(strategic|rear|national|deep[-_]rear)\b/, "strategic_rear"],
 ];
 
@@ -146,13 +154,25 @@ function inferStub(
   };
 }
 
-// ── main ─────────────────────────────────────────────────────────────────
-export function loadWorld(): WorldModel {
+/**
+ * @param bandsOverride  Live bands (from the in-app editor) to place assets
+ *   against instead of the shipped defaults. Pass null/undefined to use
+ *   bands.json as-is.
+ * @param assetOverrides Per-asset local edits (distance / operating range)
+ *   from the in-app placement editor, keyed by asset id. Applied before
+ *   validation so a bad edit surfaces in Data health like any other issue.
+ */
+export function loadWorld(
+  bandsOverride?: DistanceBand[] | null,
+  assetOverrides?: Record<string, AssetOverride> | null,
+): WorldModel {
   const issues: DataIssue[] = [];
-  const bands = bandsJson as DistanceBand[];
+  const bands = bandsOverride && bandsOverride.length > 0 ? bandsOverride : (bandsJson as DistanceBand[]);
   const domains = ([...(domainsJson as DomainLayer[])] as DomainLayer[]).sort(
     (a, b) => a.vertical_order - b.vertical_order,
   );
+  const groups = groupsJson as GroupDef[];
+  const groupsById = new Map(groups.map((g) => [g.id, g]));
 
   if (bands.length === 0) issues.push({ severity: "error", source: "bands.json", message: "No bands defined." });
   if (domains.length === 0) issues.push({ severity: "error", source: "domains.json", message: "No domain layers defined." });
@@ -163,7 +183,26 @@ export function loadWorld(): WorldModel {
 
   for (const [path, mod] of Object.entries(assetModules)) {
     const file = path.split("/").pop() ?? path;
-    const { asset, issues: assetIssues } = validateAsset(mod.default, file, bands, domains);
+    const base = mod.default as Record<string, unknown>;
+    const override = assetOverrides?.[base.id as string];
+    const merged = override
+      ? {
+          ...base,
+          distance_km_from_zero: override.distance_km_from_zero ?? base.distance_km_from_zero,
+          operating_range_km: override.operating_range_km !== undefined
+            ? override.operating_range_km
+            : base.operating_range_km,
+        }
+      : base;
+    const { asset, issues: assetIssues } = validateAsset(merged, file, bands, domains, groups);
+    if (override) {
+      issues.push({
+        severity: "info",
+        source: file,
+        subject: base.id as string,
+        message: "Placement locally edited in this browser (distance and/or operating range overridden). Not saved to the data file.",
+      });
+    }
     issues.push(...assetIssues);
     if (!asset) continue;
     if (assetsById.has(asset.id)) {
@@ -294,6 +333,8 @@ export function loadWorld(): WorldModel {
   return {
     bands,
     domains,
+    groups,
+    groupsById,
     assets,
     assetsById,
     stubs: [...stubsById.values()],

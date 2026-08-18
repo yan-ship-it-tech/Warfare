@@ -4,12 +4,25 @@
   "side": "side_a",
   "domain": "air",
   "echelon": "operational",
+  "group": "air_defense",
   "distance_km_from_zero": 40,
+  "operating_range_km": { "min_km": 25, "max_km": 120 },
   "band_id": "op_deep",
   "category": "air-defense-long-range",
   "representative_system": "MIM-104 Patriot, PAC-3 MSE interceptor",
   "icon_image": "/icons/patriot.png",
   "gallery_images": ["/gallery/patriot-battery.jpg", "/gallery/patriot-launcher.jpg"],
+
+  "cost": {
+    "unit_cost_usd": 4000000,
+    "display": "~$4M per PAC-3 MSE interceptor round (reported range $3.9–5.3M); a full battery (radar, control station, launchers) runs roughly $1.1B",
+    "confidence": "reported"
+  },
+  "key_facts": [
+    { "label": "Engagement range", "value": "~60 km vs. ballistic threats (PAC-3 MSE)" },
+    { "label": "Radar detection", "value": ">100 km (AN/MPQ-65 phased array)" },
+    { "label": "Deployment time", "value": "<1 hour to full readiness" }
+  ],
 
   "short_role": "Long-range, high-altitude air defense battery protecting rear-area cities and infrastructure from ballistic and cruise missile threats.",
   "characteristics": [
@@ -34,7 +47,9 @@
 
   "sources": [
     { "label": "Congress.gov CRS — PATRIOT Air and Missile Defense System for Ukraine", "url": "https://www.congress.gov/crs-product/IF12297" },
-    { "label": "Ukraine MoD — PAC-3 missiles fact sheet", "url": "https://mod.gov.ua/en/news/intercepting-kinzhal-iskander-and-zircon-missiles-key-facts-about-pac-3-missiles-for-the-patriot-air-defense-system-delivered-to-ukraine-by-germany" }
+    { "label": "Ukraine MoD — PAC-3 missiles fact sheet", "url": "https://mod.gov.ua/en/news/intercepting-kinzhal-iskander-and-zircon-missiles-key-facts-about-pac-3-missiles-for-the-patriot-air-defense-system-delivered-to-ukraine-by-germany" },
+    { "label": "Military Machine — Patriot Missile System Cost: $4M Per Shot, $1.1B Battery", "url": "https://militarymachine.com/patriot-missile-system-cost" },
+    { "label": "The War Zone — PAC-3 Adapted Capability Effector, Lockheed's lower-cost Patriot interceptor", "url": "https://www.twz.com/land/pac-3-adapted-capability-effector-is-lockheeds-new-low-cost-patriot-interceptor" }
   ],
   "editable": true
 }

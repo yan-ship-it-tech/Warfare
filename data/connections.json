@@ -1,12 +1,204 @@
 {
-  "_comment": "This mirrors the connections already embedded per-asset. Keeping a flat list too makes it trivial to render a full dependency-graph overlay without walking every asset file. Keep both in sync when editing by hand, or generate this file from the assets at build time.",
+  "_comment": "This mirrors the connections already embedded per-asset. Keeping a flat list too makes it trivial to render a full dependency-graph overlay without walking every asset file. Regenerated from the per-asset files — keep both in sync when editing by hand.",
   "connections": [
-    { "source_id": "side_a-artillery-m777", "target_id": "side_a-uav-reconnaissance-tactical", "type": "data_c2", "description": "Target coordinates and fall-of-shot correction." },
-    { "source_id": "side_a-artillery-m777", "target_id": "side_a-logistics-hub-op-deep", "type": "supply", "description": "155mm ammunition and propellant resupply." },
-    { "source_id": "side_a-artillery-m777", "target_id": "side_a-medical-casevac-chain", "type": "casevac", "description": "Crew casualty evacuation." },
-    { "source_id": "side_a-air-defense-long-patriot", "target_id": "side_a-c2-integrated-air-defense-network", "type": "data_c2", "description": "Radar cueing / track handoff." },
-    { "source_id": "side_b-uav-strike-lancet", "target_id": "side_b-uav-reconnaissance-tactical", "type": "data_c2", "description": "Target cueing from paired reconnaissance drone." },
-    { "source_id": "side_b-armor-t72", "target_id": "side_b-logistics-hub-op-near", "type": "supply", "description": "Fuel and ammunition." }
+    {
+      "source_id": "side_a-air-defense-cuas-gepard",
+      "target_id": "side_a-c2-integrated-air-defense-network",
+      "type": "data_c2",
+      "description": "Cued onto inbound low-altitude tracks by the wider integrated air defense network."
+    },
+    {
+      "source_id": "side_a-air-defense-cuas-gepard",
+      "target_id": "side_a-logistics-hub-op-deep",
+      "type": "supply",
+      "description": "35mm ammunition resupply."
+    },
+    {
+      "source_id": "side_a-air-defense-long-patriot",
+      "target_id": "side_a-c2-integrated-air-defense-network",
+      "type": "data_c2",
+      "description": "Receives cueing/track data from the wider integrated air defense network."
+    },
+    {
+      "source_id": "side_a-air-defense-long-patriot",
+      "target_id": "side_a-logistics-hub-op-deep",
+      "type": "supply",
+      "description": "Resupplied with interceptor missiles and generator fuel from the nearest logistics hub."
+    },
+    {
+      "source_id": "side_a-air-defense-short-stinger",
+      "target_id": "side_a-c2-integrated-air-defense-network",
+      "type": "data_c2",
+      "description": "Receives early-warning cueing on inbound low-altitude tracks."
+    },
+    {
+      "source_id": "side_a-armor-leopard2",
+      "target_id": "side_a-logistics-hub-op-deep",
+      "type": "supply",
+      "description": "Fuel, 120mm ammunition, and running-gear spares."
+    },
+    {
+      "source_id": "side_a-armor-leopard2",
+      "target_id": "side_a-medical-casevac-chain",
+      "type": "casevac",
+      "description": "Crew casualties evacuated via the tactical casevac chain."
+    },
+    {
+      "source_id": "side_a-armor-leopard2",
+      "target_id": "side_a-uav-reconnaissance-tactical",
+      "type": "data_c2",
+      "description": "Receives threat warning and target cueing from tactical reconnaissance drones."
+    },
+    {
+      "source_id": "side_a-artillery-himars-m142",
+      "target_id": "side_a-uav-reconnaissance-tactical",
+      "type": "data_c2",
+      "description": "Target cueing and battle-damage confirmation."
+    },
+    {
+      "source_id": "side_a-artillery-himars-m142",
+      "target_id": "side_a-logistics-hub-op-deep",
+      "type": "supply",
+      "description": "GMLRS/ATACMS rocket pod resupply."
+    },
+    {
+      "source_id": "side_a-artillery-himars-m142",
+      "target_id": "side_a-space-isr-satellite-commercial",
+      "type": "data_c2",
+      "description": "Commercial satellite imagery used to vet high-value targets before committing a launch."
+    },
+    {
+      "source_id": "side_a-artillery-m777",
+      "target_id": "side_a-logistics-hub-op-deep",
+      "type": "supply",
+      "description": "Ammunition resupply — 155mm rounds, propellant charges."
+    },
+    {
+      "source_id": "side_a-artillery-m777",
+      "target_id": "side_a-uav-reconnaissance-tactical",
+      "type": "data_c2",
+      "description": "Receives target coordinates and fall-of-shot correction from a tactical reconnaissance drone."
+    },
+    {
+      "source_id": "side_a-artillery-m777",
+      "target_id": "side_a-medical-casevac-chain",
+      "type": "casevac",
+      "description": "Crew casualties evacuated via the tactical casevac chain."
+    },
+    {
+      "source_id": "side_a-c2-integrated-air-defense-network",
+      "target_id": "side_a-c2-comms-starlink",
+      "type": "data_c2",
+      "description": "Uses satellite links as a resilient backbone when terrestrial networks are degraded."
+    },
+    {
+      "source_id": "side_a-ew-jammer-bukovel",
+      "target_id": "side_a-c2-integrated-air-defense-network",
+      "type": "data_c2",
+      "description": "Reports detected and jammed UAV tracks into the wider air picture."
+    },
+    {
+      "source_id": "side_a-ew-jammer-bukovel",
+      "target_id": "side_a-logistics-hub-op-deep",
+      "type": "maintenance",
+      "description": "Field maintenance and antenna/electronics spares."
+    },
+    {
+      "source_id": "side_a-logistics-hub-op-deep",
+      "target_id": "side_a-logistics-hub-strategic-rear",
+      "type": "supply",
+      "description": "Bulk resupply from the national-level strategic-rear depot."
+    },
+    {
+      "source_id": "side_a-naval-usv-magura",
+      "target_id": "side_a-c2-comms-starlink",
+      "type": "data_c2",
+      "description": "Carries the remote operator control link beyond radio horizon."
+    },
+    {
+      "source_id": "side_a-naval-usv-magura",
+      "target_id": "side_a-logistics-hub-op-deep",
+      "type": "maintenance",
+      "description": "Recovery, rearming and airframe repair between sorties."
+    },
+    {
+      "source_id": "side_a-uav-reconnaissance-tactical",
+      "target_id": "side_a-c2-comms-starlink",
+      "type": "data_c2",
+      "description": "Relays video/telemetry over satellite comms when terrestrial links are jammed or unavailable."
+    },
+    {
+      "source_id": "side_a-uav-strike-deep-crossborder",
+      "target_id": "side_a-space-isr-satellite-commercial",
+      "type": "data_c2",
+      "description": "Pre-mission target imagery used to plan airbase approach and aircraft dispersal patterns."
+    },
+    {
+      "source_id": "side_b-air-defense-short-pantsir",
+      "target_id": "side_b-logistics-hub-op-near",
+      "type": "supply",
+      "description": "Missile and 30mm gun ammunition resupply."
+    },
+    {
+      "source_id": "side_b-armor-t72",
+      "target_id": "side_b-logistics-hub-op-near",
+      "type": "supply",
+      "description": "Fuel and ammunition resupply from a near-rear logistics point."
+    },
+    {
+      "source_id": "side_b-armor-t72",
+      "target_id": "side_b-medical-casevac-chain",
+      "type": "casevac",
+      "description": "Crew casualties routed into the tactical casevac chain."
+    },
+    {
+      "source_id": "side_b-armor-t72",
+      "target_id": "side_b-c2-comms-strelets",
+      "type": "data_c2",
+      "description": "Target designation and fire calls relayed via squad-level terminal."
+    },
+    {
+      "source_id": "side_b-artillery-mlrs-grad",
+      "target_id": "side_b-uav-reconnaissance-tactical",
+      "type": "data_c2",
+      "description": "Target coordinates from Orlan-10 reconnaissance."
+    },
+    {
+      "source_id": "side_b-artillery-mlrs-grad",
+      "target_id": "side_b-logistics-hub-op-near",
+      "type": "supply",
+      "description": "122mm rocket resupply."
+    },
+    {
+      "source_id": "side_b-c2-comms-strelets",
+      "target_id": "side_b-training-center-op-deep",
+      "type": "personnel",
+      "description": "Operator training pipeline for squad-level fire-control terminal crews."
+    },
+    {
+      "source_id": "side_b-ew-jammer-zhitel",
+      "target_id": "side_b-logistics-hub-op-near",
+      "type": "maintenance",
+      "description": "Field maintenance for the truck-mounted jamming station."
+    },
+    {
+      "source_id": "side_b-uav-strike-lancet",
+      "target_id": "side_b-uav-reconnaissance-tactical",
+      "type": "data_c2",
+      "description": "Cued onto targets by a paired reconnaissance UAV feed."
+    },
+    {
+      "source_id": "side_b-uav-strike-lancet",
+      "target_id": "side_b-logistics-hub-op-near",
+      "type": "supply",
+      "description": "Airframes and batteries resupplied from a near-rear logistics point."
+    },
+    {
+      "source_id": "side_b-uav-strike-lancet",
+      "target_id": "side_b-c2-comms-strelets",
+      "type": "data_c2",
+      "description": "Receives target designation from a squad-level fire-control terminal."
+    }
   ],
-  "_note_unresolved_ids": "Several target_ids above (e.g. side_a-uav-reconnaissance-tactical, side_a-logistics-hub-op-deep, side_a-c2-integrated-air-defense-network, side_b-uav-reconnaissance-tactical, side_b-logistics-hub-op-near, *-medical-casevac-chain) are placeholders for assets not yet built in this scaffold. This is intentional — it demonstrates that connections can reference not-yet-created assets; the UI loader should render these as 'pending' stub nodes or simply hide the line until the target exists, rather than erroring."
+  "_note_unresolved_ids": "Two target_ids above are deliberate: side_a-logistics-hub-strategic-rear and side_b-training-center-op-deep are not built yet. This demonstrates that connections can reference not-yet-created assets; the loader renders these as pending stub nodes (or hides the line, toggle in the toolbar) rather than erroring."
 }

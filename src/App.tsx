@@ -1,16 +1,22 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { loadWorld } from "./data/loader";
+import { DEFAULT_BANDS, loadWorld } from "./data/loader";
 import { Scene } from "./scene/Scene";
 import { Toolbar } from "./components/Toolbar";
 import { DetailPanel } from "./components/DetailPanel";
 import { AboutPanel } from "./components/AboutPanel";
 import { DataHealthPanel } from "./components/DataHealthPanel";
+import { BandsEditorPanel } from "./components/BandsEditorPanel";
 import { Legend } from "./components/Legend";
 import { ViewStateProvider, useViewState } from "./state/viewState";
+import { OverridesProvider, useOverrides } from "./state/overridesState";
 
 function AppInner() {
-  const world = useMemo(() => loadWorld(), []);
   const view = useViewState();
+  const overrides = useOverrides();
+  const world = useMemo(
+    () => loadWorld(overrides.bands, overrides.assetOverrides),
+    [overrides.bands, overrides.assetOverrides],
+  );
   const [replayNonce, setReplayNonce] = useState(0);
   const replay = useCallback(() => setReplayNonce((n) => n + 1), []);
 
@@ -34,6 +40,7 @@ function AppInner() {
       <DetailPanel world={world} onReplay={replay} />
       <AboutPanel world={world} />
       <DataHealthPanel world={world} />
+      <BandsEditorPanel />
     </div>
   );
 }
@@ -41,7 +48,9 @@ function AppInner() {
 export function App() {
   return (
     <ViewStateProvider>
-      <AppInner />
+      <OverridesProvider defaultBands={DEFAULT_BANDS}>
+        <AppInner />
+      </OverridesProvider>
     </ViewStateProvider>
   );
 }

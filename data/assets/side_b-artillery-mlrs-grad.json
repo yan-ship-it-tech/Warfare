@@ -1,0 +1,52 @@
+{
+  "id": "side_b-artillery-mlrs-grad",
+  "name": "BM-21 Grad",
+  "side": "side_b",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "artillery",
+  "distance_km_from_zero": 8,
+  "operating_range_km": { "min_km": 5, "max_km": 20 },
+  "band_id": "op_near",
+  "category": "artillery-rocket",
+  "representative_system": "BM-21 Grad (122mm MLRS); modernized as Tornado-G",
+  "icon_image": "/icons/bm21-grad.png",
+  "gallery_images": [],
+
+  "cost": {
+    "unit_cost_usd": 350000,
+    "display": "~$310–390K per launcher vehicle (2024 dollars); each 122mm rocket costs roughly $3,000",
+    "confidence": "reported"
+  },
+  "key_facts": [
+    { "label": "Salvo", "value": "40 rockets, full salvo in ~20 seconds" },
+    { "label": "Range", "value": "~20 km (standard); Tornado-G upgrade extends this" },
+    { "label": "Role", "value": "Unguided area-saturation fire, not precision strike" }
+  ],
+
+  "short_role": "Truck-mounted unguided rocket artillery for saturating an area target — cheap per shot, imprecise per shot, still in wide use.",
+  "characteristics": [
+    "40-tube launcher can empty a full salvo in roughly 20 seconds",
+    "Unguided rockets — accuracy is area-effect, not point-precision",
+    "Tornado-G modernization adds satellite navigation and automated fire control to the same basic platform",
+    "Far cheaper per shot than any GPS-guided round, which keeps it in use despite lower per-round precision"
+  ],
+  "employment_notes": "Reported use has become more selective than earlier in the war — doctrine and battlefield reporting both describe artillery as used more sparingly than in the opening phases, while remaining a reliable, weather-independent tool precisely because it doesn't depend on a drone link or clear optics the way precision-guided fires do.",
+  "contrast_vs_traditional": "Grad represents the fires this war's drone-centric kill chains were layered on top of, not replaced by. Even as reconnaissance-to-strike chains built around drones and precision munitions have taken over most of the targeting work, unguided saturation rocket fire remains the fallback that works in weather and jamming conditions that ground a drone — a genuinely all-weather capability the newer systems haven't fully matched.",
+
+  "reactive_behavior": {
+    "animation_id": "artillery_fire_mission",
+    "description": "On select: launcher elevates, a rocket salvo fires, brief downrange impact spread."
+  },
+
+  "connections": [
+    { "target_id": "side_b-uav-reconnaissance-tactical", "type": "data_c2", "description": "Target coordinates from Orlan-10 reconnaissance." },
+    { "target_id": "side_b-logistics-hub-op-near", "type": "supply", "description": "122mm rocket resupply." }
+  ],
+
+  "sources": [
+    { "label": "Forecast International — BM-21 122mm Multiple Launch Rocket System", "url": "https://www.forecastinternational.com/archive/disp_pdf.cfm?DACH_RECNO=1591" },
+    { "label": "GlobalSecurity.org — BM-21 122-mm Multiple Rocket Launcher", "url": "https://www.globalsecurity.org/military/world/russia/bm-21.htm" }
+  ],
+  "editable": true
+}

@@ -12,9 +12,9 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { ConnectionType, Side } from "../types";
+import type { AssetGroup, ConnectionType, Side } from "../types";
 
-export type PanelId = "about" | "health" | null;
+export type PanelId = "about" | "health" | "bands" | "categories" | null;
 
 export interface ViewState {
   selectedId: string | null;
@@ -40,6 +40,12 @@ export interface ViewState {
 
   visibleSides: Set<Side>;
   toggleSide: (s: Side) => void;
+
+  /** Groups the category filter has switched off. Empty = everything shown. */
+  hiddenGroups: Set<AssetGroup>;
+  toggleGroup: (g: AssetGroup) => void;
+  showAllGroups: () => void;
+  hideAllGroups: (allGroupIds: AssetGroup[]) => void;
 
   openPanel: PanelId;
   setOpenPanel: (p: PanelId) => void;
@@ -69,6 +75,7 @@ export function ViewStateProvider({ children }: { children: ReactNode }) {
   const [visibleSides, setVisibleSides] = useState<Set<Side>>(
     () => new Set<Side>(["side_a", "side_b"]),
   );
+  const [hiddenGroups, setHiddenGroups] = useState<Set<AssetGroup>>(() => new Set());
   const [openPanel, setOpenPanel] = useState<PanelId>(null);
 
   const toggleConnectionType = useCallback((t: ConnectionType) => {
@@ -92,6 +99,18 @@ export function ViewStateProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const toggleGroup = useCallback((g: AssetGroup) => {
+    setHiddenGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(g)) next.delete(g);
+      else next.add(g);
+      return next;
+    });
+  }, []);
+
+  const showAllGroups = useCallback(() => setHiddenGroups(new Set()), []);
+  const hideAllGroups = useCallback((allGroupIds: AssetGroup[]) => setHiddenGroups(new Set(allGroupIds)), []);
+
   const value = useMemo<ViewState>(
     () => ({
       selectedId,
@@ -110,6 +129,10 @@ export function ViewStateProvider({ children }: { children: ReactNode }) {
       toggleDoctrineMarkers: () => setShowDoctrineMarkers((v) => !v),
       visibleSides,
       toggleSide,
+      hiddenGroups,
+      toggleGroup,
+      showAllGroups,
+      hideAllGroups,
       openPanel,
       setOpenPanel,
     }),
@@ -124,6 +147,10 @@ export function ViewStateProvider({ children }: { children: ReactNode }) {
       showDoctrineMarkers,
       visibleSides,
       toggleSide,
+      hiddenGroups,
+      toggleGroup,
+      showAllGroups,
+      hideAllGroups,
       openPanel,
     ],
   );

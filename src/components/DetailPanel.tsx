@@ -11,10 +11,12 @@
 import { useMemo, useState } from "react";
 import type { Asset } from "../types";
 import type { PendingStub, ResolvedConnection, WorldModel } from "../data/model";
+import { resolveBand } from "../data/model";
 import { CONNECTION_STYLE, DOMAIN_ACCENT, SIDE_ACCENT, SIDE_LABELS } from "../config/ui";
 import { resolveIcon } from "../icons/registry";
 import { resolveVignette } from "../scene/vignettes";
 import { useViewState } from "../state/viewState";
+import { useOverrides } from "../state/overridesState";
 
 interface Props {
   world: WorldModel;
@@ -112,10 +114,11 @@ function AssetDetail({
   edges: { out: ResolvedConnection[]; in: ResolvedConnection[] };
   onReplay: () => void;
 }) {
-  const Icon = resolveIcon({ category: asset.category, id: asset.id, domain: asset.domain });
-  const band = world.bands.find((b) => b.id === asset.band_id);
+  const Icon = resolveIcon({ group: asset.group, category: asset.category, id: asset.id, domain: asset.domain });
+  const group = world.groupsById.get(asset.group);
+  const band = resolveBand(asset.distance_km_from_zero, world.bands);
   const domain = world.domains.find((d) => d.id === asset.domain);
-  const accent = DOMAIN_ACCENT[asset.domain] ?? "#8b93a3";
+  const accent = group?.color ?? DOMAIN_ACCENT[asset.domain] ?? "#8b93a3";
   const { vignette, known } = resolveVignette(asset.reactive_behavior?.animation_id);
   const citable = (asset.sources ?? []).filter((s) => s.url && s.url.trim() !== "");
   const uncited = (asset.sources ?? []).filter((s) => !s.url || s.url.trim() === "");
@@ -132,29 +135,40 @@ function AssetDetail({
             <span className="dot">·</span>
             {domain?.label ?? asset.domain}
             <span className="dot">·</span>
-            {asset.echelon}
+            {group?.label ?? asset.group}
           </p>
           <h2>{asset.name}</h2>
-          <p className="detail__category">{asset.category}</p>
+          <p className="detail__category">
+            {asset.category}
+            <span className="dot">·</span>
+            {asset.representative_system}
+          </p>
         </div>
       </header>
 
-      <div className="detail__stats">
-        <div>
-          <span className="k">Distance</span>
-          <span className="v">{asset.distance_km_from_zero} km</span>
-        </div>
-        <div>
-          <span className="k">Band</span>
-          <span className="v">{band?.label ?? asset.band_id}</span>
-        </div>
-        <div>
-          <span className="k">Representative</span>
-          <span className="v" title={asset.representative_system}>
-            {asset.representative_system}
+      {/* The three facts every asset carries in comparable form — cost is the
+          one guaranteed tile, the other two are author-chosen per asset. */}
+      <div className="key-facts">
+        <div className="key-facts__tile key-facts__tile--cost">
+          <span className="k">Unit cost</span>
+          <span className={`v${asset.cost?.confidence === "unknown" ? " v--unknown" : ""}`}>
+            {asset.cost?.display ?? "Not recorded"}
           </span>
+          {asset.cost && asset.cost.confidence !== "reported" && (
+            <span className={`tag tag--${asset.cost.confidence === "unknown" ? "warn" : "info"}`}>
+              {asset.cost.confidence}
+            </span>
+          )}
         </div>
+        {(asset.key_facts ?? []).map((f, i) => (
+          <div className="key-facts__tile" key={i}>
+            <span className="k">{f.label}</span>
+            <span className="v">{f.value}</span>
+          </div>
+        ))}
       </div>
+
+      <PlacementRow asset={asset} band={band} />
 
       <p className="detail__role">{asset.short_role}</p>
 
@@ -243,6 +257,112 @@ function AssetDetail({
   );
 }
 
+/**
+ * Distance/band readout plus the placement editor. Band is never stored here
+ * — it's recomputed from whatever bands are current, so editing the distance
+ * (or editing a band cutoff elsewhere) immediately shows the correct band
+ * without anyone re-tagging the asset by hand.
+ */
+function PlacementRow({ asset, band }: { asset: Asset; band: ReturnType<typeof resolveBand> }) {
+  const overrides = useOverrides();
+  const [editing, setEditing] = useState(false);
+  const [distance, setDistance] = useState(String(asset.distance_km_from_zero));
+  const [rangeMin, setRangeMin] = useState(String(asset.operating_range_km?.min_km ?? ""));
+  const [rangeMax, setRangeMax] = useState(String(asset.operating_range_km?.max_km ?? ""));
+  const isOverridden = overrides.hasAssetOverride(asset.id);
+
+  const save = () => {
+    const km = Number(distance);
+    if (!Number.isFinite(km) || km < 0) return;
+    const min = Number(rangeMin);
+    const max = Number(rangeMax);
+    const hasRange = rangeMin.trim() !== "" && rangeMax.trim() !== "" && Number.isFinite(min) && Number.isFinite(max);
+    overrides.setAssetOverride(asset.id, {
+      distance_km_from_zero: km,
+      operating_range_km: hasRange ? { min_km: min, max_km: max } : null,
+    });
+    setEditing(false);
+  };
+
+  const cancel = () => {
+    setDistance(String(asset.distance_km_from_zero));
+    setRangeMin(String(asset.operating_range_km?.min_km ?? ""));
+    setRangeMax(String(asset.operating_range_km?.max_km ?? ""));
+    setEditing(false);
+  };
+
+  if (!editing) {
+    return (
+      <div className="placement-row">
+        <div className="placement-row__stats">
+          <div>
+            <span className="k">Distance</span>
+            <span className="v">{asset.distance_km_from_zero} km</span>
+          </div>
+          <div>
+            <span className="k">Band</span>
+            <span className="v">{band?.label ?? "—"}</span>
+          </div>
+          {asset.operating_range_km && (
+            <div>
+              <span className="k">Typical range</span>
+              <span className="v">
+                {asset.operating_range_km.min_km}–{asset.operating_range_km.max_km} km
+              </span>
+            </div>
+          )}
+        </div>
+        <button type="button" className="placement-row__edit" onClick={() => setEditing(true)}>
+          ✎ Adjust placement
+        </button>
+        {isOverridden && <span className="tag tag--info">edited locally</span>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="placement-row placement-row--editing">
+      <div className="placement-row__form">
+        <label>
+          Distance from zero (km)
+          <input type="number" min={0} value={distance} onChange={(e) => setDistance(e.target.value)} />
+        </label>
+        <label>
+          Typical range — min km
+          <input type="number" min={0} value={rangeMin} onChange={(e) => setRangeMin(e.target.value)} placeholder="optional" />
+        </label>
+        <label>
+          Typical range — max km
+          <input type="number" min={0} value={rangeMax} onChange={(e) => setRangeMax(e.target.value)} placeholder="optional" />
+        </label>
+      </div>
+      <p className="detail__note">
+        Band recomputes automatically from distance bands. Saved to this browser only — see About.
+      </p>
+      <div className="placement-row__actions">
+        <button type="button" className="btn" onClick={save}>
+          Save
+        </button>
+        <button type="button" className="btn btn--ghost" onClick={cancel}>
+          Cancel
+        </button>
+        {isOverridden && (
+          <button
+            type="button"
+            className="btn btn--ghost"
+            onClick={() => {
+              overrides.resetAssetOverride(asset.id);
+              cancel();
+            }}
+          >
+            Reset to authored value
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function GalleryTile({ src, accent }: { src: string; accent: string }) {
   const [failed, setFailed] = useState(false);
   if (failed) {
@@ -272,7 +392,7 @@ function StubDetail({
   const [copied, setCopied] = useState(false);
   const Icon = resolveIcon({ id: stub.id, domain: stub.domain });
   const accent = DOMAIN_ACCENT[stub.domain] ?? "#8b93a3";
-  const band = world.bands.find((b) => b.id === stub.band_id);
+  const band = resolveBand(stub.distance_km_from_zero, world.bands);
 
   const template = useMemo(
     () =>
@@ -283,12 +403,20 @@ function StubDetail({
           side: stub.side,
           domain: stub.domain,
           echelon: band?.echelon ?? "tactical",
+          group: "",
           distance_km_from_zero: stub.distance_km_from_zero,
-          band_id: stub.band_id,
+          operating_range_km: null,
+          band_id: band?.id ?? stub.band_id,
           category: "",
           representative_system: "",
           icon_image: `/icons/${stub.id.replace(/^side_[ab]-/, "")}.png`,
           gallery_images: [],
+          cost: { unit_cost_usd: null, display: "", confidence: "unknown" },
+          key_facts: [
+            { label: "", value: "" },
+            { label: "", value: "" },
+            { label: "", value: "" },
+          ],
           short_role: "",
           characteristics: [],
           employment_notes: "",
