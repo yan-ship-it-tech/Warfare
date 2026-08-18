@@ -68,18 +68,23 @@ export function Scene({ world, replayNonce }: Props) {
     return m;
   }, [placed]);
 
-  /** Everything one hop from the current focus — used to fade the rest out. */
+  /** Everything one hop from the current focus — used to fade the rest out.
+   *  Hovering previews the same isolation a click commits to, which matters
+   *  a lot once a node has several same-type (same-color) edges: hovering it
+   *  is the fast way to see which lines are actually its, versus another
+   *  edge that merely passes nearby on the way to a different node. */
+  const focusId = view.selectedId ?? view.hoveredId;
   const neighbours = useMemo(() => {
-    if (!view.selectedId) return null;
-    const set = new Set<string>([view.selectedId]);
+    if (!focusId) return null;
+    const set = new Set<string>([focusId]);
     for (const c of world.connections) {
       if (!view.connectionTypes.has(c.type)) continue;
       if (c.target_pending && !view.showPending) continue;
-      if (c.source_id === view.selectedId) set.add(c.target_id);
-      if (c.target_id === view.selectedId) set.add(c.source_id);
+      if (c.source_id === focusId) set.add(c.target_id);
+      if (c.target_id === focusId) set.add(c.source_id);
     }
     return set;
-  }, [view.selectedId, view.connectionTypes, view.showPending, world.connections]);
+  }, [focusId, view.connectionTypes, view.showPending, world.connections]);
 
   // Open on the zero line, and on the land layer rather than the empty space
   // lane at the top — the first screen should show the thing being taught.

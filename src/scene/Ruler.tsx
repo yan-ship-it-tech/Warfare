@@ -29,9 +29,9 @@ interface Props {
   height: number;
 }
 
-// Ruler positions come straight from proj.xFor(..., laneIndex 0), which already
-// carries the top lane's oblique offset — the inner wrapper must not translate
-// again or every reading lands one lane-step off.
+// Ruler positions come straight from proj.xFor(..., laneIndex 0). Every lane
+// shares the same horizontal mapping now (see VIEW.laneObliqueOffsetPx), so
+// what the ruler shows for lane 0 is exactly correct for every other lane too.
 export function Ruler({ proj, visibleSides, markerRows, showMarkers, height }: Props) {
   const sides: Side[] = ["side_a", "side_b"];
 
@@ -56,7 +56,13 @@ export function Ruler({ proj, visibleSides, markerRows, showMarkers, height }: P
                 const step = niceStep(span.displayMaxKm - span.band.min_km);
                 const ticks: number[] = [];
                 for (let km = span.band.min_km; km <= span.displayMaxKm + 1e-6; km += step) {
-                  ticks.push(Math.round(km));
+                  // Both sides' innermost band starts at 0 km, so both would
+                  // otherwise draw their own "0" tick at the exact same pixel
+                  // as the other side's — plus the single ZERO LINE marker
+                  // already unambiguously marks that point. Skip it here so
+                  // there's exactly one zero on the whole ruler, not three
+                  // overlapping labels.
+                  if (Math.round(km) !== 0) ticks.push(Math.round(km));
                 }
                 const openEnded = span.band.max_km >= 10_000;
                 return (

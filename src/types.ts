@@ -79,6 +79,10 @@ export interface Asset {
   domain: Domain;
   echelon: Echelon;
   group: AssetGroup;                     // references a groups.json entry — the show/hide taxonomy
+  /** Optional link into data/catalog/*.json — when set, the detail panel offers
+   *  swapping which real system fills this slot (e.g. this side's armor slot
+   *  showing T-72B3 vs. T-90M vs. T-80BVM). References CatalogEntry.comparison_group. */
+  comparison_group?: string;
   distance_km_from_zero: number;         // representative placement, not literal intel
   /** Typical employment envelope, distinct from the single representative
    *  point above. Optional because not every category has a meaningful range
@@ -105,6 +109,17 @@ export interface Asset {
     animation_id: string;                // key into the animation registry
     description: string;                 // what the vignette shows
   };
+
+  /** Seed of a "most notable/memorable moments" database — specific, dated,
+   *  sourced incidents involving this system (a first-of-its-kind strike, a
+   *  famous engagement), distinct from the general characteristics/employment
+   *  fields above. Optional and sparse for now; see docs/DECISIONS.md backlog. */
+  notable_events?: {
+    date: string;              // ISO date, or a year if that's all that's public
+    title: string;
+    description: string;
+    sources: { label: string; url: string }[];
+  }[];
 
   connections: AssetConnection[];
 

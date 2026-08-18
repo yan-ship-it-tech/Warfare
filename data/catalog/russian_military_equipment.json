@@ -1,0 +1,592 @@
+{
+  "country": "Russia",
+  "dataset_title": "Russian Military Equipment Reference Catalog",
+  "generated": "2026-08-19",
+  "schema_version": "2.0",
+  "methodology": "Compiled from Wikipedia equipment lists (List of equipment of the Russian Ground Forces) and current open-source defense reporting (news outlets, manufacturer/state statements, export contract disclosures). Cross-referenced against Oryx ('Attack On Europe: Documenting Russian Equipment Losses'), the leading open-source visual-confirmation tracker for this war, to prioritize models with substantial documented combat use rather than obscure or single-instance variants. Unit costs for Russian systems are rarely officially confirmed and vary significantly across sources -- treat unit_cost_usd as rough open-source estimates, not verified procurement figures. Entries whose cost_confidence is 'low' rely on general open-source consensus rather than a specific citable transaction. In-service quantities and combat losses change continuously amid the ongoing war and are intentionally not included here (see Oryx for real-time loss counts).",
+  "currency": "USD",
+  "companion_file": "ukrainian_military_equipment.json",
+  "further_reading": {
+    "oryx_russian_losses": "https://www.oryxspioenkop.com/2022/02/attack-on-europe-documenting-equipment.html",
+    "wikipedia_equipment_list": "https://en.wikipedia.org/wiki/List_of_equipment_of_the_Russian_Ground_Forces",
+    "iiss_military_balance": "https://www.iiss.org/publications/the-military-balance"
+  },
+  "notes_on_comparison_group": "Use 'comparison_group' to match equivalent entries against ukrainian_military_equipment.json. Not every entry has a direct counterpart (e.g. Russia's Geran-2 pairs with Ukraine's Fire Point FP-1 as 'long_range_strike_drone'; Ukraine's Magura V5 has no close Russian equivalent).",
+  "equipment": [
+    {
+      "id": "ru-mbt-t90m",
+      "name": "T-90M Proryv",
+      "category": "Main Battle Tank",
+      "comparison_group": "main_battle_tank",
+      "domain": "Ground Vehicle",
+      "manufacturer": "Uralvagonzavod",
+      "country_of_origin": "Russia",
+      "in_service_since": 2020,
+      "crew": 3,
+      "unit_cost_usd": {"min": 4000000, "max": 4500000, "basis": "Russian state media / industry estimate, ~350 million rubles; not independently verified", "confidence": "medium"},
+      "specifications": {
+        "main_armament": "125mm 2A46M5 smoothbore gun",
+        "secondary_armament": "12.7mm Kord remote weapon station, 7.62mm PKTM",
+        "combat_weight_kg": 48000,
+        "max_speed_kmh": 60,
+        "armor": "Relikt explosive reactive armor + composite"
+      },
+      "combat_notes": "Russia's most modern tank in wide service; flagship of modernized tank regiments since the 2022 invasion.",
+      "wikipedia": "https://en.wikipedia.org/wiki/T-90"
+    },
+    {
+      "id": "ru-mbt-t80bvm",
+      "name": "T-80BVM",
+      "category": "Main Battle Tank",
+      "comparison_group": "main_battle_tank",
+      "domain": "Ground Vehicle",
+      "manufacturer": "Omsktransmash (Rostec)",
+      "country_of_origin": "Russia (upgrade of Soviet-era T-80BV)",
+      "in_service_since": 2018,
+      "crew": 3,
+      "unit_cost_usd": {"min": 2500000, "max": 3500000, "basis": "General open-source estimate; refurbishment of existing T-80BV hulls rather than new-build", "confidence": "low"},
+      "specifications": {
+        "main_armament": "125mm 2A46M5 smoothbore gun, 9M119 Refleks gun-launched ATGM capability",
+        "engine": "GTD-1250 gas turbine, 1,250 hp",
+        "max_speed_kmh": 70,
+        "operational_range_km": 415,
+        "armor": "Relikt explosive reactive armor"
+      },
+      "combat_notes": "Russia's only gas-turbine-powered MBT in frontline service; deep modernization of stored T-80BV hulls, prized for cold-weather starting and mobility.",
+      "wikipedia": "https://en.wikipedia.org/wiki/T-80"
+    },
+    {
+      "id": "ru-mbt-t72b3",
+      "name": "T-72B3",
+      "category": "Main Battle Tank",
+      "comparison_group": "main_battle_tank",
+      "domain": "Ground Vehicle",
+      "manufacturer": "Uralvagonzavod",
+      "country_of_origin": "Russia (upgrade of Soviet-era T-72B)",
+      "in_service_since": 2013,
+      "crew": 3,
+      "unit_cost_usd": {"min": 2000000, "max": 2500000, "basis": "General open-source estimate for modernized refurbishment", "confidence": "low"},
+      "specifications": {
+        "main_armament": "125mm 2A46M-5 smoothbore gun",
+        "combat_weight_kg": 46500,
+        "max_speed_kmh": 60,
+        "armor": "Kontakt-5 explosive reactive armor"
+      },
+      "combat_notes": "Russia's single most numerous tank type in this war by a wide margin (Oryx-confirmed losses across multiple sub-variants, incl. the 'Obr. 2022' field upgrade, run into the hundreds).",
+      "wikipedia": "https://en.wikipedia.org/wiki/T-72"
+    },
+    {
+      "id": "ru-ifv-bmp3",
+      "name": "BMP-3",
+      "category": "Infantry Fighting Vehicle",
+      "comparison_group": "ifv",
+      "domain": "Ground Vehicle",
+      "manufacturer": "Kurganmashzavod",
+      "country_of_origin": "Russia (Soviet-era design)",
+      "in_service_since": 1987,
+      "crew": 3,
+      "troop_capacity": 7,
+      "unit_cost_usd": {"min": 3000000, "max": 4000000, "basis": "Open-source estimate based on prior export contracts", "confidence": "medium"},
+      "specifications": {
+        "main_armament": "100mm 2A70 gun + 30mm 2A72 autocannon + ATGM launch capability",
+        "combat_weight_kg": 18700,
+        "max_speed_kmh_road": 72,
+        "max_speed_kmh_water": 10,
+        "amphibious": true
+      },
+      "combat_notes": "Extensively used and lost by Russian forces in Ukraine; captured units also fielded by Ukrainian forces.",
+      "wikipedia": "https://en.wikipedia.org/wiki/BMP-3"
+    },
+    {
+      "id": "ru-ifv-bmp2",
+      "name": "BMP-2",
+      "category": "Infantry Fighting Vehicle",
+      "comparison_group": "ifv",
+      "domain": "Ground Vehicle",
+      "manufacturer": "Kurganmashzavod",
+      "country_of_origin": "USSR legacy",
+      "in_service_since": 1980,
+      "crew": 3,
+      "troop_capacity": 7,
+      "unit_cost_usd": {"min": 1000000, "max": 1500000, "basis": "General open-source estimate for a legacy design", "confidence": "low"},
+      "specifications": {
+        "main_armament": "30mm 2A42 autocannon + 9M113 Konkurs ATGM",
+        "combat_weight_kg": 14300,
+        "max_speed_kmh_road": 65,
+        "amphibious": true
+      },
+      "combat_notes": "Older, more numerous predecessor to the BMP-3; still the most common IFV type on both sides of the war due to shared Soviet-era stockpiles.",
+      "wikipedia": "https://en.wikipedia.org/wiki/BMP-2"
+    },
+    {
+      "id": "ru-apc-btr82a",
+      "name": "BTR-82A",
+      "category": "Armoured Personnel Carrier",
+      "comparison_group": "apc",
+      "domain": "Ground Vehicle",
+      "manufacturer": "Arzamas Machine-Building Plant",
+      "country_of_origin": "Russia",
+      "in_service_since": 2013,
+      "crew": 3,
+      "troop_capacity": 7,
+      "unit_cost_usd": {"min": 1800000, "max": 2200000, "basis": "General open-source estimate", "confidence": "low"},
+      "specifications": {
+        "main_armament": "30mm 2A72 autocannon",
+        "max_speed_kmh_road": 80,
+        "amphibious": true
+      },
+      "combat_notes": "Russia's standard modern wheeled APC, an upgrade of the Soviet-era BTR-80 with a new turret and fire control system.",
+      "wikipedia": "https://en.wikipedia.org/wiki/BTR-82"
+    },
+    {
+      "id": "ru-art-2s19",
+      "name": "2S19 Msta-S",
+      "category": "Self-Propelled Howitzer",
+      "comparison_group": "self_propelled_artillery",
+      "domain": "Ground Vehicle",
+      "manufacturer": "Uraltransmash",
+      "country_of_origin": "Russia (Soviet-era design)",
+      "in_service_since": 1989,
+      "crew": 5,
+      "unit_cost_usd": {"min": 3000000, "max": 3200000, "basis": "Deagel estimate for modernized 2S19M2 variant", "confidence": "medium"},
+      "specifications": {
+        "caliber_mm": 152,
+        "max_range_km_standard": 24.7,
+        "max_range_km_base_bleed": 29,
+        "max_range_km_rocket_assisted": 36,
+        "rate_of_fire_rpm": 8,
+        "max_speed_kmh": 60,
+        "operational_range_km": 500
+      },
+      "combat_notes": "Frequently cued by Orlan-10 UAVs for target correction.",
+      "wikipedia": "https://en.wikipedia.org/wiki/2S19_Msta-S"
+    },
+    {
+      "id": "ru-art-2s3",
+      "name": "2S3 Akatsiya",
+      "category": "Self-Propelled Howitzer",
+      "comparison_group": "self_propelled_artillery",
+      "domain": "Ground Vehicle",
+      "manufacturer": "Uraltransmash (Soviet-era)",
+      "country_of_origin": "USSR legacy",
+      "in_service_since": 1971,
+      "crew": 4,
+      "unit_cost_usd": {"min": 400000, "max": 700000, "basis": "Reactivated Soviet-stock estimate (original 1988 unit price ~$971,000)", "confidence": "low"},
+      "specifications": {
+        "caliber_mm": 152,
+        "max_range_km_standard": 18.5,
+        "max_range_km_rocket_assisted": 24,
+        "max_speed_kmh": 60
+      },
+      "combat_notes": "Cold War-era system pulled from long-term storage in large numbers to make up for combat losses.",
+      "wikipedia": "https://en.wikipedia.org/wiki/2S3_Akatsiya"
+    },
+    {
+      "id": "ru-art-2s1",
+      "name": "2S1 Gvozdika",
+      "category": "Self-Propelled Howitzer",
+      "comparison_group": "self_propelled_artillery",
+      "domain": "Ground Vehicle",
+      "manufacturer": "Kharkiv Tractor Plant (Soviet-era)",
+      "country_of_origin": "USSR legacy",
+      "in_service_since": 1972,
+      "crew": 4,
+      "unit_cost_usd": {"min": 300000, "max": 500000, "basis": "General open-source estimate for reactivated Soviet stock", "confidence": "low"},
+      "specifications": {
+        "caliber_mm": 122,
+        "max_range_km_standard": 15.3,
+        "max_range_km_extended": 21.9,
+        "max_speed_kmh_road": 60,
+        "amphibious": true
+      },
+      "combat_notes": "One of the most widely produced SPHs in history (10,000+ built); used by both Russia and Ukraine from shared Soviet stockpiles.",
+      "wikipedia": "https://en.wikipedia.org/wiki/2S1_Gvozdika"
+    },
+    {
+      "id": "ru-mlrs-tornado-s",
+      "name": "9A52-4 Tornado-S",
+      "category": "Multiple Launch Rocket System",
+      "comparison_group": "mlrs_heavy",
+      "domain": "Ground Vehicle",
+      "manufacturer": "Splav / Motovilikha Plants",
+      "country_of_origin": "Russia",
+      "in_service_since": 2016,
+      "crew": null,
+      "unit_cost_usd": {"min": null, "max": null, "basis": "Not publicly disclosed"},
+      "specifications": {
+        "caliber_mm": 300,
+        "tubes": 12,
+        "max_range_km": 120,
+        "chassis": "KamAZ-63501 8x8",
+        "guidance": "GLONASS-guided rounds available"
+      },
+      "combat_notes": "Modernized, automated successor to the BM-30 Smerch heavy MLRS; direct counterpart to HIMARS.",
+      "wikipedia": "https://en.wikipedia.org/wiki/9A52-4_Tornado"
+    },
+    {
+      "id": "ru-mlrs-bm21",
+      "name": "BM-21 Grad",
+      "category": "Multiple Launch Rocket System",
+      "comparison_group": "mlrs_light",
+      "domain": "Ground Vehicle",
+      "manufacturer": "Soviet-era design",
+      "country_of_origin": "USSR legacy",
+      "in_service_since": 1963,
+      "crew": 3,
+      "unit_cost_usd": {"min": 500000, "max": 1000000, "basis": "General open-source estimate for the launcher vehicle", "confidence": "low"},
+      "specifications": {
+        "caliber_mm": 122,
+        "tubes": 40,
+        "max_range_km": 20,
+        "chassis": "Ural-4320 6x6",
+        "reload_time_min": 3
+      },
+      "combat_notes": "The most numerous and widely proliferated MLRS in the world; still a mainstay unguided-rocket system for both sides.",
+      "wikipedia": "https://en.wikipedia.org/wiki/BM-21_Grad"
+    },
+    {
+      "id": "ru-art-tos1a",
+      "name": "TOS-1A Solntsepyok",
+      "category": "Thermobaric Rocket System",
+      "comparison_group": "thermobaric_system",
+      "domain": "Ground Vehicle",
+      "manufacturer": "Omsktransmash",
+      "country_of_origin": "Russia",
+      "in_service_since": 2001,
+      "crew": 3,
+      "unit_cost_usd": {"min": 6500000, "max": 6500000, "basis": "Figure includes servicing, training, and ammunition (Ukrainian defense reporting)", "confidence": "low"},
+      "specifications": {
+        "caliber_mm": 220,
+        "tubes": 24,
+        "max_range_km": 6,
+        "chassis": "T-72 tank chassis",
+        "warhead": "Thermobaric (fuel-air explosive)"
+      },
+      "combat_notes": "Heavy 'flamethrower' rocket system for fortified positions; large size makes it a prime target, with roughly 31 confirmed lost by mid-decade.",
+      "wikipedia": "https://en.wikipedia.org/wiki/TOS-1"
+    },
+    {
+      "id": "ru-spaag-tunguska",
+      "name": "2K22 Tunguska",
+      "category": "Self-Propelled Anti-Aircraft Gun/Missile",
+      "comparison_group": "self_propelled_aa",
+      "domain": "Ground Vehicle",
+      "manufacturer": "KBP Instrument Design Bureau",
+      "country_of_origin": "Russia (Soviet-era design)",
+      "in_service_since": 1982,
+      "crew": 4,
+      "unit_cost_usd": {"min": 15000000, "max": 20000000, "basis": "General open-source estimate", "confidence": "low"},
+      "specifications": {
+        "armament": "2x 30mm 2A38M autocannons + 8x 9M311 SAM",
+        "missile_range_km": 8,
+        "gun_range_km": 4,
+        "max_speed_kmh": 65
+      },
+      "combat_notes": "Combined gun-missile short-range air defense on a tracked chassis, providing mobile cover for armored columns.",
+      "wikipedia": "https://en.wikipedia.org/wiki/2K22_Tunguska"
+    },
+    {
+      "id": "ru-ad-pantsir-s1",
+      "name": "Pantsir-S1",
+      "category": "Short-Range Air Defense System",
+      "comparison_group": "air_defense_short",
+      "domain": "Ground Vehicle",
+      "manufacturer": "KBP Instrument Design Bureau / Ulyanovsk Mechanical Plant",
+      "country_of_origin": "Russia",
+      "in_service_since": 2012,
+      "crew": 3,
+      "unit_cost_usd": {"min": 13150000, "max": 14670000, "basis": "Export price estimates", "confidence": "medium"},
+      "specifications": {
+        "missile_range_km": 20,
+        "gun_range_km": 4,
+        "altitude_ceiling_km": 15,
+        "armament": "2x 30mm 2A38M autocannon + up to 12x 57E6 missiles"
+      },
+      "combat_notes": "Point-defense gun-missile system protecting high-value sites, reportedly including sites around Moscow and St. Petersburg.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Pantsir_missile_system"
+    },
+    {
+      "id": "ru-ad-buk-m3",
+      "name": "Buk-M3",
+      "category": "Medium-Range Air Defense System",
+      "comparison_group": "air_defense_medium",
+      "domain": "Ground Vehicle",
+      "manufacturer": "Almaz-Antey",
+      "country_of_origin": "Russia",
+      "in_service_since": 2016,
+      "crew": null,
+      "unit_cost_usd": {"min": 30000000, "max": 50000000, "basis": "General open-source estimate per battery", "confidence": "low"},
+      "specifications": {
+        "missile_range_km": 70,
+        "altitude_ceiling_km": 35,
+        "missiles_per_launcher": 6
+      },
+      "combat_notes": "Modernized version of the Buk family (the same lineage implicated in the 2014 MH17 shootdown); used to defend against Ukrainian aircraft and missiles.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Buk_missile_system"
+    },
+    {
+      "id": "ru-ew-krasukha4",
+      "name": "Krasukha-4",
+      "category": "Electronic Warfare System",
+      "comparison_group": "electronic_warfare",
+      "domain": "Ground Vehicle",
+      "manufacturer": "KRET Corporation",
+      "country_of_origin": "Russia",
+      "in_service_since": 2014,
+      "crew": null,
+      "unit_cost_usd": {"min": null, "max": null, "basis": "Not publicly disclosed"},
+      "specifications": {
+        "jamming_range_km": 300,
+        "targets": "Airborne radar, satellites, reconnaissance aircraft, drones"
+      },
+      "combat_notes": "Mobile jamming system intended to blind enemy radar and disrupt drone/satellite links; a high-value target for Ukrainian strikes.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Krasukha"
+    },
+    {
+      "id": "ru-uav-orlan10",
+      "name": "Orlan-10",
+      "category": "Reconnaissance UAV",
+      "comparison_group": "reconnaissance_uav",
+      "domain": "Unmanned Aerial",
+      "manufacturer": "Special Technology Center (STC)",
+      "country_of_origin": "Russia",
+      "in_service_since": 2010,
+      "crew": 0,
+      "unit_cost_usd": {"min": 87000, "max": 120000, "basis": "Open-source estimates; a full system (2 aircraft + ground control station) reported near $150,000", "confidence": "medium"},
+      "specifications": {
+        "range_km_control_link": 140,
+        "range_km_telemetry_claimed": 600,
+        "endurance_hours": 18,
+        "max_speed_kmh": 150,
+        "cruise_speed_kmh": 110,
+        "altitude_ceiling_m": 5000
+      },
+      "combat_notes": "Typically flown in teams of 2-3 (reconnaissance / electronic warfare / relay); central to Russian reconnaissance-strike targeting loops.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Orlan-10"
+    },
+    {
+      "id": "ru-um-lancet3",
+      "name": "ZALA Lancet-3",
+      "category": "Loitering Munition",
+      "comparison_group": "loitering_munition_tactical",
+      "domain": "Unmanned Aerial",
+      "manufacturer": "ZALA Aero Group (Kalashnikov Concern)",
+      "country_of_origin": "Russia",
+      "in_service_since": 2020,
+      "crew": 0,
+      "unit_cost_usd": {"min": 35000, "max": 40000, "basis": "Open-source production cost estimates", "confidence": "medium"},
+      "specifications": {
+        "range_km": 40,
+        "cruise_speed_kmh": 110,
+        "dive_speed_kmh": 300,
+        "warhead_kg": 3,
+        "max_takeoff_weight_kg": 12
+      },
+      "combat_notes": "Primary threat to Ukrainian artillery, armor, and air-defense vehicles in counter-battery engagements.",
+      "wikipedia": "https://en.wikipedia.org/wiki/ZALA_Lancet"
+    },
+    {
+      "id": "ru-um-geran2",
+      "name": "Geran-2 (Shahed-136)",
+      "category": "Long-Range One-Way Attack Drone",
+      "comparison_group": "long_range_strike_drone",
+      "domain": "Unmanned Aerial",
+      "manufacturer": "Alabuga Special Economic Zone, Russia (licensed from Iran's Shahed Aviation Industries)",
+      "country_of_origin": "Iran (design) / Russia (production)",
+      "in_service_since": 2022,
+      "crew": 0,
+      "unit_cost_usd": {"min": 20000, "max": 50000, "basis": "CSIS/RUSI open-source range for Russian domestic production", "confidence": "medium"},
+      "specifications": {
+        "range_km": 2500,
+        "max_speed_kmh": 185,
+        "warhead_kg": 50,
+        "warhead_kg_heavy_variant": 90,
+        "guidance": "GNSS/GLONASS + inertial navigation"
+      },
+      "combat_notes": "Volume weapon of Russia's long-range strike campaign against Ukrainian cities and infrastructure; launched in mass swarms alongside decoys (Gerbera) and the newer jet-powered Geran-4.",
+      "wikipedia": "https://en.wikipedia.org/wiki/HESA_Shahed_136"
+    },
+    {
+      "id": "ru-air-su35s",
+      "name": "Su-35S Flanker-E",
+      "category": "Fighter Aircraft",
+      "comparison_group": "fighter_aircraft",
+      "domain": "Air",
+      "manufacturer": "Sukhoi / United Aircraft Corporation",
+      "country_of_origin": "Russia",
+      "in_service_since": 2014,
+      "crew": 1,
+      "unit_cost_usd": {"min": 65000000, "max": 85000000, "basis": "Export pricing (e.g. China contract)", "confidence": "medium"},
+      "specifications": {
+        "max_speed_mach": 2.25,
+        "engines": "2x Saturn AL-41F1S turbofan with thrust vectoring",
+        "hardpoints": 12,
+        "max_weapons_load_kg": 8000
+      },
+      "combat_notes": "Russia's primary air-superiority fighter over the front; several lost to Ukrainian F-16s and Patriot batteries in 2026.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Sukhoi_Su-35"
+    },
+    {
+      "id": "ru-air-su34",
+      "name": "Su-34 Fullback",
+      "category": "Fighter-Bomber",
+      "comparison_group": "fighter_bomber",
+      "domain": "Air",
+      "manufacturer": "Sukhoi / United Aircraft Corporation",
+      "country_of_origin": "Russia",
+      "in_service_since": 2014,
+      "crew": 2,
+      "unit_cost_usd": {"min": 36000000, "max": 50000000, "basis": "Widely varying open-source estimates ($36M-$85M reported); mid-range used here", "confidence": "low"},
+      "specifications": {
+        "max_speed_mach": 1.8,
+        "combat_range_km": 1100,
+        "ferry_range_km": 4000,
+        "max_weapons_load_kg": 8000,
+        "armament": "30mm GSh-30-1 cannon + guided bombs, air-to-surface and anti-ship missiles"
+      },
+      "combat_notes": "Russia's primary glide-bomb (UMPK/KAB) delivery platform, responsible for much of the war's aerial bombardment of Ukrainian front-line towns; over 35 confirmed losses.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Sukhoi_Su-34"
+    },
+    {
+      "id": "ru-air-su25",
+      "name": "Su-25 Grach",
+      "category": "Ground-Attack Aircraft",
+      "comparison_group": "ground_attack_aircraft",
+      "domain": "Air",
+      "manufacturer": "Sukhoi (Soviet-era design)",
+      "country_of_origin": "USSR legacy",
+      "in_service_since": 1981,
+      "crew": 1,
+      "unit_cost_usd": {"min": 10000000, "max": 12000000, "basis": "General open-source estimate", "confidence": "low"},
+      "specifications": {
+        "max_speed_kmh": 950,
+        "armament": "30mm twin-barrel cannon + rockets, bombs, guided munitions",
+        "armor": "Titanium armored 'bathtub' cockpit"
+      },
+      "combat_notes": "Heavily armored Soviet-era close air support jet ('Frogfoot'); flown by both Russia and Ukraine from shared Cold War stocks.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Sukhoi_Su-25"
+    },
+    {
+      "id": "ru-heli-ka52",
+      "name": "Ka-52 Alligator",
+      "category": "Attack Helicopter",
+      "comparison_group": "attack_helicopter",
+      "domain": "Air",
+      "manufacturer": "Russian Helicopters (Progress plant, Arsenyev)",
+      "country_of_origin": "Russia",
+      "in_service_since": 2011,
+      "crew": 2,
+      "unit_cost_usd": {"min": 13000000, "max": 18000000, "basis": "Insurance/export documentation estimates", "confidence": "medium"},
+      "specifications": {
+        "max_speed_kmh": 300,
+        "range_km": 460,
+        "armament": "30mm 2A42 cannon + Vikhr/Ataka ATGMs + S-8/S-13 rockets",
+        "rotor_configuration": "Co-axial, no tail rotor"
+      },
+      "combat_notes": "One of Russia's most heavily used ground-attack platforms; dozens confirmed lost to MANPADS and drones.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Kamov_Ka-52"
+    },
+    {
+      "id": "ru-heli-mi8",
+      "name": "Mi-8 / Mi-17",
+      "category": "Transport Helicopter",
+      "comparison_group": "transport_helicopter",
+      "domain": "Air",
+      "manufacturer": "Mil Moscow Helicopter Plant (Soviet-era design)",
+      "country_of_origin": "USSR legacy",
+      "in_service_since": 1967,
+      "crew": 3,
+      "troop_capacity": 24,
+      "unit_cost_usd": {"min": 10000000, "max": 15000000, "basis": "General open-source estimate for modernized variants", "confidence": "low"},
+      "specifications": {
+        "max_speed_kmh": 250,
+        "range_km": 800,
+        "roles": "Troop transport, medevac, gunship variants (Mi-8AMTSh) with rocket pods and cannon"
+      },
+      "combat_notes": "Backbone utility helicopter of Russian army aviation, produced in more variants and greater numbers than any other Soviet helicopter design.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Mil_Mi-8"
+    },
+    {
+      "id": "ru-atgm-kornet",
+      "name": "9M133 Kornet",
+      "category": "Anti-Tank Guided Missile",
+      "comparison_group": "atgm",
+      "domain": "Ground",
+      "manufacturer": "KBP Instrument Design Bureau",
+      "country_of_origin": "Russia",
+      "in_service_since": 1998,
+      "crew": null,
+      "unit_cost_usd": {"min": 26000, "max": 30000, "basis": "Export price estimates, per missile", "confidence": "medium"},
+      "specifications": {
+        "range_km": 5.5,
+        "range_km_extended_variant": 10,
+        "guidance": "SACLOS laser beam-riding",
+        "warhead_kg": 5,
+        "penetration_mm_rha": 1300
+      },
+      "combat_notes": "Widely exported; used against Ukrainian armor throughout the war.",
+      "wikipedia": "https://en.wikipedia.org/wiki/9M133_Kornet"
+    },
+    {
+      "id": "ru-navy-grigorovich",
+      "name": "Admiral Grigorovich-class frigate",
+      "category": "Frigate",
+      "comparison_group": "naval_surface_combatant",
+      "domain": "Naval",
+      "manufacturer": "Yantar Shipyard, Kaliningrad",
+      "country_of_origin": "Russia",
+      "in_service_since": 2016,
+      "crew": 200,
+      "unit_cost_usd": {"min": 450000000, "max": 500000000, "basis": "Program cost estimates", "confidence": "medium"},
+      "specifications": {
+        "displacement_tons_full_load": 3860,
+        "length_m": 124.8,
+        "max_speed_knots": 30,
+        "armament": "8x Kalibr/Oniks cruise missile VLS cells, Shtil-1 SAM, 100mm A-190 gun",
+        "aviation": "1x Ka-27/Ka-31 helicopter"
+      },
+      "combat_notes": "Black Sea Fleet's primary land-attack strike asset, used repeatedly to launch Kalibr cruise missiles at Ukraine.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Admiral_Grigorovich-class_frigate"
+    },
+    {
+      "id": "ru-navy-kilo",
+      "name": "Kilo-class submarine (Improved, Project 636.3)",
+      "category": "Diesel-Electric Submarine",
+      "comparison_group": "naval_submarine",
+      "domain": "Naval",
+      "manufacturer": "Admiralty Shipyard, St. Petersburg",
+      "country_of_origin": "Russia",
+      "in_service_since": 2014,
+      "crew": 52,
+      "unit_cost_usd": {"min": 300000000, "max": 350000000, "basis": "General open-source program cost estimate", "confidence": "low"},
+      "specifications": {
+        "displacement_tons_submerged": 3950,
+        "length_m": 73.8,
+        "max_speed_knots_submerged": 20,
+        "armament": "6x 533mm torpedo tubes, Kalibr cruise missiles"
+      },
+      "combat_notes": "Black Sea Fleet submarine used to launch Kalibr cruise missile strikes on Ukraine from underwater, forcing Ukraine to develop long-range strike responses against Russian naval infrastructure.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Improved_Kilo-class_submarine"
+    },
+    {
+      "id": "ru-navy-karakurt",
+      "name": "Buyan-M / Karakurt-class corvette",
+      "category": "Missile Corvette",
+      "comparison_group": "naval_surface_combatant",
+      "domain": "Naval",
+      "manufacturer": "Various Russian shipyards",
+      "country_of_origin": "Russia",
+      "in_service_since": 2018,
+      "crew": 36,
+      "unit_cost_usd": {"min": 70000000, "max": 100000000, "basis": "General open-source estimate", "confidence": "low"},
+      "specifications": {
+        "displacement_tons": 800,
+        "length_m": 67,
+        "max_speed_knots": 25,
+        "armament": "8x Kalibr cruise missile VLS cells, 100mm gun"
+      },
+      "combat_notes": "Small, shallow-draft missile corvette that lets Russia fire Kalibr cruise missiles from rivers and coastal waters, complicating Ukrainian targeting.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Karakurt-class_corvette"
+    }
+  ]
+}

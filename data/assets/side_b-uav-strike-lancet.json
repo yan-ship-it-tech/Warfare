@@ -5,6 +5,7 @@
   "domain": "air",
   "echelon": "tactical",
   "group": "uav",
+  "comparison_group": "loitering_munition_tactical",
   "distance_km_from_zero": 3,
   "operating_range_km": { "min_km": 1, "max_km": 10 },
   "band_id": "tactical",

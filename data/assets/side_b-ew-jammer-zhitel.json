@@ -5,6 +5,7 @@
   "domain": "cyber_ew",
   "echelon": "operational",
   "group": "ew",
+  "comparison_group": "electronic_warfare",
   "distance_km_from_zero": 15,
   "operating_range_km": { "min_km": 5, "max_km": 25 },
   "band_id": "op_near",

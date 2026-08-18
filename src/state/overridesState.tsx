@@ -32,6 +32,9 @@ const ASSET_OVERRIDES_KEY = "warfare-twin:asset-overrides:v1";
 export interface AssetOverride {
   distance_km_from_zero?: number;
   operating_range_km?: { min_km: number; max_km: number } | null;
+  /** Which catalog entry fills this asset's slot — see src/data/catalog.ts.
+   *  null/undefined means "the asset's own authored system." */
+  catalog_equipment_id?: string | null;
 }
 
 function readJSON<T>(key: string): T | null {

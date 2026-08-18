@@ -1,0 +1,532 @@
+{
+  "country": "Ukraine",
+  "dataset_title": "Ukrainian Military Equipment Reference Catalog",
+  "generated": "2026-08-19",
+  "schema_version": "2.0",
+  "methodology": "Compiled from Wikipedia equipment lists (List of equipment of the Armed Forces of Ukraine) and current open-source defense reporting (news outlets, manufacturer statements, US/allied government budget and export documents). Cross-referenced against Oryx ('Attack On Europe: Documenting Ukrainian Equipment Losses') and Oryx's 'Answering the Call' list of Western equipment deliveries, to prioritize models with substantial documented service rather than obscure or single-instance donations. Western-supplied equipment generally has better-documented pricing than domestically-produced or Soviet-legacy systems -- treat unit_cost_usd as open-source estimates. Entries whose cost_confidence is 'low' rely on general open-source consensus rather than a specific citable transaction. In-service quantities and combat losses change continuously amid the ongoing war and are intentionally not included here (see Oryx for real-time loss counts).",
+  "currency": "USD",
+  "companion_file": "russian_military_equipment.json",
+  "further_reading": {
+    "oryx_ukrainian_losses": "https://www.oryxspioenkop.com/2022/02/attack-on-europe-documenting-ukrainian.html",
+    "oryx_western_deliveries": "https://www.oryxspioenkop.com/2022/04/answering-call-heavy-weaponry-supplied.html",
+    "wikipedia_equipment_list": "https://en.wikipedia.org/wiki/List_of_equipment_of_the_Armed_Forces_of_Ukraine",
+    "iiss_military_balance": "https://www.iiss.org/publications/the-military-balance"
+  },
+  "notes_on_comparison_group": "Use 'comparison_group' to match equivalent entries against russian_military_equipment.json. Not every entry has a direct counterpart (e.g. Ukraine's Magura V5 has no close Russian equivalent).",
+  "equipment": [
+    {
+      "id": "ua-mbt-t64bv",
+      "name": "T-64BV",
+      "category": "Main Battle Tank",
+      "comparison_group": "main_battle_tank",
+      "domain": "Ground Vehicle",
+      "manufacturer": "Kharkiv Morozov Machine Building Design Bureau (Soviet-era design)",
+      "country_of_origin": "Ukraine / USSR legacy",
+      "in_service_since": 1976,
+      "crew": 3,
+      "unit_cost_usd": {"min": 1000000, "max": 2000000, "basis": "Refurbishment/upgrade cost estimate; no longer newly manufactured", "confidence": "low"},
+      "specifications": {
+        "main_armament": "125mm smoothbore gun",
+        "notable_variant": "T-64BM Bulat (modernized)"
+      },
+      "combat_notes": "Ukraine's most numerous indigenous tank type (500+ hulls incl. variants); supplemented since 2023 by donated Leopard 2, Challenger 2, and M1 Abrams.",
+      "wikipedia": "https://en.wikipedia.org/wiki/T-64"
+    },
+    {
+      "id": "ua-mbt-leopard2a6",
+      "name": "Leopard 2A6",
+      "category": "Main Battle Tank",
+      "comparison_group": "main_battle_tank",
+      "domain": "Ground Vehicle",
+      "manufacturer": "Krauss-Maffei Wegmann",
+      "country_of_origin": "Germany (donated by Germany, Netherlands, and other operators)",
+      "in_service_since": 2001,
+      "crew": 4,
+      "unit_cost_usd": {"min": 10000000, "max": 15000000, "basis": "General open-source estimate; donated units, not purchased new", "confidence": "low"},
+      "specifications": {
+        "main_armament": "120mm L/55 smoothbore gun",
+        "combat_weight_kg": 62300,
+        "max_speed_kmh": 68
+      },
+      "combat_notes": "Among the first Western MBTs delivered to Ukraine (early 2023); older 2A4 variants also supplied by Poland, Portugal, Spain and others.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Leopard_2"
+    },
+    {
+      "id": "ua-mbt-abrams",
+      "name": "M1A1 Abrams",
+      "category": "Main Battle Tank",
+      "comparison_group": "main_battle_tank",
+      "domain": "Ground Vehicle",
+      "manufacturer": "General Dynamics Land Systems",
+      "country_of_origin": "United States",
+      "in_service_since": 2023,
+      "crew": 4,
+      "unit_cost_usd": {"min": 8000000, "max": 10000000, "basis": "Refurbished-unit estimate; new-production packages with support run far higher ($18-24M)", "confidence": "low"},
+      "specifications": {
+        "main_armament": "120mm M256 smoothbore gun",
+        "combat_weight_kg": 61300,
+        "max_speed_kmh": 67,
+        "engine": "Honeywell AGT1500 gas turbine"
+      },
+      "combat_notes": "31 M1A1 Abrams delivered in 2023; found to be a resource-intensive platform to maintain in Ukraine's field conditions.",
+      "wikipedia": "https://en.wikipedia.org/wiki/M1_Abrams"
+    },
+    {
+      "id": "ua-apc-btr4e",
+      "name": "BTR-4E Bucephalus",
+      "category": "Armoured Personnel Carrier",
+      "comparison_group": "apc",
+      "domain": "Ground Vehicle",
+      "manufacturer": "Kharkiv Morozov Machine Building Design Bureau",
+      "country_of_origin": "Ukraine",
+      "in_service_since": 2012,
+      "crew": 3,
+      "troop_capacity": 7,
+      "unit_cost_usd": {"min": null, "max": null, "basis": "Not publicly disclosed; comparable 8x8 APCs run roughly $1-2M", "confidence": "low"},
+      "specifications": {
+        "main_armament": "BM-7 Parus remote weapon station: 30mm autocannon + optional ATGM",
+        "max_speed_kmh_road": 110,
+        "max_speed_kmh_off_road": 60,
+        "amphibious": true
+      },
+      "combat_notes": "Fully indigenous Ukrainian design, in production and combat use since 2014.",
+      "wikipedia": "https://en.wikipedia.org/wiki/BTR-4"
+    },
+    {
+      "id": "ua-ifv-bradley",
+      "name": "M2A2 Bradley",
+      "category": "Infantry Fighting Vehicle",
+      "comparison_group": "ifv",
+      "domain": "Ground Vehicle",
+      "manufacturer": "BAE Systems Land & Armaments",
+      "country_of_origin": "United States",
+      "in_service_since": 2023,
+      "crew": 3,
+      "troop_capacity": 6,
+      "unit_cost_usd": {"min": 3000000, "max": 4000000, "basis": "General open-source estimate; donated from US Army stock", "confidence": "low"},
+      "specifications": {
+        "main_armament": "25mm M242 Bushmaster autocannon + TOW ATGM launcher",
+        "combat_weight_kg": 27600,
+        "max_speed_kmh": 66
+      },
+      "combat_notes": "Praised by Ukrainian crews for survivability; over 180 delivered starting January 2023, credited with strong loss-exchange ratios versus Russian armor.",
+      "wikipedia": "https://en.wikipedia.org/wiki/M2_Bradley"
+    },
+    {
+      "id": "ua-ifv-bmp2",
+      "name": "BMP-2",
+      "category": "Infantry Fighting Vehicle",
+      "comparison_group": "ifv",
+      "domain": "Ground Vehicle",
+      "manufacturer": "Kurganmashzavod (Soviet-era design)",
+      "country_of_origin": "USSR legacy",
+      "in_service_since": 1980,
+      "crew": 3,
+      "troop_capacity": 7,
+      "unit_cost_usd": {"min": 1000000, "max": 1500000, "basis": "General open-source estimate for a legacy design", "confidence": "low"},
+      "specifications": {
+        "main_armament": "30mm 2A42 autocannon + 9M113 Konkurs ATGM",
+        "combat_weight_kg": 14300,
+        "amphibious": true
+      },
+      "combat_notes": "Ukraine's most numerous IFV type from shared Soviet-era stockpiles, alongside captured Russian examples.",
+      "wikipedia": "https://en.wikipedia.org/wiki/BMP-2"
+    },
+    {
+      "id": "ua-art-bohdana",
+      "name": "2S22 Bohdana",
+      "category": "Self-Propelled Howitzer",
+      "comparison_group": "self_propelled_artillery",
+      "domain": "Ground Vehicle",
+      "manufacturer": "Kramatorsk Heavy Duty Machine Tool Plant",
+      "country_of_origin": "Ukraine",
+      "in_service_since": 2022,
+      "crew": 5,
+      "unit_cost_usd": {"min": 2500000, "max": 3000000, "basis": "Manufacturer-confirmed pricing (~EUR 2.3-2.8M), reported by Defense Express / Bild", "confidence": "high"},
+      "specifications": {
+        "caliber_mm": 155,
+        "caliber_standard": "NATO",
+        "max_range_km": 60,
+        "rate_of_fire_rpm": 5,
+        "max_speed_kmh": 80,
+        "operational_range_km_road": 800
+      },
+      "combat_notes": "Ukraine's first domestically-produced NATO-caliber self-propelled howitzer; monthly production scaled from 6 (2023) to 30+ (2026).",
+      "wikipedia": "https://en.wikipedia.org/wiki/2S22_Bohdana"
+    },
+    {
+      "id": "ua-art-2s1",
+      "name": "2S1 Gvozdika",
+      "category": "Self-Propelled Howitzer",
+      "comparison_group": "self_propelled_artillery",
+      "domain": "Ground Vehicle",
+      "manufacturer": "Kharkiv Tractor Plant (Soviet-era)",
+      "country_of_origin": "USSR legacy",
+      "in_service_since": 1972,
+      "crew": 4,
+      "unit_cost_usd": {"min": 300000, "max": 500000, "basis": "General open-source estimate for reactivated Soviet stock", "confidence": "low"},
+      "specifications": {
+        "caliber_mm": 122,
+        "max_range_km_standard": 15.3,
+        "max_range_km_extended": 21.9,
+        "amphibious": true
+      },
+      "combat_notes": "Legacy Soviet-stock howitzer still fielded by Ukraine alongside Western-donated systems.",
+      "wikipedia": "https://en.wikipedia.org/wiki/2S1_Gvozdika"
+    },
+    {
+      "id": "ua-art-m777",
+      "name": "M777 Howitzer",
+      "category": "Towed Howitzer",
+      "comparison_group": "towed_artillery",
+      "domain": "Ground",
+      "manufacturer": "BAE Systems",
+      "country_of_origin": "United States / United Kingdom",
+      "in_service_since": 2005,
+      "crew": 8,
+      "unit_cost_usd": {"min": 3700000, "max": 3700000, "basis": "US procurement estimate", "confidence": "medium"},
+      "specifications": {
+        "caliber_mm": 155,
+        "max_range_km": 30,
+        "max_range_km_excalibur_guided": 40,
+        "weight_kg": 4200
+      },
+      "combat_notes": "Ultra-light titanium/aluminum howitzer, easily air-transportable; one of the first major Western artillery systems delivered to Ukraine in 2022.",
+      "wikipedia": "https://en.wikipedia.org/wiki/M777_howitzer"
+    },
+    {
+      "id": "ua-mlrs-himars",
+      "name": "M142 HIMARS",
+      "category": "Multiple Launch Rocket System",
+      "comparison_group": "mlrs_heavy",
+      "domain": "Ground Vehicle",
+      "manufacturer": "Lockheed Martin",
+      "country_of_origin": "United States",
+      "in_service_since": 2005,
+      "crew": 3,
+      "unit_cost_usd": {"min": 5000000, "max": 5500000, "basis": "US Army budget line, domestic procurement (launcher only, excludes rockets)", "confidence": "medium"},
+      "specifications": {
+        "max_range_km_gmlrs": 92,
+        "max_range_km_gmlrs_er": 150,
+        "max_range_km_atacms": 300,
+        "rocket_pods": "6x MLRS rockets, or 1x ATACMS, or 2x PrSM",
+        "max_speed_kmh": 94
+      },
+      "combat_notes": "Credited with disrupting Russian ammunition depots and logistics from mid-2022 onward; direct counterpart to Tornado-S.",
+      "wikipedia": "https://en.wikipedia.org/wiki/M142_HIMARS"
+    },
+    {
+      "id": "ua-mlrs-bm21",
+      "name": "BM-21 Grad",
+      "category": "Multiple Launch Rocket System",
+      "comparison_group": "mlrs_light",
+      "domain": "Ground Vehicle",
+      "manufacturer": "Soviet-era design",
+      "country_of_origin": "USSR legacy",
+      "in_service_since": 1963,
+      "crew": 3,
+      "unit_cost_usd": {"min": 500000, "max": 1000000, "basis": "General open-source estimate for the launcher vehicle", "confidence": "low"},
+      "specifications": {
+        "caliber_mm": 122,
+        "tubes": 40,
+        "max_range_km": 20,
+        "chassis": "Ural-4320 6x6"
+      },
+      "combat_notes": "Still a mainstay unguided-rocket system for Ukrainian forces from shared Soviet-era stockpiles.",
+      "wikipedia": "https://en.wikipedia.org/wiki/BM-21_Grad"
+    },
+    {
+      "id": "ua-spaag-gepard",
+      "name": "Flakpanzer Gepard",
+      "category": "Self-Propelled Anti-Aircraft Gun",
+      "comparison_group": "self_propelled_aa",
+      "domain": "Ground Vehicle",
+      "manufacturer": "Krauss-Maffei / Rheinmetall",
+      "country_of_origin": "Germany",
+      "in_service_since": 1976,
+      "crew": 3,
+      "unit_cost_usd": {"min": 2000000, "max": 3000000, "basis": "General estimate; delivered from decommissioned Bundeswehr stock plus a $118.3M US-funded reactivation/ammunition contract", "confidence": "low"},
+      "specifications": {
+        "armament": "2x 35mm Oerlikon KDA autocannons",
+        "ammo_cost_usd_per_round": 100,
+        "targets": "Low-altitude drones, cruise missiles, helicopters"
+      },
+      "combat_notes": "A 1970s Cold War design that became one of Ukraine's most cost-effective weapons against Shahed/Geran drone swarms; a Ukrainian crew reported downing 10+ drones and 2 cruise missiles in a single engagement.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Flakpanzer_Gepard"
+    },
+    {
+      "id": "ua-ad-iris-t",
+      "name": "IRIS-T SLM",
+      "category": "Medium-Range Air Defense System",
+      "comparison_group": "air_defense_medium",
+      "domain": "Ground",
+      "manufacturer": "Diehl Defence",
+      "country_of_origin": "Germany",
+      "in_service_since": 2022,
+      "crew": null,
+      "unit_cost_usd": {"min": 150000000, "max": 200000000, "basis": "Per-battery cost, European defense reporting", "confidence": "medium"},
+      "additional_costs": {
+        "missile_usd": {"min": 400000, "max": 1000000, "note": "Per interceptor"}
+      },
+      "specifications": {
+        "missile_range_km": 40,
+        "launchers_per_battery": 3,
+        "missiles_per_battery": 24
+      },
+      "combat_notes": "Reported near-100% intercept success rate over more than 250 engagements in Ukraine since October 2022.",
+      "wikipedia": "https://en.wikipedia.org/wiki/IRIS-T_SL"
+    },
+    {
+      "id": "ua-ad-patriot",
+      "name": "MIM-104 Patriot (PAC-3 MSE)",
+      "category": "Long-Range Air Defense System",
+      "comparison_group": "air_defense_long",
+      "domain": "Ground",
+      "manufacturer": "Raytheon (system) / Lockheed Martin (PAC-3 MSE interceptor)",
+      "country_of_origin": "United States",
+      "in_service_since": 1981,
+      "crew": null,
+      "unit_cost_usd": {
+        "min": 1090000000,
+        "max": 2500000000,
+        "basis": "Cost per battery: ~$1.09B domestic (CSIS/CRS estimate) up to ~$2.5B for export configurations",
+        "confidence": "medium"
+      },
+      "additional_costs": {
+        "pac3_mse_interceptor_usd": {
+          "min": 4000000,
+          "max": 4200000,
+          "note": "Cost per interceptor missile, purchased separately and repeatedly"
+        }
+      },
+      "specifications": {
+        "interceptor_range_km": 70,
+        "targets": "Ballistic missiles, cruise missiles, aircraft, drones"
+      },
+      "combat_notes": "Shields Kyiv and other cities from Russian ballistic missile strikes; a $4M interceptor is often used against $20-50k drones.",
+      "wikipedia": "https://en.wikipedia.org/wiki/MIM-104_Patriot"
+    },
+    {
+      "id": "ua-uav-tb2",
+      "name": "Bayraktar TB2",
+      "category": "Reconnaissance / Strike UAV",
+      "comparison_group": "reconnaissance_uav",
+      "domain": "Unmanned Aerial",
+      "manufacturer": "Baykar",
+      "country_of_origin": "Turkey",
+      "in_service_since": 2014,
+      "crew": 0,
+      "unit_cost_usd": {"min": 1000000, "max": 5000000, "basis": "Widely varying by contract; commonly cited near $5M for a full configuration", "confidence": "low"},
+      "specifications": {
+        "endurance_hours": 27,
+        "altitude_ceiling_m": 8239,
+        "armament": "Up to 4x Roketsan MAM-L / MAM-C laser-guided smart munitions"
+      },
+      "combat_notes": "Became a cultural symbol of Ukrainian resistance early in the war; effectiveness declined as Russian air defenses matured.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Bayraktar_TB2"
+    },
+    {
+      "id": "ua-um-fp1",
+      "name": "Fire Point FP-1",
+      "category": "Long-Range One-Way Attack Drone",
+      "comparison_group": "long_range_strike_drone",
+      "domain": "Unmanned Aerial",
+      "manufacturer": "Fire Point",
+      "country_of_origin": "Ukraine",
+      "in_service_since": 2024,
+      "crew": 0,
+      "unit_cost_usd": {"min": 55000, "max": 55000, "basis": "Manufacturer-reported figure", "confidence": "medium"},
+      "specifications": {
+        "range_km": 1600,
+        "warhead_kg_min": 60,
+        "warhead_kg_max": 120,
+        "guidance": "Inertial + satellite navigation with ECCM"
+      },
+      "combat_notes": "Domestically-produced long-range strike drone used to hit refineries and military sites deep inside Russia.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Fire_Point_FP-1"
+    },
+    {
+      "id": "ua-navy-magura-v5",
+      "name": "Magura V5",
+      "category": "Unmanned Surface Vessel",
+      "comparison_group": "naval_drone",
+      "domain": "Unmanned Naval",
+      "manufacturer": "Ukraine Main Directorate of Intelligence (HUR)",
+      "country_of_origin": "Ukraine",
+      "in_service_since": 2023,
+      "crew": 0,
+      "unit_cost_usd": {"min": 250000, "max": 300000, "basis": "USNI / open-source estimates", "confidence": "medium"},
+      "specifications": {
+        "length_m": 5.5,
+        "displacement_kg": 1000,
+        "range_km": 800,
+        "max_speed_kmh": 78,
+        "payload_kg_explosive": 300,
+        "alternate_armament": "Modified R-73 air-to-air missile (\"Sea Dragon\")"
+      },
+      "combat_notes": "First uncrewed surface vessel to sink a warship in combat (Feb 2024); credited with 29+ Russian vessels sunk/damaged plus 2 aircraft and 1 helicopter shot down, driving the Black Sea Fleet from Crimea.",
+      "wikipedia": "https://en.wikipedia.org/wiki/MAGURA_V5"
+    },
+    {
+      "id": "ua-air-f16am",
+      "name": "F-16AM/BM Fighting Falcon",
+      "category": "Fighter Aircraft",
+      "comparison_group": "fighter_aircraft",
+      "domain": "Air",
+      "manufacturer": "Lockheed Martin (donated by Denmark, Netherlands, Norway, Belgium)",
+      "country_of_origin": "United States",
+      "in_service_since": 2024,
+      "crew": 1,
+      "unit_cost_usd": {"min": 18000000, "max": 30000000, "basis": "Estimated secondhand transfer value; new-build Block 70 runs $60-80M", "confidence": "low"},
+      "specifications": {
+        "max_speed_mach": 2.0,
+        "armament": "M61A1 20mm cannon, AIM-9/AIM-120 missiles, JDAM-ER, Storm Shadow/SCALP"
+      },
+      "combat_notes": "Became Ukraine's principal fighter by mid-2026, replacing the aging MiG-29/Su-27 fleet; scored its first confirmed air-to-air kill (a Su-35) in July 2026.",
+      "wikipedia": "https://en.wikipedia.org/wiki/General_Dynamics_F-16_Fighting_Falcon"
+    },
+    {
+      "id": "ua-air-mig29",
+      "name": "MiG-29",
+      "category": "Fighter Aircraft",
+      "comparison_group": "fighter_aircraft",
+      "domain": "Air",
+      "manufacturer": "Mikoyan (Soviet-era design)",
+      "country_of_origin": "USSR legacy / donated by Poland, Slovakia",
+      "in_service_since": 1982,
+      "crew": 1,
+      "unit_cost_usd": {"min": 11000000, "max": 20000000, "basis": "General open-source estimate for legacy airframes", "confidence": "low"},
+      "specifications": {
+        "max_speed_mach": 2.25,
+        "armament": "30mm cannon + R-27/R-73 missiles; modified to carry AGM-88 HARM and JDAM-ER"
+      },
+      "combat_notes": "Long-time backbone of the Ukrainian Air Force; still flying combat sorties (incl. GBU-39/HAMMER glide bombs) alongside the newer F-16 fleet as of mid-2026.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Mikoyan_MiG-29"
+    },
+    {
+      "id": "ua-air-su25",
+      "name": "Su-25 Grach",
+      "category": "Ground-Attack Aircraft",
+      "comparison_group": "ground_attack_aircraft",
+      "domain": "Air",
+      "manufacturer": "Sukhoi (Soviet-era design)",
+      "country_of_origin": "USSR legacy",
+      "in_service_since": 1981,
+      "crew": 1,
+      "unit_cost_usd": {"min": 10000000, "max": 12000000, "basis": "General open-source estimate", "confidence": "low"},
+      "specifications": {
+        "max_speed_kmh": 950,
+        "armament": "30mm twin-barrel cannon + rockets, bombs, guided munitions",
+        "armor": "Titanium armored 'bathtub' cockpit"
+      },
+      "combat_notes": "Flown by Ukraine from shared Cold War stocks for frontline close air support.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Sukhoi_Su-25"
+    },
+    {
+      "id": "ua-heli-mi24",
+      "name": "Mi-24/Mi-35 Hind",
+      "category": "Attack Helicopter",
+      "comparison_group": "attack_helicopter",
+      "domain": "Air",
+      "manufacturer": "Mil Moscow Helicopter Plant (Soviet-era design, refurbished/donated)",
+      "country_of_origin": "USSR legacy / donated by Czech Republic, Poland, Latvia, Lithuania, Croatia",
+      "in_service_since": 1972,
+      "crew": 3,
+      "troop_capacity": 8,
+      "unit_cost_usd": {"min": 8000000, "max": 16000000, "basis": "Modernized/refurbished unit estimates", "confidence": "low"},
+      "specifications": {
+        "max_speed_kmh": 330,
+        "range_km": 450
+      },
+      "combat_notes": "Nicknamed the 'flying tank'; still flown alongside Mi-8 in Ukraine's army aviation.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Mil_Mi-24"
+    },
+    {
+      "id": "ua-heli-mi8",
+      "name": "Mi-8",
+      "category": "Transport Helicopter",
+      "comparison_group": "transport_helicopter",
+      "domain": "Air",
+      "manufacturer": "Mil Moscow Helicopter Plant (Soviet-era design)",
+      "country_of_origin": "USSR legacy",
+      "in_service_since": 1967,
+      "crew": 3,
+      "troop_capacity": 24,
+      "unit_cost_usd": {"min": 10000000, "max": 15000000, "basis": "General open-source estimate for modernized variants", "confidence": "low"},
+      "specifications": {
+        "max_speed_kmh": 250,
+        "range_km": 800,
+        "roles": "Troop transport, medevac, gunship configurations"
+      },
+      "combat_notes": "Overhauled and modernized Soviet-era Mi-8s form the core of Ukrainian Army Aviation's transport fleet, supplemented by donated examples.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Mil_Mi-8"
+    },
+    {
+      "id": "ua-atgm-javelin",
+      "name": "FGM-148 Javelin",
+      "category": "Anti-Tank Guided Missile",
+      "comparison_group": "atgm",
+      "domain": "Ground",
+      "manufacturer": "Raytheon / Lockheed Martin (Javelin Joint Venture)",
+      "country_of_origin": "United States",
+      "in_service_since": 1996,
+      "crew": null,
+      "unit_cost_usd": {"min": 175000, "max": 217000, "basis": "Cost per missile round, US budget documents", "confidence": "medium"},
+      "additional_costs": {
+        "command_launch_unit_usd": {
+          "min": 126000,
+          "max": 350000,
+          "note": "Reusable launcher (CLU), purchased separately"
+        }
+      },
+      "specifications": {
+        "range_km": 2.5,
+        "range_km_fgm148f": 4.75,
+        "guidance": "Infrared homing, fire-and-forget, top-attack",
+        "warhead_kg": 8
+      },
+      "combat_notes": "Became an early symbol of Ukrainian resistance (\"Saint Javelin\"); highly effective against Russian armor in the war's opening phase.",
+      "wikipedia": "https://en.wikipedia.org/wiki/FGM-148_Javelin"
+    },
+    {
+      "id": "ua-atgm-nlaw",
+      "name": "NLAW",
+      "category": "Anti-Tank Guided Missile",
+      "comparison_group": "atgm",
+      "domain": "Ground",
+      "manufacturer": "Saab Bofors Dynamics / Thales Air Defence",
+      "country_of_origin": "Sweden / United Kingdom",
+      "in_service_since": 2009,
+      "crew": null,
+      "unit_cost_usd": {"min": 30000, "max": 40000, "basis": "General open-source estimate, per missile", "confidence": "low"},
+      "specifications": {
+        "range_m_min": 20,
+        "range_m_max": 800,
+        "guidance": "Predicted Line of Sight (PLOS) with overfly-top-attack mode",
+        "penetration_mm_rha": 500
+      },
+      "combat_notes": "Lightweight, disposable, one-man-portable launcher; UK deliveries beginning January 2022 made it one of the earliest and most iconic anti-tank weapons of the war.",
+      "wikipedia": "https://en.wikipedia.org/wiki/NLAW"
+    },
+    {
+      "id": "ua-navy-adaclass",
+      "name": "Ada-class corvette (Hetman Ivan Mazepa)",
+      "category": "Corvette",
+      "comparison_group": "naval_surface_combatant",
+      "domain": "Naval",
+      "manufacturer": "Sedef Shipbuilding, Turkey",
+      "country_of_origin": "Turkey (built for Ukraine)",
+      "in_service_since": 2025,
+      "crew": 106,
+      "unit_cost_usd": {"min": 260000000, "max": 270000000, "basis": "General open-source program cost estimate", "confidence": "low"},
+      "specifications": {
+        "displacement_tons": 2400,
+        "length_m": 99.4,
+        "max_speed_knots": 29,
+        "armament": "Harpoon anti-ship missiles, 76mm gun, torpedoes, VLS for future SAM integration"
+      },
+      "combat_notes": "Ukraine's first modern surface combatant, built in Turkey as the planned lead ship of a rebuilt Ukrainian Navy; a second hull is being completed domestically at Okean Shipyard.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Ada-class_corvette"
+    }
+  ]
+}

@@ -5,6 +5,7 @@
   "domain": "land",
   "echelon": "tactical",
   "group": "armor",
+  "comparison_group": "main_battle_tank",
   "distance_km_from_zero": 3,
   "operating_range_km": { "min_km": 1, "max_km": 7 },
   "band_id": "tactical",

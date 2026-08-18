@@ -1,46 +1,62 @@
 # Multi-Domain Warfare Digital Twin
 
-An interactive, illustrative cross-section of a modern multi-domain
-battlefield — deep rear to zero line, mirrored on two opposing sides, stacked
-across eight domain layers. Built as a teaching and briefing tool for UAV
-instructors, sales and defence procurement audiences.
+An interactive, illustrative cross-section of the Russo-Ukrainian war — deep
+rear to zero line, mirrored on Ukraine and Russia, stacked across eight
+domain layers. Built as a teaching and briefing tool for UAV instructors,
+sales and defence procurement audiences.
 
 > **This is a composite teaching model, not a map.** It is built from
-> open-source doctrine, publicly reported equipment characteristics and generic
-> force-structure patterns. It does not depict real current unit positions.
-> Named systems appear as representative examples that make a category
-> concrete. The disclaimer is stated in the app's own About panel.
+> open-source doctrine, publicly reported equipment characteristics, and two
+> user-supplied equipment catalogs. It does not depict real current unit
+> positions, troop dispositions, or order of battle — named systems are real,
+> currently-fielded equipment reported in this war, but where each sits on
+> the map is a representative placement within a distance band, not a
+> measured position. The disclaimer is stated in the app's own About panel.
 
 ## Running it
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173
-npm run build      # production build to dist/
-npm run preview    # serve the production build
+npm run dev              # http://localhost:5173
+npm run build            # production build to dist/, multi-chunk
+npm run build:standalone # single-file build for publishing as a static artifact
+npm run preview          # serve the production build
 ```
 
 Open `#bench` (e.g. `http://localhost:5173/#bench`) for the renderer
 head-to-head that settled the layered-DOM vs. WebGL question. See
-[docs/DECISIONS.md](docs/DECISIONS.md) for the numbers and the reasoning.
+[docs/DECISIONS.md](docs/DECISIONS.md) for the numbers and the reasoning, and
+[docs/BACKLOG.md](docs/BACKLOG.md) for what's flagged but not yet resolved
+(most notably: real photos/video are blocked in this environment and need
+files supplied directly — see the backlog for why).
+
+**Public URL:** pushes to this branch auto-build and deploy to GitHub Pages
+via `.github/workflows/deploy-pages.yml`. One-time setup if not already done:
+repo Settings → Pages → Source → "GitHub Actions".
 
 ## What's here
 
-Build-sequence steps 1, 2, 4 and 5 from the master prompt, on the four assets
-that shipped with the scaffold. Step 3 (the breadth pass across every category)
-is deliberately not done — the mechanics get proven first, then categories go
-in one at a time.
-
-- Scrollable oblique cross-section. Horizontal scroll moves toward and through
-  the zero line into the opposing side; vertical scroll moves between domain
-  layers. A persistent ruler labels distance independently per side.
-- Every asset, band, domain, connection and doctrine marker comes from `data/`.
-  Nothing about the battlefield is hardcoded in a component.
-- Click any asset for the full detail panel: role, characteristics, employment,
-  what changed versus traditional warfare, dependencies, imagery and sources —
-  with unsourced claims flagged as unverified rather than presented as fact.
+- Scrollable cross-section. Horizontal scroll moves toward and through the
+  zero line into the opposing side; vertical scroll moves between domain
+  layers. A single persistent ruler labels distance independently per side —
+  every node's screen position matches its true distance, in every lane.
+- Every asset, band, domain, connection, doctrine marker, and equipment
+  catalog entry comes from `data/`. Nothing about the battlefield is
+  hardcoded in a component.
+- Click any asset for the full detail panel: a guaranteed cost tile plus 3
+  comparable key facts, role, characteristics, employment, what changed
+  versus traditional warfare, notable sourced moments, dependencies,
+  imagery and sources — with unsourced claims flagged as unverified.
+- **System swap**: an asset tagged with a `comparison_group` (14 of 27) can
+  show any same-side, same-role system from `data/catalog/` instead — e.g.
+  Russia's armor slot showing T-90M instead of the default T-72B3 — without
+  touching its position, connections, or role narrative.
+- Editable distance bands and per-asset placement, both live and persisted
+  to this browser (no backend yet — see the backlog).
+- Category show/hide across 18 groups, independent of the domain layers.
 - Dependency overlay with a distinct stroke per connection type, direction
-  arrows, per-edge descriptions on hover, and filtering by type.
+  arrows, per-edge descriptions on hover, and hover-to-isolate a node's
+  own edges when several converge on one hub.
 - Pending-target handling: a connection may point at an asset that does not
   exist yet. Both documented behaviours are implemented and switchable.
 - Data health panel listing everything the loader flagged — a working checklist

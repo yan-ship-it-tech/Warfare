@@ -5,6 +5,7 @@
   "domain": "land",
   "echelon": "tactical",
   "group": "artillery",
+  "comparison_group": "towed_artillery",
   "distance_km_from_zero": 12,
   "operating_range_km": { "min_km": 8, "max_km": 22 },
   "band_id": "op_near",

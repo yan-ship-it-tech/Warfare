@@ -5,6 +5,7 @@
   "domain": "land",
   "echelon": "operational",
   "group": "artillery",
+  "comparison_group": "mlrs_heavy",
   "distance_km_from_zero": 25,
   "operating_range_km": { "min_km": 15, "max_km": 70 },
   "band_id": "op_near",

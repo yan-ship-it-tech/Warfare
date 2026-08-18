@@ -5,6 +5,7 @@
   "domain": "sea",
   "echelon": "operational",
   "group": "naval",
+  "comparison_group": "naval_drone",
   "distance_km_from_zero": 120,
   "operating_range_km": { "min_km": 0, "max_km": 800 },
   "band_id": "op_deep",
@@ -38,6 +39,17 @@
     "animation_id": "usv_strike_run",
     "description": "On select: USV accelerates toward a point target, brief impact vignette."
   },
+
+  "notable_events": [
+    {
+      "date": "2024-02-01",
+      "title": "First uncrewed surface vessel to sink a warship in combat",
+      "description": "A Magura V5 swarm attack sank the Russian patrol ship Sergey Kotov in the Black Sea near Kerch Strait — the first confirmed sinking of a crewed warship by an uncrewed surface vessel in naval history.",
+      "sources": [
+        { "label": "Kyiv Post — Ukraine-Built MAGURA V5 Naval Drones Sink Russian Patrol Ship Sergey Kotov", "url": "https://www.kyivpost.com/post/29016" }
+      ]
+    }
+  ],
 
   "connections": [
     { "target_id": "side_a-c2-comms-starlink", "type": "data_c2", "description": "Carries the remote operator control link beyond radio horizon." },

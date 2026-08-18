@@ -315,3 +315,90 @@ stable URL that redeploys in place on every future publish call rather than
 minting a new one. This is separate from the git branch, which stays the
 source of truth for the code; the artifact is a build output; there is no
 back-guessing meant to be applied to it directly.
+
+---
+
+# Pass 3 — access, real bugs, catalog-driven system swap, sourcing sanity check
+
+Direct response to a review pass: the published Artifact link wasn't
+reachable, several concrete bugs were reported, and two equipment catalogs
+were supplied as ground truth for sanity-checking data and enabling a
+"swap this slot to a different real system" feature.
+
+## Access
+Sent the built single-file HTML directly (no link/login required) as an
+immediate unblock, and added `.github/workflows/deploy-pages.yml` for a real
+public URL independent of Claude account access — needs a one-time manual
+step (repo Settings → Pages → Source → "GitHub Actions") since this session
+has no API path to flip that toggle itself; auto-deploys on every push after
+that.
+
+## Real bugs fixed
+- **Oblique offset was breaking coordinates, not just decorating them.**
+  `laneObliqueOffsetPx` shifted actual node/ruler x-positions per lane
+  (previously 58px/lane, up to ~400px drift at the bottom lane) while the
+  ruler was only ever computed for the top lane — so a node's true distance
+  silently stopped matching its on-screen position, and each lane drew its
+  own offset zero-line segment (reading as a doubled zero line). Set to 0:
+  every lane now shares one horizontal mapping, so the ruler is correct for
+  every lane and there is exactly one zero line. The real oblique/elevated
+  view this was standing in for is backlog item #6 — done properly (via a
+  decorative-layer transform, never on coordinates the ruler depends on),
+  not as a coordinate hack.
+- **Doubled "0" tick labels** — each side's axis independently labelled its
+  own zero at the exact pixel the single "ZERO LINE" marker already covers.
+  Ticks now skip km=0; the one marker is unambiguous.
+- **Connection "duplicates" investigated and found to be a legibility
+  problem, not a data bug** — audited the actual edges programmatically:
+  no duplicate Starlink→Leleka or Starlink→Leopard edge exists. What's real
+  is that several distinct data_c2 edges render in the same color and can
+  converge on one hub node, making them hard to tell apart at a glance.
+  Fixed by extending the existing select-to-isolate fading to fire on hover
+  too, so previewing a node's own edges doesn't require committing to a
+  click. A proper curve-fan-out for edges that share an endpoint is backlog
+  item #8.
+- **FPV range was dated.** doctrine.md's "0–10 km, no relay" figure is a
+  real citation but describes radio-link FPVs specifically; fiber-optic
+  FPVs (2025–2026 reporting) run a practical ~20 km with fielded systems
+  already reaching 50 km and a claimed 65 km test spool. Kept the original
+  citation, relabeled it "radio FPV," and added a second sourced marker for
+  the fiber-optic envelope rather than silently overwriting a real citation
+  with a different technology's numbers.
+
+## Sides renamed to Ukraine / Russia
+Config-only change (`src/config/ui.ts`), exactly as designed in pass 1 —
+the data layer only ever knew `side_a`/`side_b`. Disclaimer copy adjusted to
+match: named systems are real, currently-fielded equipment reported in this
+specific war, not generic stand-ins, while placement stays representative
+rather than a measured position.
+
+## Band labels dropped "Tactical / Operational / Strategic"
+Direct response to "these things sometimes blur, so fixed ranges don't make
+sense there." Default band labels are now distance-only (`0–5 km`, `5–30
+km`, ...); `echelon` stays as internal metadata (still used for the
+info-level mismatch flag in Data health) but is no longer asserted as part
+of the primary label. Bands stay user-editable from pass 2.
+
+## Catalog-driven system swap
+`data/catalog/{russian,ukrainian}_military_equipment.json` are the supplied
+files, verbatim. `src/data/catalog.ts` indexes them by `comparison_group`
+and exposes `resolveAssetDisplay(asset, catalogEquipmentId)`: an asset
+tagged with a `comparison_group` (14 of 27 currently) gets a "Show this slot
+as" picker in its detail panel listing every same-side, same-role catalog
+entry. Picking one swaps the displayed name/category/manufacturer/cost/key
+facts (read straight from the catalog) and the map node's own label — but
+deliberately *not* the role narrative (short_role/employment_notes/
+contrast_vs_traditional), position, or connections, which stay the
+authored asset's own and are shown under a clear "written for the default
+system" banner. The swap is a local override, same mechanism as placement
+edits (`src/state/overridesState.tsx`), and composes with it independently
+apart from a shared "reset" button — see backlog item #7.
+
+## Cost figures reconciled against the catalogs
+Cross-checked every asset with a catalog counterpart. Most of this build's
+own estimates were already within the catalog's range; three were real
+misses and got corrected: T-72 and Orlan-10 had no cost figure at all
+(now $2.0–2.5M and $87–120K respectively, from the catalog); BM-21 Grad's
+estimate was too low ($310–390K → $500K–1M, matching the catalog). Patriot,
+M777, Leopard 2, HIMARS, Gepard, Lancet and Magura V5 were already
+consistent and left as authored.

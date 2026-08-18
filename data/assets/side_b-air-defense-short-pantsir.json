@@ -5,6 +5,7 @@
   "domain": "air",
   "echelon": "operational",
   "group": "air_defense",
+  "comparison_group": "air_defense_short",
   "distance_km_from_zero": 7,
   "operating_range_km": { "min_km": 2, "max_km": 20 },
   "band_id": "op_near",

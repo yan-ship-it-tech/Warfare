@@ -5,6 +5,8 @@ import type { PlacedNode } from "./projection";
 import { resolveIcon } from "../icons/registry";
 import { resolveVignette } from "./vignettes";
 import { DOMAIN_ACCENT, SIDE_ACCENT, SIDE_DIRECTION } from "../config/ui";
+import { resolveAssetDisplay } from "../data/catalog";
+import { useOverrides } from "../state/overridesState";
 
 interface Props {
   placed: PlacedNode;
@@ -31,7 +33,10 @@ export function AssetNode({
   const isStub = node.kind === "stub";
   const side = isStub ? node.stub.side : node.asset.side;
   const domain = isStub ? node.stub.domain : node.asset.domain;
-  const label = isStub ? node.stub.label : node.asset.name;
+  const overrides = useOverrides();
+  const swapId = isStub ? null : overrides.assetOverrides[node.asset.id]?.catalog_equipment_id;
+  const display = isStub ? null : resolveAssetDisplay(node.asset, swapId);
+  const label = isStub ? node.stub.label : (display?.name ?? node.asset.name);
   const km = isStub ? node.stub.distance_km_from_zero : node.asset.distance_km_from_zero;
   const category = isStub ? undefined : node.asset.category;
   const iconPath = isStub ? "" : node.asset.icon_image;
@@ -87,7 +92,7 @@ export function AssetNode({
       aria-label={
         isStub
           ? `${label} — pending, not yet built. Referenced by ${node.stub.referenced_by.length} asset(s).`
-          : `${label}, ${node.asset.category}, ${km} km from the zero line`
+          : `${label}, ${display?.category ?? node.asset.category}, ${km} km from the zero line${display?.isSwapped ? " (swapped from default)" : ""}`
       }
     >
       <span className="node__glyph">
@@ -102,13 +107,13 @@ export function AssetNode({
           <Icon className="node__svg" />
         )}
         {playing && <span className={`vignette vignette--${vignette.kind}`} aria-hidden="true" />}
+        {display?.isSwapped && <span className="node__swap-badge" title="Swapped from the default system">⇄</span>}
       </span>
 
       <span className="node__label">
         <span className="node__name">{label}</span>
         <span className="node__meta">
           {isStub ? "pending" : `${km} km`}
-          {!isStub && node.asset.representative_system ? " · repr." : ""}
         </span>
       </span>
 

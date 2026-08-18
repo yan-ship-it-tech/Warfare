@@ -5,6 +5,7 @@
   "domain": "land",
   "echelon": "tactical",
   "group": "armor",
+  "comparison_group": "main_battle_tank",
   "distance_km_from_zero": 4,
   "operating_range_km": { "min_km": 1, "max_km": 8 },
   "band_id": "tactical",
@@ -14,9 +15,9 @@
   "gallery_images": ["/gallery/t72-field.jpg"],
 
   "cost": {
-    "unit_cost_usd": null,
-    "display": "No clean unit price exists — most T-72B3s are Soviet-era hulls overhauled/modernized, not newly built. Export-market quotes for comparable variants run roughly $200K–$1M+ depending on modernization level.",
-    "confidence": "unknown"
+    "unit_cost_usd": 2250000,
+    "display": "~$2.0–2.5M per modernized/refurbished unit (general open-source estimate — most T-72B3s are Soviet-era hulls overhauled, not newly built, so this is directional rather than a confirmed transaction price)",
+    "confidence": "estimated"
   },
   "key_facts": [
     { "label": "Main armament", "value": "125mm smoothbore, autoloader" },
@@ -46,9 +47,8 @@
   ],
 
   "sources": [
-    { "label": "General open-source order-of-battle reporting on modernized T-72 variants in the Russo-Ukrainian war (spot-check specific figures before publishing)", "url": "" },
     { "label": "GlobalSecurity.org — T-72B3 Medium Tank", "url": "https://www.globalsecurity.org/military/world/russia/t-72b3.htm" },
-    { "label": "Cost figures are market/export estimates, not a confirmed production price — treat as directional only", "url": "" }
+    { "label": "User-supplied equipment catalog (Russian Military Equipment Reference Catalog), cross-referenced against Oryx loss tracking — cost figures are open-source estimates, not a confirmed production price", "url": "" }
   ],
   "editable": true
 }

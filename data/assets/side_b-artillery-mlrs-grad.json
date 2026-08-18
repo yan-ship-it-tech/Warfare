@@ -5,6 +5,7 @@
   "domain": "land",
   "echelon": "tactical",
   "group": "artillery",
+  "comparison_group": "mlrs_light",
   "distance_km_from_zero": 8,
   "operating_range_km": { "min_km": 5, "max_km": 20 },
   "band_id": "op_near",
@@ -14,9 +15,9 @@
   "gallery_images": [],
 
   "cost": {
-    "unit_cost_usd": 350000,
-    "display": "~$310–390K per launcher vehicle (2024 dollars); each 122mm rocket costs roughly $3,000",
-    "confidence": "reported"
+    "unit_cost_usd": 750000,
+    "display": "~$500K–1M per launcher vehicle (open-source estimate, wide range reflects Soviet-stock reactivation vs. newer-build pricing); each 122mm rocket costs roughly $3,000",
+    "confidence": "estimated"
   },
   "key_facts": [
     { "label": "Salvo", "value": "40 rockets, full salvo in ~20 seconds" },
@@ -46,7 +47,8 @@
 
   "sources": [
     { "label": "Forecast International — BM-21 122mm Multiple Launch Rocket System", "url": "https://www.forecastinternational.com/archive/disp_pdf.cfm?DACH_RECNO=1591" },
-    { "label": "GlobalSecurity.org — BM-21 122-mm Multiple Rocket Launcher", "url": "https://www.globalsecurity.org/military/world/russia/bm-21.htm" }
+    { "label": "GlobalSecurity.org — BM-21 122-mm Multiple Rocket Launcher", "url": "https://www.globalsecurity.org/military/world/russia/bm-21.htm" },
+    { "label": "User-supplied equipment catalog (Russian Military Equipment Reference Catalog) — cost estimate", "url": "" }
   ],
   "editable": true
 }

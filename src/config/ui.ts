@@ -6,19 +6,22 @@
 import type { Side } from "../types";
 
 /**
- * Side labels are deliberately generic. The data layer only ever knows
- * "side_a" / "side_b"; renaming is a config change here, not a data migration.
+ * The data layer only ever knows "side_a" / "side_b" — renaming is a config
+ * change here, not a data migration. Named for this specific war rather than
+ * kept generic, per explicit direction: side_a is Ukraine (and the systems
+ * it fields — domestic production plus Western-donated equipment), side_b is
+ * Russia. Every asset's own `side` field already lines up with this.
  */
 export const SIDE_LABELS: Record<Side, { short: string; long: string; note: string }> = {
   side_a: {
-    short: "Side A",
-    long: "Side A",
-    note: "Representative equipment set: Western-supplied systems (Patriot, M777, Leopard 2).",
+    short: "Ukraine",
+    long: "Ukraine",
+    note: "Domestic production (Bohdana, Fire Point FP-1, Magura V5, ...) plus Western-donated equipment (Patriot, HIMARS, Leopard 2, ...).",
   },
   side_b: {
-    short: "Side B",
-    long: "Side B",
-    note: "Representative equipment set: Russian systems (Lancet, T-72, Orlan).",
+    short: "Russia",
+    long: "Russia",
+    note: "Russian-produced and Soviet-legacy equipment (Lancet, T-72/T-90, Orlan, Geran-2, ...).",
   },
 };
 
@@ -53,10 +56,18 @@ export const VIEW = {
   zeroGutterPx: 132,
   /** Vertical spacing between domain lanes. */
   laneHeightPx: 176,
-  /** Horizontal drift per lane going down — this is what makes the stack read
-   *  as an oblique cross-section. Applied as a discrete per-lane offset rather
-   *  than a CSS skew on the scene, so icons and hit-boxes stay undistorted. */
-  laneObliqueOffsetPx: 58,
+  /** Was a per-lane horizontal drift meant to read as an oblique cross-section
+   *  — removed. It offset actual node/ruler coordinates rather than just
+   *  decoration, so a node's true distance silently stopped matching its
+   *  on-screen position the deeper its lane sat (up to ~400px off at the
+   *  bottom lane), and produced a visually doubled zero line (each lane drew
+   *  its own offset segment). Correctness wins: 0 means every lane's zero
+   *  line is the same vertical line and every node sits exactly under its
+   *  true ruler tick, in every lane. A real oblique/elevated-viewpoint read
+   *  is still wanted (see docs/DECISIONS.md backlog) but belongs on a
+   *  decorative layer via a CSS 3D transform, never on coordinates that the
+   *  ruler and the detail panel both have to agree with. */
+  laneObliqueOffsetPx: 0,
   /** Height reserved for the sticky ruler. Fixed rather than measured so the
    *  domain rail can align to it without a layout read on every scroll. */
   rulerHeightPx: 116,
@@ -95,8 +106,8 @@ export const CONNECTION_STYLE: Record<
 export const DISCLAIMER = {
   headline: "Composite illustrative model — not a live or historical map.",
   body: [
-    "This is a teaching and briefing tool built from open-source doctrine, publicly reported equipment characteristics, and generic force-structure patterns. It does not depict real current unit positions, and no placement here should be read as intelligence.",
-    "Named systems (Patriot, M777, Lancet, T-72) appear as representative examples that make a category concrete. Distances are representative placements within a band, not measured positions.",
+    "This is a teaching and briefing tool about the Russo-Ukrainian war, built from open-source equipment catalogs, doctrine reporting, and publicly reported combat use. It does not depict real current unit positions, troop dispositions, or order of battle, and no placement here should be read as intelligence.",
+    "Systems shown (Patriot, HIMARS, Bohdana, Lancet, T-72, Geran-2, ...) are real, currently-fielded equipment reported in use in this war — not generic stand-ins — but where each one sits on the map is a representative placement within a distance band, not a measured position of an actual unit.",
     "Where public sourcing is thin, the asset says so in its own source notes rather than presenting a guess as fact. Assets carrying no usable citation are flagged in the detail panel and in Data health.",
   ],
 };

@@ -5,6 +5,7 @@
   "domain": "air",
   "echelon": "tactical",
   "group": "uav",
+  "comparison_group": "reconnaissance_uav",
   "distance_km_from_zero": 4,
   "operating_range_km": { "min_km": 1, "max_km": 5 },
   "band_id": "tactical",
@@ -14,9 +15,9 @@
   "gallery_images": ["/gallery/orlan-10-field.jpg"],
 
   "cost": {
-    "unit_cost_usd": null,
-    "display": "No confirmed unit price — widely reported as inexpensive relative to Western equivalents, built partly from commercial off-the-shelf components",
-    "confidence": "unknown"
+    "unit_cost_usd": 100000,
+    "display": "~$87–120K per aircraft (open-source estimate); a full system — 2 aircraft plus ground control station — runs closer to $150K",
+    "confidence": "estimated"
   },
   "key_facts": [
     { "label": "Endurance", "value": "Up to ~16 hours airborne" },
@@ -42,7 +43,8 @@
 
   "sources": [
     { "label": "Wikipedia — STC Orlan-10", "url": "https://en.wikipedia.org/wiki/Orlan-10" },
-    { "label": "Combat Operators — Orlan-10: A UAV for reconnaissance and electronic warfare", "url": "https://combatoperators.com/vehicles/air/uav/orlan-10/" }
+    { "label": "Combat Operators — Orlan-10: A UAV for reconnaissance and electronic warfare", "url": "https://combatoperators.com/vehicles/air/uav/orlan-10/" },
+    { "label": "User-supplied equipment catalog (Russian Military Equipment Reference Catalog) — cost estimate", "url": "" }
   ],
   "editable": true
 }

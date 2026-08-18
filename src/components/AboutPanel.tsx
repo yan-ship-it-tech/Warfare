@@ -35,14 +35,18 @@ export function AboutPanel({ world }: { world: WorldModel }) {
 
         <h3>Distance bands</h3>
         <p>
-          The five echelon bands ship from <code>data/bands.json</code> as the coarse structure, and are
-          editable live from the "Distance bands" button in the toolbar — cutoffs drift every few months
-          as the front and doctrine change, so that's a form now, not a code edit. Every asset's band is
-          computed from its distance against whichever bands are current, so moving a cutoff reshuffles
-          who's tactical vs. operational immediately. Edits are saved to this browser only (see "What's
-          not built yet" below). The narrower <em>doctrine depth</em> overlay on the ruler is separate
-          and fixed as a citation: individually-sourced findings (FPV strike envelope, the ~30 km
-          drone-dense corridor, launch team stand-off) drawn on top rather than replacing the bands.
+          The five bands ship from <code>data/bands.json</code> labelled by distance alone — 0–5 km,
+          5–30 km, and so on, deliberately not "Tactical / Operational / Strategic." Real employment
+          doesn't respect clean doctrinal boundaries at a fixed range (a HIMARS launch at 25 km isn't
+          suddenly a different kind of war than a howitzer at 12 km), so pinning a doctrine word to a
+          fixed cutoff would assert more precision than is real. They're editable live from the "Distance
+          bands" button in the toolbar — cutoffs drift every few months as the front changes, so that's a
+          form now, not a code edit. Every asset's band is computed from its distance against whichever
+          bands are current, so moving a cutoff reshuffles the picture immediately. Edits save to this
+          browser only (see "What's not built yet" below). The narrower <em>doctrine depth</em> overlay
+          on the ruler is separate and fixed as a citation: individually-sourced findings (the FPV
+          envelopes, the ~30 km drone-dense corridor, launch team stand-off) drawn on top rather than
+          replacing the bands.
         </p>
         {world.lowerSky && (
           <>
@@ -89,14 +93,18 @@ export function AboutPanel({ world }: { world: WorldModel }) {
 
         <h3>What's not built yet</h3>
         <ul>
-          <li>A backend — band and placement edits persist to this browser's local storage only, not
-            shared across devices or people. Wiring these onto real storage is the natural next step.</li>
+          <li>Real photos, video, or a photorealistic map background — this environment can't fetch
+            binary images from the open web. Unblocks if reference files are supplied directly.</li>
+          <li>A backend — band, placement, and system-swap edits persist to this browser's local storage
+            only, not shared across devices or people.</li>
           <li>Drag-to-reposition and full inline editing of asset text/images from the map itself.</li>
           <li>Per-asset reactive vignettes beyond the four already wired up — everything else falls
             back to a neutral pulse.</li>
-          <li>The remaining categories in the master brief's breadth pass, and a weather/conditions
-            toggle (mud, rain/wind, heat) affecting movement and drone performance.</li>
+          <li>The remaining catalog systems as full map assets (currently swap-only options for an
+            existing slot), the rest of the master brief's category breadth pass, "notable moments"
+            beyond the 3 seeded so far, and a weather/conditions toggle.</li>
         </ul>
+        <p className="about__foot">Full list, including things decided against for now: docs/BACKLOG.md in the repository.</p>
 
         <h3>Sides</h3>
         <ul>

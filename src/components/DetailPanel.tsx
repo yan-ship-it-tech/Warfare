@@ -17,6 +17,7 @@ import { resolveIcon } from "../icons/registry";
 import { resolveVignette } from "../scene/vignettes";
 import { useViewState } from "../state/viewState";
 import { useOverrides } from "../state/overridesState";
+import { catalogSiblings, findCatalogEntry, resolveAssetDisplay } from "../data/catalog";
 
 interface Props {
   world: WorldModel;
@@ -123,6 +124,10 @@ function AssetDetail({
   const citable = (asset.sources ?? []).filter((s) => s.url && s.url.trim() !== "");
   const uncited = (asset.sources ?? []).filter((s) => !s.url || s.url.trim() === "");
 
+  const overrides = useOverrides();
+  const swapId = overrides.assetOverrides[asset.id]?.catalog_equipment_id;
+  const display = resolveAssetDisplay(asset, swapId);
+
   return (
     <div className="detail__body">
       <header className="detail__header" style={{ ["--accent" as string]: accent }}>
@@ -137,36 +142,65 @@ function AssetDetail({
             <span className="dot">·</span>
             {group?.label ?? asset.group}
           </p>
-          <h2>{asset.name}</h2>
+          <h2>{display.name}</h2>
           <p className="detail__category">
-            {asset.category}
-            <span className="dot">·</span>
-            {asset.representative_system}
+            {display.category}
+            {display.manufacturer && (
+              <>
+                <span className="dot">·</span>
+                {display.manufacturer}
+              </>
+            )}
           </p>
         </div>
       </header>
 
+      <SwapPicker asset={asset} />
+
+      {display.isSwapped && (
+        <p className="swap-banner">
+          Showing <b>{display.name}</b> from the catalog in this slot. The role notes below (role,
+          employment, contrast) were written for <b>{asset.representative_system}</b> and describe the
+          category in general — they weren't rewritten per system.
+          {display.wikipedia && (
+            <>
+              {" "}
+              <a href={display.wikipedia} target="_blank" rel="noreferrer noopener">
+                Wikipedia →
+              </a>
+            </>
+          )}
+        </p>
+      )}
+
       {/* The three facts every asset carries in comparable form — cost is the
-          one guaranteed tile, the other two are author-chosen per asset. */}
+          one guaranteed tile, the other two are author-chosen per asset (or,
+          when swapped, read from the catalog entry's own specifications). */}
       <div className="key-facts">
         <div className="key-facts__tile key-facts__tile--cost">
           <span className="k">Unit cost</span>
-          <span className={`v${asset.cost?.confidence === "unknown" ? " v--unknown" : ""}`}>
-            {asset.cost?.display ?? "Not recorded"}
+          <span className={`v${display.cost?.confidence === "unknown" ? " v--unknown" : ""}`}>
+            {display.cost?.display ?? "Not recorded"}
           </span>
-          {asset.cost && asset.cost.confidence !== "reported" && (
-            <span className={`tag tag--${asset.cost.confidence === "unknown" ? "warn" : "info"}`}>
-              {asset.cost.confidence}
+          {display.cost && display.cost.confidence !== "reported" && (
+            <span className={`tag tag--${display.cost.confidence === "unknown" ? "warn" : "info"}`}>
+              {display.cost.confidence}
             </span>
           )}
         </div>
-        {(asset.key_facts ?? []).map((f, i) => (
+        {(display.key_facts ?? []).map((f, i) => (
           <div className="key-facts__tile" key={i}>
             <span className="k">{f.label}</span>
             <span className="v">{f.value}</span>
           </div>
         ))}
       </div>
+
+      {display.isSwapped && display.combat_notes && (
+        <p className="detail__note">
+          <b>Catalog note:</b> {display.combat_notes}
+        </p>
+      )}
 
       <PlacementRow asset={asset} band={band} />
 
@@ -194,6 +228,39 @@ function AssetDetail({
         <section className="detail__section detail__section--contrast">
           <h3>What changed vs. traditional warfare</h3>
           <p>{asset.contrast_vs_traditional}</p>
+        </section>
+      )}
+
+      {asset.notable_events && asset.notable_events.length > 0 && (
+        <section className="detail__section">
+          <h3>Notable moments</h3>
+          <ul className="notable-events">
+            {asset.notable_events.map((ev, i) => (
+              <li key={i}>
+                <div className="notable-events__head">
+                  <span className="notable-events__date">{ev.date}</span>
+                  <span className="notable-events__title">{ev.title}</span>
+                </div>
+                <p>{ev.description}</p>
+                {(ev.sources ?? []).length > 0 && (
+                  <p className="notable-events__sources">
+                    {ev.sources.map((s, j) => (
+                      <span key={j}>
+                        {j > 0 && " · "}
+                        {s.url ? (
+                          <a href={s.url} target="_blank" rel="noreferrer noopener">
+                            {s.label}
+                          </a>
+                        ) : (
+                          s.label
+                        )}
+                      </span>
+                    ))}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 
@@ -258,6 +325,46 @@ function AssetDetail({
 }
 
 /**
+ * "Change this slot to a different real system" — e.g. Russia's armor slot
+ * swapping T-72B3 for T-90M or T-80BVM. Only renders when the asset has a
+ * `comparison_group` and the catalog actually has more than one option for
+ * it; otherwise there's nothing to swap to. The default option is always
+ * the asset's own authored system, explicitly labeled so it's clear what
+ * "reset" means.
+ */
+function SwapPicker({ asset }: { asset: Asset }) {
+  const overrides = useOverrides();
+  if (!asset.comparison_group) return null;
+  const seed = findCatalogEntry(asset.side, asset.comparison_group);
+  if (!seed) return null;
+  const siblings = catalogSiblings(seed);
+  if (siblings.length <= 1) return null;
+
+  const current = overrides.assetOverrides[asset.id]?.catalog_equipment_id ?? "";
+
+  return (
+    <div className="swap-picker">
+      <label>
+        Show this slot as
+        <select
+          value={current}
+          onChange={(e) =>
+            overrides.setAssetOverride(asset.id, { catalog_equipment_id: e.target.value || null })
+          }
+        >
+          <option value="">{asset.representative_system} (default)</option>
+          {siblings.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+      </label>
+    </div>
+  );
+}
+
+/**
  * Distance/band readout plus the placement editor. Band is never stored here
  * — it's recomputed from whatever bands are current, so editing the distance
  * (or editing a band cutoff elsewhere) immediately shows the correct band
@@ -269,7 +376,13 @@ function PlacementRow({ asset, band }: { asset: Asset; band: ReturnType<typeof r
   const [distance, setDistance] = useState(String(asset.distance_km_from_zero));
   const [rangeMin, setRangeMin] = useState(String(asset.operating_range_km?.min_km ?? ""));
   const [rangeMax, setRangeMax] = useState(String(asset.operating_range_km?.max_km ?? ""));
-  const isOverridden = overrides.hasAssetOverride(asset.id);
+  // Deliberately narrower than overrides.hasAssetOverride: that flag also
+  // goes true from a catalog swap (a different kind of local edit, shown by
+  // its own banner), and this tag is specifically about distance/range.
+  const placementOverride = overrides.assetOverrides[asset.id];
+  const isOverridden =
+    placementOverride?.distance_km_from_zero !== undefined ||
+    placementOverride?.operating_range_km !== undefined;
 
   const save = () => {
     const km = Number(distance);

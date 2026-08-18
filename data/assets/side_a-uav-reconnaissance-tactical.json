@@ -5,6 +5,7 @@
   "domain": "air",
   "echelon": "tactical",
   "group": "uav",
+  "comparison_group": "reconnaissance_uav",
   "distance_km_from_zero": 4,
   "operating_range_km": { "min_km": 1, "max_km": 5 },
   "band_id": "tactical",

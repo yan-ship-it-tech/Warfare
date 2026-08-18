@@ -3,12 +3,21 @@
   "markers": [
     {
       "id": "fpv-strike-envelope",
-      "label": "FPV strike envelope",
+      "label": "Radio FPV strike envelope",
       "min_km": 0,
       "max_km": 10,
       "side": "both",
       "source_tag": "DW",
-      "note": "Standard FPV combat radius without a relay. A mother-ship relay extends this to 60–70 km (doctrine §5)."
+      "note": "Standard radio-link FPV combat radius without a relay — the older, still-common baseline. Fiber-optic FPVs go well beyond this; see the separate marker."
+    },
+    {
+      "id": "fiber-fpv-envelope",
+      "label": "Fiber-optic FPV envelope",
+      "min_km": 0,
+      "max_km": 20,
+      "side": "both",
+      "source_tag": "web: Militarnyi, UNITED24, TWZ (2025-2026 reporting)",
+      "note": "Jam-proof tethered FPVs now field at ~20 km as a practical working range on both sides (cable strength is the limit, not signal). Extended coils are already fielded well beyond that — reported up to 50 km (Ukraine's Ptashka, and separately Russian systems) and a claimed 65 km test spool — reaching well past the old radio-FPV envelope and into rear logistics and even cities behind the line."
     },
     {
       "id": "close-recon",
