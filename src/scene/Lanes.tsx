@@ -5,6 +5,7 @@ import { Fragment } from "react";
 import type { DomainLayer, Side } from "../types";
 import type { Projection } from "./projection";
 import { DOMAIN_ACCENT, SIDE_ACCENT, SIDE_LABELS, VIEW } from "../config/ui";
+import { terrainTexture } from "./terrain";
 
 interface Props {
   domains: DomainLayer[];
@@ -35,6 +36,20 @@ export function Lanes({ domains, proj, visibleSides }: Props) {
               }}
             >
               <div className="lane__face" />
+              <div
+                className="lane__terrain lane__terrain--a"
+                style={{
+                  right: "50%",
+                  backgroundImage: terrainTexture(domain.id, 1),
+                }}
+              />
+              <div
+                className="lane__terrain lane__terrain--b"
+                style={{
+                  left: "50%",
+                  backgroundImage: terrainTexture(domain.id, 7),
+                }}
+              />
               <div className="lane__grid">
                 {proj.spans.map((span) => (
                   <Fragment key={span.band.id}>

@@ -174,3 +174,144 @@ Per the instruction to prove the mechanics on the four existing assets first:
 - **The lower-sky toggle** described above.
 - **Sea and space lanes** render as empty lanes. They are in `domains.json`, so
   they exist in the stack and the rail marks them empty rather than hiding them.
+
+---
+
+# Pass 2 — schema evolution, editable bands/categories, 27 assets, visual pass
+
+Written against a follow-up request: comparable per-asset facts (cost above
+all), editable distance bands and per-asset placement, category show/hide,
+an expanded battlefield (deep-strategic depth, strategic infrastructure),
+more assets, and a visual push toward realism — plus getting a live link in
+front of a non-technical reviewer.
+
+## Schema evolution
+
+Pass 1 held `types.ts` as the scaffold's contract, untouched. This pass
+extends it deliberately: `group` (the category taxonomy), `cost`
+(`unit_cost_usd` + a display string + a confidence tier — always rendered,
+never silently blank), `key_facts` (exactly three, per-asset-type facts),
+and `operating_range_km` (typical employment envelope, distinct from the
+single representative `distance_km_from_zero`). All additive — nothing
+existing changed shape, so the change is backward compatible in spirit even
+though the four original assets were updated to carry the new fields.
+
+## Editable bands and per-asset placement — why local storage, not a backend
+
+The master prompt's own phasing says "start with local JSON/DB-backed
+storage; don't over-engineer backend on day one." Bands and per-asset
+placement edits go into `localStorage`, layered on top of the shipped
+`data/*.json` at load time, rather than mutating files on disk from the
+browser (which a static build can't do at all) or standing up a database
+this pass didn't ask for. Concretely:
+
+- `src/state/overridesState.tsx` holds `bands: DistanceBand[] | null`
+  (null = "use shipped defaults") and `assetOverrides: Record<id, {...}>`,
+  both persisted and both feeding back into `loadWorld(bands, overrides)`.
+- Band membership was already computed from distance rather than trusted
+  from the stored `band_id` (pass 1's `resolveBand`) — so editing a cutoff,
+  or editing an asset's distance, needs no additional "retag" step. The
+  placement editor and the bands table are both thin UI over that one
+  function.
+
+This means edits don't sync across devices or survive a data reset — worth
+knowing before treating one as durable. The natural extension is swapping
+the localStorage read/write in `overridesState.tsx` for real API calls; nothing
+else in the data flow needs to change shape to support that later.
+
+## Categories vs. domains
+
+`domain` (land/air/sea/...) decides vertical position and was already load-
+bearing for the scene geometry. `group` (`data/groups.json`) is a second,
+independent, purely presentational taxonomy — 18 categories matching the
+master brief's asset list — used only by the show/hide filter. Keeping them
+separate means "hide everything except air defense" doesn't require moving
+anything on the map, and a category with zero current assets still shows up
+(count 0) as a preview of what's coming, same pattern as the domain rail.
+
+## Content: 27 assets, every pending stub resolved
+
+All seven stubs left dangling in pass 1 are now real assets (both sides'
+tactical recon UAV, both logistics hubs, the air-defense C2 network, both
+medical casevac chains). Sixteen new assets were added spanning HIMARS,
+Leopard 2, Gepard, Stinger, Starlink, Bukovel-AD, a naval USV (Magura V5), a
+commercial ISR satellite, and a deep-strike entry modeling Ukraine's
+Operation Spiderweb on one side; Pantsir-S1, Grad, R-330Zh Zhitel, a
+squad-level fire-control terminal, the Black Sea Fleet's forced relocation,
+and strategic infrastructure on the other. Every one carries real sourced
+figures (cost included) rather than invented placeholders, with confidence
+flagged honestly where reporting is thin (several — the T-72's price, the
+IADS network's program cost — are marked `unknown`/`estimated` on purpose).
+
+**The Spiderweb entry is worth calling out specifically**, since it's the
+clearest illustration of "the battlefield should be much expanded": it's
+placed at 4,300 km — the confirmed distance to the Belaya airbase strike —
+inside a new fifth band, Deep Strategic / Cross-Border (500+ km). Its own
+employment notes are explicit that the placement represents *reach achieved
+by truck smuggling*, not a drone flying that distance, specifically so the
+map doesn't imply something false about the mechanism.
+
+**A direction bug worth flagging for future edits**: several "provider"
+assets (both logistics hubs, the C2 network, Starlink, both medical chains,
+both recon UAVs) were first written declaring edges back at their own
+consumers, duplicating the edge each consumer already declares toward the
+provider. That drew confusing doubled arrows between the same two nodes.
+Fixed by one consistent rule, worth keeping for every asset added from here:
+**the dependent declares the edge; the provider does not mirror it back.**
+A small script (not checked in — run inline during this pass) diffed every
+asset's connections for exact and reverse-direction duplicates before
+`connections.json` was regenerated from the per-asset files; worth re-running
+by hand on any future large content pass.
+
+## Visual pass — what's real, what's generated, and why
+
+The request was for photorealistic imagery — real equipment photos and a
+real terrain background, sourced from open-source 3D models or photography.
+That was attempted and hit a hard constraint: **this environment cannot
+fetch binary images from the open web.** The egress proxy denies the image
+hosts tried (`upload.wikimedia.org` came back policy-blocked, not a
+transient failure), and the page-fetching tool available here converts pages
+to article text rather than returning binary assets — there is no path to a
+downloaded photograph from inside this session. That's a environment
+limitation, not a judgment call, and re-tried approaches were the right
+response only up to the point of confirming the policy denial; routing
+around a policy block is explicitly out of bounds regardless.
+
+Given that, this pass pushed the **generated** visual system as far as it
+reasonably goes rather than settling for the flat lanes from pass 1:
+
+- `src/scene/terrain.ts` generates a distinct procedural ground texture per
+  domain — SVG `feTurbulence` noise colorized per-domain, with an overlay
+  pattern that reads as a material rather than a flat tint: diagonal
+  furrow lines for land, a wave pattern for sea, a starfield for space, a
+  circuit trace for EW/C2, a rail-yard hatch for logistics. Each side gets a
+  different noise seed so the two halves don't look like a mirrored decal.
+  This is drawn as a flat background image, not a 3D-transformed plane —
+  keeping the earlier decision that interactive content (icons, text, hit
+  targets) stays undistorted intact; the furrow/wave lines are angled
+  instead, which reads as "looking across this at an angle" without
+  actually tilting anything a screen reader or a pointer has to deal with.
+- Nodes moved from flat chips to a more dimensional "object on a surface"
+  treatment: a top-lit gradient, an inset shadow suggesting a lit edge, and
+  a soft contact-shadow ellipse under each node — the standard cheap trick
+  for reading as a physical marker sitting on terrain rather than a UI
+  badge floating over it.
+
+**The honest upgrade path from here** is supplying real reference images —
+equipment photos, a terrain/satellite texture — directly as files. Those can
+be read locally and embedded with no network fetch involved, which sidesteps
+the constraint entirely. Absent that, the icon set stays the uniform
+illustrated style from pass 1, now on generated terrain instead of flat
+color. Full 3D model rendering (glTF assets, a WebGL lighting rig) is a
+larger subsystem than either pass has built and would need its own scoping
+if it's still wanted once real imagery is available to work from.
+
+## Deployment
+
+Published as a Claude Artifact — the Vite build's JS/CSS is inlined into a
+single self-contained HTML file (data URIs for the fonts already inline,
+no external requests) and pushed through the Artifact tool, which gives a
+stable URL that redeploys in place on every future publish call rather than
+minting a new one. This is separate from the git branch, which stays the
+source of truth for the code; the artifact is a build output; there is no
+back-guessing meant to be applied to it directly.
