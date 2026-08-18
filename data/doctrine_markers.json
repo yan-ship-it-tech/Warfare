@@ -1,0 +1,75 @@
+{
+  "_comment": "Sourced distance findings from doctrine.md §2, overlaid on the coarse echelon bands in bands.json rather than replacing them. bands.json stays as the four broad echelon bands the master prompt specified; these markers are the narrower, individually-sourced depth patterns, shown as an optional ruler overlay. Side attribution follows the representative-equipment convention used throughout the tool (side_a = the side whose examples are Western-supplied systems, side_b = the side whose examples are Russian systems); where a source is side-agnostic, side is 'both'.",
+  "markers": [
+    {
+      "id": "fpv-strike-envelope",
+      "label": "FPV strike envelope",
+      "min_km": 0,
+      "max_km": 10,
+      "side": "both",
+      "source_tag": "DW",
+      "note": "Standard FPV combat radius without a relay. A mother-ship relay extends this to 60–70 km (doctrine §5)."
+    },
+    {
+      "id": "close-recon",
+      "label": "Close reconnaissance",
+      "min_km": 1,
+      "max_km": 5,
+      "side": "both",
+      "source_tag": "DW",
+      "note": "The 'second line' — activated within seconds of a detection."
+    },
+    {
+      "id": "forward-cp",
+      "label": "Forward command post",
+      "min_km": 2,
+      "max_km": 5,
+      "side": "side_a",
+      "source_tag": "web: US Army TDF lessons",
+      "note": "Forward CP at 2–5 km; the combat trains CP sits roughly 10 km further back."
+    },
+    {
+      "id": "drone-dense-corridor",
+      "label": "Drone-dense corridor",
+      "min_km": 0,
+      "max_km": 30,
+      "side": "both",
+      "source_tag": "web",
+      "note": "~30 km either side of the ~1,200 km front — the zone where persistent drone coverage genuinely dominates."
+    },
+    {
+      "id": "fpv-launch-teams",
+      "label": "FPV launch teams",
+      "min_km": 8,
+      "max_km": 10,
+      "side": "side_b",
+      "source_tag": "Combat Exp. RU",
+      "note": "Launch teams 8–10 km back; control and relay equipment a further ~10 km behind them (~20 km total)."
+    },
+    {
+      "id": "deep-strike-recon",
+      "label": "Medium / long-range strike & recon",
+      "min_km": 10,
+      "max_km": 150,
+      "side": "both",
+      "source_tag": "DW",
+      "note": "Deep-strike layer; some platforms fly autonomously along pre-planned routes."
+    },
+    {
+      "id": "offensive-staging",
+      "label": "Offensive staging areas",
+      "min_km": 0,
+      "max_km": 30,
+      "side": "side_b",
+      "source_tag": "Combat Exp. RU",
+      "note": "Movement forward split into guided segments over 3–4 days, radio silence, paper orders only."
+    }
+  ],
+  "lower_sky_control": {
+    "_comment": "doctrine.md §2's sharpest finding, kept as data so the planned interactive toggle reads from config rather than hardcoded numbers. Not yet wired to an interactive control — see docs/DECISIONS.md.",
+    "source_tag": "Combat Exp. RU",
+    "finding": "Local air/drone superiority — not doctrine or preference — sets how close you can position assets.",
+    "with_control": { "closest_deploy_km": 1, "closest_deploy_km_max": 1.5, "note": "Direct-fire tank positions are viable." },
+    "without_control": { "closest_deploy_km": 7, "note": "Pushed back to roughly 7 km and restricted to indirect fire." }
+  }
+}

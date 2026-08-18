@@ -1,0 +1,40 @@
+{
+  "id": "side_a-air-defense-long-patriot",
+  "name": "Patriot (PAC-3 MSE)",
+  "side": "side_a",
+  "domain": "air",
+  "echelon": "operational",
+  "distance_km_from_zero": 40,
+  "band_id": "op_deep",
+  "category": "air-defense-long-range",
+  "representative_system": "MIM-104 Patriot, PAC-3 MSE interceptor",
+  "icon_image": "/icons/patriot.png",
+  "gallery_images": ["/gallery/patriot-battery.jpg", "/gallery/patriot-launcher.jpg"],
+
+  "short_role": "Long-range, high-altitude air defense battery protecting rear-area cities and infrastructure from ballistic and cruise missile threats.",
+  "characteristics": [
+    "PAC-3 MSE interceptor: hit-to-kill, ~60 km engagement range against ballistic threats, up to ~24-30 km intercept altitude",
+    "AN/MPQ-65 phased-array radar: 360° search/track, resistant to jamming, detection well beyond 100 km",
+    "Battery: radar set, engagement control station, antenna mast group, 4-8 launcher stations (each holding multiple PAC-3 MSE rounds)",
+    "Deployable in under an hour; typically positioned well back from the line to protect high-value rear-area targets",
+    "Confirmed intercepts of Russian Kinzhal hypersonic and Iskander ballistic missiles"
+  ],
+  "employment_notes": "Positioned in the deep operational/strategic rear, not on the line — its job is theater/point missile defense over cities, power infrastructure, and logistics hubs, cued by a wider integrated air defense network (early warning radar, other SAM layers, passive acoustic/EW sensors) rather than acting alone.",
+  "contrast_vs_traditional": "In traditional warfare, ground-based air defense mainly countered aircraft. Here the primary threat set is ballistic and hypersonic missiles and mass drone raids, so Patriot batteries are one layer in a networked, multi-tier air defense stack (short-range guns/MANPADS near the line, mid-range SAMs, then Patriot for the highest-end threats) rather than a standalone system — and cost-per-intercept against cheap drones has become a real operational constraint.",
+
+  "reactive_behavior": {
+    "animation_id": "sam_launch_intercept",
+    "description": "On select: radar cues, launcher fires an interceptor, short intercept vignette against an inbound track."
+  },
+
+  "connections": [
+    { "target_id": "side_a-c2-integrated-air-defense-network", "type": "data_c2", "description": "Receives cueing/track data from the wider integrated air defense network." },
+    { "target_id": "side_a-logistics-hub-op-deep", "type": "supply", "description": "Resupplied with interceptor missiles and generator fuel from the nearest logistics hub." }
+  ],
+
+  "sources": [
+    { "label": "Congress.gov CRS — PATRIOT Air and Missile Defense System for Ukraine", "url": "https://www.congress.gov/crs-product/IF12297" },
+    { "label": "Ukraine MoD — PAC-3 missiles fact sheet", "url": "https://mod.gov.ua/en/news/intercepting-kinzhal-iskander-and-zircon-missiles-key-facts-about-pac-3-missiles-for-the-patriot-air-defense-system-delivered-to-ukraine-by-germany" }
+  ],
+  "editable": true
+}

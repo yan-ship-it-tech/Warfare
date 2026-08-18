@@ -1,0 +1,38 @@
+{
+  "id": "side_b-armor-t72",
+  "name": "T-72 (various modernized variants)",
+  "side": "side_b",
+  "domain": "land",
+  "echelon": "tactical",
+  "distance_km_from_zero": 4,
+  "band_id": "tactical",
+  "category": "armor-main-battle-tank",
+  "representative_system": "T-72B3 / T-72B3M",
+  "icon_image": "/icons/t72.png",
+  "gallery_images": ["/gallery/t72-field.jpg"],
+
+  "short_role": "Main battle tank used for direct-fire support, breakthrough attempts, and defensive strongpoints; the most numerous armor type in the conflict.",
+  "characteristics": [
+    "Crew: 3 (autoloader-equipped)",
+    "125mm smoothbore main gun, autoloader",
+    "Composite/ERA (explosive reactive armor) packages on modernized variants",
+    "Widely produced and stockpiled — numbers rather than individual sophistication are its main advantage"
+  ],
+  "employment_notes": "Increasingly used in small numbers or singly rather than in the massed armored formations classic doctrine assumed, because a tank moving in the open within a reconnaissance drone's radius is a very findable, very killable target for loitering munitions and FPV drones.",
+  "contrast_vs_traditional": "Cold War-era doctrine expected large armored formations to punch through defensive lines under cover of artillery and air support. Persistent drone reconnaissance over the whole depth of the battlefield has made massed armor movement extremely costly, pushing tanks toward dispersed use, improvised anti-drone cage armor, and much heavier reliance on EW/jamming escort to survive movement near the line.",
+
+  "reactive_behavior": {
+    "animation_id": "tank_move_fire",
+    "description": "On select: short movement, turret traverse, main gun fires."
+  },
+
+  "connections": [
+    { "target_id": "side_b-logistics-hub-op-near", "type": "supply", "description": "Fuel and ammunition resupply from a near-rear logistics point." },
+    { "target_id": "side_b-medical-casevac-chain", "type": "casevac", "description": "Crew casualties routed into the tactical casevac chain." }
+  ],
+
+  "sources": [
+    { "label": "General open-source order-of-battle reporting on modernized T-72 variants in the Russo-Ukrainian war (spot-check specific figures before publishing)", "url": "" }
+  ],
+  "editable": true
+}

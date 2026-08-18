@@ -1,0 +1,10 @@
+[
+  { "id": "space",     "label": "Space",                 "vertical_order": 0, "description": "ISR satellites, SATCOM, PNT." },
+  { "id": "air",       "label": "Air",                   "vertical_order": 1, "description": "Fixed-wing, rotary, UAVs, air defense engagement envelopes." },
+  { "id": "cyber_ew",  "label": "Electronic Warfare / Cyber", "vertical_order": 2, "description": "Jamming, SIGINT, spoofing, network intrusion." },
+  { "id": "c2_comms",  "label": "C2 & Communications",   "vertical_order": 3, "description": "Battle management systems, radios, data links." },
+  { "id": "land",      "label": "Land",                  "vertical_order": 4, "description": "Ground maneuver, fires, fortification, infantry." },
+  { "id": "logistics", "label": "Logistics",              "vertical_order": 5, "description": "Supply chain, distribution, maintenance." },
+  { "id": "medical",   "label": "Medical / Casevac",      "vertical_order": 6, "description": "Point-of-injury through definitive care." },
+  { "id": "sea",       "label": "Sea",                    "vertical_order": 7, "description": "Surface fleet, USVs, corridors — only where geography applies." }
+]

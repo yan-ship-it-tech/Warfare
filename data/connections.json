@@ -1,0 +1,12 @@
+{
+  "_comment": "This mirrors the connections already embedded per-asset. Keeping a flat list too makes it trivial to render a full dependency-graph overlay without walking every asset file. Keep both in sync when editing by hand, or generate this file from the assets at build time.",
+  "connections": [
+    { "source_id": "side_a-artillery-m777", "target_id": "side_a-uav-reconnaissance-tactical", "type": "data_c2", "description": "Target coordinates and fall-of-shot correction." },
+    { "source_id": "side_a-artillery-m777", "target_id": "side_a-logistics-hub-op-deep", "type": "supply", "description": "155mm ammunition and propellant resupply." },
+    { "source_id": "side_a-artillery-m777", "target_id": "side_a-medical-casevac-chain", "type": "casevac", "description": "Crew casualty evacuation." },
+    { "source_id": "side_a-air-defense-long-patriot", "target_id": "side_a-c2-integrated-air-defense-network", "type": "data_c2", "description": "Radar cueing / track handoff." },
+    { "source_id": "side_b-uav-strike-lancet", "target_id": "side_b-uav-reconnaissance-tactical", "type": "data_c2", "description": "Target cueing from paired reconnaissance drone." },
+    { "source_id": "side_b-armor-t72", "target_id": "side_b-logistics-hub-op-near", "type": "supply", "description": "Fuel and ammunition." }
+  ],
+  "_note_unresolved_ids": "Several target_ids above (e.g. side_a-uav-reconnaissance-tactical, side_a-logistics-hub-op-deep, side_a-c2-integrated-air-defense-network, side_b-uav-reconnaissance-tactical, side_b-logistics-hub-op-near, *-medical-casevac-chain) are placeholders for assets not yet built in this scaffold. This is intentional — it demonstrates that connections can reference not-yet-created assets; the UI loader should render these as 'pending' stub nodes or simply hide the line until the target exists, rather than erroring."
+}

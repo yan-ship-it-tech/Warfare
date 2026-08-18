@@ -1,0 +1,40 @@
+{
+  "id": "side_b-uav-strike-lancet",
+  "name": "Lancet Loitering Munition",
+  "side": "side_b",
+  "domain": "air",
+  "echelon": "tactical",
+  "distance_km_from_zero": 3,
+  "band_id": "tactical",
+  "category": "uav-strike",
+  "representative_system": "ZALA Lancet (Lancet-1 / Lancet-3)",
+  "icon_image": "/icons/lancet.png",
+  "gallery_images": ["/gallery/lancet-launch.jpg", "/gallery/lancet-inflight.jpg"],
+
+  "short_role": "Catapult-launched loitering munition used for combined reconnaissance and precision strike against vehicles, artillery, and personnel near the line.",
+  "characteristics": [
+    "Operational/control radius: roughly 40-50 km",
+    "Endurance: approximately 30-40 minutes airborne",
+    "Warhead: ~1 kg (Lancet-1) or ~3 kg (Lancet-3), HE, HE-fragmentation, or shaped-charge variants",
+    "Radar-transparent composite airframe reduces detectability",
+    "Terminal guidance via onboard optical seeker, often cued by a separate reconnaissance UAV"
+  ],
+  "employment_notes": "Typically operates as a hunter-killer pair with a separate ISR drone (e.g. a Zala or Orlan-type reconnaissance UAV) that finds and confirms the target before the Lancet is committed — the strike asset itself carries little independent search capability.",
+  "contrast_vs_traditional": "This collapses what used to be a multi-step, multi-hour kill chain (spot target → report → request fires → wait for artillery/air) into a single-digit-minutes engagement run by a small crew, without committing a manned aircraft or a full artillery battery. It also pushes both sides' vehicles and artillery further from the line and toward constant movement/camouflage discipline, since a static asset within the drone's radius is now findable and killable within minutes.",
+
+  "reactive_behavior": {
+    "animation_id": "loitering_munition_strike",
+    "description": "On select: drone loiters, dives on a target, brief impact vignette."
+  },
+
+  "connections": [
+    { "target_id": "side_b-uav-reconnaissance-tactical", "type": "data_c2", "description": "Cued onto targets by a paired reconnaissance UAV feed." },
+    { "target_id": "side_b-logistics-hub-op-near", "type": "supply", "description": "Airframes and batteries resupplied from a near-rear logistics point." }
+  ],
+
+  "sources": [
+    { "label": "Wikipedia — ZALA Lancet", "url": "https://en.wikipedia.org/wiki/ZALA_Lancet" },
+    { "label": "Kyiv Post — Russian Lancet Kamikaze Drone in Ukraine: An Overview", "url": "https://www.kyivpost.com/analysis/23923" }
+  ],
+  "editable": true
+}
