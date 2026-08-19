@@ -28,6 +28,16 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+        env:
+          # Unset by default — the app falls back to this-browser-only
+          # storage (src/state/persistence.ts) until these are set. Once
+          # you've deployed worker/ (see docs/DEPLOY_SYNC_WORKER.md), add
+          # SYNC_URL as a repo secret (Settings → Secrets and variables →
+          # Actions) and every subsequent build picks it up automatically —
+          # no other change needed here. Vite bakes VITE_ vars in at build
+          # time, so this has to happen in the build step, not at runtime.
+          VITE_SYNC_URL: ${{ secrets.SYNC_URL }}
+          VITE_SYNC_TOKEN: ${{ secrets.SYNC_WRITE_TOKEN }}
       # Tried enablement: true to have this bootstrap the Pages site itself
       # on first run — GitHub's own security model blocks that: the default
       # GITHUB_TOKEN (whatever permissions the workflow grants it) cannot

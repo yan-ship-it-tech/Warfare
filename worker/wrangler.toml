@@ -1,0 +1,25 @@
+# Cloudflare Worker for the digital twin's shared-edits sync store.
+#
+# Deploy: see docs/DEPLOY_SYNC_WORKER.md for the full walkthrough. Short
+# version, from the `worker/` directory:
+#
+#   npx wrangler login
+#   npx wrangler kv namespace create SYNC_KV
+#   # paste the printed id into the [[kv_namespaces]] block below
+#   npx wrangler deploy
+#
+# The command prints a workers.dev URL — that becomes VITE_SYNC_URL.
+
+name = "warfare-twin-sync"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+# Replace `id` with the namespace id `wrangler kv namespace create` prints.
+[[kv_namespaces]]
+binding = "SYNC_KV"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+
+[vars]
+# Comma-separated list of origins allowed to call this worker. Update if the
+# Pages URL ever changes (custom domain, org rename, etc.).
+ALLOWED_ORIGINS = "https://yan-ship-it-tech.github.io"

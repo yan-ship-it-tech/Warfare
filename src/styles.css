@@ -746,6 +746,47 @@ code { font-family: var(--mono); font-size: 0.92em; }
 .legend b { color: var(--text); font-family: var(--mono); }
 .legend__hint, .legend__sides { color: var(--text-3); font-size: 11px; }
 
+/* The panel itself is click-through (so it never steals an orbit-drag from
+   the canvas underneath), but its own controls need to be pressable. */
+.legend__close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  pointer-events: auto;
+  border: none;
+  background: none;
+  color: var(--text-3);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.legend__close:hover { color: var(--text); }
+.legend p:first-child { padding-right: 16px; }
+
+/* Collapsed: a small round toggle, same corner, small enough that it can
+   never overlap pin labels or the toolbar even on the narrowest phone. */
+.legend--collapsed {
+  pointer-events: auto;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 14px;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.legend--collapsed:hover { color: var(--text); border-color: var(--line-2); }
+
+@media (max-width: 680px) {
+  .legend { right: 12px; bottom: 12px; max-width: calc(100vw - 24px); }
+  /* The detail panel takes the whole right-hand strip at this width — no
+     room for the info panel too, and nothing lost by hiding it while an
+     asset is already open and being read. */
+  .app.has-detail .legend { display: none; }
+}
+
 /* ── detail panel ───────────────────────────────────────────────────── */
 .detail {
   position: absolute;
@@ -1732,20 +1773,8 @@ code { font-family: var(--mono); font-size: 0.92em; }
 .scene3d__side--b { color: var(--text-2); }
 .scene3d__zero { color: var(--text); font-weight: 600; }
 
-.scene3d__hint {
-  position: absolute;
-  left: 12px;
-  bottom: 12px;
-  max-width: 380px;
-  padding: 8px 10px;
-  border-radius: var(--radius);
-  background: rgba(10, 13, 19, 0.8);
-  border: 1px solid var(--line);
-  color: var(--text-3);
-  font-size: 10.5px;
-  line-height: 1.5;
-  pointer-events: none;
-}
+/* .scene3d__hint retired — its content now lives in .legend, so there is one
+   bottom-corner panel instead of two that could overlap at narrow widths. */
 
 /* ── lessons ────────────────────────────────────────────────────────── */
 .modal__body--wide { max-width: 760px; }

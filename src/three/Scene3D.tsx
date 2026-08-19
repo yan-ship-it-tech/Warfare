@@ -22,8 +22,16 @@ import { useOverrides } from "../state/overridesState";
 import { resolveAssetDisplay } from "../data/catalog";
 import { buildTerrain, terrainHeight } from "./terrain3d";
 import { buildProps, PROP_BUDGET } from "./props";
+import { buildScenery, disposeScenery, SCENERY_BUDGET } from "./scenery";
 import { buildHeroModel, hasHeroModel } from "./models";
-import { worldPlacement, worldXFor, worldHalfWidth } from "./worldMapping";
+import { worldPlacement, worldXFor, worldHalfWidth, DOMAIN_ALTITUDE, STRIP_HALF_Z } from "./worldMapping";
+
+/** Above this, a domain is genuinely elevated (air, space, the EW/C2 mast
+ *  tiers) and gets the floating-marker-on-a-tether treatment. At or below
+ *  it (land, logistics, medical, sea), the group's own position is already
+ *  on the terrain surface — see worldPlacement() — so the marker belongs
+ *  right there, not on a stalk above it. */
+const ELEVATED_ALTITUDE_THRESHOLD = 2;
 
 const BG = new THREE.Color("#0a0d13");
 
@@ -81,6 +89,11 @@ export function Scene3D({ world }: { world: WorldModel }) {
   const selectedRef = useRef<string | null>(null);
   const hoveredRef = useRef<string | null>(null);
   const flyRef = useRef<{ from: THREE.Vector3; to: THREE.Vector3; tFrom: THREE.Vector3; tTo: THREE.Vector3; t0: number; dur: number } | null>(null);
+  // Soft pan bounds, in world X — kept a ref (not read from `proj` directly)
+  // because the render loop is set up once on mount and proj can change
+  // later if bands are edited live. Margin lets the target reach past the
+  // strip's edge, just not disappear into empty fog.
+  const panBoundXRef = useRef(120);
 
   const proj = useMemo(() => buildProjection(world.bands, world.domains), [world.bands, world.domains]);
 
@@ -131,6 +144,14 @@ export function Scene3D({ world }: { world: WorldModel }) {
     controls.maxPolarAngle = Math.PI * 0.47;
     controls.minPolarAngle = Math.PI * 0.06;
     controls.target.set(0, 5, 0);
+    // Three's defaults (all 1) scale pan/rotate distance with camera
+    // distance from the target — at this scene's default framing that reads
+    // as wildly oversensitive: a small drag traverses a large fraction of
+    // the strip. Slowed down for predictable small-gesture control; damping
+    // above still gives motion weight without amplifying the gain.
+    controls.rotateSpeed = 0.55;
+    controls.panSpeed = 0.4;
+    controls.zoomSpeed = 0.7;
     controlsRef.current = controls;
 
     scene.add(new THREE.HemisphereLight(0xa8c0e0, 0x2a2a20, 1.15));
@@ -166,6 +187,17 @@ export function Scene3D({ world }: { world: WorldModel }) {
         camera.position.lerpVectors(fly.from, fly.to, e);
         controls.target.lerpVectors(fly.tFrom, fly.tTo, e);
         if (t >= 1) flyRef.current = null;
+      }
+
+      // Soft clamp on the pan target, in X and Z. Not a hard wall — it lets
+      // the target reach a margin past the strip's edge — but it stops a
+      // fast pan gesture from throwing the camera into empty fog with no
+      // landmark to reorient by, which compounds a too-sensitive drag into
+      // "lost," not just "overshot".
+      if (!flyRef.current) {
+        const bx = panBoundXRef.current;
+        controls.target.x = THREE.MathUtils.clamp(controls.target.x, -bx, bx);
+        controls.target.z = THREE.MathUtils.clamp(controls.target.z, -STRIP_HALF_Z - 30, STRIP_HALF_Z + 30);
       }
 
       controls.update();
@@ -249,6 +281,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
     if (!scene || !ready) return;
 
     const halfX = worldHalfWidth(proj);
+    panBoundXRef.current = halfX + 40;
     // Prop budget follows device capability rather than being a fixed number
     // that is either wasteful on a laptop or unusable on a phone.
     const lowPower =
@@ -257,6 +290,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
 
     const terrain = buildTerrain(halfX);
     const props = buildProps(halfX, PROP_BUDGET[lowPower ? "low" : "high"]);
+    const scenery = buildScenery(proj, SCENERY_BUDGET[lowPower ? "low" : "high"]);
 
     // Zero line — a standing marker plane rather than a painted stripe, so it
     // stays readable from an oblique angle instead of foreshortening away.
@@ -298,10 +332,10 @@ export function Scene3D({ world }: { world: WorldModel }) {
       }
     }
 
-    scene.add(terrain, props, zero);
+    scene.add(terrain, props, scenery, zero);
 
     return () => {
-      scene.remove(terrain, props, zero);
+      scene.remove(terrain, props, scenery, zero);
       terrain.geometry.dispose();
       (terrain.material as THREE.Material).dispose();
       props.traverse((o) => {
@@ -310,6 +344,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
           (o.material as THREE.Material).dispose();
         }
       });
+      disposeScenery(scenery);
       zero.traverse((o) => {
         if (o instanceof THREE.Mesh || o instanceof THREE.Line) o.geometry.dispose();
       });
@@ -369,9 +404,15 @@ export function Scene3D({ world }: { world: WorldModel }) {
         }
       }
 
-      // Every asset — hero or not — carries the same floating marker, so the
-      // hero tier reads as extra detail rather than as a different class of
-      // thing, and nothing becomes unfindable for lacking a model.
+      // Every asset — hero or not — carries the same marker, so the hero
+      // tier reads as extra detail rather than as a different class of
+      // thing, and nothing becomes unfindable for lacking a model. Only
+      // genuinely elevated domains get it lifted onto a tether — this was
+      // previously unconditional (7.5 units up, always), which is why land
+      // and sea assets briefly rendered as if airborne: their group origin
+      // is already on the terrain surface (see worldPlacement()), so lifting
+      // the marker on top of that put it floating over its own footprint.
+      const elevated = (DOMAIN_ALTITUDE[domain] ?? 0) > ELEVATED_ALTITUDE_THRESHOLD;
       const markerMat = new THREE.MeshStandardMaterial({
         color: isStub ? "#8b93a3" : accent,
         emissive: isStub ? "#8b93a3" : accent,
@@ -382,29 +423,34 @@ export function Scene3D({ world }: { world: WorldModel }) {
         opacity: isStub ? 0.55 : 1,
       });
       const marker = new THREE.Mesh(new THREE.OctahedronGeometry(1.5, 0), markerMat);
-      marker.position.y = 7.5;
+      const markerY = elevated ? 7.5 : 1.4;
+      marker.position.y = markerY;
       marker.userData.assetId = node.id;
       g.add(marker);
 
-      // Tether from the marker down to the true ground point. For airborne
-      // assets this is the whole altitude story; for ground assets it is a
-      // short stalk that still says "this marker means *here*".
+      // Tether from the marker down to the true ground point — only meaningful
+      // when there IS a real gap to explain (air/space/mast tiers). Grounded
+      // domains skip it entirely: their marker already sits right at the
+      // surface, and drawing a stalk down to a point 1.4 units below it would
+      // just be visual noise, not a corrected version of the same cue.
       const groundY = terrainHeight(pos.x, pos.z) - pos.y;
-      const tether = new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(0, 7.5, 0),
-          new THREE.Vector3(0, groundY, 0),
-        ]),
-        new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: 0.45 }),
-      );
-      g.add(tether);
+      if (elevated) {
+        const tether = new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(0, markerY, 0),
+            new THREE.Vector3(0, groundY, 0),
+          ]),
+          new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: 0.45 }),
+        );
+        g.add(tether);
+      }
 
       const pad = new THREE.Mesh(
         new THREE.CircleGeometry(3.4, 16),
         new THREE.MeshBasicMaterial({ color: sideColor, transparent: true, opacity: 0.16, depthWrite: false }),
       );
       pad.rotation.x = -Math.PI / 2;
-      pad.position.y = groundY + 0.12;
+      pad.position.y = (elevated ? groundY : 0) + 0.12;
       g.add(pad);
 
       root.add(g);
@@ -412,7 +458,10 @@ export function Scene3D({ world }: { world: WorldModel }) {
         id: node.id,
         node,
         group: g,
-        anchor: new THREE.Vector3(pos.x, pos.y + 10.5, pos.z),
+        // Label anchor floats a fixed bit above the marker itself, whatever
+        // that marker's own height is — kept proportional so grounded labels
+        // don't hover unnecessarily high above their now-grounded marker.
+        anchor: new THREE.Vector3(pos.x, pos.y + markerY + 3, pos.z),
         marker,
         lod,
       });
@@ -561,12 +610,6 @@ export function Scene3D({ world }: { world: WorldModel }) {
         <span className="scene3d__side scene3d__side--a">← {SIDE_LABELS.side_a.short} rear</span>
         <span className="scene3d__zero">zero line</span>
         <span className="scene3d__side scene3d__side--b">{SIDE_LABELS.side_b.short} rear →</span>
-      </div>
-
-      <div className="scene3d__hint">
-        Drag to orbit · scroll to zoom · right-drag to pan. Synthetic representative terrain — a
-        strip a few km wide, full depth rear-to-rear. Not real geography; distance along the axis
-        is band-compressed exactly as in the schematic view.
       </div>
     </div>
   );
