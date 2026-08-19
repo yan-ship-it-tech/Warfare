@@ -17,6 +17,10 @@ const MOBILE_QUERY = "(max-width: 680px)";
 export function Legend({ world }: { world: WorldModel }) {
   const view = useViewState();
   const pendingEdges = world.connections.filter((c) => c.target_pending).length;
+  // Only the 3D view has a camera that can be orbited past the point where
+  // the axis reads mirrored; the schematic can never be flipped, and must not
+  // inherit a stale flag from a 3D session earlier in the same page load.
+  const flipped = view.renderMode === "terrain3d" && view.axisFlipped;
 
   const [collapsed, setCollapsed] = useState(false);
   useEffect(() => {
@@ -80,8 +84,15 @@ export function Legend({ world }: { world: WorldModel }) {
           geography; distance along the axis is band-compressed exactly as in the schematic view.
         </p>
       )}
+      {/* Follows the camera, not a constant. This line used to assert
+          "Ukraine rear is to the left" no matter which way the 3D camera was
+          pointing, which is simply false past 90 degrees of azimuth — the 3D
+          view's render loop reports the axis orientation into view state and
+          both this and the scene's own top legend read it (Pass 13 item 8).
+          The schematic view has no camera to orbit, so it is never flipped. */}
       <p className="legend__sides">
-        {SIDE_LABELS.side_a.short} rear is to the left, {SIDE_LABELS.side_b.short} rear to the right.
+        {SIDE_LABELS[flipped ? "side_b" : "side_a"].short} rear is to the left,{" "}
+        {SIDE_LABELS[flipped ? "side_a" : "side_b"].short} rear to the right.
       </p>
     </div>
   );

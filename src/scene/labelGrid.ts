@@ -31,6 +31,15 @@ export class LabelGrid {
     return cx * 73856093 + cy * 19349663;
   }
 
+  /** Empties the index for reuse. The 3D render loop runs a declutter pass
+   *  many times a second and used to allocate a fresh LabelGrid (and a fresh
+   *  Map, and a bucket array per occupied cell) for each one — see
+   *  docs/DECISIONS.md Pass 13 on per-frame allocation. Clearing the buckets
+   *  in place keeps the same index alive for the life of the scene. */
+  clear(): void {
+    this.buckets.clear();
+  }
+
   /** True if the box overlaps anything already inserted. */
   collides(box: LabelBox): boolean {
     const cx0 = Math.floor(box.x1 / this.cell);

@@ -1947,7 +1947,22 @@ code { font-family: var(--mono); font-size: 0.92em; }
 
 /* Labels sit above the canvas but must not eat the orbit drag — only the
    pins themselves take pointer events. */
-.scene3d__labels { position: absolute; inset: 0; pointer-events: none; }
+/* Labels sit above the canvas but must not eat the orbit drag — only the
+   pins themselves take pointer events.
+
+   `z-index` here is load-bearing and not decorative (Pass 13 item 7): it
+   makes this div a stacking context, which traps every pin's own z-index
+   inside it. Without it the pins' per-depth z-index (up to 900, and 2001 for
+   a selected one) competed directly with `.detail` at 50, so the selected
+   asset's marker drew straight through the open detail panel — the panel is
+   painted by the same root stacking context the pins were escaping into. */
+.scene3d__labels {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  isolation: isolate;
+  pointer-events: none;
+}
 
 .pin3d {
   position: absolute;
@@ -1966,8 +1981,28 @@ code { font-family: var(--mono); font-size: 0.92em; }
   color: var(--text);
   cursor: pointer;
   white-space: nowrap;
-  transition: opacity 140ms, border-color 140ms, transform 60ms linear;
-  will-change: transform;
+  /* Opacity is the ONE thing that animates on a tier change: a pin fading in
+     and out reads as the field thinning, where the old pop-in read as a
+     rendering glitch (Pass 13 item 5). Transform must NOT be transitioned —
+     the render loop writes it every frame from the live camera, and a
+     transition on top of that is a second, lagging animation fighting the
+     first. That lag was half of what made the pins trail the scene. */
+  transition: opacity 170ms ease, border-color 140ms ease, background-color 140ms ease;
+  will-change: transform, opacity;
+  /* Without this the browser claims a touch that starts on a pin as a scroll
+     gesture and fires pointercancel mid-drag — see the drag notes in
+     Scene3D.tsx. That cancel is what used to leave OrbitControls disabled. */
+  touch-action: none;
+}
+/* Out of range entirely: not drawn, not tabbable, not in the a11y tree. */
+.pin3d.is-hidden { display: none; }
+/* While a drag is committed, the pin follows the finger and must not also be
+   trying to fade or re-colour under it. */
+.pin3d.is-dragging {
+  transition: none;
+  cursor: grabbing;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent);
 }
 /* Real assets are drag-to-reposition (Scene3D.tsx's onPinDragStart); pending
    stubs aren't, since their position is inferred rather than authored. */
@@ -2022,12 +2057,12 @@ code { font-family: var(--mono); font-size: 0.92em; }
 
 .pin3d:hover, .pin3d.is-hovered {
   border-color: color-mix(in srgb, var(--accent) 90%, transparent);
-  z-index: 2000 !important;
+  z-index: 950 !important;
 }
 .pin3d.is-selected {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent);
-  z-index: 2001 !important;
+  z-index: 951 !important;
 }
 .pin3d--stub { border-style: dashed; opacity: 0.7; }
 .pin3d--stub .pin3d__name { font-style: italic; color: var(--text-3); }
@@ -2232,43 +2267,208 @@ code { font-family: var(--mono); font-size: 0.92em; }
 .sync__badge em.is-err { color: var(--err); }
 .sync__msg { font-size: 10.5px; color: var(--text-3); }
 
-/* Decluttered labels collapse to a dot rather than disappearing — they stay
-   hoverable, tabbable, tappable and screen-reader reachable, which is the whole
-   reason these are DOM buttons and not sprites. The dot keeps the side colour
-   as its fill and the domain colour as its rim, so even the thinned-out far
-   field still answers "whose is that?" without being read.
+/* ── decluttered pins: hit target, no dot (Pass 13 item 6) ──────────────
+   These used to draw a small filled circle — side colour as the fill, domain
+   colour as the rim. They were the "blue and red dots that lag behind their
+   asset and snap back": a DOM element re-positioned by React one commit after
+   the WebGL frame it belonged to, so during a pan they trailed the marker
+   they were supposed to BE and caught up when the camera stopped.
 
-   Reveal-on-hover is a pointer affordance only; touch has no hover, so a tap
-   selects, and a selected label is never collapsed (see the render loop's
-   pinned tier) — that is the tap-to-reveal path. */
+   The lag itself is fixed (the render loop writes these transforms inside the
+   same rAF that draws the frame). The dot is gone anyway, because what it
+   encoded is already on screen at the exact same point and drawn by the
+   renderer that cannot lag it: side is the Pass 8 side-identification ring on
+   the ground, and domain is the marker octahedron's own accent colour. Two
+   cues for one fact, one of them a frame behind, was the whole problem.
+
+   What survives is the element: still here, still 16 px of pointer target
+   over its marker, still tabbable, still hoverable, still named for a screen
+   reader. That is the part the dot was carrying that nothing else does — and
+   it is why decluttering to "invisible" is not the same as decluttering to
+   "gone". Hover or focus restores the full label. */
 .pin3d.is-collapsed {
   padding: 0;
-  width: 10px;
-  height: 10px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   overflow: hidden;
-  border-color: color-mix(in srgb, var(--accent) 75%, transparent);
-  background: color-mix(in srgb, var(--side) 70%, rgba(8, 11, 17, 0.9));
-  opacity: var(--fade, 1);
+  border-color: transparent;
+  background: transparent;
+  backdrop-filter: none;
+  opacity: 0;
 }
 .pin3d.is-collapsed::before { display: none; }
 .pin3d.is-collapsed .pin3d__name,
 .pin3d.is-collapsed .pin3d__km { display: none; }
 .pin3d.is-collapsed::after { display: none; }
-.pin3d.is-collapsed:hover,
+/* Keyboard focus has to be visible even though the resting state is not —
+   otherwise tabbing through the far field lands on something invisible. */
 .pin3d.is-collapsed:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* Pointer hover reveals the label. The render loop promotes a hovered pin to
+   the full tier anyway (view.hoveredId feeds the declutter pass), so this is
+   the immediate, no-frame-of-latency version of the same reveal; touch has no
+   hover, and there a tap selects, which pins the label open. */
+.pin3d.is-collapsed:hover {
   width: auto;
   height: auto;
   border-radius: 7px;
   padding: 3px 8px 4px;
+  border-color: color-mix(in srgb, var(--accent) 90%, transparent);
   background: rgba(8, 11, 17, 0.92);
+  backdrop-filter: blur(3px);
   opacity: 1;
   /* Grow upward from the dot so the revealed label doesn't cover the icon. */
   transform-origin: 50% 100%;
 }
-.pin3d.is-collapsed:hover::before,
-.pin3d.is-collapsed:focus-visible::before { display: block; }
+.pin3d.is-collapsed:hover::before { display: block; }
 .pin3d.is-collapsed:hover .pin3d__name,
-.pin3d.is-collapsed:focus-visible .pin3d__name,
 .pin3d.is-collapsed:hover .pin3d__km,
+.pin3d.is-collapsed:focus-visible .pin3d__name,
 .pin3d.is-collapsed:focus-visible .pin3d__km { display: block; }
+
+/* Scenario-focus mode parks its exit banner in the same top-centre slot the
+   side legend uses, and the two were overlapping — the legend's text read
+   straight through the banner. The banner is the mode's own state and wins;
+   the legend comes back when focus is exited. */
+.app:has(.focus-banner) .scene3d__legend { display: none; }
+
+/* ── dev-only perf readout (src/three/perfHud.ts) ─────────────────────────
+   Opt-in only: ?perf=1 or Shift+P. Deliberately unstyled-looking and
+   top-left — it must never be mistaken for part of the briefing UI, and it
+   must not sit where the scene legend, the focus banner or the detail panel
+   do. pointer-events off so it can never eat a gesture it is measuring. */
+.perf-hud {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 70;
+  margin: 0;
+  padding: 6px 9px;
+  border-radius: 6px;
+  border: 1px solid rgba(120, 220, 160, 0.35);
+  background: rgba(4, 8, 6, 0.82);
+  color: #8ef0b4;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.45;
+  white-space: pre;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── distance ruler, 3D view (Pass 13 item 9, src/three/ruler3d.ts) ───────
+   Pinned to the bottom edge; tick X positions are written every frame by the
+   render loop from the live camera projection, so a tick sits exactly over
+   the ground it measures. Nothing here may set a transform transition — the
+   loop owns transform, same rule as the pins. */
+.scene3d__ruler {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 64px;
+  z-index: 25;
+  pointer-events: none;
+  overflow: hidden;
+  background: linear-gradient(to top, rgba(8, 11, 17, 0.88), rgba(8, 11, 17, 0));
+  border-top: 1px solid transparent;
+}
+/* Orbited round to look down the axis: a screen-space ruler stops meaning
+   anything, so it says nothing rather than something false. */
+.scene3d__ruler.is-degenerate { opacity: 0; }
+
+.scene3d__ruler-bands,
+.scene3d__ruler-ticks { position: absolute; left: 0; top: 0; right: 0; }
+.scene3d__ruler-bands { top: 5px; height: 13px; }
+.scene3d__ruler-ticks { top: 21px; height: 24px; }
+
+.scene3d__ruler-band {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  text-align: center;
+  font-size: 9px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-top: 1px solid color-mix(in srgb, var(--side-base, #7d8798) 30%, transparent);
+  padding-top: 2px;
+  will-change: transform, width;
+}
+.scene3d__ruler-band--side_a { --side-base: #4d97d6; }
+.scene3d__ruler-band--side_b { --side-base: #d0655a; }
+.scene3d__ruler-band.is-off { visibility: hidden; }
+
+.scene3d__ruler-tick {
+  position: absolute;
+  left: 0;
+  top: 0;
+  /* Zero width on purpose: the loop writes translate3d(sx) and the flex
+     centring then puts both the mark and the number ON that x, whatever the
+     number's own width. Sizing the box to its content instead would offset
+     every tick mark by half its own label. */
+  width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  will-change: transform;
+}
+.scene3d__ruler-tick > * { flex: 0 0 auto; }
+.scene3d__ruler-tick i {
+  display: block;
+  width: 1px;
+  height: 5px;
+  background: color-mix(in srgb, var(--side-base, #7d8798) 55%, transparent);
+}
+.scene3d__ruler-tick.is-major i { height: 10px; background: var(--side-base, #7d8798); }
+.scene3d__ruler-tick b {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 400;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.scene3d__ruler-tick.is-major b { color: var(--text-2); font-weight: 600; }
+/* Kept its mark, lost its number: the density of the marks IS the
+   compression cue and has to survive; the number is what would have become
+   an unreadable overlap. */
+.scene3d__ruler-tick.is-mute b { display: none; }
+.scene3d__ruler-tick.is-off { visibility: hidden; }
+.scene3d__ruler-tick--side_a { --side-base: #4d97d6; }
+.scene3d__ruler-tick--side_b { --side-base: #d0655a; }
+
+.scene3d__ruler-note {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 3px;
+  margin: 0;
+  text-align: center;
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+  color: var(--text-3);
+  opacity: 0.75;
+}
+
+/* The bottom-corner info panel has to clear the ruler now. */
+.legend { bottom: 70px; }
+.legend--collapsed { bottom: 70px; }
+
+@media (max-width: 680px) {
+  .scene3d__ruler { height: 54px; }
+  .scene3d__ruler-note { display: none; }
+  .scene3d__ruler-ticks { top: 20px; }
+  /* The side legend now carries live orientation state (Pass 13 item 8), so
+     it has to stay readable at phone width rather than wrapping to three
+     lines and eating the top of the scene. */
+  .scene3d__legend { gap: 8px; padding: 4px 9px; font-size: 9px; letter-spacing: 0.04em; max-width: calc(100vw - 24px); }
+}

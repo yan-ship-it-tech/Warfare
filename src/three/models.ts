@@ -15,6 +15,7 @@
 // sub-pixel. Same convention as an icon on a map: legibility over literalism.
 // ─────────────────────────────────────────────────────────────────────────
 import * as THREE from "three";
+import { mergeStaticGroup } from "./mergeStatic";
 
 const HULL = new THREE.MeshStandardMaterial({ color: "#5d6350", flatShading: true, roughness: 0.85 });
 const HULL_DARK = new THREE.MeshStandardMaterial({ color: "#3f4438", flatShading: true, roughness: 0.9 });
@@ -236,6 +237,19 @@ export function buildHeroModel(assetId: string, accent: string): THREE.Group | n
   let proto = cache.get(builder);
   if (!proto) {
     proto = builder();
+    // Merged ONCE, on the prototype, not on every clone. A hero model is
+    // 10–30 authored boxes and cylinders sharing five materials and it never
+    // animates, so merging by material turns each one from ~20 draw calls
+    // into ~5 (see src/three/mergeStatic.ts, added in Pass 13). Doing it here
+    // rather than at the call site means the eleven hero assets pay for seven
+    // merges once per session instead of seven merges per scene rebuild —
+    // and a scene rebuild happens on every placement edit.
+    mergeStaticGroup(proto);
+    proto.traverse((o) => {
+      // The clones below share these geometries with the prototype, so the
+      // scene's teardown must not dispose them — see Scene3D's cleanup.
+      o.userData.sharedGeometry = true;
+    });
     cache.set(builder, proto);
   }
   const model = proto.clone(true);

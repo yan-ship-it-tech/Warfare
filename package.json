@@ -9,7 +9,9 @@
     "build:standalone": "tsc -b && STANDALONE=1 vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "fetch:osm": "node scripts/fetch-osm-data.mjs"
+    "fetch:osm": "node scripts/fetch-osm-data.mjs",
+    "perf": "node scripts/perf-probe.mjs",
+    "smoke": "node scripts/interaction-smoke.mjs"
   },
   "dependencies": {
     "@types/three": "^0.185.4",

@@ -33,6 +33,17 @@ cheap to bring back into line once the 3D view settles. Do not spend pass budget
 
 ## Pass 13 — Performance and interaction (BLOCKING — do first)
 
+> **Status: landed.** All nine items done; write-up, before/after numbers and
+> flagged deviations in `docs/DECISIONS.md` under
+> "Pass 13 (PLANNING.md roadmap) — Performance and interaction" (the LAST such
+> section — three earlier ones are numbered 13–15 for the OSM work, see the
+> numbering note there). Two things it deliberately left open, both in
+> `docs/BACKLOG.md`: the placement-edit rebuild still costs one ~54 ms frame
+> (was 104 ms), and the ~280 remaining per-asset draw calls need instancing
+> that scenario-focus mode's per-asset opacity currently blocks. Passes 14–18
+> are unblocked. Headroom to build on: 845 → 426 draw calls, orbit CPU
+> 12.4 → 5.3 ms/frame, React commits during camera motion ~60/s → 0.
+
 Nothing else in this push should start until this lands. The app currently
 stutters and freezes; every later pass adds load on top of that.
 

@@ -2188,3 +2188,439 @@ bucket). Spot-checked rail feature count (303), summed `length_km` across
 all rail features (~229 km, explained above), and range-checked `xz` values
 for the rail layer against the tree/road layers already in the file to
 confirm the merge didn't disturb the existing projection.
+
+---
+
+# Pass 13 (PLANNING.md roadmap) — Performance and interaction
+
+**On the number.** Three sections above are already headed Pass 13, 14 and 15.
+Those are the ad-hoc OSM-pipeline sessions, which took the next free sequential
+numbers before `docs/PLANNING.md` existed and defined its own Pass 13–18
+roadmap. This section is *`PLANNING.md`'s* Pass 13 — "Performance and
+interaction (BLOCKING — do first)" — not a fourth OSM session. The two
+numbering schemes have collided; nothing was renamed, because the OSM sections
+are referenced by number from `docs/OSM_PIPELINE.md` and from CLAUDE.md's file
+table. Read the heading, not the number.
+
+Scope, per `PLANNING.md`: the 3D WebGL view only. `src/scene/` (the schematic)
+was not touched beyond one shared file — `labelGrid.ts` gained a `clear()`
+method, which the 2D view does not call.
+
+---
+
+## 0. The instrument, and why it comes first
+
+`src/three/perfHud.ts`. Opt-in three ways — `?perf=1`, `perf=1` in the hash
+(this app's router is hash-based, so a query string alone doesn't survive a
+route), or **Shift+P**, which persists in `localStorage`. Never on by itself:
+there is no "visible in dev" mode, because a readout that appears
+unrequested is one more thing covering the scene it is measuring.
+
+It reports rAF-to-rAF frame time (avg / p95 / max), the time spent *inside*
+this app's own tick, the share of frames over 33 ms, `renderer.info` draw
+calls / triangles / programs / geometries, the label tier counts, and React
+commits per second of the label layer. Nothing in it allocates per frame — a
+ring buffer of 240 floats written in place, one DOM text write at 5 Hz — for
+the obvious reason that an allocating profiler measures itself.
+
+`scripts/perf-probe.mjs` drives it: same scripted idle / orbit / pan / zoom /
+select / drag-drop sequence every run, printed as a table. The gesture script
+lives in the repo rather than in a session's scrollback specifically so the
+"after" number is comparable to the "before" one by construction.
+
+**Caveat stated up front, because it changes how these numbers should be
+read:** this sandbox has no GPU. Chromium runs SwiftShader, a software
+rasteriser, so *frame time is fill-bound and barely moves* — at 1440×900 with
+69k triangles it sits near 170 ms regardless of what the CPU side does. The
+numbers that transfer to real hardware are **draw calls**, **CPU ms inside the
+tick**, and **React commits**. Frame time is reported for completeness and
+should not be quoted as "the app runs at 6 fps"; it is what a software
+rasteriser does with this scene.
+
+## 1. Baseline, and what it said
+
+Measured on `HEAD` with nothing changed but the HUD wired in — 1440×900,
+89 assets + 2 stubs:
+
+| pass | draws | cpu avg | cpu p95 | cpu max | react/s | titled labels |
+|---|---|---|---|---|---|---|
+| idle | 845 | 8.0 ms | 10.2 | 10.3 | 5.8 | 33 |
+| orbit-drag | 848 | 12.4 ms | 18.9 | 26.0 | 4.9 | 32 |
+| pan-drag | 860 | 7.7 ms | 11.1 | 14.6 | 4.4 | 31 |
+| zoom-wheel | 856 | 8.7 ms | 12.9 | 21.8 | 4.7 | 36 |
+| click-select | 375 | 6.8 ms | 8.4 | 8.9 | 5.4 | 21 |
+| drag-drop | 379 | 6.4 ms | 8.6 | **103.7** | 7.3 | 20 |
+
+Three findings, and each of them names its own fix:
+
+1. **One React commit per rendered frame.** `react/s` tracks fps exactly. The
+   loop was building a fresh array of ~90 label descriptors and calling
+   `setLabels()` every frame — so every frame carried a full React render,
+   reconciliation and style recalculation of up to 90 absolutely positioned
+   buttons, *after* `renderer.render()` had already drawn the scene those
+   labels belonged to.
+2. **845 draw calls** for a scene of 89 assets. Almost none of it is the
+   assets: it is the dressing. Every sandbag in every fighting position,
+   every plank of every landmark, every box and cylinder of every hero model
+   was its own `THREE.Mesh`, and none of them ever moves.
+3. **A 104 ms frame on drop.** One frame, on the one interaction that is a
+   rebuild rather than a redraw.
+
+## 2. Pan/zoom stutter: the labels were the whole of it
+
+The lag had a mechanism, not a vibe. `setLabels()` schedules a React commit;
+the commit lands after the current frame has already been painted. So during
+a pan, every pin was drawn from the *previous* frame's camera while the WebGL
+marker under it was drawn from the current one — they diverged by one frame's
+worth of camera motion for as long as the gesture lasted, and converged when
+it stopped. That is precisely the reported symptom: pins trail the scene, then
+snap back.
+
+**React now owns only what a pin *is*** — one stable `<button>` per node,
+mounted once from `nodes`, never rebuilt per frame. **The render loop owns
+where it is and what state it is in**, written straight to `style.transform`,
+`style.zIndex` and `classList` inside the same `requestAnimationFrame` that
+draws the frame. Same camera, same frame, no divergence possible.
+
+Everything else in the loop followed from measuring rather than guessing:
+
+- **Per-frame allocation removed.** The loop built a `.map()`ed array of ~90
+  measurement objects, sorted a copy of it, and constructed a `new LabelGrid()`
+  (plus a `Map` and a bucket array per occupied cell) — every frame. All of it
+  is now scratch held on the `Entry` records, one reusable order array sorted
+  in place, and one `LabelGrid` with a new `clear()`. A minor GC landing
+  mid-pan *is* a hitch, and this was a treadmill feeding one.
+- **The declutter pass is skipped when nothing changed.** `OrbitControls.update()`
+  already returns whether the camera moved this frame, damping tail included;
+  that plus two explicit dirty flags (`labelsDirty` for a drag or a resize,
+  `visualsDirty` for selection/hover/focus) decides whether the pass runs at
+  all. An idle scene now does nothing but draw.
+- **Material writes are gated on `visualsDirty`.** The loop was writing colour,
+  emissive, opacity and scale to every marker, ring and fill *every frame* —
+  ~540 colour copies a frame to express state that changes when a human clicks
+  something.
+- **The ridge-occlusion probe went from ~90 calls a frame to a handful.** It
+  is 5 `terrainHeight()` calls (~35 value-noise evaluations) per asset, it was
+  run for every grounded asset every frame, and its answer only changes when
+  the camera does. It is now (a) memoised for 120 ms and (b) moved *after* the
+  cheap tier tests, so it only runs for the few assets that were about to win
+  a title anyway.
+
+There was no raycast-per-pointermove to fix — the brief listed it as a
+suspect and it was not present; the only raycasting is on click and during a
+committed drag. Resize was already `ResizeObserver`-driven. Both checked, both
+clean, neither changed.
+
+## 3. Draw calls: merge what never moves
+
+`src/three/mergeStatic.ts`. Walks a finished group, bakes each static mesh's
+world transform into its vertices, and merges everything sharing a material
+into one mesh. Triangle count is unchanged and the picture is identical; the
+per-draw overhead collapses. Applied to the scenery group and — once, on the
+shared prototype in `models.ts`, not per clone — to every hero model.
+
+Two decisions inside it worth recording:
+
+- **Bucketed by material *and* by a coarse X bucket (90 world units).** Merging
+  by material alone would collapse the whole strip's concrete into one mesh
+  spanning ~360 world units, which can never be frustum-culled. Trading 300
+  draw calls for rasterising the far rear on every frame is not obviously a
+  win. Bucketing keeps the batches big and the culling coarse-but-real.
+- **Everything is normalised to non-indexed first.** `mergeGeometries()`
+  refuses a mix of indexed and non-indexed inputs, and this scene is
+  flat-shaded low-poly that shares no vertices between faces anyway, so the
+  index was buying nothing.
+
+Alongside it, two allocation fixes on the asset side:
+
+- **The marker, side ring and side fill geometries are module-level and shared.**
+  They are the same three shapes for all 89 assets and were being built fresh
+  per asset — ~270 `BufferGeometry` allocations and GPU uploads on load *and*
+  on every rebuild. Only the materials stay per-asset, because those carry the
+  per-asset colour, opacity and scenario-focus state.
+- **Those materials are cached per asset across rebuilds** (`matCacheRef`).
+  This is what the 104 ms drop frame actually was: a rebuild produces ~270
+  brand-new materials, and the first `renderer.render()` after it has to bind
+  a fresh program and uniform set for each one. Profiling ruled out the
+  obvious suspects first — `loadWorld()` re-runs in 1.2 ms, disposal in 1.0 ms,
+  rebuilding all 91 asset groups in 4.5 ms — which left the render itself.
+  Caching halved it.
+
+## 4. After
+
+Same script, same machine, same viewport:
+
+| pass | draws | cpu avg | cpu p95 | cpu max | react/s | titled labels |
+|---|---|---|---|---|---|---|
+| idle | **426** | **6.2 ms** | 10.7 | 13.7 | **0.0** | 15 |
+| orbit-drag | **429** | **5.3 ms** | **7.2** | **12.3** | **0.1** | 14 |
+| pan-drag | **434** | **5.4 ms** | **7.2** | **12.9** | **0.2** | 14 |
+| zoom-wheel | **433** | **5.2 ms** | **7.9** | **12.3** | **0.0** | 11 |
+| click-select | **205** | **4.6 ms** | 8.6 | 8.7 | 1.5 | 15 |
+| drag-drop | **205** | **3.5 ms** | **6.0** | **53.6** | **0.3** | 15 |
+
+Draw calls halved (845 → 426, and 379 → 205 with the detail panel open).
+Orbit CPU is down 57% (12.4 → 5.3 ms avg, 26.0 → 12.3 ms worst). React commits
+during camera motion went from one per frame to effectively zero. The drop
+hitch is down from 104 ms to 54 ms — better, not gone; the remainder is
+three's own object/render setup for 91 freshly built groups, and removing it
+properly means an incremental scene update instead of a rebuild, which is a
+larger change than this pass should make. Flagged for a later pass rather than
+half-done here.
+
+Frame time barely moves, for the reason given in §0: SwiftShader is fill-bound
+and none of this pass's work is fill.
+
+## 5. Two-finger pan (item 3)
+
+Retuned the existing curve, not a second implementation. Pass 7 set
+`panSpeed = 0.4` and added damping, and that is still right for a mouse, where
+the pointer can cross a desktop screen in one gesture. It is wrong for a
+two-finger pan, which has to move ~400 world units of strip using a gesture
+that can physically travel maybe 300 CSS px before the fingers run out of
+glass.
+
+`panSpeed` is now set per input device from whichever pointer most recently
+started a gesture on the canvas — capture-phase `pointerdown`, so it lands
+before OrbitControls' own handler reads the value. Damping, the soft bounds
+clamp and everything else are untouched and still shared.
+
+Measured with real two-finger touch events dispatched through CDP (Playwright's
+touchscreen API only taps), at 390×780: **220 px of finger travel moved the
+world 70 px before, and 203 px after** — near 1:1, which is what direct
+manipulation should feel like.
+
+## 6. Drag reliability (item 4)
+
+Tested with actual Playwright pointer gestures, per the brief. Three real
+faults, none of which reading the code would have shown:
+
+1. **The listeners were hung off `window` from inside a `useCallback`, and
+   removed by a cleanup keyed on that callback's identity.** Pass 11 already
+   fixed one instance of this (a hover mid-drag swapping the handler out); the
+   shape of the bug survived. Now the pin **captures the pointer**, so every
+   subsequent move and the release retarget to that element and React's own
+   handlers see them — React owns the lifecycle, and there is nothing left to
+   tear down at the wrong moment.
+2. **`pointercancel` was not handled, and `.pin3d` had no `touch-action`.**
+   Together those are the "occasional freeze": a touch drag the browser decided
+   was a scroll fires `pointercancel`, the old code never saw it, and
+   `controls.enabled` stayed `false` forever. That is not a slow frame — it is
+   a camera whose input has been switched off and never switched back.
+   `touch-action: none` stops the browser claiming the gesture; `pointercancel`,
+   `lostpointercapture`, window blur and unmount all now route to one `endDrag`
+   that restores `controls.enabled` unconditionally.
+3. **A 4 px threshold with no time component.** 4 px is inside the jitter of a
+   real finger tap and roughly at the edge of it for a mouse, so taps became
+   drags; and nothing handled the opposite case of a deliberate slow press.
+
+The discriminator: a press commits to a drag when the pointer travels past
+**9 px**, or when it is **held 380 ms** (the touch path — a deliberate
+press-and-hold arms the drag so the slow finger movement after it is never
+read as a wandering tap). On release, if the asset actually moved, the new
+placement is written to the overrides store and the asset is selected; if it
+never moved and the pointer never left the 9 px slop, it is a tap and selects.
+The synthesised `click` that follows *any* pointerup on the pin is suppressed —
+including the one after a gesture the discriminator decided meant nothing.
+Suppressing it only on the paths that DID select was the first version and it
+was wrong: a deliberately cancelled drag still ended up opening the detail
+panel, which is the precise complaint the item is about. `onClick` stays wired,
+because keyboard activation has no preceding pointerup and these are real
+`<button>`s for exactly that reason.
+
+Same slop now guards the canvas: releasing an orbit-drag over empty ground
+used to count as a click and silently close whatever was open.
+
+## 7. Labels (item 5)
+
+Reused `src/scene/labelGrid.ts` — Pass 8 built it deliberately and this pass
+added `clear()` to it and nothing else. What changed is the budget and the
+transitions:
+
+- Titled-label budget: 30 per megapixel → **13 per megapixel, hard-capped at
+  20**. 30/Mpx authorised 39 simultaneous titles on a 1440×900 screen, which
+  is a wall of text, not a decluttered field. Measured: 33 titled before, 15
+  after, at the same framing.
+- Near-tier distance tightened from `camDist × 1.25 + 60` to
+  `camDist × 0.72 + 34`, so proximity does real work instead of titling most
+  of the field most of the time.
+- Selection, hover and scenario-focus membership still outrank distance for
+  label space, unchanged from Pass 8.
+- Tier changes now **animate**: a 170 ms opacity transition, and *only* on
+  opacity. Transform must never be transitioned here — the loop writes it every
+  frame from the live camera, and a CSS transition on top of that is a second,
+  lagging animation fighting the first.
+
+## 8. The blue/red dots (item 6) — what they encoded, and what replaced them
+
+The brief asked for this to be confirmed before removing, so: the dots were
+`.pin3d.is-collapsed`, the decluttered tier of the DOM label. They encoded
+**side** as the fill and **domain** as the rim — and they were the specific
+thing that lagged, because they are DOM positioned by React one commit behind
+the WebGL frame they belonged to.
+
+Both facts are already on screen at the exact same point, drawn by the
+renderer that cannot lag them: side is the **Pass 8 side-identification ring**
+on the ground, and domain is the marker octahedron's own accent colour. Two
+cues for one fact, one of them a frame behind, was the whole problem. So the
+brief's call is right and the dot is gone.
+
+**What is deliberately kept is the element.** It is still there at 16 px, still
+a pointer target over its marker, still tabbable, still hoverable, still named
+for a screen reader — just transparent. That is the part the dot was carrying
+that nothing else does, and it is why decluttering to "invisible" is not the
+same as decluttering to "gone": Pass 8 made these DOM buttons instead of
+sprites precisely so the thinned-out far field stays reachable. Keyboard focus
+makes it visible again (it would otherwise be a focus ring on nothing), and
+hover restores the full label.
+
+## 9. z-order (item 7)
+
+The pins were setting `z-index: 2000`/`2001 !important` and `.scene3d__labels`
+had no `z-index` of its own, so it created no stacking context and the pins
+competed directly with `.detail` at 50 in the root context. Fixed at the
+container: `.scene3d__labels` now takes `z-index: 30` and `isolation: isolate`,
+which traps every pin's z-index inside it. Per-pin values were also brought
+down into a sane range (depth order 1–900, hover 950, selected 951) — with the
+stacking context in place they are no longer load-bearing, but leaving 2001 in
+the file invites the next person to reintroduce the bug.
+
+The per-pin depth key changed from NDC z to camera distance: NDC z is crushed
+into the top of its range by this camera's far plane and resolved barely a
+dozen distinct layers across the whole strip.
+
+## 10. Header orientation (item 8)
+
+Two places asserted a fixed left/right and both were wrong past 90° of
+azimuth: the scene's top legend pill (`← Ukraine rear · zero line · Russia
+rear →`) and the map-info panel's "Ukraine rear is to the left, Russia rear
+to the right." The app header itself carries no side labels — it is the
+hamburger and the brand — so those two are what the brief's "header" means
+here.
+
+Orientation is now derived in the render loop and published through
+`ViewState.axisFlipped`, which both read. **Derived from the camera's own
+right vector** (`matrixWorld`'s first column), not by projecting the two ends
+of the axis and comparing them. Projection was the first attempt and it is
+not safe: a point behind the camera comes back through the perspective divide
+with a negative `w`, so its NDC x flips sign and the comparison silently
+reports the axis mirrored when it isn't — and the deep-rear ends of a
+360-unit axis go behind the camera routinely. That bug was caught by testing,
+and it is the same class of thing as the two Pass 11 found.
+
+`axisFlipped` is gated to the 3D renderer in the Legend: the schematic has no
+camera to orbit and must not inherit a stale flag from a 3D session earlier
+in the same page load.
+
+## 11. Distance ruler (item 9)
+
+`src/three/ruler3d.ts` derives the model; the render loop projects it and
+writes the DOM, in the same frame as the scene, for the same reason the pins
+do.
+
+The rule that makes it honest: **ticks are laid out at a constant step in
+kilometres and drawn wherever that kilometre lands on screen.** The uneven
+spacing that results *is* the band compression, shown rather than described —
+the tactical band's 1 km ticks stand well apart, the deep-strategic band's
+500 km ticks crowd together, and the change in density between them is the
+cue. A ruler with evenly spaced ticks would be a linear scale over a
+non-linear axis, i.e. a lie. Step sizes come from the same "nice steps" list
+`src/scene/Ruler.tsx` uses, so the two views cannot label the same axis with
+different numbers.
+
+Three details that only showed up once it was on screen:
+
+- **Band edges claim their labels first.** Labels are placed in two passes —
+  majors (band edges, where the scale itself changes) before interior ticks —
+  because one pass in screen order let a 1 km tick take a slot and mute the
+  500 km band edge two pixels along, which is exactly backwards.
+- **A tick that loses its label keeps its mark.** The mark density is the
+  compression cue and has to survive; the number is what would have become an
+  unreadable overlap.
+- **The ruler hides itself when the camera looks down the axis.** Within ~17°
+  of end-on, every tick projects to nearly the same screen X and a
+  screen-space ruler stops meaning anything. It says nothing rather than
+  drawing 60 ticks in a 40 px pile and letting the reader think the axis
+  really is that short.
+
+The in-scene band gates from Pass 6 stay, and were merged from ten separate
+`THREE.Line` objects into one `LineSegments` while nearby.
+
+## Where the brief and prior passes disagreed
+
+**1. "Tap fires only if neither threshold is crossed" (item 4).** Taken
+literally, a press held past the time threshold and released without moving
+would select nothing — so a desktop user who clicks slowly while thinking gets
+a dead gesture. Implemented instead as: the *movement* threshold alone
+suppresses the tap, and the time threshold (700 ms, well past the 380 ms at
+which the drag arms) suppresses it too. Between 380 ms and 700 ms the drag is
+armed but a still release is still a tap, so clicking slowly is not punished;
+past 700 ms, holding still and letting go is how you back out of a drag you
+didn't want. Both thresholds are real, the forgiving band between them is the
+deviation.
+
+**2. "Remove the blue/red dots" (item 6).** The visible dot is removed as
+asked, and the confirmation the brief required is in §8 — it encoded side,
+which the Pass 8 ring already carries. The *element* is kept, transparent, as
+a hit target and a11y node. Deleting it outright would have undone the reason
+Pass 8 made these DOM buttons rather than sprites, and the brief's own
+regression guard says not to undo Pass 8.
+
+**3. "Fix header orientation" (item 8).** The app header has no side labels to
+fix. Applied to the two places that do assert an edge — the scene legend pill
+and the map-info panel line. Flagged rather than assumed.
+
+**4. The drop hitch is halved, not eliminated.** 104 ms → 54 ms. Removing the
+rest means replacing the rebuild-everything-on-any-override effect with an
+incremental update, which is a bigger change than a performance pass should
+smuggle in. Recorded here and in `docs/BACKLOG.md` rather than left as a
+silent gap.
+
+**5. Numbering.** See the note at the top of this section.
+
+## Regression guard (PLANNING.md's explicit ask)
+
+Pass 8's four invariants were checked, not assumed:
+
+- **Label collision** — still `src/scene/labelGrid.ts`, the same single index,
+  now with `clear()`. No second collision system was built.
+- **Lateral spreading** — `lateralLayout()` untouched.
+- **`platform_domain` grounding** — `resolvePlatformDomain()` /
+  `worldPlacement()` untouched; both renderers still go through them.
+- **Side rings** — still drawn, still per-asset, still the persistent cue; §8
+  depends on them being there.
+
+`git diff --stat` against the branch point: `src/data/`, `src/scene/projection.ts`,
+`src/scene/Scene.tsx`, `src/three/worldMapping.ts`, `src/three/terrain3d.ts`,
+`src/three/props.ts` and `src/three/scenery.ts` are all unmodified.
+
+## Verification
+
+`npm run build` clean. `scripts/perf-probe.mjs` run against `HEAD`-plus-HUD and
+against this branch, same script, same machine, same viewport — tables in §1
+and §4.
+
+`scripts/interaction-smoke.mjs` (new, committed) drives real pointer gestures
+and asserts 14 things: labels are thinned (15 titled of 91); a *jittered* tap —
+3 px of travel between press and release, which the old 4 px threshold turned
+into a failed drag — opens the detail panel; the detail panel hit-tests above
+the pins; a slow 24-step drag repositions an asset (3 km → 4.6 km, written
+through to the overrides store); a 1000 ms press with no movement selects
+nothing (the cancel path, and the check that caught the click-suppression bug
+above); the camera still orbits after both of those (`controls.enabled`
+restored on the completed AND the cancelled path); the ruler is present with
+genuinely non-uniform tick spacing (2.8–214 px gaps); default framing reads
+side_a left / side_b right; both the scene legend and the map-info line flip
+with azimuth; the ruler hides itself end-on; and no page errors. 14/14.
+
+Additionally, by hand in a headless Chromium: a full 360° orbit in ~44° steps
+with the label orientation and ruler state read at each step (flips once
+each way, degenerate exactly at the two end-on azimuths); scenario focus from
+the Lessons page (dimming intact after the material-cache change, which was
+the one change that could plausibly have left stale focus state on a reused
+material); a live band edit through the Bands editor with an asset selected —
+the projection-only rebuild path, where React does *not* re-render the pins,
+so the effect has to reset their classes from `data-base-class` — exactly one
+pin still selected afterwards, ruler re-derived, no stale classes; every
+routed page (`#/health`, `#/lessons`, `#/about`, `#/library`); the schematic
+view; and phone width at 390×780.

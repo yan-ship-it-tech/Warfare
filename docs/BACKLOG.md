@@ -6,6 +6,48 @@ gets listed here rather than silently dropped or silently worked around.
 
 ---
 
+## Open — Pass 13 (performance and interaction)
+
+### The drop hitch is halved, not eliminated
+Dropping a dragged asset (or any other placement edit) writes to the overrides
+store, which re-runs `loadWorld()` and rebuilds every asset group in the 3D
+scene. Pass 13 took that frame from **104 ms to 54 ms** — shared geometry for
+the marker/ring/fill, and a per-asset material cache so the first
+`renderer.render()` after a rebuild isn't binding ~270 brand-new materials
+(profiling: `loadWorld()` 1.2 ms, disposal 1.0 ms, building 91 groups 4.5 ms —
+the rest was the render).
+
+What's left is three's own object and render setup for 91 freshly built
+groups. Removing it means replacing the rebuild-everything-on-any-override
+effect in `Scene3D.tsx` with an **incremental update** — diff the new node set
+against `entriesRef.current`, move what moved, add/remove only what changed.
+That is a real change to how the scene effect is structured and was
+deliberately not smuggled into a performance pass. Worth doing before Pass 15,
+which adds swap/duplicate mechanics that will hit this same path far more
+often than a drag does.
+
+### Draw calls are halved, and the remaining half is the assets
+845 → 426 with the scenery and hero models merged (`src/three/mergeStatic.ts`).
+Roughly 280 of what remains is three draws per asset — marker, side ring, side
+fill. Collapsing those into per-side `InstancedMesh` would take it to a
+handful, but scenario-focus mode modulates **opacity per asset**, and instanced
+rendering has no per-instance opacity without either a custom shader or
+switching the rings to additive blending. Both change how the Pass 8 side ring
+looks, which Pass 13's regression guard explicitly forbids. Deferred with the
+reason recorded rather than attempted and reverted. Revisit alongside Pass 16,
+which has to think about instancing anyway.
+
+### Frame time was never measured on real hardware
+Every number in `docs/DECISIONS.md` Pass 13 comes from Chromium on
+SwiftShader — a software rasteriser, no GPU in this sandbox. Draw calls, CPU
+ms and React commits transfer; **frame time does not** (it is fill-bound and
+sits near 170 ms regardless of what the CPU side does). Someone with a real
+device should run `node scripts/perf-probe.mjs` against a deployed build and
+record the frame-time column, which is the only column this environment cannot
+speak to.
+
+---
+
 ## Blocked / open — Pass 11 (OSM rail & tree-line pipeline)
 
 ### The Pokrovsk fetch — resolved (Pass 12); Kramatorsk still open

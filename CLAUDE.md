@@ -24,12 +24,18 @@ Two renderers, both real, neither a mockup:
   disagree about where anything is.
 
 **Read `docs/DECISIONS.md` before assuming anything about *why* the code
-looks the way it does.** It's a full build log across 12 passes, written
+looks the way it does.** It's a full build log across every pass so far, written
 specifically so a fresh session doesn't have to rediscover reasoning that's
 already settled — rendering approach, licensing constraints, what got
 reverted and why, every place a later pass's literal instructions collided
 with something an earlier pass learned. Treat it as required reading before
 making an architectural change, not optional history.
+
+**Numbering warning:** `DECISIONS.md` has *two* sections headed Pass 13. The
+first three of its trailing sections (13, 14, 15) are the ad hoc OSM-pipeline
+sessions, which took the next free sequential numbers before `PLANNING.md`
+existed; the last one is `PLANNING.md`'s roadmap Pass 13 (performance and
+interaction). Go by the heading text, not the number.
 
 **Then read `docs/PLANNING.md`** — the forward-looking brief for the next
 major push (Passes 13–18), with a sequencing/dependency order and a
@@ -49,7 +55,7 @@ reading order for any session is `CLAUDE.md` → `DECISIONS.md` →
 | `src/data/model.ts` | Loader-derived types sitting on top of the schema in `src/types.ts` (the actual `Asset` contract). |
 | `src/data/placement.ts` | **Engagement domain vs. platform domain** — resolves how high off the deck to draw an asset. Read the file header before touching altitude/tether logic in either renderer. |
 | `src/scene/labelGrid.ts` | The one label-collision index both renderers share (uniform grid, cost scales with local crowding rather than roster size). |
-| `src/three/` | The WebGL scene: `Scene3D.tsx` (main component — also owns drag-to-reposition, hung off each DOM pin's `onPointerDown`, see Pass 11), `worldMapping.ts` (world-unit conversion + `DOMAIN_ALTITUDE` + `worldXToKm`, the inverse a drag needs to turn a drop point back into a distance), `terrain3d.ts` (synthetic terrain), `models.ts` (`HERO_BUILDERS` — authored, not sourced, low-poly 3D models for a subset of assets), `scenery.ts` (decorative trench lines/obstacle belts/power plant/etc., not clickable), `props.ts` (instanced scatter — trees/craters). |
+| `src/three/` | The WebGL scene: `Scene3D.tsx` (main component — also owns drag-to-reposition and the screen-space overlays; **read its file header before touching the render loop**, Pass 13 moved every per-frame label/ruler write out of React and into the rAF and the two must not drift apart again), `worldMapping.ts` (world-unit conversion + `DOMAIN_ALTITUDE` + `worldXToKm`, the inverse a drag needs to turn a drop point back into a distance), `terrain3d.ts` (synthetic terrain), `models.ts` (`HERO_BUILDERS` — authored, not sourced, low-poly 3D models for a subset of assets), `scenery.ts` (decorative trench lines/obstacle belts/power plant/etc., not clickable), `props.ts` (instanced scatter — trees/craters), `mergeStatic.ts` (merges never-moving geometry by material — halves draw calls, Pass 13), `ruler3d.ts` (the distance ruler's model; the axis is band-compressed, and its tick spacing is deliberately uneven to show that), `perfHud.ts` (dev-only frame-time/draw-call readout, opt-in via `?perf=1` or Shift+P). |
 | `src/state/overridesState.tsx` + `persistence.ts` | The live-edit layer: distance-band edits, per-asset placement/text/media overrides, and brand-new assets built in the Asset Editor all persist here — to `localStorage` by default, or a shared Cloudflare Worker if `VITE_SYNC_URL` is configured (see `docs/DEPLOY_SYNC_WORKER.md`). |
 | `src/components/` | `AppHeader` (hamburger + brand) + `NavDrawer` (every toggle/filter, plus nav links to the routed pages below — Pass 9 replaced the old stacked-button `Toolbar` with this), `PageShell` (chrome for a routed page), `DetailPanel` (per-asset view + inline edit controls + Duplicate), `AssetEditorPanel` (build a whole new asset from scratch, live; also opens directly into edit mode for a custom asset via `ViewState.editorTarget`), `BandsEditorPanel`, `Legend`, `SyncControls`, `CategoryFilterMenu`, `ScenarioFocusBanner` (Pass 11 — the visible entry/exit for `ViewState.focusRequest`'s scenario-focus mode). |
 | `src/pages/` | Routed pages — `registry.tsx` (the `PAGES` array `NavDrawer`/`App.tsx` read; add a page by adding one entry here plus a component, see Pass 9), `DataHealthPage`, `LessonsPage`, `AboutPage`, `AssetLibraryPage` (Pass 11 — browse/filter every asset by side and category, independent of where it sits on the map). |
@@ -64,7 +70,7 @@ reading order for any session is `CLAUDE.md` → `DECISIONS.md` →
 | `docs/3d-model-sourcing-manifest.xlsx` | Pass 16's source list — 72 candidate 3D models (47 with a free sourced candidate, 8 flagged "Weak/Verify", 17 with no free source), with license/attribution info per row. Read before starting Pass 16. |
 | `docs/DEPLOY_SYNC_WORKER.md` | Human walkthrough for deploying the Worker (one remaining manual step: `wrangler deploy` + two repo secrets). |
 | `docs/MODEL_STYLE_GUIDE.md` | **Read before adding or editing any 3D geometry** in `src/three/`. Proportions, poly budget, material/palette rules and silhouette conventions, measured off the hero tier (`models.ts`) and audited against `scenery.ts`/`props.ts`/`terrain3d.ts` — see Pass 12. |
-| `scripts/` | `audit-content.mjs` (verification), `fetch-osm-data.mjs` (Overpass → `data/osm/<aoi>.json`; two stages, and `--raw=` runs the second one with no network), `import-catalog.py` + `fill-sources.py` (spreadsheet → asset JSON, the repeatable path for the next ad hoc content drop). |
+| `scripts/` | `audit-content.mjs` (verification), `fetch-osm-data.mjs` (Overpass → `data/osm/<aoi>.json`; two stages, and `--raw=` runs the second one with no network), `import-catalog.py` + `fill-sources.py` (spreadsheet → asset JSON, the repeatable path for the next ad hoc content drop), `perf-probe.mjs` + `interaction-smoke.mjs` (the Playwright passes below — the closest thing this repo has to a test suite). |
 
 ## Commands
 
@@ -75,14 +81,28 @@ npm run typecheck    # tsc --noEmit only, faster iteration
 npm run preview      # serve the production build locally
 node scripts/audit-content.mjs [--write]   # content verification pass
 node scripts/fetch-osm-data.mjs [--aoi=pokrovsk|kramatorsk]   # OSM extract → data/osm/
+
+# both need `npm run build && npm run preview -- --port 4173` running first
+npm run smoke        # 14 interaction checks driven by real pointer gestures
+npm run perf         # frame-time / draw-call table, before-vs-after comparable
 ```
 
-No test suite exists yet — validate changes with `npm run build` plus a
-headless Playwright smoke pass (Chromium is pre-installed at
-`/opt/pw-browsers/chromium-1194/chrome-linux/chrome`; launch with
-`--use-gl=swiftshader --enable-unsafe-swiftshader --no-sandbox` against
-`npm run preview -- --port 4173`) — this is the pattern used throughout
-`docs/DECISIONS.md` for verifying rendering/UI changes.
+No unit-test suite exists. Validate changes with `npm run build` plus the two
+Playwright scripts above, which are the repeatable form of the ad hoc smoke
+passes used throughout `docs/DECISIONS.md`. Chromium is pre-installed at
+`/opt/pw-browsers/chromium-1194/chrome-linux/chrome` and both scripts launch it
+with `--use-gl=swiftshader --enable-unsafe-swiftshader --no-sandbox`.
+
+**Two things about `npm run perf`:** it needs the app's dev-only HUD
+(`src/three/perfHud.ts`, opt-in via `?perf=1` or Shift+P), and this sandbox has
+no GPU — SwiftShader is a software rasteriser, so its *frame time* column is
+fill-bound and does not transfer to real hardware. Draw calls, CPU-ms-in-tick
+and React-commits-per-second do. See `docs/DECISIONS.md` Pass 13 §0.
+
+**Anything that changes interaction gets tested as a gesture, not read.**
+Pass 11 found two real drag bugs that way and Pass 13 found three more —
+including a `pointercancel` path that left the camera permanently frozen.
+Code review found none of them.
 
 ## Conventions worth knowing before editing
 

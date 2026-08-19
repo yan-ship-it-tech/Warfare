@@ -60,6 +60,17 @@ export interface ViewState {
   sceneZoom: number;
   setSceneZoom: (z: number | ((prev: number) => number)) => void;
 
+  /** True when the camera has been orbited past the point where the distance
+   *  axis reads mirrored — side_b's rear now lies to the LEFT of the zero
+   *  line on screen, not the right. Written by the 3D view's render loop (it
+   *  is the only thing that knows the camera azimuth) and read by everything
+   *  that names an edge: the scene's own side legend and the Legend panel's
+   *  "X rear is to the left" line, both of which were previously static and
+   *  therefore simply wrong at any azimuth past 90 degrees. Always false in
+   *  the schematic view, which has no camera to rotate. */
+  axisFlipped: boolean;
+  setAxisFlipped: (v: boolean) => void;
+
   selectedId: string | null;
   hoveredId: string | null;
   hoveredConnectionKey: string | null;
@@ -122,6 +133,7 @@ const ZOOM_MAX = 2;
 
 export function ViewStateProvider({ children }: { children: ReactNode }) {
   const [renderMode, setRenderMode] = useState<RenderMode>("terrain3d");
+  const [axisFlipped, setAxisFlipped] = useState(false);
   const [focusRequest, setFocusRequest] = useState<FocusRequest | null>(null);
   const focusNonce = useRef(0);
   const [sceneZoom, setSceneZoomRaw] = useState(1);
@@ -198,6 +210,8 @@ export function ViewStateProvider({ children }: { children: ReactNode }) {
     () => ({
       renderMode,
       setRenderMode,
+      axisFlipped,
+      setAxisFlipped,
       focusRequest,
       focusAssets,
       clearFocus,
@@ -231,6 +245,7 @@ export function ViewStateProvider({ children }: { children: ReactNode }) {
     }),
     [
       renderMode,
+      axisFlipped,
       focusRequest,
       focusAssets,
       clearFocus,
