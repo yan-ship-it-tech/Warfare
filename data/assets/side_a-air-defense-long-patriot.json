@@ -7,24 +7,36 @@
   "group": "air_defense",
   "comparison_group": "air_defense_long",
   "distance_km_from_zero": 40,
-  "operating_range_km": { "min_km": 25, "max_km": 120 },
+  "operating_range_km": {
+    "min_km": 25,
+    "max_km": 120
+  },
   "band_id": "op_deep",
   "category": "air-defense-long-range",
   "representative_system": "MIM-104 Patriot, PAC-3 MSE interceptor",
-  "icon_image": "/icons/patriot.png",
-  "gallery_images": ["/gallery/patriot-battery.jpg", "/gallery/patriot-launcher.jpg"],
-
+  "icon_image": "https://commons.wikimedia.org/wiki/Special:FilePath/MIM-104_Patriot.JPG",
+  "gallery_images": [
+    "https://commons.wikimedia.org/wiki/Special:FilePath/MIM-104_Patriot.JPG"
+  ],
   "cost": {
     "unit_cost_usd": 4000000,
     "display": "~$4M per PAC-3 MSE interceptor round (reported range $3.9–5.3M); a full battery (radar, control station, launchers) runs roughly $1.1B",
     "confidence": "reported"
   },
   "key_facts": [
-    { "label": "Engagement range", "value": "~60 km vs. ballistic threats (PAC-3 MSE)" },
-    { "label": "Radar detection", "value": ">100 km (AN/MPQ-65 phased array)" },
-    { "label": "Deployment time", "value": "<1 hour to full readiness" }
+    {
+      "label": "Engagement range",
+      "value": "~60 km vs. ballistic threats (PAC-3 MSE)"
+    },
+    {
+      "label": "Radar detection",
+      "value": ">100 km (AN/MPQ-65 phased array)"
+    },
+    {
+      "label": "Deployment time",
+      "value": "<1 hour to full readiness"
+    }
   ],
-
   "short_role": "Long-range, high-altitude air defense battery protecting rear-area cities and infrastructure from ballistic and cruise missile threats.",
   "characteristics": [
     "PAC-3 MSE interceptor: hit-to-kill, ~60 km engagement range against ballistic threats, up to ~24-30 km intercept altitude",
@@ -35,22 +47,43 @@
   ],
   "employment_notes": "Positioned in the deep operational/strategic rear, not on the line — its job is theater/point missile defense over cities, power infrastructure, and logistics hubs, cued by a wider integrated air defense network (early warning radar, other SAM layers, passive acoustic/EW sensors) rather than acting alone.",
   "contrast_vs_traditional": "In traditional warfare, ground-based air defense mainly countered aircraft. Here the primary threat set is ballistic and hypersonic missiles and mass drone raids, so Patriot batteries are one layer in a networked, multi-tier air defense stack (short-range guns/MANPADS near the line, mid-range SAMs, then Patriot for the highest-end threats) rather than a standalone system — and cost-per-intercept against cheap drones has become a real operational constraint.",
-
   "reactive_behavior": {
     "animation_id": "sam_launch_intercept",
     "description": "On select: radar cues, launcher fires an interceptor, short intercept vignette against an inbound track."
   },
-
   "connections": [
-    { "target_id": "side_a-c2-integrated-air-defense-network", "type": "data_c2", "description": "Receives cueing/track data from the wider integrated air defense network." },
-    { "target_id": "side_a-logistics-hub-op-deep", "type": "supply", "description": "Resupplied with interceptor missiles and generator fuel from the nearest logistics hub." }
+    {
+      "target_id": "side_a-c2-integrated-air-defense-network",
+      "type": "data_c2",
+      "description": "Receives cueing/track data from the wider integrated air defense network."
+    },
+    {
+      "target_id": "side_a-logistics-hub-op-deep",
+      "type": "supply",
+      "description": "Resupplied with interceptor missiles and generator fuel from the nearest logistics hub."
+    }
   ],
-
   "sources": [
-    { "label": "Congress.gov CRS — PATRIOT Air and Missile Defense System for Ukraine", "url": "https://www.congress.gov/crs-product/IF12297" },
-    { "label": "Ukraine MoD — PAC-3 missiles fact sheet", "url": "https://mod.gov.ua/en/news/intercepting-kinzhal-iskander-and-zircon-missiles-key-facts-about-pac-3-missiles-for-the-patriot-air-defense-system-delivered-to-ukraine-by-germany" },
-    { "label": "Military Machine — Patriot Missile System Cost: $4M Per Shot, $1.1B Battery", "url": "https://militarymachine.com/patriot-missile-system-cost" },
-    { "label": "The War Zone — PAC-3 Adapted Capability Effector, Lockheed's lower-cost Patriot interceptor", "url": "https://www.twz.com/land/pac-3-adapted-capability-effector-is-lockheeds-new-low-cost-patriot-interceptor" }
+    {
+      "label": "Congress.gov CRS — PATRIOT Air and Missile Defense System for Ukraine",
+      "url": "https://www.congress.gov/crs-product/IF12297"
+    },
+    {
+      "label": "Ukraine MoD — PAC-3 missiles fact sheet",
+      "url": "https://mod.gov.ua/en/news/intercepting-kinzhal-iskander-and-zircon-missiles-key-facts-about-pac-3-missiles-for-the-patriot-air-defense-system-delivered-to-ukraine-by-germany"
+    },
+    {
+      "label": "Military Machine — Patriot Missile System Cost: $4M Per Shot, $1.1B Battery",
+      "url": "https://militarymachine.com/patriot-missile-system-cost"
+    },
+    {
+      "label": "The War Zone — PAC-3 Adapted Capability Effector, Lockheed's lower-cost Patriot interceptor",
+      "url": "https://www.twz.com/land/pac-3-adapted-capability-effector-is-lockheeds-new-low-cost-patriot-interceptor"
+    },
+    {
+      "label": "Wikimedia Commons — MIM-104 Patriot launcher",
+      "url": "https://commons.wikimedia.org/wiki/File:MIM-104_Patriot.JPG"
+    }
   ],
   "editable": true
 }

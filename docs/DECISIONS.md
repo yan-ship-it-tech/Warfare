@@ -402,3 +402,88 @@ misses and got corrected: T-72 and Orlan-10 had no cost figure at all
 estimate was too low ($310–390K → $500K–1M, matching the catalog). Patriot,
 M777, Leopard 2, HIMARS, Gepard, Lancet and Magura V5 were already
 consistent and left as authored.
+
+---
+
+# Pass 4 — real geography and real imagery
+
+## Why the "photorealism is blocked" conclusion from earlier passes was wrong
+Every earlier pass correctly found that *this session* cannot download a
+binary image or map tile — the egress proxy policy-denies image hosts, and
+the web-fetch tool available here returns article text, not bytes. What
+changed is recognizing that constraint only applies to what *this session*
+fetches into its own build environment. Once the app is deployed (GitHub
+Pages), an `<img src="https://...">` or a map tile URL is fetched by the
+*visitor's own browser*, entirely outside this session's network path. That
+reopens both real photography and a real map, with zero binary transfer
+through this sandbox — the build only ever ships text (URLs) referencing
+public, keyless image/tile hosts.
+
+## Map engine: MapLibre GL JS over Cesium
+Both were viable. MapLibre won on fit for what was actually asked for — a
+tilted aerial/oblique read of a relatively small, mostly flat sector — not a
+full orbiting 3D globe. It's lighter, has no ion-account/token dependency
+for usable assets, integrates its `pitch`/`bearing` camera controls to match
+the reference images directly, and its HTML `Marker` API let the existing
+node/detail-panel styling carry over rather than being rebuilt in a 3D
+scene graph. Cesium stays a legitimate future option if the ask becomes "a
+real spinning-globe view of the whole war," which this wasn't.
+
+## Basemap and terrain: keyless, public, real
+- **Satellite/aerial basemap:** Esri World Imagery REST tile service
+  (`server.arcgisonline.com/.../World_Imagery/...`) — public, no API key.
+- **Terrain:** AWS's public "Terrain Tiles" open dataset,
+  Terrarium-encoded `raster-dem`, served straight from
+  `s3.amazonaws.com/elevation-tiles-prod` — public, no API key.
+
+Both are real data, not generated — MapLibre's `hillshade` layer and
+`terrain` (3D displacement) render actual elevation. Honesty note carried
+into the app itself (About panel and an on-map notice): the real
+Donbas/Zaporizhzhia front is flat rolling steppe, not the dramatic mountains
+in the reference mockup images. Terrain exaggeration (1.6×) is used to make
+the real, subtle relief — river valleys, ravines — legible, not to fabricate
+elevation that isn't there.
+
+## Asset placement on the real map: `src/map/geoPlacement.ts`
+No schema change. The existing `distance_km_from_zero` + `side` + `domain`
+fields are reused as inputs to a pure destination-point projection (real
+spherical-earth bearing/distance formula) from one real anchor point — a
+spot on the contact line near Orikhiv, Zaporizhzhia Oblast, picked because
+it's on open, well-documented, typical-of-most-of-the-front terrain. Ukraine
+projects west/northwest along the bearing, Russia east/southeast. A small
+id-stable lateral jitter (keyed off `domain`, ±1.5 km) keeps same-distance
+markers from stacking exactly on top of one another. Same honesty rule as
+the schematic view, restated on the map itself: real coordinates, real
+terrain, illustrative placement — not a measured unit position. This also
+retires backlog item #6 (the old "true oblique perspective" ask) — the map
+view *is* a real, camera-tilted 3D read now, without touching the
+schematic view's coordinate guarantees.
+
+## Real equipment photography: sourced, not supplied
+The user declined to supply images/video directly ("I don't want to start
+putting in manually pictures... what do we need to do to enable you?"). Per
+the constraint above, the fix was searching the open web for filenames
+(text — a search result, not a downloaded image) and constructing a stable
+`https://commons.wikimedia.org/wiki/Special:FilePath/<file>` URL, which
+Commons resolves to the current image regardless of its underlying storage
+path. 12 of 27 assets — the most recognizable named systems on each side —
+now carry a real, licensed photograph as both their map icon and their
+detail-panel gallery image, with a Commons attribution entry added to
+`sources`. The remaining 15 (mostly abstract nodes — C2 networks, logistics
+hubs, EW systems with no good public photo, the two deliberately-generic
+"representative infrastructure" power-plant nodes) were left as generated
+icons rather than force a photo that would either not exist cleanly or
+misrepresent a "representative" placeholder as a specific real facility —
+same sourcing-caution reasoning as backlog item #3. Every image tile
+already had a broken-image fallback (`GalleryTile`/`AssetNode`'s
+`onerror`) from earlier passes, so a bad or renamed Commons file degrades
+gracefully instead of breaking the app.
+
+## View toggle: Map is now the default
+`viewState.mode` (`"map" | "schematic"`) switches `App.tsx` between
+`MapView` and the original `Scene`. Map defaults on, since it's the more
+immersive, less "tech-pitch-deck" read the user asked for; Schematic stays
+one click away as the teaching view with the ruler and domain lanes, which
+the real map's geography can't replace (bands compress distance
+nonlinearly on purpose — a real map can't do that and stay geographically
+honest at the same time).

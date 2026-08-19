@@ -6,34 +6,48 @@ gets listed here rather than silently dropped or silently worked around.
 
 ---
 
+## Resolved this pass
+
+### 1. Real photos of equipment — done for 12 of 27
+Was blocked on the wrong assumption: this *session* can't fetch binary
+images, but a *deployed page's* `<img src="https://...">` is fetched by the
+visitor's own browser, outside this sandbox entirely. Sourced real,
+licensed photos (Wikimedia Commons, via `Special:FilePath` stable URLs) for
+the 12 most recognizable named systems — see `docs/DECISIONS.md`, Pass 4.
+Remaining ~15 assets (abstract nodes, and two deliberately-generic
+"representative infrastructure" placeholders) intentionally left without a
+forced photo — see item 3 below for why the power-plant nodes specifically
+stay as-is.
+
+### 3'. A real photomap — done, with a scope narrower than "destroyed infrastructure"
+Real satellite basemap + real elevation terrain shipped this pass (MapLibre
+GL, `src/map/MapView.tsx`) — see Pass 4 in `docs/DECISIONS.md`. What did
+*not* ship: destroyed-infrastructure imagery specifically. That's a
+separate, harder sourcing problem from "a real basemap" — provenance (real
+vs. staged vs. a different conflict) matters more there, and it sits closer
+to the disclaimer's line ("no placement here should be read as
+intelligence"). Still flagged below as its own open item, deliberately not
+bundled into the basemap work.
+
+---
+
 ## Blocked — needs something from outside this session
 
-### 1. Real photos of equipment
-This environment cannot download binary images from the open web — the
-egress policy blocks image hosts (Wikimedia's upload host came back
-policy-denied, not a transient failure) and the page-fetch tool available
-here converts pages to article text, not binary image data. There is no
-path to a downloaded photograph from inside this session.
-**Unblocks if:** you supply image files directly (a batch of equipment
-photos, screenshots, whatever you have) — those can be read locally and
-embedded with zero network involved, sidestepping the constraint entirely.
-
 ### 2. Video of each asset "doing its typical job"
-Same blocker as #1, and harder: no video fetch or generation capability
-exists in this session at all.
-**Unblocks if:** you supply video files directly. Worth scoping file
-size/format constraints once real footage exists — a single-file build has
-a 16MB ceiling, so video likely means this stops being a single-file
-artifact and becomes something that needs real hosting.
+No video fetch or generation capability exists in this session. Unlike
+photos, there's no equivalent "the visitor's browser fetches it" trick for
+video that this pass exposed — a real `<video src>` pointing at a real
+hosted clip would work the same way in principle (worth trying the same
+approach used for photos: search for a permissively-licensed clip's stable
+URL), but wasn't attempted this pass. Reasonable next step before writing
+this off as blocked again.
 
-### 3. A real photomap with destroyed infrastructure
-Same blocker as #1 for the imagery itself. Separately worth flagging: real
-destroyed-infrastructure photography is a more sensitive sourcing problem
-than equipment photos — provenance (real vs. staged vs. from a different
-conflict) matters a lot more, and it sits closer to the line the tool's own
-disclaimer draws ("not a live or historical map... no placement here should
-be read as intelligence"). Worth a deliberate conversation about sourcing
-standards before pulling this in, not just a technical fix.
+### 3. Real destroyed-infrastructure photography
+See "Resolved this pass" above — the basemap itself is done; this item is
+now specifically about sourcing photography of *actual damaged sites* to
+attach to specific asset nodes, which is a deliberate sourcing-standards
+conversation (provenance, specificity, the disclaimer's own red line), not
+a technical blocker anymore.
 
 ---
 
@@ -45,6 +59,13 @@ Operation Spiderweb, Gepard's 10-drone engagement). Extending it to the rest
 of the 27 assets — and to new ones as they're added — is straightforward
 but is real per-asset research work, same shape as the original asset
 build-out. Natural to do category-by-category like the rest of the content.
+
+### 5'. Connections overlay on the Map view
+The dependency-line overlay (supply/data-C2/casevac/...) only renders in
+Schematic view. It's the same `world.connections` data and the same
+`geoPlacement()` coordinates each endpoint already has — drawing them as a
+MapLibre GeoJSON line layer between marker positions is mechanical, just
+didn't fit this pass alongside getting the map itself shipped.
 
 ### 5. Build out the remaining catalog entries as full map assets
 Your two catalogs carry ~53 systems; 14 are currently placed on the map with
@@ -59,15 +80,19 @@ placement or doctrine-level writeup yet. Next natural expansion pass.
 
 ## Decided against for now, worth revisiting
 
-### 6. True oblique/3D-elevated perspective
-Removed this pass because the previous implementation applied the "oblique"
-offset to actual node/ruler coordinates, silently breaking the
-distance-matches-position guarantee (up to ~400px off at the deepest lane) —
-correctness won. A version that gets the diagonal, elevated-viewpoint look
-back *without* touching coordinates the ruler and detail panel both have to
-agree with is still worth doing: apply a perspective transform to a purely
-decorative background layer (terrain art), never to the layer nodes and the
-ruler are positioned on. Bigger lift than a quick fix; needs its own pass.
+### 6. True oblique/3D-elevated perspective — resolved via the map view
+The schematic Scene still can't get this safely (see the original note
+below — it stays fixed for that reason). But the actual want here — a
+tilted, elevated, aerial read of the battlefield — now exists for real in
+the new Map view (`src/map/MapView.tsx`, Pass 4): a genuine 3D camera
+(`pitch`/`bearing`) over real elevation terrain, with its own independent
+coordinate system (`src/map/geoPlacement.ts`) that never touches the
+schematic Scene's node/ruler math. Original note, kept for context: removed
+from the schematic view because the previous implementation applied the
+"oblique" offset to actual node/ruler coordinates, silently breaking the
+distance-matches-position guarantee (up to ~400px off at the deepest lane)
+— correctness won there, and stays won; the 3D read now lives on the map
+instead of being smuggled into the schematic one.
 
 ### 7. Reset granularity: placement vs. system swap
 "Reset to authored value" in the placement editor currently clears *both* a

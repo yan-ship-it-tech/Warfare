@@ -7,24 +7,36 @@
   "group": "artillery",
   "comparison_group": "towed_artillery",
   "distance_km_from_zero": 12,
-  "operating_range_km": { "min_km": 8, "max_km": 22 },
+  "operating_range_km": {
+    "min_km": 8,
+    "max_km": 22
+  },
   "band_id": "op_near",
   "category": "artillery",
   "representative_system": "M777A2 (BAE Systems), firing M795 / M982 Excalibur precision rounds",
-  "icon_image": "/icons/m777.png",
-  "gallery_images": ["/gallery/m777-firing.jpg", "/gallery/m777-towed.jpg"],
-
+  "icon_image": "https://commons.wikimedia.org/wiki/Special:FilePath/M777_Light_Towed_Howitzer_1.jpg",
+  "gallery_images": [
+    "https://commons.wikimedia.org/wiki/Special:FilePath/M777_Light_Towed_Howitzer_1.jpg"
+  ],
   "cost": {
     "unit_cost_usd": 3700000,
     "display": "~$3.7M per gun (estimates range $2.5–4.4M depending on whether life-cycle costs are included); a single M982 Excalibur precision round runs ~$100K",
     "confidence": "estimated"
   },
   "key_facts": [
-    { "label": "Max range", "value": "~40 km with M982 Excalibur precision rounds" },
-    { "label": "Crew", "value": "7–8" },
-    { "label": "Rate of fire", "value": "2–5 rounds/min sustained" }
+    {
+      "label": "Max range",
+      "value": "~40 km with M982 Excalibur precision rounds"
+    },
+    {
+      "label": "Crew",
+      "value": "7–8"
+    },
+    {
+      "label": "Rate of fire",
+      "value": "2–5 rounds/min sustained"
+    }
   ],
-
   "short_role": "Towed 155mm howitzer providing indirect fire support; titanium construction keeps it light enough for helicopter/vehicle relocation.",
   "characteristics": [
     "Crew: 7-8",
@@ -35,22 +47,44 @@
   ],
   "employment_notes": "Rarely fires from a static position for long — 'shoot and scoot' displacement after a few fire missions is now standard, driven by counter-battery radar and reconnaissance drones that can locate a firing signature within minutes.",
   "contrast_vs_traditional": "Traditional artillery doctrine assumed relatively safe rear firing positions; today, persistent overhead drone reconnaissance and fast counter-battery radar mean a gun that fires from the same spot twice risks being hit within minutes. This has pushed batteries toward dispersion, frequent displacement, and much heavier reliance on drone-spotted precision rounds (like Excalibur) to reduce the number of shots — and therefore the exposure time — needed per target.",
-
   "reactive_behavior": {
     "animation_id": "artillery_fire_mission",
     "description": "On select: crew lays the gun, fires, brief fall-of-shot indicator downrange toward zero line."
   },
-
   "connections": [
-    { "target_id": "side_a-logistics-hub-op-deep", "type": "supply", "description": "Ammunition resupply — 155mm rounds, propellant charges." },
-    { "target_id": "side_a-uav-reconnaissance-tactical", "type": "data_c2", "description": "Receives target coordinates and fall-of-shot correction from a tactical reconnaissance drone." },
-    { "target_id": "side_a-medical-casevac-chain", "type": "casevac", "description": "Crew casualties evacuated via the tactical casevac chain." }
+    {
+      "target_id": "side_a-logistics-hub-op-deep",
+      "type": "supply",
+      "description": "Ammunition resupply — 155mm rounds, propellant charges."
+    },
+    {
+      "target_id": "side_a-uav-reconnaissance-tactical",
+      "type": "data_c2",
+      "description": "Receives target coordinates and fall-of-shot correction from a tactical reconnaissance drone."
+    },
+    {
+      "target_id": "side_a-medical-casevac-chain",
+      "type": "casevac",
+      "description": "Crew casualties evacuated via the tactical casevac chain."
+    }
   ],
-
   "sources": [
-    { "label": "Wikipedia — M777 howitzer", "url": "https://en.wikipedia.org/wiki/M777_howitzer" },
-    { "label": "Defense Express — American M777 Howitzers in Ukraine in All Details", "url": "https://en.defence-ua.com/weapon_and_tech/american_m777_howitzers_in_ukraine_in_all_details_from_projectiles_to_fire_control_system-2925.html" },
-    { "label": "HistoryNet — M777 Howitzer: US Artillery Pounding Russians in Ukraine (cost figures, general reporting)", "url": "https://historynet.com/m777-howitzer/" }
+    {
+      "label": "Wikipedia — M777 howitzer",
+      "url": "https://en.wikipedia.org/wiki/M777_howitzer"
+    },
+    {
+      "label": "Defense Express — American M777 Howitzers in Ukraine in All Details",
+      "url": "https://en.defence-ua.com/weapon_and_tech/american_m777_howitzers_in_ukraine_in_all_details_from_projectiles_to_fire_control_system-2925.html"
+    },
+    {
+      "label": "HistoryNet — M777 Howitzer: US Artillery Pounding Russians in Ukraine (cost figures, general reporting)",
+      "url": "https://historynet.com/m777-howitzer/"
+    },
+    {
+      "label": "Wikimedia Commons — M777 towed howitzer",
+      "url": "https://commons.wikimedia.org/wiki/File:M777_Light_Towed_Howitzer_1.jpg"
+    }
   ],
   "editable": true
 }

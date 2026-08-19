@@ -36,7 +36,15 @@ repo Settings → Pages → Source → "GitHub Actions".
 
 ## What's here
 
-- Scrollable cross-section. Horizontal scroll moves toward and through the
+- **Map view (default)**: MapLibre GL over real satellite imagery (Esri World
+  Imagery) and real elevation terrain (AWS Terrain Tiles), tilted to a 3D
+  oblique camera. Every asset's real `distance_km_from_zero` is projected onto
+  it from a real anchor point (`src/map/geoPlacement.ts`) — real terrain, real
+  coordinates, illustrative placement, same honesty rule as the rest of the
+  tool. 12 of 27 assets carry a real, licensed equipment photograph sourced
+  from Wikimedia Commons. Switch to "Schematic" in the toolbar for the
+  original distance-band cross-section.
+- Scrollable cross-section (Schematic view). Horizontal scroll moves toward and through the
   zero line into the opposing side; vertical scroll moves between domain
   layers. A single persistent ruler labels distance independently per side —
   every node's screen position matches its true distance, in every lane.
@@ -96,6 +104,9 @@ src/
     loader.ts             globs, validates, merges edges, builds pending stubs
     validate.ts           runtime schema checks
     model.ts              loader-derived types (does not extend the schema)
+  map/
+    geoPlacement.ts        real-geography projection (pure, no DOM)
+    MapView.tsx             MapLibre GL real-terrain view
   scene/
     projection.ts         battlefield → screen geometry (pure, no DOM)
     Scene.tsx             scroll container, lanes, rail

@@ -15,8 +15,12 @@ import {
 import type { AssetGroup, ConnectionType, Side } from "../types";
 
 export type PanelId = "about" | "health" | "bands" | "categories" | null;
+export type ViewMode = "map" | "schematic";
 
 export interface ViewState {
+  mode: ViewMode;
+  setMode: (m: ViewMode) => void;
+
   selectedId: string | null;
   hoveredId: string | null;
   hoveredConnectionKey: string | null;
@@ -63,6 +67,7 @@ const ALL_CONNECTION_TYPES: ConnectionType[] = [
 const Ctx = createContext<ViewState | null>(null);
 
 export function ViewStateProvider({ children }: { children: ReactNode }) {
+  const [mode, setMode] = useState<ViewMode>("map");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [hoveredConnectionKey, setHoveredConnectionKey] = useState<string | null>(null);
@@ -113,6 +118,8 @@ export function ViewStateProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<ViewState>(
     () => ({
+      mode,
+      setMode,
       selectedId,
       hoveredId,
       hoveredConnectionKey,
@@ -137,6 +144,7 @@ export function ViewStateProvider({ children }: { children: ReactNode }) {
       setOpenPanel,
     }),
     [
+      mode,
       selectedId,
       hoveredId,
       hoveredConnectionKey,

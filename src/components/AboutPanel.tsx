@@ -81,20 +81,37 @@ export function AboutPanel({ world }: { world: WorldModel }) {
           unverified rather than presented as fact. Data health lists every one of those flags.
         </p>
 
-        <h3>Imagery — a real constraint, not a style choice</h3>
+        <h3>Map view — real satellite imagery and real terrain</h3>
         <p>
-          This build cannot fetch photographs, satellite imagery, or 3D model renders from the open
-          web — the environment it runs in blocks image hosts, and the page-fetching tool available
-          to it returns article text, not binary image data. Every icon and every ground texture on
-          this map is generated (SVG shapes, procedural noise), not sourced. That's a real limitation,
-          not a design preference: real reference photos supplied directly can be embedded, and would
-          be a meaningful upgrade over the generated set.
+          The Map view (default; switch with the "Map / Schematic" toggle in the toolbar) is
+          MapLibre GL over Esri World Imagery satellite tiles and AWS's open elevation data, tilted to
+          a real 3D camera — not generated art. Asset positions on it come from the same
+          <code>distance_km_from_zero</code> every asset already carries, projected from one real
+          anchor point near Orikhiv, Zaporizhzhia Oblast — a real place on real terrain, chosen because
+          it's typical of most of the front, not because anything is claimed to sit there specifically.
+          The real Donbas/Zaporizhzhia front is mostly flat, open steppe, not the dramatic mountains a
+          tilted 3D view might suggest — terrain is exaggerated (1.6×) to make that real, subtle relief
+          legible, never to invent elevation that isn't there. Same rule as everywhere else in this
+          tool: real coordinates, real imagery, illustrative placement — not a measured unit position.
+        </p>
+
+        <h3>Equipment photography — sourced, not generated</h3>
+        <p>
+          12 of 27 assets — the most recognizable named systems on each side — carry a real, licensed
+          photograph (Wikimedia Commons, credited in that asset's Sources) as both their map icon and
+          detail-panel image, with a graceful fallback to the generated icon set if a photo URL ever
+          breaks. The rest still use the generated icon set: mostly abstract nodes (C2 networks,
+          logistics hubs) with no good equipment photo to speak of, plus two deliberately-generic
+          "representative infrastructure" placeholders left ungrounded on purpose rather than dressed
+          up with a specific real facility's photo. See docs/BACKLOG.md for the full picture on video
+          and destroyed-infrastructure imagery specifically, which are handled differently.
         </p>
 
         <h3>What's not built yet</h3>
         <ul>
-          <li>Real photos, video, or a photorealistic map background — this environment can't fetch
-            binary images from the open web. Unblocks if reference files are supplied directly.</li>
+          <li>Video of each asset in typical use, and destroyed-infrastructure photography
+            specifically — different sourcing problem from equipment stills; see docs/BACKLOG.md.</li>
+          <li>The dependency-line overlay only renders in Schematic view, not yet on the map.</li>
           <li>A backend — band, placement, and system-swap edits persist to this browser's local storage
             only, not shared across devices or people.</li>
           <li>Drag-to-reposition and full inline editing of asset text/images from the map itself.</li>

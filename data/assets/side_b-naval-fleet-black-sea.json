@@ -10,20 +10,29 @@
   "band_id": "strategic_rear",
   "category": "naval-surface-fleet",
   "representative_system": "Composite — Black Sea Fleet surface combatants (e.g. Admiral Grigorovich-class frigates), representing the fleet's post-2023 basing pattern",
-  "icon_image": "/icons/black-sea-fleet.png",
-  "gallery_images": [],
-
+  "icon_image": "https://commons.wikimedia.org/wiki/Special:FilePath/Russian_cruiser_Moskva.jpg",
+  "gallery_images": [
+    "https://commons.wikimedia.org/wiki/Special:FilePath/Russian_cruiser_Moskva.jpg"
+  ],
   "cost": {
     "unit_cost_usd": null,
     "display": "A fleet presence, not a single procured unit — individual frigates of this class run in the hundreds of millions of dollars each",
     "confidence": "unknown"
   },
   "key_facts": [
-    { "label": "Relocation", "value": "Bulk of surface units moved from Sevastopol to Novorossiysk" },
-    { "label": "Losses", "value": "Multiple vessels sunk/damaged since 2022, several by USVs" },
-    { "label": "Effect", "value": "Reduced ability to blockade the western Black Sea / grain corridor" }
+    {
+      "label": "Relocation",
+      "value": "Bulk of surface units moved from Sevastopol to Novorossiysk"
+    },
+    {
+      "label": "Losses",
+      "value": "Multiple vessels sunk/damaged since 2022, several by USVs"
+    },
+    {
+      "label": "Effect",
+      "value": "Reduced ability to blockade the western Black Sea / grain corridor"
+    }
   ],
-
   "short_role": "Representative Black Sea Fleet surface presence, shown at a distance reflecting its forced relocation away from Crimea toward more distant, less exposed basing.",
   "characteristics": [
     "Historic main base at Sevastopol became untenable under sustained missile and USV threat",
@@ -32,12 +41,20 @@
   ],
   "employment_notes": "This entry's distance on the map is deliberately larger than a 'normal' strategic-rear asset to represent the fleet's actual behavior: it has been pushed further from the line, not merely stationed at long range by original design. That repositioning is itself the story — a fleet that used to operate close to Crimea now bases further away because it has to.",
   "contrast_vs_traditional": "Doctrine reference §2's sharpest finding is that local air/drone superiority — not doctrine or preference — sets how close an asset can operate. The Black Sea Fleet's relocation shows the same logic applied at sea: a fleet with no peer navy to fight was nonetheless pushed back by a mix of shore-based missiles and uncrewed surface vessels, the naval equivalent of the tank being forced from 1.5 km to 7 km when it loses local air control.",
-
   "connections": [],
-
   "sources": [
-    { "label": "USNI Proceedings — Ukraine's Magura Naval Drones: Black Sea Equalizers", "url": "https://www.usni.org/magazines/proceedings/2025/september/ukraines-magura-naval-drones-black-sea-equalizers" },
-    { "label": "Army Recognition — Ukrainian MAGURA V5 drone paralyzes Russian Black Sea Fleet", "url": "https://www.armyrecognition.com/news/navy-news/2024/ukrainian-magura-v5-drone-paralyzes-russian-black-sea-fleet-damages-18-ships-in-18-months" }
+    {
+      "label": "USNI Proceedings — Ukraine's Magura Naval Drones: Black Sea Equalizers",
+      "url": "https://www.usni.org/magazines/proceedings/2025/september/ukraines-magura-naval-drones-black-sea-equalizers"
+    },
+    {
+      "label": "Army Recognition — Ukrainian MAGURA V5 drone paralyzes Russian Black Sea Fleet",
+      "url": "https://www.armyrecognition.com/news/navy-news/2024/ukrainian-magura-v5-drone-paralyzes-russian-black-sea-fleet-damages-18-ships-in-18-months"
+    },
+    {
+      "label": "Wikimedia Commons — Russian cruiser Moskva, Black Sea Fleet flagship (sunk April 2022)",
+      "url": "https://commons.wikimedia.org/wiki/File:Russian_cruiser_Moskva.jpg"
+    }
   ],
   "editable": true
 }

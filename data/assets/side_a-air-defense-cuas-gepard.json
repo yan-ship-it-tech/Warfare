@@ -7,24 +7,36 @@
   "group": "air_defense",
   "comparison_group": "self_propelled_aa",
   "distance_km_from_zero": 6,
-  "operating_range_km": { "min_km": 2, "max_km": 15 },
+  "operating_range_km": {
+    "min_km": 2,
+    "max_km": 15
+  },
   "band_id": "op_near",
   "category": "cuas-gun",
   "representative_system": "Flakpanzer Gepard self-propelled anti-aircraft gun",
-  "icon_image": "/icons/gepard.png",
-  "gallery_images": [],
-
+  "icon_image": "https://commons.wikimedia.org/wiki/Special:FilePath/Flakpanzer_Gepard_SPAAG.JPG",
+  "gallery_images": [
+    "https://commons.wikimedia.org/wiki/Special:FilePath/Flakpanzer_Gepard_SPAAG.JPG"
+  ],
   "cost": {
     "unit_cost_usd": 1960000,
     "display": "~$2M per refurbished unit in bulk batches (a 2013-era contract priced one at ~€350K; 35mm ammunition runs roughly €560/round)",
     "confidence": "reported"
   },
   "key_facts": [
-    { "label": "Armament", "value": "Twin 35mm autocannons, radar-directed" },
-    { "label": "Rate of fire", "value": "~550 rounds/min per barrel" },
-    { "label": "Role", "value": "Cold War-era system repurposed as a leading drone/cruise-missile killer" }
+    {
+      "label": "Armament",
+      "value": "Twin 35mm autocannons, radar-directed"
+    },
+    {
+      "label": "Rate of fire",
+      "value": "~550 rounds/min per barrel"
+    },
+    {
+      "label": "Role",
+      "value": "Cold War-era system repurposed as a leading drone/cruise-missile killer"
+    }
   ],
-
   "short_role": "A 1970s-vintage twin-35mm anti-aircraft gun repurposed as one of the most effective, cost-per-kill counter-drone systems fielded in this war.",
   "characteristics": [
     "Twin radar-directed 35mm autocannons, originally designed against Cold War-era jets and helicopters",
@@ -34,27 +46,48 @@
   ],
   "employment_notes": "Protects maneuver units and rear infrastructure against exactly the threat category — cheap loitering munitions and small attack drones — that a multi-million-dollar interceptor missile is uneconomical against. Its gun-based kill mechanism is far cheaper per engagement than a guided missile, which is precisely why a nominally obsolete system has become a valued asset.",
   "contrast_vs_traditional": "Designed for a threat (fast jets and attack helicopters) that barely appears in this war, Gepard turned out to be well suited to a threat nobody designed it for: cheap mass drone raids. With 60–70% of equipment losses on this battlefield now attributed to drones rather than artillery or direct fire, a cost-effective gun-based counter-drone system matters more than the raw sophistication of any single interceptor — a direct inversion of what counted as a 'modern' air-defense asset a decade ago.",
-
   "notable_events": [
     {
       "date": "2023",
       "title": "10+ drones and 2 cruise missiles in a single engagement",
       "description": "A Ukrainian Gepard crew reported downing more than 10 drones plus two cruise missiles in one engagement — widely cited as the clearest single demonstration of the type's cost-per-kill advantage over missile-based air defense against a mass drone raid.",
       "sources": [
-        { "label": "User-supplied equipment catalog (Ukrainian Military Equipment Reference Catalog)", "url": "" }
+        {
+          "label": "User-supplied equipment catalog (Ukrainian Military Equipment Reference Catalog)",
+          "url": ""
+        }
       ]
     }
   ],
-
   "connections": [
-    { "target_id": "side_a-c2-integrated-air-defense-network", "type": "data_c2", "description": "Cued onto inbound low-altitude tracks by the wider integrated air defense network." },
-    { "target_id": "side_a-logistics-hub-op-deep", "type": "supply", "description": "35mm ammunition resupply." }
+    {
+      "target_id": "side_a-c2-integrated-air-defense-network",
+      "type": "data_c2",
+      "description": "Cued onto inbound low-altitude tracks by the wider integrated air defense network."
+    },
+    {
+      "target_id": "side_a-logistics-hub-op-deep",
+      "type": "supply",
+      "description": "35mm ammunition resupply."
+    }
   ],
-
   "sources": [
-    { "label": "Kyiv Independent — US to buy Gepard air defense system for Ukraine in $118 million contract", "url": "https://kyivindependent.com/us-to-buy-gepard-anti-aircraft-guns-for-ukraine-worth-almost-120-million/" },
-    { "label": "Euromaidan Press — Ukraine just solved the hardest math problem in modern air defense", "url": "https://euromaidanpress.com/2025/07/20/ukraine-drone-defense/" },
-    { "label": "Defense News — Germany ships first batch of new Gepard ammo to Ukraine", "url": "https://www.defensenews.com/global/europe/2023/09/05/germany-ships-first-batch-of-new-gepard-ammo-to-ukraine/" }
+    {
+      "label": "Kyiv Independent — US to buy Gepard air defense system for Ukraine in $118 million contract",
+      "url": "https://kyivindependent.com/us-to-buy-gepard-anti-aircraft-guns-for-ukraine-worth-almost-120-million/"
+    },
+    {
+      "label": "Euromaidan Press — Ukraine just solved the hardest math problem in modern air defense",
+      "url": "https://euromaidanpress.com/2025/07/20/ukraine-drone-defense/"
+    },
+    {
+      "label": "Defense News — Germany ships first batch of new Gepard ammo to Ukraine",
+      "url": "https://www.defensenews.com/global/europe/2023/09/05/germany-ships-first-batch-of-new-gepard-ammo-to-ukraine/"
+    },
+    {
+      "label": "Wikimedia Commons — Flakpanzer Gepard SPAAG",
+      "url": "https://commons.wikimedia.org/wiki/File:Flakpanzer_Gepard_SPAAG.JPG"
+    }
   ],
   "editable": true
 }
