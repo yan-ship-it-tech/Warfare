@@ -1,0 +1,76 @@
+{
+  "id": "side_b-naval-admiral-grigorovich",
+  "name": "Admiral Grigorovich-class frigate (Project 11356R)",
+  "side": "side_b",
+  "domain": "sea",
+  "echelon": "strategic",
+  "group": "naval",
+  "distance_km_from_zero": 480,
+  "operating_range_km": {
+    "min_km": 0,
+    "max_km": 4850
+  },
+  "band_id": "strategic_rear",
+  "category": "naval-frigate",
+  "representative_system": "Admiral Grigorovich-class (Project 11356R) guided-missile frigate",
+  "icon_image": "/icons/admiral-grigorovich.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": 475000000,
+    "display": "~$450-500M per hull",
+    "confidence": "estimated"
+  },
+  "key_facts": [
+    {
+      "label": "Armament",
+      "value": "Vertical launch system for Kalibr, Oniks or Tsirkon cruise missiles"
+    },
+    {
+      "label": "Speed / range",
+      "value": "30 knots; 4,850 nm at 14 knots; 30-day endurance"
+    },
+    {
+      "label": "Fleet status",
+      "value": "3 of 6 ordered ever reached the Black Sea Fleet before Turkey closed the Straits in Feb 2022"
+    }
+  ],
+  "short_role": "Guided-missile frigate, the Black Sea Fleet's primary surface Kalibr launch platform",
+  "characteristics": [
+    "124.8m long, 4,000 tonnes full displacement, complement of ~200",
+    "VLS-launched Kalibr land-attack cruise missiles are the fleet's main standoff strike tool against targets deep in Ukraine",
+    "Built at Yantar Shipyard, Kaliningrad — on the Baltic, not the Black Sea, so every hull has to transit to reach its assigned fleet",
+    "Strength: Kalibr-armed surface combatant with real land-attack reach, unlike most of the rest of the Black Sea Fleet's surface units",
+    "Limitation: a surface ship, so it shares the fleet-wide exposure to Ukrainian USVs and anti-ship missiles that pushed the fleet's main basing to Novorossiysk",
+    "Estimated quantity available: 6 ordered for the Black Sea Fleet in 2010-2011; only 3 delivered before the Turkish Straits closure, the other 3 hulls diverted (two later transferred to India as the Tushil class)"
+  ],
+  "employment_notes": "The Black Sea Fleet's Kalibr strikes on Ukraine are launched primarily from these frigates and from the Kilo-class submarines, not from the fleet's larger but now-relocated surface combatants. Since relocating from Sevastopol to Novorossiysk, employment has shifted toward launching from further up the coast and further from Ukrainian USV range rather than forward-basing near Crimea.",
+  "contrast_vs_traditional": "Traditional naval logistics assumed a fleet's own home port was safe rear-area infrastructure, not a target. Ukraine's drone-boat and missile campaign against Sevastopol forced a wartime relocation of an entire fleet's main base — the doctrine.md finding that control of the immediate sky and sea, not distance from the front alone, now sets where an asset can safely sit applies just as much to a naval base as it does to a SAM battery or an artillery position.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "naval-technology.com — Project 11356 Admiral Grigorovich Class Frigates",
+      "url": "https://www.naval-technology.com/projects/project-11356-admiral-grigorovich-class-frigates/"
+    },
+    {
+      "label": "globalmilitary.net — Admiral Grigorovich-class (Project 11356R)",
+      "url": "https://www.globalmilitary.net/ships/admiral-grigorovich/"
+    },
+    {
+      "label": "Foreign Policy Research Institute — Russia's Black Sea Fleet in the \"Special Military Operation\" in Ukraine",
+      "url": "https://www.fpri.org/article/2024/02/russias-black-sea-fleet-in-the-special-military-operation-in-ukraine/"
+    },
+    {
+      "label": "USNI Proceedings — Turkey, the Montreux Convention, and Russian Navy Transits of the Turkish Straits",
+      "url": "https://www.usni.org/magazines/proceedings/2022/march/turkey-montreux-convention-and-russian-navy-transits-turkish"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 4,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Specs meet the bar but the unit cost is an estimate — cost is not verified."
+    ]
+  }
+}

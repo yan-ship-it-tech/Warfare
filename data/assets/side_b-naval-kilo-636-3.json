@@ -1,0 +1,72 @@
+{
+  "id": "side_b-naval-kilo-636-3",
+  "name": "Improved Kilo-class submarine (Project 636.3)",
+  "side": "side_b",
+  "domain": "sea",
+  "echelon": "strategic",
+  "group": "naval",
+  "distance_km_from_zero": 440,
+  "operating_range_km": {
+    "min_km": 0,
+    "max_km": 7500
+  },
+  "band_id": "strategic_rear",
+  "category": "naval-submarine",
+  "representative_system": "Improved Kilo-class (Project 636.3) diesel-electric attack submarine",
+  "icon_image": "/icons/kilo-636-3.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": 350000000,
+    "display": "~$300-350M per hull (derived from a six-boat export contract; Russia's own internal procurement cost is not publicly disclosed)",
+    "confidence": "estimated"
+  },
+  "key_facts": [
+    {
+      "label": "Armament",
+      "value": "6x 21-inch torpedo tubes; Kalibr land-attack/anti-ship cruise missiles fired through the tubes"
+    },
+    {
+      "label": "Range",
+      "value": "7,500 nm; max depth 300m, operational depth 240m"
+    },
+    {
+      "label": "Unit",
+      "value": "4th Independent Submarine Brigade, Black Sea Fleet"
+    }
+  ],
+  "short_role": "Diesel-electric attack submarine, land-attack cruise missile launch platform",
+  "characteristics": [
+    "74m long, 3,900+ tonnes submerged displacement",
+    "6x 21-inch bow torpedo tubes; up to 18 torpedoes or 24 mines, or Kalibr cruise missiles fired from the tubes",
+    "Extremely quiet for its class — Western navies nicknamed the original Kilo the \"Black Hole\"",
+    "Strength: submerged, effectively immune to the USV attacks that have driven the Black Sea Fleet's surface units out of Sevastopol",
+    "Limitation: diesel-electric, not nuclear — must snorkel/surface periodically to recharge batteries, the one window it's vulnerable in",
+    "Estimated quantity available: 6 boats assigned to the Black Sea Fleet's submarine brigade"
+  ],
+  "employment_notes": "Has continued firing Kalibr land-attack cruise missiles at Ukraine from submerged positions in the Black Sea throughout the war, even after the surface fleet's relocation from Sevastopol to Novorossiysk — submersion is what keeps it employable in a sea Ukraine's USVs and anti-ship missiles have made increasingly costly for surface combatants to operate in.",
+  "contrast_vs_traditional": "Traditional naval doctrine treated a battle fleet's most valuable strike asset as its surface combatants, with submarines in a supporting anti-ship/reconnaissance role. Ukraine's USV campaign has inverted that locally in the Black Sea: a submerged submarine is now the more survivable land-attack missile platform of the two, precisely because it doesn't have to sit at a pier or transit open water where a $250k drone boat can reach it.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "USNI Proceedings — Russia's Kilo-class Submarine: Improved And More Deadly Than Ever",
+      "url": "https://www.usni.org/magazines/proceedings/2023/august/russias-kilo-class-submarine-improved-and-more-deadly-ever"
+    },
+    {
+      "label": "Naval News — Russia's improved Kilo-class submarine entering Black Sea",
+      "url": "https://www.navalnews.com/naval-news/2022/02/russias-improved-kilo-class-submarine-entering-black-sea/"
+    },
+    {
+      "label": "GlobalSecurity.org — Project 636-M / 636.3 Varshavyanka",
+      "url": "https://www.globalsecurity.org/military/world/russia/636m.htm"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 3,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Specs meet the bar but the unit cost is an estimate — cost is not verified."
+    ]
+  }
+}

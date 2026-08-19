@@ -436,7 +436,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
 
     const terrain = buildTerrain(halfX);
     const props = buildProps(halfX, PROP_BUDGET[lowPower ? "low" : "high"]);
-    const scenery = buildScenery(proj, SCENERY_BUDGET[lowPower ? "low" : "high"]);
+    const scenery = buildScenery(proj, SCENERY_BUDGET[lowPower ? "low" : "high"], halfX);
 
     // Zero line — a standing marker plane rather than a painted stripe, so it
     // stays readable from an oblique angle instead of foreshortening away.

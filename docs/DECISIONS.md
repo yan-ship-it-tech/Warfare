@@ -1406,3 +1406,205 @@ choosing hash routing over pushState here); closing a page returns to `#`
 empty-hash and the map; a toggle click (3D → Schematic) inside the drawer
 leaves the drawer open; and `#bench` still loads the render-bench harness
 untouched.
+
+# Pass 10 — world-building: destruction gradient, coastal water, mixed biome
+
+Brief: build on Pass 8's rendering-foundation fixes without reintroducing the
+label/spread/anchoring regressions that pass closed out. Three asks — (1) a
+distance-band terrain destruction gradient (0–5 km total destruction, 5–20 km
+damaged forest/mixed structures, 20–50 km lighter damage, 50 km+ mostly
+intact); (2) a body of water, explicitly framed as also giving the Russia
+naval/Black Sea Fleet backlog gap somewhere to exist; (3) expand the terrain
+to read as a mixed-biome representative strip — urban clusters, villages,
+steppe, fields, forest belts — while keeping the composite/illustrative
+framing the About page already commits to. Log the generation approach here.
+
+Nothing in `src/scene/`, `src/scene/labelGrid.ts`, `src/data/placement.ts`,
+or `worldMapping.ts`'s `lateralLayout`/`worldPlacement` was touched. The
+changes are additive geometry/colour in `terrain3d.ts`, `props.ts` and
+`scenery.ts`, plus one new parameter threaded through an existing call
+(`buildScenery(proj, budget, halfWidthX)`) — Scene3D.tsx's asset-placement
+effect, where Pass 8's fixes live, is unchanged.
+
+## 1. The destruction gradient is a fixed world-X threshold, not a live one
+
+`damageIntensity(x)` in `terrain3d.ts` returns 1 at the zero line, tapering
+through the brief's tiers to a small residual (0.02) past 50 km-equivalent —
+never quite zero, so a rare "destroyed key infrastructure" placement out in
+the intact zone still has somewhere to belong. The stop values (39, 61, 82
+world units) are `worldXFor("side_b", 5|20|50, proj)` computed once against
+the *shipped* `bands.json`/`domains.json` projection, not read from the live
+`Projection` this module would need to accept as a parameter to track a band
+edit in real time:
+
+```
+5 km  -> 38.83 world units
+20 km -> 60.83 world units
+50 km -> 81.89 world units      (side_a mirrors exactly, confirmed numerically)
+```
+
+This is the same convention the existing zero-line scar term already used
+(a fixed radius, not derived from `proj`), for the same reason: `terrainHeight(x, z)`
+is a pure `(x, z) -> number` function that props.ts, scenery.ts, and
+Scene3D.tsx's pads/tethers/trenches all call directly, with no `Projection`
+in scope at most of those call sites. Giving it one would mean either
+threading `proj` through every caller (a much larger, riskier diff than this
+pass's scope) or accepting that ground height could silently disagree with
+itself mid-session as someone drags a band slider. Fixed thresholds keep the
+one property every other module's anchoring depends on: same `(x, z)` in,
+same height out, always. **This is a flagged deviation from a literal
+reading of the brief** — if bands.json's tactical cutoff is edited from 5 km
+to 8 km in the live band editor, the ground scorch tint doesn't move to
+match. It reads the km stops the brief specified, but against the default
+bands, the same way the "doctrine depths" ruler overlay already reads
+`docs/doctrine.md`'s findings as a fixed citation regardless of live band
+edits (see the About page's own copy on that point).
+
+The gradient drives three things, layered in `buildTerrain`'s per-vertex
+colour pass: a scorch tint blended over the existing scar/side/elevation
+tints; a field-patchwork tint on dry ground where `dmg < 0.5`; and, in
+`props.ts`, per-instance treeline colour and height via
+`InstancedMesh.setColorAt` (bare/scorched near the line, green canopy tint
+further out, shorter trunks in the damaged bands) — one extra buffer, not an
+extra draw call, so the tree budget's cost stays what Pass 6 tuned it to.
+
+## 2. Coastal basin + water plane
+
+`buildWater()` sits next to `terrainHeight()` in `terrain3d.ts` rather than
+in `scenery.ts`, because it shares the same fixed-world-X convention and the
+same `coastalDepression()` term that carves the basin `terrainHeight()`
+draws. Two constants had to be picked with a real margin, worked out
+numerically rather than guessed:
+
+- `side_b-strategic-target-power-plant` (250 km, x≈122.40) — a shipped,
+  sourced asset — had to stay dry. `COAST_X0 = 126` gives it a ~3.6-unit
+  buffer before the depression even starts ramping.
+- The two new Black Sea Fleet vessels this pass adds (§4 below, 440/480 km,
+  x≈138.7/142.1) had to land in full-depth water. `COAST_X1 = 140` reaches
+  full basin depth (9 units) right around where the closer of the two sits,
+  and the further one is comfortably past it.
+
+The water itself is a **separate mesh**, not just the terrain's own vertex
+colour painted dark in the depression. A flat-shaded matte plane at the same
+roughness as the ground read as a dark wet-looking dip, not water; a second
+plane with lower roughness (0.18) and a little transparency, sitting a fixed
+`WATER_LEVEL_Y` above the carved basin floor, is what actually reads as a
+surface rather than a hole. Its far edge sizes to `halfWidthX` (the same
+value `buildTerrain` already receives) so it always reaches exactly as far
+as whatever terrain extent got generated; its near edge (the shoreline) is
+fixed, for the same live-band-edit reason as §1 — one more place this pass
+consistently didn't thread `proj` where it didn't have to. A low-frequency
+noise wobble on the shoreline's X keeps it from reading as a ruler-straight
+cliff edge.
+
+`buildPortHarbor()` (§3) sits right at the shoreline, at 262 km — inland of
+`COAST_X0` — giving the coast a specific "this is a base," not just an edge
+where the ground stops.
+
+## 3. Mixed biome — hand-placed landmarks, same convention as the existing set
+
+Villages (`buildVillage`, three condition tiers sharing one `buildHouse`
+composer rather than three separate builders — only the material/roof-
+completeness choice differs), an urban cluster, a ruined-infrastructure
+set-piece, and hand-placed wreck markers all extend `LANDMARK_BUILDERS` /
+`LANDMARKS` — the exact mechanism the three Pass 6 landmarks
+(power_plant/fuel_depot/command_post) already used. Placement is hand-picked
+`(side, km, z)` per entry, following the destruction gradient: ruined
+villages at 3–3.5 km, damaged at 9–11 km, intact at 28–33 km and again at
+140–180 km, an urban cluster per side past 130 km, one ruined-infrastructure
+piece per side as the brief's "occasional destroyed key infrastructure" in
+the otherwise-intact deep rear.
+
+Wrecks are split deliberately across two mechanisms rather than one. The
+*field* of them near the line — what makes 0–10 km read as strewn with
+burnt vehicles rather than a couple of set-pieces — is
+`props.ts`'s `buildWreckHusks()`, instanced like the existing crater/scrub
+props (one draw call, Gaussian-clustered on the line same as craters). The
+handful of *specific* "still burning" wrecks (`scenery.ts`'s
+`buildWreckMarker`) are hand-placed `Group`s instead, because they carry an
+emissive ember accent an `InstancedMesh`'s one shared material can't give
+per-instance without a custom shader — nothing in this codebase uses one
+(checked before writing this), and adding the first would have been a much
+bigger architectural addition than three burning-wreck landmarks justify.
+**Scope interpretation, flagged:** "burning wrecks" reads here as a
+scorched hull plus a small emissive glow, not a particle/flame system —
+consistent with the low-poly flat-shaded language everything else in this
+scene already speaks, not a corner cut for time.
+
+Rolling steppe and forest belts were already this scene's baseline aesthetic
+(Pass 6's terrain header literally says "rolling steppe"; Pass 7 established
+forest belting in `props.ts`'s `buildTrees`) — §1's colour/height changes
+extend that existing belt rather than replacing it. "Fields" are a coarse
+vertex-colour patchwork on dry mid/far ground (`COLOR_FIELD_DRY`/
+`COLOR_FIELD_GREEN`, cell-noise checkering) rather than new furrow geometry
+— matching the vertex-coloured-facet visual language the whole terrain
+already commits to instead of introducing a second art style for one biome.
+
+## 4. Two new named Russia-naval assets, and a correction found while writing this
+
+Item 2's water body was explicitly framed as "gives us a place to build out
+the Russia-naval category" — read as license to add real assets, not just
+terrain. Two, hand-authored rather than run through the batch
+`import-catalog.py` pipeline (worth two files, not worth spinning up a
+spreadsheet round-trip for): `side_b-naval-kilo-636-3` (Improved Kilo-class,
+Project 636.3, Black Sea Fleet's 4th Independent Submarine Brigade) and
+`side_b-naval-admiral-grigorovich` (Project 11356R, the fleet's primary
+surface Kalibr launch platform). Both real-researched — USNI Proceedings,
+Naval News, GlobalSecurity.org, naval-technology.com, globalmilitary.net,
+and FPRI's Black Sea Fleet analysis, which is also where the Sevastopol ->
+Novorossiysk relocation detail in both assets' `employment_notes` comes
+from. `node scripts/audit-content.mjs --write` (the actual, mechanical
+verification step, not self-graded) stamped both `verified` — 3 and 4
+independent sources respectively. Total roster: 89 assets, 66 verified, 13
+low-confidence, 10 unverified (unchanged from Pass 7 — the two new assets
+added zero new Data Health issues).
+
+**Compressed pipeline, flagged:** `docs/CONTENT_PIPELINE.md` calls for
+drafting a whole category in one sitting and verifying it in a separate,
+later one. Two assets, hand-authored with real citations gathered before
+writing rather than invented and checked after, is a smaller-scale version
+of that same discipline rather than the full two-sitting batch process —
+worth naming as a compression, not a departure, since the audit script still
+ran as a genuinely separate, mechanical check rather than my own judgment
+grading my own work.
+
+Found while updating `docs/BACKLOG.md` for this: the Ada-class corvette
+listed there since an earlier pass as a Russia-naval candidate is actually
+Ukrainian — the Turkish-built `Hetman Ivan Mazepa`, Ukraine's first corvette
+(confirmed via Naval News, Defense Express, naval-technology.com). Bundling
+it with the Russia naval gap was a real, pre-existing inaccuracy, not
+something this pass introduced — corrected in place in `BACKLOG.md` (struck
+through, not deleted, so the correction itself stays visible) rather than
+silently fixed.
+
+## Where the brief and prior passes disagreed
+
+1. **Fixed world-X thresholds, not live-`Projection`-driven ones**, for both
+   the destruction gradient and the coastline. Covered in §1/§2 — the brief
+   describes both in km; this reads those km against the *default* bands
+   only, for the same reason the existing scar term already worked that way.
+2. **"Burning wrecks" implemented as scorched-hull-plus-ember-glow, not a
+   literal fire/particle effect.** Covered in §3 — a scope interpretation
+   consistent with the existing visual language, not a corner cut.
+3. **Item 2 read as license to add real Russia-naval data assets, not just
+   terrain.** The brief's own wording ("gives us a place to build out the
+   category") reads as an invitation rather than an instruction to stop at
+   geometry — flagged in case that reading over-reached.
+
+## Verification
+
+`npx tsc --noEmit` and `npm run build` clean throughout (checked after each
+file, not just at the end). `node scripts/audit-content.mjs --write`: 89
+assets, 66 verified / 13 low-confidence / 10 unverified, both new naval
+assets `verified`. Headless Playwright pass (Chromium + swiftshader) against
+`npm run preview`: default view screenshot, then zoomed-out and panned-right
+passes reaching the side_b deep rear — the water plane renders with a
+visible shallow-to-deep gradient, the urban cluster and a village sit near
+the shoreline, `side_b-strategic-target-power-plant` (250 km) reads dry with
+a visible margin before the water starts, and both new vessels' DOM labels
+are present and clickable after panning that far out. Data Health: 0 errors,
+37 total issues (identical count to before this pass — the two new assets
+and the terrain/scenery changes introduced no new warnings). Right-drag pan
+in headless Chromium needed a mouse-down point clear of any label overlay to
+register at all — a test-harness quirk, not an app behaviour change; noted
+here in case a future pass's headless verification hits the same thing.

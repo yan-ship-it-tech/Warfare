@@ -15,11 +15,17 @@
 // reason: this sandbox cannot fetch binary assets, so anything sourced
 // would be trusted under a licence nobody here could read. Primitives,
 // same as the hero tier.
+//
+// Pass 10 adds the mixed-biome landmark kinds (villages at three condition
+// tiers, an urban cluster, a port, a ruined-infrastructure set-piece, a
+// hand-placed wreck) plus the coastal water plane from terrain3d.ts — see
+// that file's header for why the shoreline position is a fixed world-X
+// rather than something derived from the live `Projection` passed in here.
 // ─────────────────────────────────────────────────────────────────────────
 import * as THREE from "three";
 import type { Side } from "../types";
 import type { Projection } from "../scene/projection";
-import { terrainHeight } from "./terrain3d";
+import { terrainHeight, buildWater } from "./terrain3d";
 import { worldXFor, STRIP_HALF_Z } from "./worldMapping";
 
 const CONCRETE = new THREE.MeshStandardMaterial({ color: "#6b6d63", flatShading: true, roughness: 0.92 });
@@ -31,6 +37,25 @@ const SANDBAG = new THREE.MeshStandardMaterial({ color: "#8c7f5c", flatShading: 
 const DIRT_WALL = new THREE.MeshStandardMaterial({ color: "#3e3826", flatShading: true, roughness: 1 });
 const CANVAS = new THREE.MeshStandardMaterial({ color: "#4f5a41", flatShading: true, roughness: 0.9 });
 const WIRE = new THREE.MeshStandardMaterial({ color: "#3a3a38", flatShading: true, roughness: 0.6, metalness: 0.5 });
+
+// ── Pass 10 materials: villages, urban cluster, port, wreck ──────────────
+const WALL_INTACT = new THREE.MeshStandardMaterial({ color: "#8a7a5c", flatShading: true, roughness: 0.9 });
+const WALL_DAMAGED = new THREE.MeshStandardMaterial({ color: "#5f5748", flatShading: true, roughness: 0.95 });
+const WALL_RUINED = new THREE.MeshStandardMaterial({ color: "#332f28", flatShading: true, roughness: 1 });
+const ROOF_INTACT = new THREE.MeshStandardMaterial({ color: "#7a3b32", flatShading: true, roughness: 0.85 });
+const ROOF_DAMAGED = new THREE.MeshStandardMaterial({ color: "#4a2a24", flatShading: true, roughness: 0.9 });
+const RUBBLE = new THREE.MeshStandardMaterial({ color: "#302c26", flatShading: true, roughness: 1 });
+const URBAN_WALL_A = new THREE.MeshStandardMaterial({ color: "#5a5f66", flatShading: true, roughness: 0.8 });
+const URBAN_WALL_B = new THREE.MeshStandardMaterial({ color: "#6b6558", flatShading: true, roughness: 0.8 });
+const PIER_WOOD = new THREE.MeshStandardMaterial({ color: "#4a4438", flatShading: true, roughness: 1 });
+const WRECK_HULL = new THREE.MeshStandardMaterial({ color: "#211d17", flatShading: true, roughness: 0.85, metalness: 0.3 });
+const EMBER = new THREE.MeshStandardMaterial({
+  color: "#ff5a1f",
+  emissive: "#ff5a1f",
+  emissiveIntensity: 1.5,
+  flatShading: true,
+  roughness: 0.6,
+});
 
 function box(w: number, h: number, d: number, mat: THREE.Material) {
   return new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
@@ -117,10 +142,176 @@ export function buildCommandPost(): THREE.Group {
   return g;
 }
 
+type Condition = "ruined" | "damaged" | "intact";
+
+/** One small house, condition-dependent: fewer/tilted walls and a missing
+ *  or askew roof the more damaged it is, with an occasional rubble pile
+ *  beside anything that isn't intact. */
+function buildHouse(condition: Condition, r: () => number): THREE.Group {
+  const g = new THREE.Group();
+  const wallMat = condition === "intact" ? WALL_INTACT : condition === "damaged" ? WALL_DAMAGED : WALL_RUINED;
+  const w = 2.6 + r() * 1.2;
+  const d = 2.2 + r() * 1;
+  const h = 1.6 + r() * 0.5;
+  const body = box(w, h, d, wallMat);
+  body.position.y = h / 2;
+  if (condition === "ruined") {
+    body.rotation.z = (r() - 0.5) * 0.35;
+    body.scale.y = 0.55 + r() * 0.3;
+  } else if (condition === "damaged") {
+    body.rotation.z = (r() - 0.5) * 0.1;
+  }
+  g.add(body);
+
+  const hasRoof = condition === "intact" ? true : condition === "damaged" ? r() > 0.3 : r() > 0.78;
+  if (hasRoof) {
+    const roofMat = condition === "intact" ? ROOF_INTACT : ROOF_DAMAGED;
+    const roof = cyl(0, Math.max(w, d) * 0.75, 1.1, 4, roofMat);
+    roof.rotation.y = Math.PI / 4;
+    roof.position.y = h + 0.4;
+    if (condition !== "intact") roof.rotation.z = (r() - 0.5) * 0.3;
+    g.add(roof);
+  }
+
+  if (condition !== "intact" && r() > 0.4) {
+    const rub = new THREE.Mesh(new THREE.DodecahedronGeometry(0.8 + r() * 0.5, 0), RUBBLE);
+    rub.position.set(w * 0.7, 0.3, (r() - 0.5) * d);
+    rub.rotation.set(r() * Math.PI, r() * Math.PI, r() * Math.PI);
+    g.add(rub);
+  }
+  return g;
+}
+
+/** A cluster of houses at one condition tier — the "rural village" unit
+ *  item 3 asked for, reused at each of the three damage tiers rather than
+ *  three separate builders, since only the material/completeness choice
+ *  actually differs. */
+function buildVillage(condition: Condition, seed: number, count: number): THREE.Group {
+  const g = new THREE.Group();
+  const r = rngLocal(seed);
+  for (let i = 0; i < count; i++) {
+    const house = buildHouse(condition, r);
+    const angle = (i / count) * Math.PI * 2 + r() * 0.6;
+    const radius = 3 + r() * 5.5;
+    house.position.set(Math.cos(angle) * radius, 0, Math.sin(angle) * radius * 0.7);
+    house.rotation.y += r() * Math.PI * 2;
+    g.add(house);
+  }
+  return g;
+}
+
+/** A small town skyline — the "urban cluster" tier, reserved for the intact
+ *  50 km+ bands per item 1's gradient. A handful of taller rectangular
+ *  volumes rather than a real streetscape; the point is silhouette, viewed
+ *  from the distance this always renders at. */
+function buildUrbanCluster(seed: number): THREE.Group {
+  const g = new THREE.Group();
+  const r = rngLocal(seed);
+  const mats = [URBAN_WALL_A, URBAN_WALL_B];
+  for (let i = 0; i < 9; i++) {
+    const w = 2 + r() * 2.2;
+    const d = 2 + r() * 2.2;
+    const h = 4 + r() * 11;
+    const b = box(w, h, d, mats[i % 2]);
+    b.position.set((r() - 0.5) * 18, h / 2, (r() - 0.5) * 13);
+    b.rotation.y = r() * 0.3;
+    g.add(b);
+  }
+  return g;
+}
+
+/** A small harbour: a couple of warehouse volumes on the dry side plus a
+ *  pier reaching out over the water — this is the "place to build out the
+ *  Russia-naval category" item 2 asked for, sitting right at the coastline
+ *  buildWater() draws. */
+function buildPortHarbor(): THREE.Group {
+  const g = new THREE.Group();
+  for (let i = 0; i < 3; i++) {
+    const b = box(4, 2.8 + (i % 2) * 0.6, 6, CONCRETE_DARK);
+    b.position.set(-7 + i * 5.5, 1.4, -2 + (i % 2) * 1.5);
+    g.add(b);
+  }
+  const pier = box(2, 0.4, 15, PIER_WOOD);
+  pier.position.set(7, 0.2, 0);
+  g.add(pier);
+  for (let i = 0; i < 6; i++) {
+    const post = cyl(0.14, 0.14, 1.6, 6, PIER_WOOD);
+    post.position.set(6.1, -0.6, -7 + i * 2.8);
+    g.add(post);
+  }
+  return g;
+}
+
+/** A destroyed piece of key infrastructure — a collapsed span with exposed
+ *  rebar, standing in for a bridge or rail junction. This is item 1's
+ *  "occasional destroyed key infrastructure" in the otherwise-intact 50 km+
+ *  band: rare and hand-placed rather than scattered. */
+function buildRuinedInfrastructure(): THREE.Group {
+  const g = new THREE.Group();
+  const base = box(7.5, 2.2, 5, WALL_RUINED);
+  base.position.y = 1.1;
+  base.rotation.z = 0.1;
+  g.add(base);
+  const collapse = box(6.2, 1, 4.4, RUBBLE);
+  collapse.position.set(1.2, 0.5, 0.4);
+  collapse.rotation.set(0.15, 0.4, 0.08);
+  g.add(collapse);
+  for (let i = 0; i < 4; i++) {
+    const strut = cyl(0.06, 0.06, 2.4, 4, METAL_RUST);
+    strut.position.set(-2.4 + i * 1.4, 1.6, 2.2);
+    strut.rotation.z = 0.3;
+    g.add(strut);
+  }
+  return g;
+}
+
+/** One hand-placed burnt vehicle husk with a smouldering ember accent —
+ *  distinct from props.ts's instanced wreck field (props:wrecks), which
+ *  covers the near-line *density* of this but can't carry a per-instance
+ *  emissive glow. A handful of these mark specific "still burning" points
+ *  rather than trying to make every one of the instanced husks glow. */
+function buildWreckMarker(seed: number): THREE.Group {
+  const g = new THREE.Group();
+  const r = rngLocal(seed);
+  const hull = box(1.2 + r() * 1.3, 0.55 + r() * 0.3, 2.4 + r() * 1.3, WRECK_HULL);
+  hull.position.y = 0.35;
+  hull.rotation.set((r() - 0.5) * 0.3, r() * Math.PI, (r() - 0.5) * 0.5);
+  g.add(hull);
+  if (r() > 0.4) {
+    const turret = box(0.7, 0.4, 0.9, WRECK_HULL);
+    turret.position.set(0.1, 0.75, -0.2);
+    turret.rotation.y = r() * Math.PI;
+    g.add(turret);
+  }
+  const ember = new THREE.Mesh(new THREE.SphereGeometry(0.2 + r() * 0.15, 6, 5), EMBER);
+  ember.position.set(0.15 + (r() - 0.5) * 0.6, 0.45, 0.2 + (r() - 0.5) * 0.6);
+  g.add(ember);
+  return g;
+}
+
+function rngLocal(seed: number) {
+  let s = seed >>> 0;
+  return () => {
+    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+    return s / 4294967295;
+  };
+}
+
+const villageRuined = () => buildVillage("ruined", 0xb17e, 5);
+const villageDamaged = () => buildVillage("damaged", 0xc0de, 6);
+const villageIntact = () => buildVillage("intact", 0xfeed, 7);
+
 const LANDMARK_BUILDERS = {
   power_plant: buildPowerPlant,
   fuel_depot: buildFuelDepot,
   command_post: buildCommandPost,
+  village_ruined: villageRuined,
+  village_damaged: villageDamaged,
+  village_intact: villageIntact,
+  urban_cluster: () => buildUrbanCluster(0x7089),
+  port_harbor: buildPortHarbor,
+  ruined_infrastructure: buildRuinedInfrastructure,
+  wreck_marker: () => buildWreckMarker(0x9a11),
 } as const;
 
 interface LandmarkSpec {
@@ -131,10 +322,18 @@ interface LandmarkSpec {
   rotationY: number;
 }
 
-/** Fixed, hand-placed landmarks — a handful, not a scatter. One of each per
- *  side, at illustrative rear-area distances, so the deep-rear bands read
- *  as somewhere rather than as bare ground the schematic view's icons used
- *  to float over. */
+/**
+ * Fixed, hand-placed landmarks — a handful, not a scatter. Distance stops
+ * follow item 1's destruction gradient (ruined near the line, damaged
+ * through the mid bands, intact/urban past 50 km) and item 3's ask for a
+ * mixed biome — villages, an urban cluster, rolling steppe left as bare
+ * terrain, forest belts handled in props.ts. km values are real distances
+ * from the zero line; the world-X they land at goes through the same
+ * `Projection` the ruler and every real asset use (`worldXFor` below), so a
+ * live band edit moves these exactly as it moves everything else — unlike
+ * the destruction-gradient *tint* in terrain3d.ts, which is a fixed
+ * world-X and does not track band edits (see that file's header).
+ */
 const LANDMARKS: LandmarkSpec[] = [
   { kind: "power_plant", side: "side_a", km: 95, z: 22, rotationY: 0.4 },
   { kind: "power_plant", side: "side_b", km: 110, z: -18, rotationY: -0.3 },
@@ -142,6 +341,41 @@ const LANDMARKS: LandmarkSpec[] = [
   { kind: "fuel_depot", side: "side_b", km: 55, z: 30, rotationY: -0.5 },
   { kind: "command_post", side: "side_a", km: 12, z: 40, rotationY: 0.6 },
   { kind: "command_post", side: "side_b", km: 14, z: -36, rotationY: -0.2 },
+
+  // 0-5 km: total destruction — ruined villages right at the line.
+  { kind: "village_ruined", side: "side_a", km: 3, z: -44, rotationY: 0.5 },
+  { kind: "village_ruined", side: "side_b", km: 3.5, z: 40, rotationY: -0.4 },
+
+  // 5-20 km: damaged forest + mixed-condition structures.
+  { kind: "village_damaged", side: "side_a", km: 11, z: 32, rotationY: 0.9 },
+  { kind: "village_damaged", side: "side_b", km: 9, z: -30, rotationY: -0.7 },
+
+  // 20-50 km: lighter but visible damage — still calling these "damaged",
+  // one tier gentler in practice since buildHouse's own randomness already
+  // gives a lighter touch than the 5-20 km pair above.
+  { kind: "village_intact", side: "side_a", km: 28, z: -48, rotationY: 0.2 },
+  { kind: "village_intact", side: "side_b", km: 33, z: 46, rotationY: -0.6 },
+
+  // 50 km+: mostly intact — a second intact village plus one urban cluster
+  // per side, and one occasional destroyed piece of key infrastructure so
+  // the "mostly" in "mostly intact" stays honest.
+  { kind: "village_intact", side: "side_a", km: 140, z: 20, rotationY: 0.7 },
+  { kind: "village_intact", side: "side_b", km: 180, z: -22, rotationY: -0.3 },
+  { kind: "urban_cluster", side: "side_a", km: 130, z: -40, rotationY: 0.15 },
+  { kind: "urban_cluster", side: "side_b", km: 170, z: 34, rotationY: -0.25 },
+  { kind: "ruined_infrastructure", side: "side_a", km: 230, z: 6, rotationY: 0.3 },
+  { kind: "ruined_infrastructure", side: "side_b", km: 150, z: 8, rotationY: -0.15 },
+
+  // The coast: a port right at the shoreline (see buildWater in
+  // terrain3d.ts) — this is the "place to build out the Russia-naval
+  // category" item 2 asked for.
+  { kind: "port_harbor", side: "side_b", km: 262, z: -4, rotationY: -0.1 },
+
+  // A couple of hand-placed burning wrecks with an ember glow, on top of
+  // props.ts's instanced wreck field.
+  { kind: "wreck_marker", side: "side_a", km: 2, z: 8, rotationY: 0.4 },
+  { kind: "wreck_marker", side: "side_b", km: 2.2, z: -10, rotationY: -0.6 },
+  { kind: "wreck_marker", side: "side_a", km: 4, z: -26, rotationY: 1.1 },
 ];
 
 // ── near-line belt (instanced: trench segments, wire, fighting positions) ─
@@ -248,9 +482,11 @@ export const SCENERY_BUDGET: Record<"high" | "low", SceneryBudget> = {
   low: { fightingPositionsPerSide: 6, obstaclesPerSide: 40 },
 };
 
-/** Builds the whole scenery group: landmarks + near-line belt, both sides.
- *  Called alongside buildTerrain()/buildProps() and disposed the same way. */
-export function buildScenery(proj: Projection, budget: SceneryBudget): THREE.Group {
+/** Builds the whole scenery group: landmarks + near-line belt + the coastal
+ *  water plane, both sides. Called alongside buildTerrain()/buildProps() and
+ *  disposed the same way. `halfWidthX` sizes the water plane's far edge to
+ *  match whatever terrain extent was actually generated. */
+export function buildScenery(proj: Projection, budget: SceneryBudget, halfWidthX: number): THREE.Group {
   const g = new THREE.Group();
   g.name = "scenery";
 
@@ -268,6 +504,9 @@ export function buildScenery(proj: Projection, budget: SceneryBudget): THREE.Gro
     g.add(buildObstacleBelt(proj, side, budget.obstaclesPerSide));
     g.add(buildFightingPositions(proj, side, budget.fightingPositionsPerSide));
   }
+
+  const water = buildWater(halfWidthX);
+  if (water) g.add(water);
 
   return g;
 }

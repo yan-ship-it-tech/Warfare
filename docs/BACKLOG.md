@@ -6,6 +6,34 @@ gets listed here rather than silently dropped or silently worked around.
 
 ---
 
+## Resolved in Pass 10
+
+### Terrain destruction gradient
+`src/three/terrain3d.ts` — a `damageIntensity(x)` function keyed on fixed
+world-X thresholds (matching the default projection's 5/20/50 km stops)
+drives ground-colour scorch tint and treeline colour/height across four
+tiers: total destruction at the line, damaged mid-bands, lighter damage
+further out, mostly-intact deep rear. `props.ts`'s wreck-husk field and
+`scenery.ts`'s hand-placed ruined villages/wreck markers use the same
+gradient so the discrete objects and the ground under them agree.
+
+### Body of water — the Black Sea, and a place for Russia-naval
+`buildWater()` in `terrain3d.ts` carves a coastal basin into the side_b
+deep rear and draws a shaded water plane over it; `buildPortHarbor()` in
+`scenery.ts` sits right at the shoreline. Closes most of the Russia
+naval/Black Sea Fleet gap below — see that entry, now moved out of "not
+started."
+
+### Mixed biome across the strip
+`scenery.ts` gains village clusters at three condition tiers (ruined/
+damaged/intact), an urban cluster, and a ruined-infrastructure set-piece,
+hand-placed by (side, km, z) the same way the existing power-plant/fuel-
+depot/command-post landmarks already were. Rolling steppe and forest belts
+were already the existing terrain/props aesthetic; fields are a coarse
+vertex-colour patchwork on dry mid/far ground rather than new geometry.
+
+---
+
 ## Resolved in Pass 7
 
 ### Grounding bug — land/sea assets floating on a tether
@@ -229,12 +257,17 @@ narrower, harder half.
 ### 5. Build out the remaining catalog entries as full map assets
 Mostly closed by Pass 7's 60-asset import — T-90M, BMP-3, 2S19 Msta-S,
 TOS-1A, Bohdana, IRIS-T and the rest of the original ~39 swap-only options
-are now full map assets with their own placement and narrative. What's left
-is systems neither catalog spreadsheet has covered at all: fixed-wing/rotary
-air power (Su-35S, Su-34, Ka-52, F-16), a submarine and a surface combatant
-(Kilo-class, Ada-class corvette — partial overlap with the Russia
-naval/Black Sea Fleet category gap below), Bradley, and man-portable ATGMs
-(Javelin, NLAW — overlap with the infantry/small-arms category gap below).
+are now full map assets with their own placement and narrative. Pass 10
+closed the Kilo-class submarine off this list too (now a real asset —
+`side_b-naval-kilo-636-3` — see the Russia naval gap entry below). What's
+left is systems neither catalog spreadsheet has covered at all: fixed-wing/
+rotary air power (Su-35S, Su-34, Ka-52, F-16), Bradley, and man-portable
+ATGMs (Javelin, NLAW — overlap with the infantry/small-arms category gap
+below). **Correction while writing this pass:** the Ada-class corvette
+listed here in an earlier pass is Ukrainian (side_a) — the Turkish-built
+`Hetman Ivan Mazepa`, Ukraine's own first corvette — not a Russian system.
+Bundling it with the Russia naval gap was wrong; it belongs on this list as
+a side_a candidate instead, still not built.
 No source document for any of these yet, so no guessed placements — same
 "not started" honesty as the category-gap list.
 
@@ -332,12 +365,15 @@ started.
   narrative weight — passive RF triangulation, the "unofficial EW fields"
   finding, hard-kill interceptor layers — none of it represented as its
   own asset yet.
-- **Russia naval / Black Sea Fleet** — one composite node
-  (`side_b-naval-fleet-black-sea`, `verified`, 2 sources) stands in for the
-  entire Russian naval presence, next to two named Ukrainian USVs (Magura,
-  MANTAS, Sonobot) plus Pass 7's new Ukrainian naval assets. No named
-  Russian vessels (the Kilo-class submarine and Ada-class corvette from item
-  5 above would start this) at all.
+- ~~**Russia naval / Black Sea Fleet**~~ — no longer a "not started" gap as
+  of Pass 10, which added two real named vessels
+  (`side_b-naval-kilo-636-3`, `side_b-naval-admiral-grigorovich`, both
+  `verified`) alongside the existing composite node
+  (`side_b-naval-fleet-black-sea`). Still thin relative to a real fleet
+  order of battle — no surface combatants beyond the one frigate class, no
+  corvettes, no landing ships, no coastal defense (Bastion-P) — but the
+  category itself is real now, not a placeholder. Kept here, struck rather
+  than deleted, so the "this used to be empty" context isn't lost.
 
 ### Hero-tier desired but not yet built (7 assets)
 The equipment_catalog.xlsx sheet flagged 7 of the 60 Pass 7 imports as
