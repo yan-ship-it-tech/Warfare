@@ -64,6 +64,13 @@ export interface AssetOverride {
   catalog_equipment_id?: string | null;
   text?: AssetTextOverride;
   customMedia?: CustomMedia[];
+  /** 3D-view-only: manual lateral (Z, world units) position from dragging a
+   *  marker in Scene3D — see worldMapping.ts's `lateralLayout()`. Not part of
+   *  the Asset schema (it's a layout preference, not sourced data) and not
+   *  read by the 2D view, which has no equivalent free coordinate. undefined
+   *  means "let lateralLayout() auto-place it," same convention as every
+   *  other optional override field here. */
+  lateral_offset_world?: number;
 }
 
 let bandIdSeq = 0;

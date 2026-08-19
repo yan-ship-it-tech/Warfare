@@ -29,6 +29,12 @@ interface Props {
   hoveredConnectionKey: string | null;
   onHoverConnection: (key: string | null) => void;
   onSelectNode: (id: string) => void;
+  /** Scenario-focus mode (ViewState.focusRequest). When set, this takes over
+   *  emphasis entirely: an edge is "focus" only when BOTH ends are in the
+   *  named set — the one dependency line the lesson is actually about — and
+   *  "muted" otherwise, overriding the ordinary select/hover-driven emphasis
+   *  below so the two mechanisms never disagree about what's legible. */
+  scenarioFocusSet?: Set<string> | null;
 }
 
 interface Routed {
@@ -66,6 +72,7 @@ export function ConnectionsOverlay({
   hoveredConnectionKey,
   onHoverConnection,
   onSelectNode,
+  scenarioFocusSet,
 }: Props) {
   const focusId = selectedId ?? hoveredId;
 
@@ -78,17 +85,19 @@ export function ConnectionsOverlay({
       const t = positions.get(conn.target_id);
       if (!s || !t) continue; // side filtered out, or stub suppressed
       const { d, mid } = route(s.x, s.y, t.x, t.y);
-      const touches = focusId === conn.source_id || focusId === conn.target_id;
-      out.push({
-        conn,
-        d,
-        mid,
-        emphasis: !focusId ? "normal" : touches ? "focus" : "muted",
-      });
+      let emphasis: Routed["emphasis"];
+      if (scenarioFocusSet) {
+        const bothEnds = scenarioFocusSet.has(conn.source_id) && scenarioFocusSet.has(conn.target_id);
+        emphasis = bothEnds ? "focus" : "muted";
+      } else {
+        const touches = focusId === conn.source_id || focusId === conn.target_id;
+        emphasis = !focusId ? "normal" : touches ? "focus" : "muted";
+      }
+      out.push({ conn, d, mid, emphasis });
     }
     // Focused edges last so they paint on top.
     return out.sort((a, b) => Number(a.emphasis === "focus") - Number(b.emphasis === "focus"));
-  }, [connections, positions, visibleTypes, showPending, focusId]);
+  }, [connections, positions, visibleTypes, showPending, focusId, scenarioFocusSet]);
 
   const hovered = routed.find((r) => r.conn.key === hoveredConnectionKey);
 

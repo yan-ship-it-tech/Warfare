@@ -91,6 +91,17 @@ export function Scene({ world, replayNonce }: Props) {
     return set;
   }, [focusId, view.connectionTypes, view.showPending, world.connections]);
 
+  /** Scenario-focus mode (ViewState.focusRequest) — a lesson's "show on
+   *  battlefield" or the Asset editor's "view on map". This is a distinct,
+   *  sustained mode rather than the transient hover/select preview above:
+   *  while active it takes over the fade/highlight treatment entirely rather
+   *  than combining with `neighbours`, so the two mechanisms never disagree
+   *  about what's dimmed. */
+  const scenarioFocusSet = useMemo(
+    () => (view.focusRequest ? new Set(view.focusRequest.assetIds) : null),
+    [view.focusRequest],
+  );
+
   // Open on the zero line, and on the land layer rather than the empty space
   // lane at the top — the first screen should show the thing being taught.
   useEffect(() => {
@@ -217,23 +228,33 @@ export function Scene({ world, replayNonce }: Props) {
               hoveredConnectionKey={view.hoveredConnectionKey}
               onHoverConnection={view.hoverConnection}
               onSelectNode={view.select}
+              scenarioFocusSet={scenarioFocusSet}
             />
           )}
 
           <div className="nodes">
-            {placed.map((p) => (
-              <AssetNode
-                key={p.id}
-                placed={p}
-                selected={view.selectedId === p.id}
-                hovered={view.hoveredId === p.id}
-                faded={Boolean(neighbours) && !neighbours!.has(p.id)}
-                labelCollapsed={collapsedLabels.has(p.id)}
-                replayNonce={replayNonce}
-                onSelect={view.select}
-                onHover={view.hover}
-              />
-            ))}
+            {placed.map((p) => {
+              const pinned = view.selectedId === p.id || view.hoveredId === p.id;
+              return (
+                <AssetNode
+                  key={p.id}
+                  placed={p}
+                  selected={view.selectedId === p.id}
+                  hovered={view.hoveredId === p.id}
+                  faded={
+                    scenarioFocusSet
+                      ? false
+                      : Boolean(neighbours) && !neighbours!.has(p.id)
+                  }
+                  focusDimmed={Boolean(scenarioFocusSet) && !scenarioFocusSet!.has(p.id) && !pinned}
+                  focused={Boolean(scenarioFocusSet) && scenarioFocusSet!.has(p.id) && !pinned}
+                  labelCollapsed={collapsedLabels.has(p.id)}
+                  replayNonce={replayNonce}
+                  onSelect={view.select}
+                  onHover={view.hover}
+                />
+              );
+            })}
           </div>
         </div>
         </div>

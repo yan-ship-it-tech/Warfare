@@ -8,6 +8,7 @@ import { DetailPanel } from "./components/DetailPanel";
 import { BandsEditorPanel } from "./components/BandsEditorPanel";
 import { AssetEditorPanel } from "./components/AssetEditorPanel";
 import { Legend } from "./components/Legend";
+import { ScenarioFocusBanner } from "./components/ScenarioFocusBanner";
 import { ViewStateProvider, useViewState } from "./state/viewState";
 import { OverridesProvider, useOverrides } from "./state/overridesState";
 import { RouterProvider, useRouter } from "./state/router";
@@ -34,7 +35,13 @@ function AppInner() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
+      // Tiered, same convention as before (Pass 9): each press peels back one
+      // layer rather than resetting everything at once. Scenario focus is a
+      // new layer between "a panel is open" and "something is selected" —
+      // added here, not just as a background click, since a keyboard-only
+      // user has no background to click on.
       if (view.openPanel) view.setOpenPanel(null);
+      else if (view.focusRequest) view.clearFocus();
       else view.select(null);
     };
     window.addEventListener("keydown", onKey);
@@ -58,6 +65,7 @@ function AppInner() {
           </PageShell>
         ) : (
           <>
+            <ScenarioFocusBanner view={view} />
             {view.renderMode === "terrain3d" ? (
               <Suspense fallback={<div className="scene3d__loading">Building terrain…</div>}>
                 <Scene3D world={world} />

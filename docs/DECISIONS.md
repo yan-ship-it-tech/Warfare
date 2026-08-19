@@ -1611,7 +1611,289 @@ here in case a future pass's headless verification hits the same thing.
 
 ---
 
-# Pass 11 — OSM rail & tree-line pipeline (fetch + reduce; integration deferred)
+# Pass 11 — interactivity: scenario focus mode, drag-to-reposition, asset library
+
+Three-item brief: fix "show on the battlefield" and turn it into a real
+scenario-focus mode; make assets draggable (ground pinned to terrain, air
+pinned to its elevation band) with non-mutating duplication for swarm/
+scenario building; a new asset library page. Explicitly told to stop and
+flag rather than ship a half-working version if the highlight/blur logic got
+complicated — it didn't, but two other things in this pass did get
+genuinely complicated before landing, and both are called out below because
+they were caught by testing the actual gesture, not by reading the code.
+
+## 1. Scenario focus mode — what was actually broken
+
+**Diagnosis first, since "broken" needed to be pinned down before fixing
+it.** The mechanism existed (`ViewState.focusRequest`, wired from the
+Lessons page since Pass 6) and partially worked: the camera flew to the
+lesson's assets and their DOM labels dimmed. Three real defects, not one:
+
+- **No way out.** `clearFocus()` was written and exported and never called
+  from anywhere. Once a lesson dimmed the map, that state was permanent for
+  the rest of the session short of firing another focus request.
+- **Selecting anything outside the focus set looked broken.** `is-dimmed`
+  didn't check selection/hover, so clicking a dimmed asset to compare it
+  against the highlighted lesson opened its detail panel while the asset
+  itself sat at 18% opacity — a selected thing rendered as barely visible is
+  exactly the "half-working" outcome the brief warned about.
+- **Only the DOM labels dimmed.** The WebGL markers (the octahedron icons
+  actually sitting on the terrain) stayed at full brightness regardless of
+  focus, and the Schematic (2D) view had zero awareness of `focusRequest` at
+  all — switching views mid-lesson silently dropped the whole effect.
+
+**What shipped**, all reusing the existing `focusRequest` mechanism rather
+than adding a second one:
+
+- `FocusRequest` gained an optional `label` (lesson title / asset name),
+  surfaced in a new `ScenarioFocusBanner` — the entry AND the one deliberate
+  exit besides Escape. Every place that calls `focusAssets()` (Lessons, the
+  Asset editor's "view on map", the new library page) now passes a label.
+- Real exits: the banner's own button, and Escape (a new tier between
+  "close a panel" and "deselect" — see App.tsx). Deliberately **not** added
+  to a background click in either view — that gesture already means
+  "deselect," and overloading it to also silently drop scenario focus felt
+  like the wrong kind of surprise mid-demo. Flagged as a scope choice, not
+  an oversight.
+- Dimming now excludes anything selected or hovered, in both the label class
+  computation and the 3D marker material pass — the exact bug above.
+- **3D markers dim/desaturate now, not just labels.** The octahedron marker,
+  its side ring and its fill all blend toward a flat grey and drop opacity
+  when outside the focus set, computed in the same per-frame loop that
+  already set selection/hover emphasis (`Scene3D.tsx`). Hero models (11
+  assets with real geometry, Pass 6) are deliberately **not** touched — their
+  materials are cached and cloned per `models.ts`'s own comment ("Models are
+  cached per builder and cloned"), and mutating a clone's material without
+  first checking whether that mutation reaches back to the shared cache was
+  a real risk not worth taking for a cosmetic dim. Flagged rather than
+  silently scoped out: a focused/dimmed hero model still gets the marker+
+  ring treatment every asset gets, just not a dimmed model on top of it.
+- **2D view now participates.** `Scene.tsx` computes a `scenarioFocusSet`
+  from `focusRequest` and, when active, it takes over `AssetNode`'s fade
+  treatment entirely (a new `is-focus-dimmed`/`is-focused` pair, blurred via
+  real CSS `filter: blur()` — cheap and exact for DOM, unlike the WebGL
+  layer) rather than combining with the pre-existing hover/select-neighbour
+  fade (`is-faded`), so the two mechanisms can't disagree about what's
+  dimmed. `ConnectionsOverlay` got the same override: with a scenario focus
+  active, an edge is "in focus" only when BOTH ends are in the named set —
+  literally the dependency line the lesson is about — rather than the
+  ordinary single-node hover/select emphasis.
+- **"Blur," read honestly.** A real screen-space blur needs a post-
+  processing pass (`EffectComposer` or similar) that doesn't exist in this
+  renderer and wasn't worth adding for a dim effect. The DOM layers (2D
+  nodes, 3D labels) get genuine `filter: blur()` since that's free there;
+  the WebGL markers get desaturate+dim instead. Documented in both places
+  rather than silently substituting one for the other and calling it done.
+
+## 2. Drag-to-reposition — two real bugs caught only by testing the gesture
+
+**The feature is 3D-only, flagged deliberately.** "The battlefield" in this
+codebase's own language is the 3D view (`Scene3D.tsx`'s file header literally
+opens "The WebGL battlefield"); the Schematic view's vertical axis is a
+domain lane plus auto-packed sub-row, not a free coordinate anything could
+drag to. The Schematic view already supports repositioning along the one
+axis it does own — `distance_km_from_zero`, editable from the detail panel
+since Pass 2 — and a drag there would just be a mouse-driven version of that
+same field. Building a second, different lateral concept for 2D to make
+"draggable" literal everywhere felt like solving a problem nobody has; not
+done, flagged here rather than silently scoped down.
+
+**Mechanics.** `AssetOverride` gains `lateral_offset_world?: number` — a
+3D-only layout preference, deliberately kept out of the `Asset` schema
+(`types.ts`) since it's not sourced data, the same reasoning that already
+keeps `platform_domain` inference separate from authored fields.
+`worldMapping.ts` gains `worldXToKm()`, the literal inverse Pass 1 predicted
+("`offsetPxToKm` specifically so drag-to-reposition can convert a drop x
+back into a distance") — implemented as a bounded binary search rather than
+inverting `Projection.xFor()`'s algebra by hand, since that algebra folds in
+the lane-oblique term and the zero-gutter and reproducing it by hand would
+have to stay in lockstep with `projection.ts` forever. `lateralLayout()`
+now takes a manually-placed asset OUT of the auto-spread/relaxation pass
+entirely rather than feeding it in and nudging the result — the relaxation
+pass exists to keep *auto*-placed assets from colliding, and running a
+user-dropped one through it would silently move it again right after the
+user let go. During the drag, every live update goes through the exact
+same `worldPlacement()` every asset is placed with on load — that's the
+entire mechanism behind "ground stays pinned to terrain height, air stays
+in its band": only km (via `worldXToKm`) and z move; Y is whatever
+`worldPlacement()` says it should be at the new point, same as day one.
+
+**Bug 1 — hit-testing off the wrong surface.** First implementation
+raycasted the WebGL marker meshes from a `pointerdown` on the canvas,
+capture-phase on the mount div so it could beat `OrbitControls`' own
+listener to `controls.enabled = false`. It typechecked, built, and was
+*wrong*: the DOM pin (name + km label) sits `LABEL_LIFT_PX` plus its own
+height above the marker's actual screen point — grabbing the visible,
+obviously-clickable label almost always raycasts past the small octahedron
+sitting well below it. Caught only by actually dragging a pin in a headless
+run and finding the distance hadn't moved. Rebuilt around the pin itself:
+`onPointerDown` on the `.pin3d` button, which also turns out simpler — the
+pin lives in a sibling overlay div, never inside `renderer.domElement`, so
+`OrbitControls` never sees the gesture at all and there's no priority race
+to win in the first place.
+
+**Bug 2 — a stable-looking callback that wasn't.** The pin-based rewrite
+still failed silently: `pointerdown` fired, nothing else did. Root cause was
+a `useCallback` dependency array holding the entire `view` object (`[...,
+overrides.setAssetOverride, view]`) so it would have `view.select` for the
+post-drop confirmation. `view` gets a new identity on essentially every
+hover, and an unrelated cleanup effect keyed on that same callback's
+identity was tearing down the `pointerup`/`pointermove` window listeners the
+instant a hover fired mid-drag — which a real drag gesture does constantly,
+crossing other pins on the way. The fix is one word: depend on `view.select`
+(a stable `useState` setter) instead of `view`. Verified by an actual
+Playwright drag before and after: 0% success, then a real distance change
+persisted to the override store, both confirmed by reading `localStorage`
+directly rather than trusting the UI alone. Neither bug would have been
+caught by a code read — both needed the gesture actually run.
+
+## 3. Duplicate — reuses the Asset editor's own store, not a new one
+
+`DetailPanel.tsx` gained a "⧉ Duplicate" button. It writes into
+`overrides.customAssets` — the exact mechanism `AssetEditorPanel` already
+uses for brand-new assets (Pass 7) — so a duplicate is a real, independent
+`Asset` record from the moment it's created: draggable, editable, deletable,
+and it never touches the `data/assets/*.json` file it was copied from. Text
+fields bake in whatever local edits the original currently shows (its
+effective role/characteristics/employment/contrast, not necessarily the
+shipped file's own) since the clone is meant to drift independently from
+here on. `connections` copy verbatim — a duplicated Lancet keeps the same
+Starlink/ISR dependency edges the original declares, which is the correct
+read of "swarm/scenario building": five of the same asset should share the
+same real dependency, not five orphans. New id/name collision handling
+walks `-copy`, `-copy-2`, ... against both the shipped roster and existing
+custom assets.
+
+## 4. Asset library page
+
+`src/pages/AssetLibraryPage.tsx`, registered in `pages/registry.tsx` per
+that file's own note that this page was coming ("costs one entry here plus
+the component itself" — it did). Filters by side and by category (the
+`data/groups.json` taxonomy, same chips `CategoryFilterMenu` already uses)
+plus a name/category text search, added beyond the literal ask because at
+90 assets "browse by category and side" alone still leaves a long list —
+flagged as a small addition, not a silent scope change. Selecting a row
+expands it in place (same interaction language as the Lessons page's own
+list) to show its role and three actions:
+
+- **View detail** — `view.select()` + navigate home, same pattern
+  `DataHealthPage` already uses to jump from an issue to its asset.
+- **Show on battlefield** — calls `focusAssets([id], name)`, i.e. scenario
+  focus mode from §1 applied to a single asset. Free reuse: the library
+  page didn't need its own spotlight mechanism, item 1's already is one.
+- **Edit** — branches on what kind of asset it is rather than pretending
+  there's one editing surface for both. A custom asset (built in, or
+  duplicated via, the Asset editor) opens that form directly in edit mode,
+  via a new one-shot `ViewState.editorTarget`/`requestEditAsset()` — the
+  same consume-once pattern `focusRequest`'s nonce already established. A
+  shipped asset opens the detail panel instead, which is genuinely where its
+  inline edit controls live (`AssetEditorPanel.tsx`'s own file header is
+  explicit that its form can't touch a shipped asset's fields — extending it
+  to do so was out of scope for this pass and would cut against that
+  file's own stated design).
+
+## Where the brief and prior passes disagreed
+
+1. **Drag-to-reposition scoped to the 3D view only.** See §2 — the brief's
+   wording ("make assets draggable on the battlefield") reads naturally as
+   the 3D view in this codebase's own vocabulary, and the 2D view's vertical
+   axis has no free coordinate to drag along without inventing one.
+2. **"Blur" is real CSS blur on the DOM layers (2D nodes, 3D labels) and
+   desaturate+dim on the WebGL markers**, not a literal blur everywhere —
+   see §1. A post-processing pass for the 3D canvas was judged not worth
+   adding for a dim effect.
+3. **Hero models don't participate in scenario-focus dimming.** See §1 —
+   their materials are cached/cloned per `models.ts`, and mutating a clone
+   without checking whether the cache is shared was a risk not worth taking.
+4. **Background click does not clear scenario focus**, only the banner and
+   Escape do. See §1 — overloading the existing "click empty space to
+   deselect" gesture felt like the wrong kind of surprise mid-demo.
+5. **Asset library's search box** wasn't asked for; added because the ask
+   ("browse by category and side") still leaves 90 assets to scroll without
+   one.
+
+## Verification
+
+`npx tsc --noEmit` and `npm run build` clean throughout. No test suite
+exists, so this pass leaned harder than most on the headless Playwright
+harness precisely because §2's two bugs were both invisible from reading the
+code — both were only found by actually running the gesture:
+
+- Scenario focus: triggered from the Lessons page, confirmed the banner
+  text/count, confirmed dimmed-pin and focused-pin counts, confirmed a
+  dimmed pin becomes fully visible on selection (the bug this pass fixed),
+  confirmed the banner and all dimming clear on both its own Exit button and
+  Escape, and confirmed the identical spotlight mechanism fires correctly
+  from the library page's "Show on battlefield" for a single asset.
+- Drag: selected an asset, read its distance from the detail panel,
+  performed an actual multi-step `mouse.move`/`down`/`move`/`up` sequence
+  on its pin, and confirmed both the on-screen distance AND the raw
+  `localStorage` override record changed to match — not just that the UI
+  looked different. Also confirmed a plain click (no movement) still
+  selects normally and writes no override, so the drag threshold isn't
+  accidentally eating ordinary clicks.
+- Duplicate: selected a shipped asset, clicked Duplicate, confirmed a new
+  `(copy)`-suffixed asset was selected and it persisted in
+  `overrides.customAssets` across a reload.
+- Library: filtered by side and by category, expanded a row, and exercised
+  all three actions from it.
+
+# Pass 12 — model style guide (documentation/consistency, no feature work)
+
+Brief: write a short model style guide alongside this file, based on the
+best-looking assets already in the scene, use it to audit the existing 3D
+models, flag deviations — no new features. `docs/MODEL_STYLE_GUIDE.md`.
+
+The reference set is the 11-asset hero tier in `src/three/models.ts` —
+chosen because it's the one file with an explicit, self-enforced
+consistency rule already (`export const HERO_MATERIALS = [...]`, five
+shared materials, box+cylinder-only primitives), not a subjective pick.
+Every number in the guide (poly-budget range, segment-count ceiling,
+roughness/metalness bands, saturation band) was measured off the actual
+source — grepped geometry constructors and material declarations across
+`models.ts`, `scenery.ts`, `props.ts`, `terrain3d.ts`, then computed HSL
+saturation and pairwise RGB distance in Python — not asserted from general
+low-poly-aesthetic knowledge. Worth being explicit that this was measured,
+not eyeballed, since a style guide's numbers are only as good as their
+source.
+
+One real, fixable inconsistency came out of it: `scenery.ts` declares 19
+one-off materials with no shared/exported list the way `models.ts` does,
+and at least four pairs are close enough in RGB distance (2.2–13.0 out of a
+441-max scale) to be visually redundant — `PIER_WOOD` vs. a `props.ts` tree
+colour, `WALL_RUINED` vs. `RUBBLE` in the same file, `SANDBAG` vs.
+`WALL_INTACT` in the same file, `CONCRETE_DARK` vs. `PIER_WOOD` in the same
+file. Everything else audited clean: `flatShading: true` has zero
+exceptions across all four files; primitive vocabulary (box+cylinder-only
+for hero models, a wider set for scenery) is a documented split, not scope
+creep; segment counts (4–14) and primitive counts (6–25) hold across every
+file, hero and scenery alike; the three deliberate saturation/roughness
+accents (`GLASS`, `EMBER`, the Pass 10 water plane) are each already
+commented as intentional at the point they're declared. `ROOF_INTACT`/
+`ROOF_DAMAGED` sit a little hot on saturation relative to everything else
+and aren't marked as an accent — flagged as a smaller, arguable case rather
+than a clear violation.
+
+**Not fixed in this pass, on purpose**: the material-consolidation and
+`SCENERY_MATERIALS`-export follow-up the audit recommends is left as a
+recommendation, not applied. The brief was documentation and audit — making
+that specific code change would have been the "no new features" instruction
+undercut by exactly the kind of drive-by edit this pass exists to name
+instead of quietly making.
+
+## Where the brief and prior passes disagreed
+
+Nothing to flag — this pass didn't touch runtime code at all
+(`git status` after: two new/changed files, both docs). The one judgment
+call worth naming: the brief said "flag which ones deviate" in the plural,
+and the honest finding is that three of four files (`models.ts`, `props.ts`,
+`terrain3d.ts`) don't deviate at all — reported that plainly rather than
+manufacturing findings to make the audit look more thorough than the
+codebase actually warranted.
+
+---
+
+# Pass 13 — OSM rail & tree-line pipeline (fetch + reduce; integration deferred)
 
 Brief: an out-of-band spec for pulling real OpenStreetMap line features — rail
 lines, windbreak tree rows, roads, rivers — for two Donetsk Oblast AOIs
@@ -1756,9 +2038,9 @@ to run it from, and a committed fixture nothing executes is a file that rots.
 
 ---
 
-# Pass 12 — `data/osm/pokrovsk.json` committed, from a phone
+# Pass 14 — `data/osm/pokrovsk.json` committed, from a phone
 
-Pass 11 built the pipeline and documented, correctly, that the fetch stage
+Pass 13 built the pipeline and documented, correctly, that the fetch stage
 cannot run inside this sandbox's egress proxy. This pass closes that out —
 not by getting the sandbox online, but because the user came back on an
 iPhone asking for the easiest way to get the data themselves, and "easiest"
@@ -1792,7 +2074,7 @@ one extra normalization step ahead of the existing one.
 
 `data/osm/pokrovsk.json` is committed: 1113 features, nothing skipped
 (`counts.skipped` all zero) — `tree_row: 1010` (900 forest/wood polygons plus
-110 windbreak lines — Pass 11's "multipolygon forests aren't fetched" worry
+110 windbreak lines — Pass 13's "multipolygon forests aren't fetched" worry
 turned out not to bite; the ways-only query still caught a dense forest
 pattern), `road: 99`, `river: 3`, `rail_line: 1`. 29,269 raw vertices
 simplified to 10,544 at the default 5 m tolerance (-64%).
@@ -1806,14 +2088,14 @@ overpass-turbo view that produced the export either wasn't panned over the
 rail yard when Export ran, or the query it ran had dropped the
 `railway=rail` selector. The right fix is a follow-up export focused on
 rail, from the user, when they're back at it — not inventing rail geometry
-to fill the gap, which is the exact fabrication Pass 11 already refused to
+to fill the gap, which is the exact fabrication Pass 13 already refused to
 do for the whole AOI. Logged in `docs/BACKLOG.md` rather than silently
 shipped as if it were complete.
 
 ## 3. What this pass did not touch
 
 No `src/` changes — this is still purely the data-acquisition half. Both
-open decisions from Pass 11's §7 (real geography vs. the band-compressed X
+open decisions from Pass 13's §7 (real geography vs. the band-compressed X
 axis; 3D meshes vs. 2.5D sprites) are exactly as open as they were; nothing
 about having real Pokrovsk data in hand resolves either. `data/osm/kramatorsk.json`
 still doesn't exist — same phone-export route would get it, not attempted
@@ -1843,13 +2125,13 @@ guarantee.
 
 ---
 
-# Pass 13 — the "thin rail" gap from Pass 12 was a tag-value assumption, not missing data
+# Pass 15 — the "thin rail" gap from Pass 14 was a tag-value assumption, not missing data
 
-Pass 12 flagged Pokrovsk's `rail_line` layer (one 5 m fragment) as a real
+Pass 14 flagged Pokrovsk's `rail_line` layer (one 5 m fragment) as a real
 data gap and asked the user to re-export focused on rail. They did, from a
 link built for exactly that: `way["railway"]` (any value, no `="rail"`
 restriction) over the same bbox, run in overpass-turbo on their phone,
-exported as GeoJSON and pasted in — the same route Pass 12 established.
+exported as GeoJSON and pasted in — the same route Pass 14 established.
 
 ## 1. It wasn't missing — it's `disused`
 
@@ -1872,7 +2154,7 @@ folded in under a bare `tags.railway` truthiness check).
 The two GeoJSON exports overlap by exactly one way (the original
 `osm_1085918173` fragment, present in both). Merged by feature id before
 reducing — 1113 + 306 → 1418 unique input features, 1415 after the 3
-platform/no exclusions — rather than discarding Pass 12's tree/road/river
+platform/no exclusions — rather than discarding Pass 14's tree/road/river
 data and re-fetching everything. `data/osm/pokrovsk.json` now carries
 `rail_line: 303` (up from 1), everything else unchanged: `tree_row: 1010`,
 `road: 99`, `river: 3`.
@@ -1890,10 +2172,10 @@ layer.
 
 ## Where the brief and prior passes disagreed
 
-Pass 12 treated the thin rail layer as data to *flag*, and it was right to —
+Pass 14 treated the thin rail layer as data to *flag*, and it was right to —
 at that point there was no way to tell "genuinely sparse" from "wrong tag
 value" without more data. This pass had that data and could tell the
-difference. Nothing about Pass 12's `--raw=` GeoJSON support needed to
+difference. Nothing about Pass 14's `--raw=` GeoJSON support needed to
 change; `classify()` was the only thing that was actually wrong for this
 AOI, and it's a one-line widening, not a redesign.
 

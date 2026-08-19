@@ -19,6 +19,49 @@ import { useViewState } from "../state/viewState";
 import { useOverrides, type CustomMedia } from "../state/overridesState";
 import { catalogSiblings, findCatalogEntry, resolveAssetDisplay } from "../data/catalog";
 
+/**
+ * Clone an asset for swarm/scenario building (e.g. "duplicate this Lancet
+ * five times to show a saturation attack") — a real, independent `Asset`
+ * record written into `overrides.customAssets`, the exact same mechanism the
+ * Asset Editor page uses for brand-new assets. The source file under
+ * `data/assets/` is never touched: this is additive, same as every other
+ * override in this app.
+ *
+ * Effective (possibly locally-edited) text is baked into the copy rather than
+ * re-pointing at the original's override record — the clone is meant to
+ * drift independently from here on (drag it, edit it, delete it) without
+ * that ever touching the asset it was copied from.
+ */
+function duplicateAsset(
+  original: Asset,
+  effectiveText: {
+    short_role: string;
+    employment_notes: string;
+    contrast_vs_traditional: string;
+    characteristics: string[];
+  },
+  existingIds: Set<string>,
+  existingNames: Set<string>,
+): Asset {
+  const baseId = original.id.replace(/-copy(-\d+)?$/, "");
+  let id = `${baseId}-copy`;
+  for (let n = 2; existingIds.has(id); n++) id = `${baseId}-copy-${n}`;
+
+  const baseName = original.name.replace(/\s*\(copy(?: \d+)?\)$/, "");
+  let name = `${baseName} (copy)`;
+  for (let n = 2; existingNames.has(name); n++) name = `${baseName} (copy ${n})`;
+
+  return {
+    ...original,
+    id,
+    name,
+    short_role: effectiveText.short_role,
+    employment_notes: effectiveText.employment_notes,
+    contrast_vs_traditional: effectiveText.contrast_vs_traditional,
+    characteristics: effectiveText.characteristics,
+  };
+}
+
 interface Props {
   world: WorldModel;
   onReplay: () => void;
@@ -132,6 +175,28 @@ function AssetDetail({
   const effectiveEmployment = textOverride?.employment_notes ?? asset.employment_notes;
   const effectiveContrast = textOverride?.contrast_vs_traditional ?? asset.contrast_vs_traditional;
   const effectiveCharacteristics = textOverride?.characteristics ?? asset.characteristics ?? [];
+  const view = useViewState();
+
+  const duplicate = () => {
+    const existingIds = new Set([...world.assetsById.keys(), ...Object.keys(overrides.customAssets)]);
+    const existingNames = new Set([
+      ...world.assets.map((a) => a.name),
+      ...Object.values(overrides.customAssets).map((a) => a.name),
+    ]);
+    const clone = duplicateAsset(
+      asset,
+      {
+        short_role: effectiveRole,
+        employment_notes: effectiveEmployment ?? "",
+        contrast_vs_traditional: effectiveContrast ?? "",
+        characteristics: effectiveCharacteristics,
+      },
+      existingIds,
+      existingNames,
+    );
+    overrides.saveCustomAsset(clone);
+    view.select(clone.id);
+  };
 
   return (
     <div className="detail__body">
@@ -158,6 +223,14 @@ function AssetDetail({
             )}
           </p>
         </div>
+        <button
+          type="button"
+          className="detail__duplicate"
+          onClick={duplicate}
+          title="Add an independent copy of this asset to the battlefield — for swarm/scenario building. Never touches the source data file."
+        >
+          ⧉ Duplicate
+        </button>
       </header>
 
       <SwapPicker asset={asset} />

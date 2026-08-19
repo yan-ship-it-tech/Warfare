@@ -10,6 +10,7 @@ import type { WorldModel } from "../data/model";
 import { AboutPage } from "./AboutPage";
 import { DataHealthPage } from "./DataHealthPage";
 import { LessonsPage } from "./LessonsPage";
+import { AssetLibraryPage } from "./AssetLibraryPage";
 
 export interface PageProps {
   world: WorldModel;
@@ -49,6 +50,14 @@ export const PAGES: PageDef[] = [
       if (world.issues.length) return { text: String(world.issues.length) };
       return null;
     },
+  },
+  {
+    path: "/library",
+    title: "Asset library",
+    navLabel: "Asset library",
+    navHint: "Browse every asset by category and side, independent of where it sits on the map",
+    Component: AssetLibraryPage,
+    badge: (world) => (world.assets.length ? { text: String(world.assets.length) } : null),
   },
   {
     path: "/lessons",
