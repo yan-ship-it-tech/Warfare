@@ -3,6 +3,7 @@
   "name": "Integrated Air Defense C2 Network",
   "side": "side_a",
   "domain": "c2_comms",
+  "platform_domain": "land",
   "echelon": "operational",
   "group": "c2",
   "distance_km_from_zero": 60,

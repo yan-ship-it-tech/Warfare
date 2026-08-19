@@ -3,6 +3,7 @@
   "name": "R-330Zh Zhitel",
   "side": "side_b",
   "domain": "cyber_ew",
+  "platform_domain": "land",
   "echelon": "operational",
   "group": "ew",
   "comparison_group": "electronic_warfare",

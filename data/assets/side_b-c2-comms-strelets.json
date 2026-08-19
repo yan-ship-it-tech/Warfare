@@ -3,6 +3,7 @@
   "name": "Strelets Reconnaissance-Fire Terminal",
   "side": "side_b",
   "domain": "c2_comms",
+  "platform_domain": "land",
   "echelon": "tactical",
   "group": "c2",
   "distance_km_from_zero": 4,

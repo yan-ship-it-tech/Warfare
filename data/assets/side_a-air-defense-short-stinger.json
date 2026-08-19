@@ -3,6 +3,7 @@
   "name": "FIM-92 Stinger",
   "side": "side_a",
   "domain": "air",
+  "platform_domain": "land",
   "echelon": "tactical",
   "group": "air_defense",
   "distance_km_from_zero": 2,

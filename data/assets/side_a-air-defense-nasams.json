@@ -3,6 +3,7 @@
   "name": "NASAMS",
   "side": "side_a",
   "domain": "air",
+  "platform_domain": "land",
   "echelon": "operational",
   "group": "air_defense",
   "distance_km_from_zero": 19,

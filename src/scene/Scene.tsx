@@ -10,6 +10,7 @@ import type { WorldModel, SceneNode } from "../data/model";
 import { nodeSide } from "../data/model";
 import {
   buildProjection,
+  declutterLabels,
   packMarkerRows,
   placeNodes,
   rulerHeight,
@@ -55,6 +56,10 @@ export function Scene({ world, replayNonce }: Props) {
   }, [world.assets, world.stubs, view.showPending, view.visibleSides, view.hiddenGroups]);
 
   const placed = useMemo(() => placeNodes(nodes, proj), [nodes, proj]);
+
+  // Which labels have to give way. Recomputed only when the layout itself
+  // changes — not on hover, selection or zoom, none of which move a node.
+  const collapsedLabels = useMemo(() => declutterLabels(placed), [placed]);
 
   const markerRows = useMemo(
     () => packMarkerRows(world.doctrineMarkers, ["side_a", "side_b"], proj),
@@ -223,6 +228,7 @@ export function Scene({ world, replayNonce }: Props) {
                 selected={view.selectedId === p.id}
                 hovered={view.hoveredId === p.id}
                 faded={Boolean(neighbours) && !neighbours!.has(p.id)}
+                labelCollapsed={collapsedLabels.has(p.id)}
                 replayNonce={replayNonce}
                 onSelect={view.select}
                 onHover={view.hover}

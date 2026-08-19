@@ -76,7 +76,20 @@ export interface Asset {
   id: string;                            // stable slug, e.g. "side_a-air-defense-long-patriot"
   name: string;                          // display name, e.g. "Patriot (PAC-3 MSE)"
   side: Side;
+  /** ENGAGEMENT domain — which domain this asset fights *in or against*.
+   *  This is the teaching taxonomy: it drives lane order, legend colour and
+   *  the show/hide filters, and it is why a Patriot battery is `air` (it is
+   *  an air-domain weapon) even though the launcher never leaves the ground.
+   *  It is NOT a statement about where the hardware physically sits — use
+   *  `platform_domain` for that. See `src/data/placement.ts`. */
   domain: Domain;
+  /** PLATFORM domain — where the hardware physically SITS, which is what any
+   *  renderer must use to decide altitude. Optional: when absent it is
+   *  inferred from `category` (see `resolvePlatformDomain`), so an asset file
+   *  that omits it still places correctly rather than floating. Set it
+   *  explicitly whenever the engagement domain and the physical one differ —
+   *  ground-based air defence, truck-mounted EW, ground satcom terminals. */
+  platform_domain?: Domain;
   echelon: Echelon;
   group: AssetGroup;                     // references a groups.json entry — the show/hide taxonomy
   /** Optional link into data/catalog/*.json — when set, the detail panel offers

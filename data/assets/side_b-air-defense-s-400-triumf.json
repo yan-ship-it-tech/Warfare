@@ -3,6 +3,7 @@
   "name": "S-400 'Triumf'",
   "side": "side_b",
   "domain": "air",
+  "platform_domain": "land",
   "echelon": "operational",
   "group": "air_defense",
   "distance_km_from_zero": 42,

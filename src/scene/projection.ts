@@ -15,7 +15,9 @@
 import type { DistanceBand, Domain, DomainLayer, Side } from "../types";
 import type { DoctrineMarker, SceneNode } from "../data/model";
 import { nodeDistance, nodeDomain, nodeSide } from "../data/model";
-import { SIDE_DIRECTION, VIEW } from "../config/ui";
+import { DOMAIN_ALTITUDE_PX, SIDE_DIRECTION, VIEW } from "../config/ui";
+import { resolvePlatformDomain } from "../data/placement";
+import { LabelGrid } from "./labelGrid";
 
 export interface BandSpan {
   band: DistanceBand;
@@ -138,6 +140,17 @@ export interface PlacedNode {
   subRow: number;
 }
 
+/** The purely visual vertical pop AssetNode applies at render time, in px.
+ *  Keyed on the platform domain — where the thing physically sits — so a
+ *  ground-based SAM in the `air` lane gets none. See src/data/placement.ts. */
+function nodeAltitudePx(n: SceneNode): number {
+  const platform =
+    n.kind === "asset"
+      ? resolvePlatformDomain(n.asset)
+      : resolvePlatformDomain({ domain: n.stub.domain });
+  return DOMAIN_ALTITUDE_PX[platform] ?? 0;
+}
+
 /**
  * Positions every node and pushes overlapping ones into sub-rows within their
  * lane, so a dense category stays readable without hand-tuning coordinates in
@@ -157,32 +170,116 @@ export function placeNodes(nodes: SceneNode[], proj: Projection): PlacedNode[] {
     const sorted = [...list].sort(
       (a, b) => nodeDistance(a) - nodeDistance(b) || a.id.localeCompare(b.id),
     );
-    // Track the last x used in each sub-row so we only bump when we must.
+
+    // Pass 1 — assign each node the first sub-row with room for it. The row
+    // count is NOT capped here. It used to be clamped to VIEW.maxSubRows, which
+    // meant every node past the third collision landed on the same row at the
+    // same x — i.e. exactly on top of another node, covering its hit target
+    // entirely (Gepard SPAAG was unreachable behind Switchblade 600). Letting
+    // the count grow and then fitting the rows to the lane in pass 2 keeps
+    // every node individually hoverable however dense the category gets.
+    const rows: { node: SceneNode; x: number; subRow: number }[] = [];
     const lastXInRow: number[] = [];
+    let maxSubRow = 0;
     for (const n of sorted) {
       const laneIndex = proj.laneIndexOf(nodeDomain(n));
       const x = proj.xFor(nodeSide(n), nodeDistance(n), laneIndex);
       let subRow = 0;
       while (
-        subRow < VIEW.maxSubRows &&
         lastXInRow[subRow] !== undefined &&
         Math.abs(x - lastXInRow[subRow]) < VIEW.minIconSeparationPx
       ) {
         subRow += 1;
       }
-      if (subRow >= VIEW.maxSubRows) subRow = VIEW.maxSubRows - 1;
       lastXInRow[subRow] = x;
+      if (subRow > maxSubRow) maxSubRow = subRow;
+      rows.push({ node: n, x, subRow });
+    }
+
+    // Pass 2 — distribute however many rows were needed across the lane's own
+    // height, centred on the lane. Spacing shrinks only when demand exceeds
+    // what VIEW.subRowOffsetPx would use, so sparse lanes look exactly as they
+    // did and only genuinely crowded ones tighten up.
+    //
+    // The floor has to clear the render-time altitude pop as well. AssetNode
+    // draws each node at `y - altitude`, and altitude varies *within* a lane
+    // (the air lane holds both airborne UAVs and ground-based SAMs, which is
+    // the whole point of the platform/engagement split) — so a row gap of
+    // exactly minSubRowSpacingPx can be eaten by a 20px pop and drop an
+    // elevated node straight onto the grounded one below it. Widening the gap
+    // by the lane's altitude spread keeps the *rendered* separation correct.
+    const altitudes = rows.map((r) => nodeAltitudePx(r.node));
+    const altitudeSpread = altitudes.length
+      ? Math.max(...altitudes) - Math.min(...altitudes)
+      : 0;
+    const spacing =
+      maxSubRow === 0
+        ? 0
+        : Math.max(
+            VIEW.minSubRowSpacingPx + altitudeSpread,
+            Math.min(VIEW.subRowOffsetPx, VIEW.laneHeightPx / (maxSubRow + 1)),
+          );
+    for (const r of rows) {
+      const laneIndex = proj.laneIndexOf(nodeDomain(r.node));
       placed.push({
-        node: n,
-        id: n.id,
-        x,
-        y: proj.laneY(laneIndex) + subRow * VIEW.subRowOffsetPx - (subRow > 0 ? 8 : 0),
+        node: r.node,
+        id: r.node.id,
+        x: r.x,
+        y: proj.laneY(laneIndex) + (r.subRow - maxSubRow / 2) * spacing,
         laneIndex,
-        subRow,
+        subRow: r.subRow,
       });
     }
   }
   return placed;
+}
+
+// ── label declutter (2D) ─────────────────────────────────────────────────
+/** Label footprint under a node, in scene units — matches .node__label's
+ *  132px width and its two-line-clamped height. */
+const NODE_LABEL_W = 132;
+const NODE_LABEL_H = 40;
+/** Offset from the node's centre to the top of its label box: half the 52px
+ *  icon plus the 5px gap .node__label sets. */
+const NODE_LABEL_TOP_OFFSET = 31;
+
+/**
+ * Decides which 2D labels can be drawn without overlapping, returning the ids
+ * whose label must collapse to icon-only (revealed on hover, focus or select).
+ *
+ * Zoom is deliberately not a parameter. The 2D scene is a single CSS
+ * `scale()` — nodes and their labels scale by the same factor — so relative
+ * overlap is zoom-invariant and this can be computed once in scene units. That
+ * is the opposite of the 3D view, where perspective means the same two assets
+ * can be far apart in one frame and on top of each other in the next.
+ *
+ * Priority is deterministic: real assets before pending stubs, un-bumped rows
+ * before nodes the packer had to push into a sub-row, then by id. So the
+ * primary row of each lane keeps its labels and the overflow collapses, which
+ * is the readable outcome rather than an arbitrary left-to-right race.
+ */
+export function declutterLabels(placed: PlacedNode[]): Set<string> {
+  const ordered = [...placed].sort(
+    (a, b) =>
+      Number(a.node.kind === "stub") - Number(b.node.kind === "stub") ||
+      a.subRow - b.subRow ||
+      a.id.localeCompare(b.id),
+  );
+
+  const grid = new LabelGrid(64);
+  const collapsed = new Set<string>();
+  for (const p of ordered) {
+    const top = p.y + NODE_LABEL_TOP_OFFSET;
+    const box = {
+      x1: p.x - NODE_LABEL_W / 2,
+      y1: top,
+      x2: p.x + NODE_LABEL_W / 2,
+      y2: top + NODE_LABEL_H,
+    };
+    if (grid.collides(box)) collapsed.add(p.id);
+    else grid.insert(box);
+  }
+  return collapsed;
 }
 
 // ── ruler geometry ───────────────────────────────────────────────────────

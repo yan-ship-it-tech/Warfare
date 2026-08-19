@@ -12,6 +12,7 @@ import type {
   DomainLayer,
   Side,
 } from "../types";
+import { resolvePlatformDomain } from "./placement";
 
 export type IssueSeverity = "error" | "warning" | "info";
 
@@ -146,6 +147,14 @@ export function nodeSide(n: SceneNode): Side {
 }
 export function nodeDomain(n: SceneNode): Domain {
   return n.kind === "asset" ? n.asset.domain : n.stub.domain;
+}
+/** Where the node physically sits — the only correct input to an altitude.
+ *  See src/data/placement.ts for why this is not the same as nodeDomain().
+ *  A stub has no category to infer from, so it resolves to its own domain. */
+export function nodePlatformDomain(n: SceneNode): Domain {
+  return n.kind === "asset"
+    ? resolvePlatformDomain(n.asset)
+    : resolvePlatformDomain({ domain: n.stub.domain });
 }
 export function nodeDistance(n: SceneNode): number {
   return n.kind === "asset"

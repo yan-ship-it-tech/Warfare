@@ -8,6 +8,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 import type { Asset, ConnectionType, DistanceBand, Domain, DomainLayer, Echelon, Side } from "../types";
 import type { DataIssue, GroupDef } from "./model";
+import { resolvePlatformDomain } from "./placement";
 
 const SIDES: Side[] = ["side_a", "side_b"];
 const ECHELONS: Echelon[] = ["strategic", "operational", "tactical"];
@@ -76,6 +77,32 @@ export function validateAsset(
     push("error", `\`domain\` must be one of ${domainIds.join(" | ")}; got ${JSON.stringify(a.domain)}.`, subject);
     placeable = false;
   }
+  // `platform_domain` is optional — an asset that omits it is inferred from
+  // its category rather than being an error (degrade, don't break). What IS
+  // worth flagging is an inference the author may not have intended, since a
+  // wrong answer here is what puts a launcher in the sky.
+  if (a.platform_domain !== undefined) {
+    if (typeof a.platform_domain !== "string" || !domainIds.includes(a.platform_domain as Domain)) {
+      push(
+        "warning",
+        `\`platform_domain\` must be one of ${domainIds.join(" | ")}; got ${JSON.stringify(a.platform_domain)}. Falling back to \`domain\` for placement.`,
+        subject,
+      );
+    }
+  } else if (typeof a.domain === "string" && typeof a.category === "string") {
+    const inferred = resolvePlatformDomain({
+      domain: a.domain as Domain,
+      category: a.category,
+    });
+    if (inferred !== a.domain) {
+      push(
+        "info",
+        `No \`platform_domain\` set; inferred "${inferred}" from category "${a.category}" (engagement domain is "${a.domain}"). Set it explicitly to pin the placement.`,
+        subject,
+      );
+    }
+  }
+
   if (typeof a.distance_km_from_zero !== "number" || !Number.isFinite(a.distance_km_from_zero)) {
     push("error", "`distance_km_from_zero` must be a finite number.", subject);
     placeable = false;

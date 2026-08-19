@@ -14,8 +14,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { WorldModel, SceneNode } from "../data/model";
-import { nodeSide, nodeDomain, nodeDistance } from "../data/model";
-import { buildProjection, placeNodes } from "../scene/projection";
+import { nodeSide, nodeDomain, nodePlatformDomain, nodeDistance } from "../data/model";
+import { buildProjection } from "../scene/projection";
+import { LabelGrid } from "../scene/labelGrid";
 import { DOMAIN_ACCENT, SIDE_ACCENT, SIDE_LABELS } from "../config/ui";
 import { useViewState } from "../state/viewState";
 import { useOverrides } from "../state/overridesState";
@@ -24,16 +25,61 @@ import { buildTerrain, terrainHeight } from "./terrain3d";
 import { buildProps, PROP_BUDGET } from "./props";
 import { buildScenery, disposeScenery, SCENERY_BUDGET } from "./scenery";
 import { buildHeroModel, hasHeroModel } from "./models";
-import { worldPlacement, worldXFor, worldHalfWidth, DOMAIN_ALTITUDE, STRIP_HALF_Z } from "./worldMapping";
+import {
+  worldPlacement,
+  lateralLayout,
+  worldXFor,
+  worldHalfWidth,
+  DOMAIN_ALTITUDE,
+  STRIP_HALF_Z,
+} from "./worldMapping";
 
-/** Above this, a domain is genuinely elevated (air, space, the EW/C2 mast
- *  tiers) and gets the floating-marker-on-a-tether treatment. At or below
- *  it (land, logistics, medical, sea), the group's own position is already
- *  on the terrain surface — see worldPlacement() — so the marker belongs
- *  right there, not on a stalk above it. */
+/** Above this, a PLATFORM domain is genuinely off the deck (air, space, and
+ *  the airborne members of the EW/C2 tiers) and gets the floating-marker-on-a-
+ *  tether treatment. At or below it the group's own position is already on the
+ *  terrain surface — see worldPlacement() — so the marker belongs right there.
+ *
+ *  Pass 7 gated this on the *engagement* domain, which is why the fix appeared
+ *  to work for tanks and ships and did nothing for the 16 assets whose
+ *  engagement and platform domains differ. See src/data/placement.ts. */
 const ELEVATED_ALTITUDE_THRESHOLD = 2;
 
 const BG = new THREE.Color("#0a0d13");
+
+// ── label declutter tuning ───────────────────────────────────────────────
+/** Screen box a titled label reserves. Must match .pin3d's real footprint or
+ *  the collision test is measuring the wrong rectangle. */
+const LABEL_W = 132;
+const LABEL_H = 32;
+/** Constant screen-space gap from marker to the bottom of its label. Constant
+ *  is the entire fix for the drifting-nametag bug: the anchor used to be a
+ *  world point 3 units above the marker, and the screen distance between two
+ *  world points separated in Y collapses toward zero as the camera tilts
+ *  toward the horizon and grows without bound as it looks down — so the label
+ *  slid off its own icon and the CSS leader stub pointed at empty ground. */
+const LABEL_LIFT_PX = 28;
+/** Label distance tiers, expressed RELATIVE to how far the camera currently
+ *  sits from its orbit target. Inside the near tier a label may carry its
+ *  title; beyond it, it degrades to a dot; past the far tier it is not
+ *  rendered at all.
+ *
+ *  Relative, not absolute, because absolute thresholds break at the ends of
+ *  the zoom range: with a fixed 700-unit cutoff and OrbitControls.maxDistance
+ *  at 900, pulling all the way back put every asset past the cutoff and the
+ *  scene lost its labels entirely instead of thinning. Scaling with the orbit
+ *  radius means "far" always means far *for this framing* — zooming out thins
+ *  the field via the budget and collision grid, which is the intended
+ *  behaviour, rather than emptying it. */
+const LABEL_FULL_DIST = (camDist: number) => camDist * 1.25 + 60;
+const LABEL_DOT_DIST = (camDist: number) => camDist * 3 + 200;
+/** Titled labels allowed per megapixel of viewport. The budget scales with
+ *  the area actually available rather than being a fixed count that is stingy
+ *  on a desktop and unreadable on a phone. */
+const LABEL_BUDGET_PER_MPX = 30;
+/** Terrain samples per occlusion probe. */
+const OCCLUSION_SAMPLES = 6;
+
+type LabelTier = "full" | "dot" | "hidden";
 
 interface LabelState {
   id: string;
@@ -42,10 +88,14 @@ interface LabelState {
   side: string;
   domain: string;
   accent: string;
+  sideColor: string;
   isStub: boolean;
   x: number;
   y: number;
-  visible: boolean;
+  tier: LabelTier;
+  /** 0–1 proximity fade, applied to dots so the far field recedes instead of
+   *  presenting every distant asset at full strength. */
+  fade: number;
   depth: number;
 }
 
@@ -53,9 +103,33 @@ interface Entry {
   id: string;
   node: SceneNode;
   group: THREE.Group;
+  /** The marker's own world position. Labels project THIS and then offset in
+   *  screen space — never a pre-lifted world point. */
   anchor: THREE.Vector3;
   marker: THREE.Mesh;
+  ring: THREE.Mesh;
   lod: THREE.LOD | null;
+  /** Grounded assets can be hidden behind terrain; elevated ones effectively
+   *  cannot, so they skip the occlusion probe entirely. */
+  grounded: boolean;
+}
+
+/**
+ * Cheap ridge-occlusion probe: march the camera→target segment and report
+ * whether terrain rises above it anywhere along the way. Six samples is not a
+ * depth buffer, but it reliably catches the case that actually misleads — a
+ * label for something sitting in dead ground behind a rise, drawn as if it
+ * were in front of it.
+ */
+function occludedByTerrain(cam: THREE.Vector3, target: THREE.Vector3): boolean {
+  for (let i = 1; i < OCCLUSION_SAMPLES; i++) {
+    const t = i / OCCLUSION_SAMPLES;
+    const px = cam.x + (target.x - cam.x) * t;
+    const py = cam.y + (target.y - cam.y) * t;
+    const pz = cam.z + (target.z - cam.z) * t;
+    if (terrainHeight(px, pz) > py + 0.9) return true;
+  }
+  return false;
 }
 
 export function Scene3D({ world }: { world: WorldModel }) {
@@ -88,6 +162,9 @@ export function Scene3D({ world }: { world: WorldModel }) {
   const entriesRef = useRef<Entry[]>([]);
   const selectedRef = useRef<string | null>(null);
   const hoveredRef = useRef<string | null>(null);
+  // Read by the declutter pass so a lesson's assets outrank the rest of the
+  // field for label space, without re-running the scene-building effects.
+  const focusSetRef = useRef<Set<string> | null>(null);
   const flyRef = useRef<{ from: THREE.Vector3; to: THREE.Vector3; tFrom: THREE.Vector3; tTo: THREE.Vector3; t0: number; dur: number } | null>(null);
   // Soft pan bounds, in world X — kept a ref (not read from `proj` directly)
   // because the render loop is set up once on mount and proj can change
@@ -106,8 +183,6 @@ export function Scene3D({ world }: { world: WorldModel }) {
     }
     return list.filter((n) => view.visibleSides.has(nodeSide(n)));
   }, [world.assets, world.stubs, view.showPending, view.visibleSides, view.hiddenGroups]);
-
-  const placed = useMemo(() => placeNodes(nodes, proj), [nodes, proj]);
 
   // ── one-time engine setup ─────────────────────────────────────────────
   useEffect(() => {
@@ -206,37 +281,106 @@ export function Scene3D({ world }: { world: WorldModel }) {
       const h = mount.clientHeight;
       const next: LabelState[] = [];
 
-      // Nearest-first, so when two labels collide the one in front survives.
-      const ordered = entriesRef.current
-        .map((entry) => {
-          projected.copy(entry.anchor).project(camera);
-          return { entry, sx: (projected.x * 0.5 + 0.5) * w, sy: (-projected.y * 0.5 + 0.5) * h, sz: projected.z };
-        })
-        .sort((a, b) => a.sz - b.sz);
+      // Project each marker's OWN world point. Everything that lifts the label
+      // clear of its icon happens below, in pixels, so the offset cannot vary
+      // with camera pitch the way a world-space lift does.
+      const camPos = camera.position;
+      const measured = entriesRef.current.map((entry) => {
+        projected.copy(entry.anchor).project(camera);
+        return {
+          entry,
+          sx: (projected.x * 0.5 + 0.5) * w,
+          sy: (-projected.y * 0.5 + 0.5) * h,
+          sz: projected.z,
+          dist: camPos.distanceTo(entry.anchor),
+        };
+      });
 
-      const taken: { x1: number; y1: number; x2: number; y2: number }[] = [];
-      const LW = 132;
-      const LH = 32;
+      // Priority, best first. Pinned entries are placed before anything else
+      // so they can never lose a collision to an arbitrary neighbour; a
+      // lesson's focus set outranks the rest of the field; otherwise nearest
+      // wins, which is also what reads correctly when two labels overlap.
+      const focusIds = focusSetRef.current;
+      const pinRank = (id: string): number => {
+        if (selectedRef.current === id) return 0;
+        if (hoveredRef.current === id) return 1;
+        if (focusIds && focusIds.has(id)) return 2;
+        return 3;
+      };
+      const ordered = measured.sort(
+        (a, b) => pinRank(a.entry.id) - pinRank(b.entry.id) || a.dist - b.dist,
+      );
 
-      for (const { entry, sx, sy, sz } of ordered) {
+      const grid = new LabelGrid();
+      // Budget scales with viewport area rather than being a fixed count.
+      const budget = Math.max(8, Math.round(((w * h) / 1_000_000) * LABEL_BUDGET_PER_MPX));
+      let titled = 0;
+      // Tier thresholds follow the current framing — see LABEL_FULL_DIST.
+      const orbitRadius = camPos.distanceTo(controls.target);
+      const fullDist = LABEL_FULL_DIST(orbitRadius);
+      const dotDist = LABEL_DOT_DIST(orbitRadius);
+
+      for (const { entry, sx, sy, sz, dist } of ordered) {
         const isSel = selectedRef.current === entry.id;
         const isHov = hoveredRef.current === entry.id;
+        const pinned = isSel || isHov;
         const behind = sz > 1;
-
-        // Selection and hover always keep their label; everything else yields
-        // to whatever is already occupying that patch of screen.
-        const box = { x1: sx - LW / 2, y1: sy - LH, x2: sx + LW / 2, y2: sy };
-        const collides = taken.some(
-          (t) => box.x1 < t.x2 && box.x2 > t.x1 && box.y1 < t.y2 && box.y2 > t.y1,
-        );
-        const showLabel = !behind && (isSel || isHov || !collides);
-        if (showLabel) taken.push(box);
+        // Cull against the label's own box, not the marker point, so a pin
+        // whose title would land entirely outside the viewport is never built.
+        const offscreen =
+          sx + LABEL_W / 2 < 0 ||
+          sx - LABEL_W / 2 > w ||
+          sy < -LABEL_H ||
+          sy - LABEL_LIFT_PX - LABEL_H > h;
 
         const mat = entry.marker.material as THREE.MeshStandardMaterial;
         mat.emissiveIntensity = isSel ? 2.4 : isHov ? 1.5 : 0.75;
         const s = isSel ? 1.6 : isHov ? 1.3 : 1;
         entry.marker.scale.setScalar(s);
         entry.marker.rotation.y += 0.006;
+        // Side ring tracks selection too — the persistent cue gets brighter
+        // rather than being replaced by a different one.
+        (entry.ring.material as THREE.MeshBasicMaterial).opacity = isSel
+          ? 0.95
+          : isHov
+            ? 0.7
+            : 0.42;
+
+        let tier: LabelTier;
+        if (behind || offscreen) {
+          tier = "hidden";
+        } else if (pinned) {
+          // Selection and hover are always fully titled, at any distance.
+          tier = "full";
+        } else if (dist > dotDist) {
+          tier = "hidden";
+        } else if (
+          entry.grounded &&
+          dist < dotDist &&
+          occludedByTerrain(camPos, entry.anchor)
+        ) {
+          // Behind a ridge: keep the dot as a "something is there" cue, but
+          // never the title, which would read as being in front of the rise.
+          tier = "dot";
+        } else if (dist > fullDist || titled >= budget) {
+          tier = "dot";
+        } else {
+          const y2 = sy - LABEL_LIFT_PX;
+          const box = { x1: sx - LABEL_W / 2, y1: y2 - LABEL_H, x2: sx + LABEL_W / 2, y2 };
+          tier = grid.collides(box) ? "dot" : "full";
+        }
+
+        if (tier === "full") {
+          const y2 = sy - LABEL_LIFT_PX;
+          grid.insert({ x1: sx - LABEL_W / 2, y1: y2 - LABEL_H, x2: sx + LABEL_W / 2, y2 });
+          if (!pinned) titled += 1;
+        } else if (tier === "dot") {
+          // Dots reserve their own small footprint so they don't pile into an
+          // unreadable clump at the far end of the axis.
+          grid.insert({ x1: sx - 6, y1: sy - 6, x2: sx + 6, y2: sy + 6 });
+        }
+
+        if (tier === "hidden") continue;
 
         next.push({
           ...(entry.node.kind === "asset"
@@ -250,9 +394,11 @@ export function Scene3D({ world }: { world: WorldModel }) {
           side: nodeSide(entry.node),
           domain: nodeDomain(entry.node),
           accent: DOMAIN_ACCENT[nodeDomain(entry.node)] ?? "#8b93a3",
+          sideColor: SIDE_ACCENT[nodeSide(entry.node)].base,
           x: sx,
           y: sy,
-          visible: showLabel,
+          tier,
+          fade: THREE.MathUtils.clamp(1 - (dist - fullDist) / (dotDist - fullDist), 0.3, 1),
           depth: sz,
         });
       }
@@ -363,19 +509,30 @@ export function Scene3D({ world }: { world: WorldModel }) {
     root.name = "assets";
     const entries: Entry[] = [];
 
-    for (const p of placed) {
-      const node = p.node;
+    // Breadth layout first: every asset needs to know its cohort before any of
+    // them can be positioned, so this cannot be folded into the loop below.
+    const lateral = lateralLayout(
+      nodes.map((n) => ({
+        id: n.id,
+        side: nodeSide(n),
+        km: nodeDistance(n),
+        platformDomain: nodePlatformDomain(n),
+      })),
+      proj,
+    );
+
+    for (const node of nodes) {
       const side = nodeSide(node);
       const domain = nodeDomain(node);
+      const platformDomain = nodePlatformDomain(node);
       const km = nodeDistance(node);
       const isStub = node.kind === "stub";
 
       const pos = worldPlacement({
-        id: node.id,
         side,
-        domain,
+        platformDomain,
         km,
-        subRow: p.subRow,
+        z: lateral.get(node.id) ?? 0,
         proj,
         terrainHeightAt: terrainHeight,
       });
@@ -412,7 +569,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
       // and sea assets briefly rendered as if airborne: their group origin
       // is already on the terrain surface (see worldPlacement()), so lifting
       // the marker on top of that put it floating over its own footprint.
-      const elevated = (DOMAIN_ALTITUDE[domain] ?? 0) > ELEVATED_ALTITUDE_THRESHOLD;
+      const elevated = (DOMAIN_ALTITUDE[platformDomain] ?? 0) > ELEVATED_ALTITUDE_THRESHOLD;
       const markerMat = new THREE.MeshStandardMaterial({
         color: isStub ? "#8b93a3" : accent,
         emissive: isStub ? "#8b93a3" : accent,
@@ -445,25 +602,55 @@ export function Scene3D({ world }: { world: WorldModel }) {
         g.add(tether);
       }
 
-      const pad = new THREE.Mesh(
-        new THREE.CircleGeometry(3.4, 16),
-        new THREE.MeshBasicMaterial({ color: sideColor, transparent: true, opacity: 0.16, depthWrite: false }),
+      // ── side identification ────────────────────────────────────────────
+      // A soft pad at 0.16 opacity was not a cue you could read before the
+      // label — at any real camera distance it washed out against terrain of
+      // similar value. The persistent cue is now a hard-edged ring in the side
+      // colour plus a dim fill inside it: the ring survives distance and
+      // shallow angles (it is the shape, not the tint, that carries), and the
+      // fill keeps the footprint readable when the ring is near edge-on.
+      const padY = (elevated ? groundY : 0) + 0.12;
+
+      const ring = new THREE.Mesh(
+        new THREE.RingGeometry(2.15, 2.9, 28),
+        new THREE.MeshBasicMaterial({
+          color: sideColor,
+          transparent: true,
+          opacity: 0.42,
+          depthWrite: false,
+          side: THREE.DoubleSide,
+        }),
       );
-      pad.rotation.x = -Math.PI / 2;
-      pad.position.y = (elevated ? groundY : 0) + 0.12;
-      g.add(pad);
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.y = padY + 0.02;
+      g.add(ring);
+
+      const fill = new THREE.Mesh(
+        new THREE.CircleGeometry(2.15, 20),
+        new THREE.MeshBasicMaterial({
+          color: sideColor,
+          transparent: true,
+          opacity: 0.13,
+          depthWrite: false,
+        }),
+      );
+      fill.rotation.x = -Math.PI / 2;
+      fill.position.y = padY;
+      g.add(fill);
 
       root.add(g);
       entries.push({
         id: node.id,
         node,
         group: g,
-        // Label anchor floats a fixed bit above the marker itself, whatever
-        // that marker's own height is — kept proportional so grounded labels
-        // don't hover unnecessarily high above their now-grounded marker.
-        anchor: new THREE.Vector3(pos.x, pos.y + markerY + 3, pos.z),
+        // The marker's own position — NOT a pre-lifted point. The lift that
+        // keeps a label clear of its icon is applied in screen space in the
+        // render loop, which is what stops it drifting off under camera tilt.
+        anchor: new THREE.Vector3(pos.x, pos.y + markerY, pos.z),
         marker,
+        ring,
         lod,
+        grounded: !elevated,
       });
     }
 
@@ -482,7 +669,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
       });
       entriesRef.current = [];
     };
-  }, [placed, proj, ready]);
+  }, [nodes, proj, ready]);
 
   // Selection/hover are read by the render loop from refs so that hovering a
   // node does not re-run the scene-building effects above.
@@ -492,6 +679,10 @@ export function Scene3D({ world }: { world: WorldModel }) {
   useEffect(() => {
     hoveredRef.current = view.hoveredId;
   }, [view.hoveredId]);
+  useEffect(() => {
+    const ids = view.focusRequest?.assetIds;
+    focusSetRef.current = ids && ids.length > 0 ? new Set(ids) : null;
+  }, [view.focusRequest]);
 
   /** Eases the camera to frame a set of assets. */
   const flyTo = useCallback((ids: string[]) => {
@@ -564,31 +755,45 @@ export function Scene3D({ world }: { world: WorldModel }) {
     <div className="scene3d">
       <div className="scene3d__mount" ref={mountRef} onClick={onCanvasClick} />
 
-      {/* Labels are DOM, positioned from the projected world point each frame.
-          They stay the accessible, keyboard-reachable representation of the
-          scene — the canvas is the picture, this is the interface. */}
+      {/* Labels are DOM, positioned from the projected MARKER point each frame
+          and then lifted a constant number of pixels — screen space, not world
+          space, which is what keeps a nametag locked over its own icon at any
+          camera pitch. They stay the accessible, keyboard-reachable
+          representation of the scene — the canvas is the picture, this is the
+          interface. */}
       <div className="scene3d__labels">
         {labels.map((l) => {
           const dimmed = focusSet ? !focusSet.includes(l.id) : false;
+          const isDot = l.tier === "dot";
           return (
             <button
               key={l.id}
               type="button"
               className={[
                 "pin3d",
+                `pin3d--${l.side}`,
                 l.isStub ? "pin3d--stub" : "",
                 view.selectedId === l.id ? "is-selected" : "",
                 view.hoveredId === l.id ? "is-hovered" : "",
                 dimmed ? "is-dimmed" : "",
-                l.visible ? "" : "is-collapsed",
+                isDot ? "is-collapsed" : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
               style={{
-                transform: `translate(-50%, -100%) translate(${l.x}px, ${l.y}px)`,
+                // A dot stands in for the icon, so it centres ON the marker; a
+                // titled label hangs its bottom edge a fixed lift above it,
+                // with the leader stub spanning exactly that gap.
+                transform: isDot
+                  ? `translate(-50%, -50%) translate(${l.x}px, ${l.y}px)`
+                  : `translate(-50%, -100%) translate(${l.x}px, ${l.y - LABEL_LIFT_PX}px)`,
                 ["--accent" as string]: l.accent,
+                ["--side" as string]: l.sideColor,
+                ["--lift" as string]: `${LABEL_LIFT_PX}px`,
+                ["--fade" as string]: l.fade,
                 zIndex: Math.max(1, Math.round((1 - l.depth) * 1000)),
               }}
+              title={isDot ? `${l.name} — ${l.isStub ? "pending" : `${l.km} km`}` : undefined}
               onClick={(e) => {
                 e.stopPropagation();
                 view.select(l.id);

@@ -348,3 +348,21 @@ everything else in the batch, consistent with item 22's existing scope line
 (hero tier is a deliberate subset, not automatic for every new asset). Not
 silently dropped: recorded here as the natural next 7 candidates when
 extending the hero-model tier, ahead of the item-22 list from Pass 6.
+
+### Dangling gallery image (found Pass 8, not fixed)
+`data/assets/side_a-uav-reconnaissance-tactical.json` (Leleka-100) lists
+`gallery/leleka-100-launch.jpg` in `gallery_images`. No such file exists —
+it has 404'd on every page load since Pass 6 introduced it. Surfaced by
+Pass 8's headless smoke pass, which logs failed responses.
+
+Left alone deliberately: Pass 8 was scoped to rendering only, and this is a
+content defect. Two possible fixes for whoever picks it up — drop the entry,
+or supply the image — but note the repo's standing constraint that binary
+assets are never fetched in an agent session (see "Authored geometry only" in
+CLAUDE.md and Pass 6 §2), so dropping the entry is the option available
+without a human.
+
+Worth a broader sweep at the same time: nothing currently validates that a
+`gallery_images` / `icon_image` path actually resolves, so there may be
+others. A path-existence check would fit naturally into
+`scripts/audit-content.mjs`.

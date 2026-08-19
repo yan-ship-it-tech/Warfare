@@ -609,6 +609,40 @@ code { font-family: var(--mono); font-size: 0.92em; }
 
 .node--stub .node__meta { color: var(--warn); opacity: 0.8; }
 
+/* Decluttered 2D labels. At 87 assets the packer's three sub-rows run out and
+   names start overprinting each other, so a node whose label lost the
+   collision pass keeps its icon (still the hit target, still tab-reachable,
+   still fully described by aria-label) and shows its name on hover, focus or
+   selection. Icon-only, not hidden — position still carries the reading. */
+.node.is-label-collapsed .node__label {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms;
+}
+.node.is-label-collapsed:hover .node__label,
+.node.is-label-collapsed:focus-visible .node__label,
+.node.is-label-collapsed.is-selected .node__label,
+.node.is-label-collapsed.is-hovered .node__label {
+  opacity: 1;
+  /* Lift above neighbouring icons so a revealed name is never overprinted. */
+  z-index: 40;
+}
+/* A faint tick under a collapsed node, so it reads as "named, not empty". */
+.node.is-label-collapsed::after {
+  content: "";
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  width: 10px;
+  height: 2px;
+  border-radius: 2px;
+  transform: translateX(-50%);
+  background: color-mix(in srgb, var(--side-base) 60%, transparent);
+}
+.node.is-label-collapsed:hover::after,
+.node.is-label-collapsed:focus-visible::after,
+.node.is-label-collapsed.is-selected::after { opacity: 0; }
+
 .node__tip {
   position: absolute;
   bottom: calc(100% + 10px);
@@ -1751,15 +1785,39 @@ code { font-family: var(--mono); font-size: 0.92em; }
   will-change: transform;
 }
 
+/* Leader line down to the marker. Height is driven by --lift, the SAME
+   constant the render loop offsets the label by, so the stub always lands
+   exactly on the icon instead of pointing at whatever the old world-space
+   anchor happened to project to. */
 .pin3d::after {
   content: "";
   position: absolute;
-  bottom: -6px;
+  bottom: calc(-1 * var(--lift, 6px));
   left: 50%;
   width: 1px;
-  height: 6px;
-  background: color-mix(in srgb, var(--accent) 60%, transparent);
+  height: var(--lift, 6px);
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--accent) 70%, transparent),
+    color-mix(in srgb, var(--side) 55%, transparent)
+  );
 }
+
+/* Persistent side cue on the label itself, so which side an asset belongs to
+   is readable before any text is: a colour bar down the leading edge, matching
+   the ground ring drawn under the asset in the scene. */
+.pin3d::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  width: 2.5px;
+  border-radius: 7px 0 0 7px;
+  background: var(--side);
+}
+.pin3d--side_a { border-left-color: color-mix(in srgb, var(--side) 70%, transparent); }
+.pin3d--side_b { border-left-color: color-mix(in srgb, var(--side) 70%, transparent); }
 
 /* Capped so a long name can't exceed the box the declutter pass reserved
    for it — otherwise the collision test is measuring the wrong rectangle. */
@@ -1903,16 +1961,25 @@ code { font-family: var(--mono); font-size: 0.92em; }
 .sync__msg { font-size: 10.5px; color: var(--text-3); }
 
 /* Decluttered labels collapse to a dot rather than disappearing — they stay
-   hoverable, tabbable and screen-reader reachable, which is the whole reason
-   these are DOM buttons and not sprites. */
+   hoverable, tabbable, tappable and screen-reader reachable, which is the whole
+   reason these are DOM buttons and not sprites. The dot keeps the side colour
+   as its fill and the domain colour as its rim, so even the thinned-out far
+   field still answers "whose is that?" without being read.
+
+   Reveal-on-hover is a pointer affordance only; touch has no hover, so a tap
+   selects, and a selected label is never collapsed (see the render loop's
+   pinned tier) — that is the tap-to-reveal path. */
 .pin3d.is-collapsed {
   padding: 0;
-  width: 9px;
-  height: 9px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   overflow: hidden;
-  background: color-mix(in srgb, var(--accent) 55%, rgba(8, 11, 17, 0.9));
+  border-color: color-mix(in srgb, var(--accent) 75%, transparent);
+  background: color-mix(in srgb, var(--side) 70%, rgba(8, 11, 17, 0.9));
+  opacity: var(--fade, 1);
 }
+.pin3d.is-collapsed::before { display: none; }
 .pin3d.is-collapsed .pin3d__name,
 .pin3d.is-collapsed .pin3d__km { display: none; }
 .pin3d.is-collapsed::after { display: none; }
@@ -1923,7 +1990,12 @@ code { font-family: var(--mono); font-size: 0.92em; }
   border-radius: 7px;
   padding: 3px 8px 4px;
   background: rgba(8, 11, 17, 0.92);
+  opacity: 1;
+  /* Grow upward from the dot so the revealed label doesn't cover the icon. */
+  transform-origin: 50% 100%;
 }
+.pin3d.is-collapsed:hover::before,
+.pin3d.is-collapsed:focus-visible::before { display: block; }
 .pin3d.is-collapsed:hover .pin3d__name,
 .pin3d.is-collapsed:focus-visible .pin3d__name,
 .pin3d.is-collapsed:hover .pin3d__km,

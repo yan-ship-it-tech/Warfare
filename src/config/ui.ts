@@ -81,9 +81,27 @@ export const VIEW = {
   /** Padding around the whole scene. */
   scenePadPx: { top: 96, bottom: 140, x: 120 },
   /** Minimum horizontal separation between two icons in the same lane before
-   *  the later one is bumped to a sub-row. */
-  minIconSeparationPx: 132,
+   *  the later one is bumped to a sub-row.
+   *
+   *  Was 132 — the *label* width, not the icon's. That made the packer demand
+   *  a fresh sub-row for every pair of assets within 132px, which at 87 assets
+   *  meant a dozen-plus rows crammed into a 176px lane and icons buried under
+   *  each other. Labels now have their own declutter pass (declutterLabels),
+   *  so this only has to keep the 52px glyphs apart, and sub-row demand drops
+   *  to something a lane can actually hold. */
+  minIconSeparationPx: 64,
   subRowOffsetPx: 76,
+  /** Floor on sub-row spacing. Below half an icon's height a node's centre
+   *  falls inside its neighbour's box and it stops being clickable at all —
+   *  so a very crowded lane spills past its nominal height rather than
+   *  burying nodes, which is the lesser of the two failures. */
+  minSubRowSpacingPx: 30,
+  /** Retired in Pass 8. Sub-rows are no longer capped: the cap made every
+   *  node past the third collision land on the *same* row at the same x,
+   *  which stacked icons exactly on top of each other and made the covered
+   *  one unclickable. placeNodes() now grows as many rows as a lane needs and
+   *  fits them to the lane height instead. Kept as a named tombstone so a
+   *  later pass doesn't reintroduce it as an obvious-looking safeguard. */
   maxSubRows: 3,
 };
 

@@ -3,6 +3,7 @@
   "name": "S-300 (Soviet-legacy)",
   "side": "side_b",
   "domain": "air",
+  "platform_domain": "land",
   "echelon": "operational",
   "group": "air_defense",
   "distance_km_from_zero": 46,

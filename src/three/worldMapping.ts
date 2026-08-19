@@ -27,10 +27,16 @@ import type { Projection } from "../scene/projection";
  *  comfortable camera distance rather than a number chosen for its own sake. */
 export const PX_PER_UNIT = 12;
 
-/** Altitude per domain, in world units. Ground-level domains share Y = 0 and
- *  are separated on Z instead (see STRIP_Z) — stacking logistics above land
- *  would assert a height difference that isn't real. Air and space are the
- *  only genuinely elevated tiers, plus EW's mast-height emitters. */
+/** Altitude per PLATFORM domain, in world units — i.e. keyed by where the
+ *  hardware physically sits, never by what it shoots at. Feeding this the
+ *  engagement domain is what left every SAM battery hovering; see
+ *  src/data/placement.ts. Ground-level platforms share Y = 0 and are separated
+ *  on Z instead — stacking logistics above land would assert a height
+ *  difference that isn't real.
+ *
+ *  cyber_ew and c2_comms keep a nonzero altitude for the genuinely airborne or
+ *  orbital members of those domains; every ground-mounted jammer and command
+ *  post in the dataset now resolves to a `land` platform and sits at grade. */
 export const DOMAIN_ALTITUDE: Record<Domain, number> = {
   space: 96,
   air: 32,
@@ -42,7 +48,12 @@ export const DOMAIN_ALTITUDE: Record<Domain, number> = {
   sea: -1.4,
 };
 
-/** Lateral lane per domain across the strip, in world units. */
+/** Ordering of platform domains across the strip's breadth. Pass 8 demoted
+ *  this from an absolute Z position to a sort key: assets are now spread
+ *  across the full breadth by band cohort (see lateralLayout), and this only
+ *  decides which end of that breadth a given domain tends toward — so sea
+ *  still gathers to one side and logistics to the other without every land
+ *  asset being pinned to a single crowded line down the middle. */
 export const STRIP_Z: Record<Domain, number> = {
   land: 0,
   air: 2,
@@ -75,29 +86,157 @@ export interface WorldPlacement {
   z: number;
 }
 
-/**
- * Places one asset in the 3D world. `subRow` comes from the same
- * collision-packing the 2D view already does (placeNodes), so two assets at
- * the same distance separate here exactly as they separate there — just on
- * Z instead of on a sub-row offset in Y.
- */
-export function worldPlacement(opts: {
+/** Fraction of the strip's half-breadth the spread is allowed to use. Short of
+ *  1 so the outermost asset still has terrain beyond it rather than sitting on
+ *  the strip's cut edge. */
+const SPREAD_FILL = 0.86;
+
+/** Jitter as a fraction of the cohort's own slot pitch. Fixed-magnitude jitter
+ *  was the first version and it was wrong: ±2.5 units against a pitch of ~5.4
+ *  can close a neighbouring pair to almost nothing. Scaling it to the pitch
+ *  means two neighbours always keep at least (1 − 2·JITTER_FRACTION) of their
+ *  slot, whatever the cohort size. */
+const JITTER_FRACTION = 0.15;
+
+/** Minimum ground-plane separation between any two same-side assets, world
+ *  units — a bit over the marker/ring footprint so rings don't overlap. */
+const MIN_SEPARATION = 4.6;
+const RELAX_ITERATIONS = 6;
+
+/** One asset's input to the lateral layout. */
+export interface LateralItem {
   id: string;
   side: Side;
-  domain: Domain;
   km: number;
-  subRow: number;
+  platformDomain: Domain;
+}
+
+/**
+ * Lays every asset out across the strip's full breadth, by band cohort.
+ *
+ * The old rule was `STRIP_Z[domain] + subRow * 8.5 + jitter`, which had two
+ * compounding problems at 87 assets: the domain lanes it keyed off are only
+ * ~2 units apart for the common cases (land 0, air 2), and `subRow` came from
+ * the 2D packer, which caps at VIEW.maxSubRows = 3. So the 42 land assets were
+ * competing for a band of Z barely 30 units wide inside a strip 124 wide, and
+ * everything piled up down the middle with the edges left empty.
+ *
+ * Now: assets sharing a (side, band) cohort are distributed evenly across the
+ * breadth. Sorting by platform domain keeps sea at one end and logistics at
+ * the other — the domain read survives — while sorting by km *within* a domain
+ * means the assets most likely to collide in X are the ones pushed furthest
+ * apart in Z, which is precisely the separation that was wanted.
+ *
+ * Deterministic: same cohort in, same layout out, no dependence on render
+ * order or on how many frames have gone by.
+ */
+export function lateralLayout(items: LateralItem[], proj: Projection): Map<string, number> {
+  const half = STRIP_HALF_Z * SPREAD_FILL;
+  const bandIndexFor = (km: number): number => {
+    const i = proj.spans.findIndex((s) => km <= s.band.max_km);
+    return i === -1 ? proj.spans.length : i;
+  };
+
+  const cohorts = new Map<string, LateralItem[]>();
+  for (const item of items) {
+    const key = `${item.side}:${bandIndexFor(item.km)}`;
+    const list = cohorts.get(key);
+    if (list) list.push(item);
+    else cohorts.set(key, [item]);
+  }
+
+  const out = new Map<string, number>();
+  for (const cohort of cohorts.values()) {
+    const sorted = [...cohort].sort(
+      (a, b) =>
+        (STRIP_Z[a.platformDomain] ?? 0) - (STRIP_Z[b.platformDomain] ?? 0) ||
+        a.km - b.km ||
+        a.id.localeCompare(b.id),
+    );
+    const n = sorted.length;
+    const pitch = n > 1 ? (2 * half) / (n - 1) : 0;
+    sorted.forEach((item, i) => {
+      // n === 1 lands at 0 rather than at an arbitrary edge.
+      const t = n === 1 ? 0.5 : i / (n - 1);
+      // Deterministic jitter, scaled to the pitch so it can never close a gap.
+      const jitter = (hashId(item.id) - 0.5) * pitch * 2 * JITTER_FRACTION;
+      out.set(item.id, (t - 0.5) * 2 * half + jitter);
+    });
+  }
+
+  // ── cross-cohort relaxation ────────────────────────────────────────────
+  // Spreading each cohort independently guarantees separation *within* a band
+  // and says nothing across bands: two assets either side of a band boundary
+  // sit only a couple of world units apart in X and draw their Z from
+  // unrelated layouts, so they could still land on top of each other. A few
+  // iterations of pairwise push-apart fix that directly rather than leaving it
+  // to luck.
+  //
+  // Only Z moves. X encodes the asset's actual distance from the zero line and
+  // is the one number this whole view promises is true — the ruler, the 2D
+  // schematic and the detail panel all have to agree with it, so it is never
+  // nudged for layout's sake.
+  const all = items.map((item) => ({
+    item,
+    x: (proj.xFor(item.side, item.km, 0) - proj.centerXPx) / PX_PER_UNIT,
+    z: out.get(item.id) ?? 0,
+  }));
+  all.sort((a, b) => a.x - b.x || a.item.id.localeCompare(b.item.id));
+
+  for (let pass = 0; pass < RELAX_ITERATIONS; pass++) {
+    let moved = false;
+    for (let i = 0; i < all.length; i++) {
+      for (let j = i + 1; j < all.length; j++) {
+        const a = all[i];
+        const b = all[j];
+        // Sorted by x, so once the x gap alone exceeds the threshold every
+        // later j is further still — nothing more to check for this i.
+        if (b.x - a.x >= MIN_SEPARATION) break;
+        if (a.item.side !== b.item.side) continue;
+        const dx = b.x - a.x;
+        const dz = b.z - a.z;
+        const dist = Math.hypot(dx, dz);
+        if (dist >= MIN_SEPARATION) continue;
+        // How far apart they still need to get, along Z only.
+        const needZ = Math.sqrt(Math.max(0, MIN_SEPARATION * MIN_SEPARATION - dx * dx));
+        const push = (needZ - Math.abs(dz)) / 2;
+        if (push <= 0) continue;
+        const dir = dz === 0 ? (hashId(a.item.id) < hashId(b.item.id) ? -1 : 1) : Math.sign(dz);
+        a.z = THREE_CLAMP(a.z - dir * push, -STRIP_HALF_Z, STRIP_HALF_Z);
+        b.z = THREE_CLAMP(b.z + dir * push, -STRIP_HALF_Z, STRIP_HALF_Z);
+        moved = true;
+      }
+    }
+    if (!moved) break;
+  }
+
+  for (const entry of all) out.set(entry.item.id, entry.z);
+  return out;
+}
+
+/** Local clamp — this module stays free of a three.js import so it can be
+ *  exercised by a plain node harness. */
+function THREE_CLAMP(v: number, lo: number, hi: number): number {
+  return v < lo ? lo : v > hi ? hi : v;
+}
+
+/**
+ * Places one asset in the 3D world. `z` comes from lateralLayout() above;
+ * `platformDomain` — not the engagement domain — decides the altitude.
+ */
+export function worldPlacement(opts: {
+  side: Side;
+  platformDomain: Domain;
+  km: number;
+  z: number;
   proj: Projection;
   terrainHeightAt?: (x: number, z: number) => number;
 }): WorldPlacement {
-  const { id, side, domain, km, subRow, proj } = opts;
+  const { side, platformDomain, km, z, proj } = opts;
 
   const x = (proj.xFor(side, km, 0) - proj.centerXPx) / PX_PER_UNIT;
 
-  const jitter = (hashId(id) - 0.5) * 7;
-  const z = STRIP_Z[domain] + subRow * 8.5 + jitter;
-
-  const altitude = DOMAIN_ALTITUDE[domain] ?? 0;
+  const altitude = DOMAIN_ALTITUDE[platformDomain] ?? 0;
   // Ground-bound assets ride the terrain surface; airborne ones are measured
   // from mean ground so they don't bob with the hills underneath them.
   const ground = altitude <= 4 && opts.terrainHeightAt ? opts.terrainHeightAt(x, z) : 0;

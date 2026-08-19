@@ -1031,3 +1031,275 @@ next-candidates for item 22, not a silently dropped ask.
    key-facts bugs in §4 before they shipped. Worth naming as a general
    lesson: the instruction generalizes to "verify what a script produced,"
    not just "verify what a spreadsheet claimed."
+
+---
+
+# Pass 8 — rendering foundation: the domain conflation, declutter, spread, side cue, screen-space labels
+
+Scope was explicitly rendering-only: no terrain, no water, no new pages, no
+asset library. Five items, all five landed. The first one turned out to be
+the root cause of a bug Pass 7 believed it had already fixed, and the same
+mis-keyed field was quietly wrong in the 2D view too.
+
+## 1. Engagement domain vs. platform domain — the conflation, confirmed
+
+**The hypothesis in the brief was right, and understated the blast radius.**
+
+`Asset.domain` was doing two incompatible jobs. As a *teaching taxonomy* it
+answers "which domain does this thing fight in?", and by that measure every
+SAM battery in the dataset is correctly `air` — a Patriot is an air-domain
+weapon. But both renderers were also using it as a *physical* fact to derive
+an altitude from, and by that measure it is simply false: the launcher is a
+trailer on the ground.
+
+Pass 7 gated the elevated-marker tether on `DOMAIN_ALTITUDE[domain] > 2`
+(§Pass 7.1). That was the right *shape* of fix and it is why tanks and ships
+stopped floating — their engagement domain happens to coincide with their
+platform. It could never have reached anything where the two differ, which
+is exactly the set that was still floating.
+
+Audited the whole roster, not just the air-defence category as asked.
+**16 of 87 assets** were mis-placed:
+
+| Engagement domain | Platform | n | Assets |
+|---|---|---|---|
+| `air` | `land` | 11 | Patriot, NASAMS, IRIS-T SLM, Gepard SPAAG, FIM-92 Stinger, S-300 / Buk-M1, S-300, S-400, Buk-M3, Pantsir-S1, Tor-M2 |
+| `c2_comms` | `land` | 3 | Starlink Terminal, Integrated Air Defense C2 Network, Strelets Reconnaissance-Fire Terminal |
+| `cyber_ew` | `land` | 2 | Bukovel-AD, R-330Zh Zhitel |
+
+The C2 and EW rows are worth calling out, because Pass 7 explicitly declined
+to re-ground them: its "EW/C2 sit on a mast, not the ground" reasoning was
+recorded as a deliberate deviation to *preserve*. With the platform/engagement
+split available, that call can be read properly. The design intent was never
+wrong — an airborne relay or an orbital node genuinely belongs above the deck
+— but the two EW systems and three C2 nodes actually in the dataset are a
+truck, a truck, a ground terminal, a command post and a soldier-carried
+terminal. `DOMAIN_ALTITUDE` keeps its `cyber_ew: 11` / `c2_comms: 4` tiers for
+the airborne members of those domains that a later pass may add; the ground
+members now resolve to a `land` platform and sit at grade. **Pass 7's intent is
+kept; only its proxy for "is this thing off the ground" is replaced.**
+
+**The fix — split the field, don't redefine it.** `Asset.platform_domain?:
+Domain` is new and optional. `domain` is untouched and still drives lanes,
+legend colour and the show/hide filters, so nothing about the taxonomy or the
+UI's grouping moves.
+
+Resolution order (`src/data/placement.ts`, `resolvePlatformDomain`):
+
+1. explicit `platform_domain` if set;
+2. else inferred from `category` by prefix (`air-defense-`, `cuas-`, `ew-`,
+   `c2-`, `satcom-` → `land`; `uav-` → `air`; `naval-` → `sea`; `space-` →
+   `space`);
+3. else fall back to `domain`.
+
+Both belt and braces on purpose. The 16 affected assets carry the field
+explicitly in their JSON, so the dataset is self-describing and an editor can
+override it. The category inference exists so that a *new* asset file that
+omits it — including anything built in the in-app Asset Editor — still places
+correctly instead of silently floating, which is the failure this whole
+module exists to prevent. Prefix matching rather than exact, so a later
+`air-defense-very-long-range` inherits the right answer for free.
+
+`validateAsset()` gained an `info` issue when an asset has no
+`platform_domain` and the inference disagrees with its `domain` — the
+conflation stays visible in Data Health rather than only in code. Warning-
+level at most, never an error, per the repo's degrade-don't-break rule.
+
+**The 2D view had the identical bug.** `AssetNode.tsx` keyed its
+`DOMAIN_ALTITUDE_PX` pop (and ground tether) off the same field, so every
+Patriot and jammer floated 20px above its own shadow in the schematic view
+too. Fixed through the same resolver. The two views could not have been left
+disagreeing about whether a thing is on the ground.
+
+## 2. Label declutter that survives the roster growing
+
+Both renderers had a non-answer to the same problem.
+
+The 3D view compared each candidate label against **every** label already
+placed — a quadratic scan, fine at 20 assets. The 2D view had no label
+declutter at all: it relied on `placeNodes()` bumping collisions into at most
+`VIEW.maxSubRows = 3` sub-rows, and simply overprinted once that ran out.
+Measured on the pre-change build: **81 overlapping label pairs** in the 2D
+view.
+
+Shipped:
+
+- **One shared collision index** (`src/scene/labelGrid.ts`), a uniform hash
+  grid used by both views. Each test is now proportional to local crowding
+  rather than to total asset count.
+- **3D: three tiers by camera distance** — titled, dot, not drawn — with a
+  titled-label budget that scales with viewport area
+  (`LABEL_BUDGET_PER_MPX`), and priority ordering so selection, hover and a
+  lesson's focus set can never lose a collision to an arbitrary neighbour.
+  Dots reserve their own small footprint so the far field can't clump.
+- **Tiers are relative to the orbit radius, not absolute.** First
+  implementation used fixed world-unit thresholds and broke at the end of the
+  zoom range: with a 700-unit cutoff against `OrbitControls.maxDistance = 900`,
+  pulling all the way back put every asset past the cutoff and the scene lost
+  its labels entirely instead of thinning. Scaling with the current framing
+  means "far" always means far *for this shot*.
+- **2D: a layout-time pass** (`declutterLabels`). Zoom is deliberately not an
+  input — the 2D scene is a single CSS `scale()`, so relative overlap is
+  zoom-invariant and this is computed once in scene units. That is the
+  opposite of the 3D case, where perspective means the same two assets can be
+  far apart in one frame and stacked in the next.
+- **Tap-to-reveal.** A decluttered label collapses to a dot (3D) or icon-only
+  (2D) rather than vanishing: still a real `<button>`, still tabbable, still
+  fully described by `aria-label`. Hover reveals on pointer devices; touch has
+  no hover, so a tap selects, and a selected label is never collapsed.
+
+Measured after: **0 overlapping label pairs** in both views, at default
+framing, tilted to the horizon, and zoomed out.
+
+## 3. Spread — and a hit-target bug the spread work exposed
+
+**3D.** The old rule was `STRIP_Z[domain] + subRow * 8.5 + jitter`. Two
+compounding problems: the domain lanes it keyed off are ~2 units apart for the
+common cases (`land: 0`, `air: 2`), and `subRow` came from the 2D packer,
+capped at 3. So 42 land assets competed for a Z band barely 30 units wide
+inside a strip 124 wide, and the edges sat empty.
+
+`lateralLayout()` now distributes each `(side, band)` cohort across the full
+breadth. Sorting by platform domain keeps sea at one end and logistics at the
+other; sorting by km *within* a domain means the assets most likely to collide
+in X are pushed furthest apart in Z. Jitter is a fraction of the cohort's own
+slot pitch rather than a fixed magnitude — the first version used ±2.5 units
+against a ~5.4-unit pitch and could close a neighbouring pair to almost
+nothing.
+
+Per-cohort spreading says nothing about assets *across* a band boundary, which
+sit a couple of units apart in X and drew Z from unrelated layouts. A short
+relaxation pass fixes that directly rather than leaving it to luck. **It moves
+Z only.** X encodes the asset's real distance from the zero line and is the one
+number this view promises is true — the ruler, the schematic and the detail
+panel all have to agree with it. That guarantee is the same one
+`VIEW.laneObliqueOffsetPx` was reverted to zero to protect in Pass 5, and it is
+not spent on layout convenience.
+
+Measured: closest same-side pair went from 1.39 world units (overlapping) to
+3.60; every band cohort now spans >100 units of a 124-unit strip.
+
+**2D, and this is the part that wasn't asked for.** Verifying the 2D declutter
+surfaced a genuine defect: `placeNodes()` clamped overflow with
+`if (subRow >= maxSubRows) subRow = maxSubRows - 1`, so every node past the
+third collision landed on the *same* row at the *same* x — stacked exactly on
+top of another node and covering its hit target completely. Gepard SPAAG was
+literally unclickable behind Switchblade 600; **30 of 89 nodes had a buried
+centre** on the pre-change build. Three changes:
+
+- Sub-rows are no longer capped; the row count grows to demand and pass 2 fits
+  the rows to the lane height. `VIEW.maxSubRows` is kept as a commented
+  tombstone so a later pass doesn't reintroduce it as an obvious-looking
+  safeguard.
+- `VIEW.minIconSeparationPx` dropped 132 → 64. It was set to the *label*
+  width, so the packer demanded a fresh sub-row for every pair within 132px
+  and produced a dozen-plus rows crammed into a 176px lane. Labels have their
+  own declutter now; this only has to keep the 52px glyphs apart.
+- Sub-row spacing is floored at `minSubRowSpacingPx` **plus the lane's altitude
+  spread**. The render-time pop varies within a lane — the air lane holds both
+  airborne UAVs and ground-based SAMs, which is precisely what §1 made
+  possible — so a bare 30px row gap was being eaten by a 20px pop and dropping
+  an elevated node onto the grounded one below it. This was the last 8 buried
+  nodes.
+
+Measured after: **0 buried icons**, densest lane spans 150px inside its 176px
+lane, so nothing spills.
+
+## 4. Side identification
+
+The persistent cue was a filled pad at `opacity: 0.16`, which at any real
+camera distance washed out against terrain of similar value — not something
+you could read before the label. Replaced with a hard-edged ring in the side
+colour plus a dim fill: the ring survives distance and shallow angles because
+it is the *shape* carrying the signal, not the tint, and the fill keeps the
+footprint readable when the ring is near edge-on. The ring brightens on hover
+and selection rather than being replaced, so the cue is continuous.
+
+Carried onto the DOM labels too — a side-colour bar down the leading edge of
+every pin, and the collapsed dot takes the side colour as its fill with the
+domain colour as its rim. So even a fully thinned-out far field still answers
+"whose is that?" without being read.
+
+Ring radius was set to 2.9/2.15 units rather than the 4.0 first tried: at the
+densest cohort's ~5.4-unit pitch, r=4 rings overlapped their neighbours.
+
+## 5. Floating nametags in tilted views
+
+Root cause: the label anchor was a **world** point, `pos.y + markerY + 3`.
+Projecting a point 3 units above the marker and drawing the label there means
+the on-screen gap between icon and label is whatever perspective makes it —
+it collapses toward zero as the camera tilts toward the horizon and grows
+without bound as it looks down. The CSS leader was a fixed 6px stub, so at
+most camera angles it pointed at empty ground rather than at the icon.
+
+Fix: the anchor is now the **marker's own** world position, and the entire
+lift is applied in screen space as a constant `LABEL_LIFT_PX = 28`. The leader
+line's height is driven by the same constant via a CSS custom property, so
+the stub always lands exactly on the icon by construction rather than by
+tuning. A dot centres *on* the marker; a titled label hangs its bottom edge
+one lift above it.
+
+Also added, as the brief asked:
+
+- **Occlusion.** A cheap ridge probe marches the camera→marker segment against
+  `terrainHeight()`. Six samples is not a depth buffer, but it catches the case
+  that actually misleads — an asset in dead ground behind a rise, labelled as
+  if it were in front of it. Such a label degrades to a dot rather than
+  disappearing; only grounded assets are probed, since elevated ones can't be
+  hidden by terrain.
+- **Fade by distance**, applied to dots so the far field recedes.
+- **Off-screen culling** against the label's own box rather than the marker
+  point, so a pin whose title would land entirely outside the viewport is
+  never built.
+
+## Verification
+
+No test suite exists, so this pass used two harnesses, per the pattern the
+repo already relies on:
+
+1. A **node harness over the real modules and the real asset JSON** — no
+   reimplementation of the logic under test — asserting: every ground-based
+   system resolves to a non-elevated platform; UAVs and satellites stay
+   elevated; every grounded asset's Y sits on the terrain surface; cohorts
+   span the strip; no two same-side assets are closer than 2.5 world units.
+2. A **headless Playwright pass** (Chromium + swiftshader) measuring label
+   overlaps, buried hit targets, tier counts and reveal-on-hover across
+   default, tilted, zoomed-out and zoomed-in framings, in both views, with a
+   before/after comparison against a `git worktree` build of HEAD.
+
+Two things the harness got wrong before the app did, recorded so the next
+session doesn't re-chase them:
+
+- **`page.mouse.wheel` with a negative delta is not delivered** under this
+  headless config, which made zoom-in look permanently broken in both the new
+  build *and* HEAD. Dispatching real `WheelEvent`s at the canvas works
+  correctly in both directions. There was no zoom bug.
+- **A stale `vite preview` on the comparison port** silently served the new
+  bundle as if it were HEAD, producing a "before" measurement identical to the
+  "after". Always confirm the served bundle hash when diffing builds.
+
+## Where the brief and prior passes disagreed
+
+1. **"Split the field or gate the tether check on the correct one"** — did
+   both, and neither exactly as a minimal reading would. Added
+   `platform_domain` *and* a category-prefix inference, because writing the
+   field into 16 files fixes today's roster while only the inference protects
+   the next asset someone adds through the editor.
+2. **Pass 7's EW/C2 "mast height" deviation is partly reversed.** It was
+   recorded as a deliberate call to preserve, and §1 explains why the reversal
+   keeps its intent rather than discarding it — the tiers remain in
+   `DOMAIN_ALTITUDE`; only the five ground-mounted assets stop using them.
+   Flagged rather than done quietly, since the earlier pass argued for it
+   explicitly.
+3. **Item 2 was not scoped to a view, so it was done for both.** The 2D view
+   is where the label overlap was actually worst (81 pairs), and fixing only
+   the 3D view would have left the schematic view unreadable at 87 assets.
+4. **Two 2D fixes were not asked for**: uncapping sub-rows and retuning
+   `minIconSeparationPx`. Both were required to make item 2's 2D half
+   meaningful — decluttering labels on nodes whose icons are stacked on top of
+   each other fixes nothing — and both fixed a real "this node cannot be
+   clicked" defect. Called out here rather than folded in silently.
+5. **Not fixed, deliberately:** `data/assets/side_a-uav-reconnaissance-
+   tactical.json` references `gallery/leleka-100-launch.jpg`, which does not
+   exist and 404s. Dangling since Pass 6. It is a content defect, and this
+   pass was scoped to rendering. Logged in BACKLOG.md instead.

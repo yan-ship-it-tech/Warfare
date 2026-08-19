@@ -13,6 +13,7 @@ import type { PlacedNode } from "./projection";
 import { resolveIcon } from "../icons/registry";
 import { resolveVignette } from "./vignettes";
 import { DOMAIN_ACCENT, DOMAIN_ALTITUDE_PX, SIDE_ACCENT, SIDE_DIRECTION } from "../config/ui";
+import { resolvePlatformDomain } from "../data/placement";
 import { resolveAssetDisplay } from "../data/catalog";
 import { useOverrides } from "../state/overridesState";
 
@@ -24,6 +25,9 @@ interface Props {
   faded: boolean;
   /** Bumped to replay the vignette without re-selecting. */
   replayNonce: number;
+  /** This node's label lost the declutter pass, so it renders icon-only and
+   *  reveals its name on hover, focus or selection. */
+  labelCollapsed: boolean;
   onSelect: (id: string) => void;
   onHover: (id: string | null) => void;
 }
@@ -34,6 +38,7 @@ export function AssetNode({
   hovered,
   faded,
   replayNonce,
+  labelCollapsed,
   onSelect,
   onHover,
 }: Props) {
@@ -50,7 +55,14 @@ export function AssetNode({
 
   const group = isStub ? undefined : node.asset.group;
   const Icon = resolveIcon({ group, category, id: node.id, domain });
-  const altitude = DOMAIN_ALTITUDE_PX[domain] ?? 0;
+  // Altitude keys off the PLATFORM domain, not the engagement domain — the 3D
+  // view had exactly this bug and the two views must not disagree about
+  // whether a thing is off the ground. A Patriot is an `air` asset that sits
+  // on `land`; it gets no pop and no tether. See src/data/placement.ts.
+  const platformDomain = isStub
+    ? resolvePlatformDomain({ domain })
+    : resolvePlatformDomain(node.asset);
+  const altitude = DOMAIN_ALTITUDE_PX[platformDomain] ?? 0;
   const [playing, setPlaying] = useState(false);
 
   const { vignette } = resolveVignette(
@@ -75,6 +87,7 @@ export function AssetNode({
     selected ? "is-selected" : "",
     hovered ? "is-hovered" : "",
     faded ? "is-faded" : "",
+    labelCollapsed ? "is-label-collapsed" : "",
   ]
     .filter(Boolean)
     .join(" ");
