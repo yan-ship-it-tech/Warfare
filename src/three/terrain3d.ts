@@ -74,27 +74,81 @@ export function damageIntensity(x: number): number {
   return DESTRUCTION_V[DESTRUCTION_V.length - 1];
 }
 
-// ── coastal basin (Black Sea, side_b deep rear only) ────────────────────
-// Same fixed-world-X convention as the destruction gradient above. Chosen so
-// the existing side_b-strategic-target-power-plant asset (250 km, x≈122)
-// stays dry with a margin, and the new Black Sea Fleet vessels this pass
-// adds (440/480 km, x≈139/142) sit in full-depth water — see
-// docs/DECISIONS.md Pass 10 for the worked numbers.
+// ── coastal basin (Black Sea, both sides' deep rear, wrapping toward the
+//    front at one lateral flank) ─────────────────────────────────────────
+// Pass 10 shipped this as x > 126 only — side_b's deep rear exclusively, a
+// fixed rectangle glued to the far edge with no connection to the front.
+// Two things wrong with that, both from the brief: (a) "both sides have
+// Black Sea access" — the data already agrees (side_a fields three coastal
+// USV/drone assets, MANTAS T-12/Sonobot-5/Magura V5, all `domain: "sea"`),
+// but side_a had no water to put them on; (b) a coastline that only exists
+// deep in the rear reads as disconnected from "operationally relevant,"
+// which is specifically about the front having a coastal flank.
+//
+// Both fixed here, without touching a single existing asset's placement:
+//  1. SYMMETRIC — depends on |x|, not x, so side_a's deep rear gets the same
+//     basin side_b's already had. `COAST_X0`/`COAST_X1` are unchanged, so
+//     every asset Pass 10 sited against them (side_b's power-plant strategic
+//     target at x≈122 staying dry, the Black Sea Fleet vessels at x≈139/142
+//     sitting in full-depth water) is untouched; side_a's mirror-image
+//     equivalents land the same way.
+//  2. AN INLET — the shoreline threshold is no longer a constant in x; it
+//     dips from the baseline 126 down to `COAST_NEAR_X` (105) in a Gaussian
+//     band centred on `COAST_INLET_Z`, so at that one lateral flank the
+//     coast reaches meaningfully closer to the line — genuinely "wraps
+//     toward the front" rather than sitting only at the far end.
+//
+//     105, not something closer to the line: chosen with a margin past
+//     every currently-placed asset this checked against — side_a's own
+//     near-shore drones (worldX ≈85–104), the Forward Distribution Hub
+//     (worldX≈91.5) and the Integrated Air Defense C2 Network (worldX≈85)
+//     all sit BELOW 105, so none of them end up standing in a depression
+//     regardless of where lateralLayout's hash-spread happens to put their
+//     Z. Pulling the inlet in far enough to actually reach those specific
+//     assets — genuinely giving the sea-domain trio real water — would need
+//     to know their Z ahead of a build that runs before they're placed, or
+//     move their `distance_km_from_zero`, which is a data/placement change
+//     this pass didn't make (that's Pass 15's "review every asset's
+//     distance-from-front for doctrinal plausibility," not a terrain pass).
+//     Flagged, not silently left, in docs/BACKLOG.md.
+//
+// `COAST_INLET_Z` is picked clear of every LANDMARKS entry that falls in the
+// affected x-range on either side (scenery.ts) — see docs/DECISIONS.md
+// Pass 14 for the checked list. Z carries no distance claim (file header,
+// worldMapping.ts), so unlike the x-thresholds this is stylistic placement,
+// not a number derived from anything real.
 export const COAST_X0 = 126;
 export const COAST_X1 = 140;
 export const COAST_DEPTH = 9;
 export const WATER_LEVEL_Y = -2.4;
+export const COAST_NEAR_X = 105;
+export const COAST_INLET_Z = 50;
+export const COAST_INLET_SIGMA = 9;
+
+/** How close the shoreline's start-of-depression threshold sits to the
+ *  front at a given z — COAST_X0 away from the inlet, sweeping down to
+ *  COAST_NEAR_X at its centre. Exported so buildWater() can shape the
+ *  visible water mesh to the exact same curve; if the two ever drifted apart
+ *  the glossy water surface would stop lining up with the tinted, depressed
+ *  ground under it. */
+export function coastThresholdAt(z: number): number {
+  const pull = Math.exp(-Math.pow((z - COAST_INLET_Z) / COAST_INLET_SIGMA, 2));
+  return COAST_X0 - (COAST_X0 - COAST_NEAR_X) * pull;
+}
 
 /** How far below the undepressed terrain height (x, z) sits, 0 on dry land,
- *  ramping smoothly to COAST_DEPTH once past the (wobbled) shoreline. */
+ *  ramping smoothly to COAST_DEPTH once past the (wobbled) shoreline.
+ *  Symmetric in x — see file header. */
 function coastalDepression(x: number, z: number): number {
-  if (x <= COAST_X0 - 20) return 0;
+  const ax = Math.abs(x);
+  const threshold = coastThresholdAt(z);
+  if (ax <= threshold - 20) return 0;
   // A low-frequency wobble so the shoreline isn't a razor-straight cliff.
   const wobble = (valueNoise(z * 0.045, 3.5, 41) - 0.5) * 9;
-  const start = COAST_X0 + wobble;
-  const end = COAST_X1 + wobble;
-  if (x <= start) return 0;
-  const t = smooth(THREE.MathUtils.clamp((x - start) / (end - start), 0, 1));
+  const start = threshold + wobble;
+  const end = start + (COAST_X1 - COAST_X0);
+  if (ax <= start) return 0;
+  const t = smooth(THREE.MathUtils.clamp((ax - start) / (end - start), 0, 1));
   return t * COAST_DEPTH;
 }
 
@@ -240,24 +294,37 @@ const WATER_MAT = new THREE.MeshStandardMaterial({
   opacity: 0.88,
 });
 
-export function buildWater(halfWidthX: number): THREE.Mesh | null {
-  const nearX = COAST_X0 + 16; // inland of the shoreline wobble — always wet
-  const farX = Math.max(nearX + 10, halfWidthX + 10);
-  const width = farX - nearX;
-  const geo = new THREE.PlaneGeometry(width, STRIP_HALF_Z * 2 + 20, Math.max(8, Math.round(width / 4)), 24);
+/** One side's water surface. The near edge follows `coastThresholdAt(z)` —
+ *  the SAME curve `coastalDepression()` carves into the terrain — row by
+ *  row, rather than being a fixed-width rectangle: PlaneGeometry generates
+ *  vertices at a normalised local x in [-0.5, 0.5] per row, and each row's
+ *  local x is remapped through that row's own near/far span. Built from a
+ *  unit-width PlaneGeometry for exactly that reason — a per-row width only
+ *  has meaning once every row starts from the same [-0.5, 0.5] parameter
+ *  range. Keeping this in lockstep with the depression is what stops the
+ *  glossy water mesh sitting somewhere other than the tinted, carved ground
+ *  under it once the shoreline stopped being a constant. */
+function buildWaterSide(sign: 1 | -1, halfWidthX: number): THREE.Mesh {
+  const farX = Math.max(COAST_X0 + 16 + 10, halfWidthX + 10);
+  const rows = 40;
+  const cols = Math.max(8, Math.round((farX - (COAST_NEAR_X + 16)) / 4));
+  const zSpan = STRIP_HALF_Z * 2 + 20;
+  const geo = new THREE.PlaneGeometry(1, zSpan, cols, rows);
   geo.rotateX(-Math.PI / 2);
 
   const pos = geo.attributes.position as THREE.BufferAttribute;
   const colors = new Float32Array(pos.count * 3);
   const c = new THREE.Color();
   for (let i = 0; i < pos.count; i++) {
-    const localX = pos.getX(i);
-    const t = THREE.MathUtils.clamp((localX + width / 2) / width, 0, 1);
-    c.copy(COLOR_WATER_SHALLOW).lerp(COLOR_WATER_DEEP, t);
+    const z = pos.getZ(i);
+    const nearX = coastThresholdAt(z) + 16; // inland of the wobble — always wet
+    const width = Math.max(1, farX - nearX);
+    const t = pos.getX(i) + 0.5; // 0 at the shore, 1 at the far edge
+    c.copy(COLOR_WATER_SHALLOW).lerp(COLOR_WATER_DEEP, THREE.MathUtils.clamp(t, 0, 1));
     colors[i * 3] = c.r;
     colors[i * 3 + 1] = c.g;
     colors[i * 3 + 2] = c.b;
-    pos.setX(i, localX + nearX + width / 2);
+    pos.setX(i, sign * (nearX + t * width));
   }
   geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
   geo.computeVertexNormals();
@@ -266,6 +333,16 @@ export function buildWater(halfWidthX: number): THREE.Mesh | null {
   mat.vertexColors = true;
   const mesh = new THREE.Mesh(geo, mat);
   mesh.position.set(0, WATER_LEVEL_Y, 0);
-  mesh.name = "water";
+  mesh.name = `water:${sign > 0 ? "side_b" : "side_a"}`;
   return mesh;
+}
+
+/** Both sides' Black Sea access — see the coastal-basin header above for why
+ *  this is now two mirrored meshes instead of one. */
+export function buildWater(halfWidthX: number): THREE.Group | null {
+  const g = new THREE.Group();
+  g.name = "water";
+  g.add(buildWaterSide(1, halfWidthX));
+  g.add(buildWaterSide(-1, halfWidthX));
+  return g;
 }

@@ -41,6 +41,7 @@ import { buildHeroModel, hasHeroModel } from "./models";
 import { installPerfHud, markReactCommit, type PerfHud } from "./perfHud";
 import { mergeStaticGroup } from "./mergeStatic";
 import { buildRulerModel, type RulerModel } from "./ruler3d";
+import { buildOsmInset, disposeOsmInset, OSM_ATTRIBUTION } from "./osmTerrain";
 import {
   worldPlacement,
   lateralLayout,
@@ -944,9 +945,24 @@ export function Scene3D({ world }: { world: WorldModel }) {
     // handful of batches; the picture is identical, the per-draw overhead is
     // not. See src/three/mergeStatic.ts and docs/DECISIONS.md Pass 13.
     mergeStaticGroup(scenery);
+    // The real Pokrovsk-AOI rail/tree-line patch — src/three/osmTerrain.ts.
+    // Built alongside terrain/scenery for the same reason (only `proj`
+    // changing should rebuild it, never a frame).
+    const osmInset = buildOsmInset(proj);
 
-    // Zero line — a standing marker plane rather than a painted stripe, so it
-    // stays readable from an oblique angle instead of foreshortening away.
+    // Zero line — a standing marker plane, readable from an oblique angle
+    // without foreshortening away. Pass 14 removed this group's other
+    // occupant: a bright white LineBasicMaterial polyline running the full
+    // length of the strip at a fixed z-step of 3, hugging noisy terrain
+    // height. That reads exactly like what it is — a raw geometric
+    // artifact, a "seam" — not a battlefield feature, and it's what item 6
+    // was asking to fix (docs/DECISIONS.md Pass 14 has the before screenshot
+    // that made this obvious once looked at rather than read). What marks
+    // the line now: the terrain's own scar/damage tint (already there,
+    // terrain3d.ts), the density of props.ts's crater/wreck scatter (already
+    // concentrated at x≈0), and this pass's new static smoke columns
+    // (scenery.ts) — cues that read as *the ground being fought over*
+    // rather than a line drawn on top of it.
     const zero = new THREE.Group();
     zero.name = "zeroline";
     const zeroMat = new THREE.MeshBasicMaterial({
@@ -960,13 +976,6 @@ export function Scene3D({ world }: { world: WorldModel }) {
     zeroPlane.rotation.y = Math.PI / 2;
     zeroPlane.position.set(0, 4.5, 0);
     zero.add(zeroPlane);
-
-    // The line itself is carried by a bright stripe laid on the ground, which
-    // stays legible from any orbit angle without occluding terrain behind it.
-    const stripePts: THREE.Vector3[] = [];
-    for (let z = -72; z <= 72; z += 3) stripePts.push(new THREE.Vector3(0, terrainHeight(0, z) + 0.35, z));
-    const stripeMat = new THREE.LineBasicMaterial({ color: "#ffffff", transparent: true, opacity: 0.55 });
-    zero.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(stripePts), stripeMat));
 
     // Distance graticule: one standing gate per band edge, both sides. These
     // are the in-scene counterpart to the screen-space ruler along the bottom
@@ -993,11 +1002,11 @@ export function Scene3D({ world }: { world: WorldModel }) {
     const gates = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(gatePts), gateMat);
     zero.add(gates);
 
-    scene.add(terrain, props, scenery, zero);
+    scene.add(terrain, props, scenery, osmInset, zero);
     labelsDirtyRef.current = true;
 
     return () => {
-      scene.remove(terrain, props, scenery, zero);
+      scene.remove(terrain, props, scenery, osmInset, zero);
       terrain.geometry.dispose();
       (terrain.material as THREE.Material).dispose();
       props.traverse((o) => {
@@ -1007,11 +1016,11 @@ export function Scene3D({ world }: { world: WorldModel }) {
         }
       });
       disposeScenery(scenery);
+      disposeOsmInset(osmInset);
       zero.traverse((o) => {
         if (o instanceof THREE.Mesh || o instanceof THREE.Line) o.geometry.dispose();
       });
       zeroMat.dispose();
-      stripeMat.dispose();
       gateMat.dispose();
     };
   }, [proj, ready]);
@@ -1693,6 +1702,15 @@ export function Scene3D({ world }: { world: WorldModel }) {
           {SIDE_LABELS[rightSide].short} rear →
         </span>
       </div>
+
+      {/* The one non-optional obligation that comes with drawing OSM data
+          at all (docs/OSM_PIPELINE.md § Licensing) — real rail lines and
+          tree rows now render inside the metric inset (osmTerrain.ts).
+          Bottom-left so it never competes with the legend/ruler for the
+          same corner, and small enough to read as a citation, not a UI
+          element. Repeated in the About page for anyone who never orbits
+          past the inset. */}
+      <div className="scene3d__osm-credit">{OSM_ATTRIBUTION}</div>
     </div>
   );
 }

@@ -79,6 +79,20 @@ grounding, side rings). Verify with `git diff --stat` before committing.
 
 ## Pass 14 — World and terrain
 
+> **Status: landed.** All six items done; write-up, the two real bugs found
+> (tree/rail scale mismatches — both flagged for future sessions not to
+> reintroduce), the water/river decision and its justification, and flagged
+> deviations in `docs/DECISIONS.md` under "Pass 14 (PLANNING.md roadmap) —
+> World and terrain" (the LAST such section — three earlier ones are
+> numbered 14 for the OSM fetch pipeline itself, see the numbering note
+> there). Open items in `docs/BACKLOG.md`: three side_a naval drones still
+> lack real water under them (needs Pass 15's placement review, not a
+> terrain fix); the bridge was verified numerically, not by screenshot;
+> `road`/`river` OSM classes fetched but not rendered; `kramatorsk.json`
+> still doesn't exist. Pass 15 is unblocked — forest patches, an elevated
+> treeline and built-up blocks now exist on both sides near the line
+> specifically for it to site tactical positions into.
+
 Depends on: Pass 13. Enables: Pass 15 (assets need terrain features to be placed *into*).
 
 1. **Integrate `data/osm/pokrovsk.json`** per the metric-inset decision above. Extrude rail

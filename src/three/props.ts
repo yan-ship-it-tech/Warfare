@@ -55,8 +55,25 @@ function buildTrees(halfWidthX: number, count: number): THREE.InstancedMesh {
 
     // Treelines in this landscape follow field boundaries, not open ground —
     // banding on z keeps them in belts instead of dusting them everywhere.
-    const belt = Math.abs(Math.sin(z * 0.09 + x * 0.004));
-    if (belt < 0.72 && r() > 0.12) continue;
+    //
+    // Pass 14 measured the real thing this represents: 30 usable windbreak
+    // segments in the Pokrovsk-AOI extract (data/osm/pokrovsk.json) cluster
+    // at a dominant orientation (~177°, i.e. close to east–west) with a
+    // sparser perpendicular cross-family (~75°) — 10 lines in the dominant
+    // 15° bin against 6 in the next, roughly 5:3 — and parallel belts sit
+    // close together (filtered-outlier median gap 0.43 km across the AOI).
+    // Applied as STYLE ratios here, not literal distances: this formula
+    // already operates in raw world-X, which has no one km-per-unit rate
+    // (the whole axis is band-compressed) and Z carries no distance claim at
+    // all (worldMapping.ts) — a literal 0.43 km period has nothing correct
+    // to convert into on either axis. What transfers honestly is the SHAPE:
+    // one dominant belt family, a second sparser one roughly crosswise to
+    // it, and a tighter repeat than a single lonely sinusoid gave before.
+    const beltPrimary = Math.abs(Math.sin(z * 0.1 + x * 0.004));
+    const beltSecondary = Math.abs(Math.sin(x * 0.1 - z * 0.004));
+    const onPrimary = beltPrimary >= 0.74;
+    const onSecondary = beltSecondary >= 0.86; // sparser — a higher bar to clear
+    if (!onPrimary && !onSecondary && r() > 0.12) continue;
     // Thinned out right at the line, where nothing is left standing.
     if (Math.abs(x) < 16 && r() > 0.25) continue;
 

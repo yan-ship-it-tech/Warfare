@@ -2,6 +2,7 @@
 // docs/DECISIONS.md Pass 9 for why this moved from a modal to a routed page.
 import type { PageProps } from "./registry";
 import { DISCLAIMER, SIDE_LABELS } from "../config/ui";
+import { OSM_ATTRIBUTION, OSM_LICENSE, OSM_INSET_KM, OSM_INSET_SIDE } from "../config/osm";
 
 export function AboutPage({ world }: PageProps) {
   return (
@@ -123,6 +124,22 @@ export function AboutPage({ world }: PageProps) {
         scope line, tracked in docs/BACKLOG.md rather than left as a silent gap. The Schematic view
         is one click away in the drawer and still owns the distance ruler, the band editor and the
         dependency-line overlay.
+      </p>
+
+      <h3>The one patch of real terrain — and why it's still not "a real map"</h3>
+      <p>
+        One small area of the 3D view's {SIDE_LABELS[OSM_INSET_SIDE].short} territory (around{" "}
+        {OSM_INSET_KM} km from the zero line, inside a thin bordered frame you'll see if you orbit
+        past it) is genuinely sourced: real rail-line and tree-row geometry from a real Donbas rail
+        junction, drawn true-to-scale rather than fabricated. It is drawn as a small local patch, at
+        its own fixed metric scale, rather than stretched across the rest of the view's
+        band-compressed axis — laying real kilometres over a non-linear axis would visibly bend a
+        straight rail line, so this pass drew it as an honest inset instead of a dishonest overlay.
+        <b> It is not labelled or claimed as any specific named town</b> anywhere in this app — it's
+        real terrain <em>character</em> (a genuine rail-junction and shelterbelt pattern typical of
+        this front), placed as an illustrative composite, the same convention as everywhere else on
+        this map. Data: OpenStreetMap, {OSM_LICENSE} — <b>{OSM_ATTRIBUTION}</b>, also credited in a
+        small corner tag on the 3D view itself.
       </p>
 
       <h3>Equipment photography — sourced, not generated</h3>

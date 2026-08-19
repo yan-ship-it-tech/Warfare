@@ -2624,3 +2624,353 @@ so the effect has to reset their classes from `data-base-class` — exactly one
 pin still selected afterwards, ruler re-derived, no stale classes; every
 routed page (`#/health`, `#/lessons`, `#/about`, `#/library`); the schematic
 view; and phone width at 390×780.
+
+---
+
+# Pass 14 (PLANNING.md roadmap) — World and terrain
+
+Depends on Pass 13 (landed — see the section above). Scope per
+`docs/PLANNING.md`: the 3D WebGL view only.
+
+**Numbering note, same shape as Pass 13's:** three sections above are also
+headed "Pass 14" (the OSM fetch pipeline, an ad hoc session numbered before
+`PLANNING.md` existed). This section is `PLANNING.md`'s roadmap Pass 14 —
+"World and terrain." Read the heading text, not the number, per the note at
+the top of the Pass 13 (roadmap) section above.
+
+## 1. The metric inset — real rail and tree-line geometry, drawn honestly
+
+`data/osm/pokrovsk.json` (1415 features, committed Pass 12) is now
+integrated: `src/three/osmTerrain.ts` draws it as **option 1, metric
+inset** — the choice `docs/PLANNING.md`'s "do not re-litigate" table already
+made. A small local patch, side_a at 20 km, rendered at its own fixed
+1.1-world-units-per-km scale, independent of the surrounding band-compressed
+axis. Real geometry stays true (a straight rail line stays straight); a thin
+standing frame loops its footprint so the "why does the ground pattern
+change here" reads as a deliberate design choice — a sourced local map,
+framed like one — rather than a seam.
+
+**A build-time trim, not a runtime one.** Importing `pokrovsk.json` directly
+into `osmTerrain.ts` would ship its full 1.7 MB (lat/lon pairs, OSM tags, and
+~90% of features outside any patch this ever draws) into the already-lazy
+Scene3D bundle. `scripts/build-osm-inset.mjs` — a second reduce stage, same
+split `fetch-osm-data.mjs` already uses between fetch and reduce — radius-clips
+rail lines and tree rows to the ~140 KB `data/osm/pokrovsk.inset.json`
+`osmTerrain.ts` actually imports (`274` rail chains, `23` windbreak lines,
+`916` wood polygons after clipping). Scene3D's chunk grew 585 KB → 750 KB
+gzipped 152 KB → 208 KB regardless — flagged in `docs/BACKLOG.md`, not
+absorbed silently.
+
+**Rail lines** are two stacked flat ribbons (a wider ballast bed, a narrower
+darker steel strip) following the *actual surveyed points* — not a
+`TubeGeometry` along a fitted curve, which would round real corners into
+something the survey never recorded. Merged via Pass 13's
+`mergeStaticGroup()`, same convention as scenery. **Tree rows**: open
+(windbreak) lines get instances placed at intervals along their length;
+closed (wood) polygons get instances scattered inside via point-in-polygon
+rejection sampling, count scaled to area. Both respect the `closed` flag
+exactly as `docs/OSM_PIPELINE.md` flagged it should.
+
+### A real bug, and what it was: legibility, not literalism, applies to placement too
+
+First version used real-world figures directly for tree density: ~900
+trees/km² inside a wood, one tree every ~18 m along a windbreak — the
+literal numbers a forester would use. It rendered as **one solid black
+mass** covering the whole patch, confirmed by disabling rails/trees
+independently (rails alone: clean; trees alone: the mass) and then by
+logging real instance counts, which were fine (1752, not absurd) — the bug
+wasn't count, it was **scale**. A tree's own geometry (trunk + canopy, ~1–2
+world units) is not scaled down by `OSM_INSET_UNITS_PER_KM` the way its
+*position* is — nothing in this scene is drawn to real proportion
+(`docs/MODEL_STYLE_GUIDE.md` § 1: "world units are not to-scale"). Real
+18 m spacing became ~0.02 world units between trunks each 1–2 units wide:
+hundred-fold overlap. Real wood polygons here are mostly tiny too (median
+0.0039 km², a ~60 m copse) — smaller than one tree's own canopy at *any*
+inset scale a legible patch could use.
+
+The fix is the same move `MODEL_STYLE_GUIDE.md` already made for hero-model
+geometry, applied to placement: **counts and spacing calibrated directly in
+world units**, using the real polygon/line size only as a *relative* signal
+(bigger wood → more trees, longer row → more trees; 1–6 trees per wood,
+clamped), never as a literal density conversion. That alone wasn't enough —
+this AOI has a real forest belt digitised as ~290 adjacent, near-touching
+OSM polygon fragments within one narrow radius band, and scattering each
+fragment independently (even at a sane per-polygon count) stacked hundreds
+of independently-placed clusters back into the same physical space. The
+actual fix is a **global minimum-spacing rejection check across every
+candidate**, wood or windbreak, in world space: it does not matter how many
+adjacent polygons proposed a point near an already-accepted tree, only the
+first one wins. 1752 → 154 → 52 total instances (tightened once more for
+legibility) as MIN_TREE_GAP_WORLD went 0 → 1.1 → 2.2, each step verified by
+screenshot, not by reading the formula.
+
+### The rail line was there and invisible — same lesson, different axis
+
+Rail ribbons render at 0.05–0.14 units above `terrainHeight()` at each
+vertex — mathematically correct, and invisible. Confirmed present (correct
+274-chain count, correct world-space bounding box, `visible: true`) via a
+debug bright-magenta material and an exaggerated 3-unit lift before finding
+the right number; the real fix is a lift of 0.32/0.46. The terrain **mesh**
+(`buildTerrain()`, ~1–2.5 world units between grid samples, linearly
+interpolated) tracks the analytic `terrainHeight()` function only
+approximately between its own vertices; rail points, placed at much finer
+OSM-survey resolution, sit *below* that coarser interpolated surface often
+enough to bury the ribbon almost everywhere. 0.3–0.5 is not a new
+convention — it is the same order every other "sits on the ground" object in
+this codebase already uses for the identical reason (the obstacle belt rides
++0.3, fighting-position sandbags +0.15) — this file just hadn't needed it
+until now.
+
+**Both bugs share one shape**, worth stating plainly since it will recur:
+*this scene is stylised, not measured, and a value copied straight from a
+real-world source (a tree spacing, a terrain-following offset) is only
+correct if something in the pipeline also converts the SCALE it lives at.*
+Neither bug would have been caught reading the code — both needed a
+screenshot.
+
+## 2. ODbL credit — a data-free seam, not a data import from a non-lazy page
+
+Corner tag in the 3D view (`.scene3d__osm-credit`, bottom-left, the one
+corner nothing else claims) and a new About page section, both required by
+`docs/OSM_PIPELINE.md` § Licensing. First draft had the About page import
+`OSM_ATTRIBUTION` straight from `osmTerrain.ts` — which would have pulled
+that module's 140 KB JSON import into a **non-lazy** path: the About page is
+an ordinary routed page (`src/pages/registry.tsx`), not behind `Scene3D`'s
+`lazy()` boundary, so a static import into it forces the shared chunk
+containing that JSON to load on first paint regardless of whether the 3D
+view is ever opened — exactly the regression the derived-file trim in §1
+exists to prevent, reintroduced through a different door. Fixed with a new
+seam file, `src/config/osm.ts`: three plain-literal constants (attribution
+string, license string, inset side/km) with no data import, consumed by
+both `osmTerrain.ts` (re-exported, with a dev-console assertion that the
+data file's own `license`/`attribution` fields still agree) and
+`AboutPage.tsx`. Measured: the main bundle grew 624.49 KB → 625.76 KB
+(+1.27 KB, the new About copy) — confirms the split held.
+
+## 3. Dressing derived from the OSM data — style ratios, not literal units
+
+Measured from the real extract before touching `props.ts`: windbreak lines'
+dominant orientation is ~177° (near east–west) with a sparser perpendicular
+family at ~75° (10 lines in the clearest 15° bin vs. 6 in the next, roughly
+5:3), and the filtered-outlier median gap between parallel belts is 0.43 km.
+
+**None of that converts to a literal number in `props.ts`'s belt formula,
+and that's a finding, not a shortcut.** That formula runs in raw world-X,
+which has no single km-per-unit rate (the whole axis is band-compressed —
+the entire premise of this app); Z carries no distance claim at all
+(`worldMapping.ts`'s own header). A literal 0.43 km period has nothing
+correct to convert into on either axis. What transfers honestly is the
+**shape**: one dominant belt family plus a sparser roughly-perpendicular
+one, and a tighter repeat than the single lonely sinusoid gave before.
+`buildTrees()`'s belt test is now two sinusoids (`beltPrimary`,
+`beltSecondary`) with the second held to a higher bar — mirrors the measured
+dominance ratio without pretending to be a distance.
+
+## 4. Water — kept as coastline (not river), made symmetric, and made to reach the front
+
+**The brief asked for a decision, "pick one, don't build both."** Chose
+**coastline over river**, for a reason already sitting in the data: three
+existing side_a assets (`MANTAS T-12`, `Sonobot-5`, `Magura V5`) are
+`domain: "sea"` naval drones — a river feature would have nothing to do with
+them, and replacing the coast with one would leave every existing naval
+asset, on either side, without water. `docs/OSM_HANDOFF.md`'s real river
+data (3 features in `pokrovsk.json`) was available and deliberately **not**
+used for this: it's a genuine inland watercourse near the AOI centre, ~8 km
+from the coast this pass builds — splicing it into a coastal position would
+misrepresent what it actually is, the same honesty standard that already
+governs every other terrain feature here.
+
+Two real fixes to the water itself, both in `terrain3d.ts`'s
+`coastalDepression()`/`buildWater()`:
+
+1. **Symmetric.** Was `x > 126` only — side_b's deep rear exclusively. Now
+   `|x| > threshold` — side_a gets the mirror basin. This is the direct fix
+   for "both sides have Black Sea access": before this pass, side_a's three
+   naval drones sat on dry ground with no water at all.
+2. **An inlet.** The shoreline threshold is no longer a constant — it dips
+   from the baseline 126 to `COAST_NEAR_X` (105) in a Gaussian band centred
+   on one lateral flank (`COAST_INLET_Z = 50`, `SIGMA = 9`), so at that one
+   flank the coast reaches meaningfully closer to the line: "wraps around
+   where the frontline meets the coast," per the brief, without submerging
+   anything already placed. 105, not closer: checked against every existing
+   asset whose world-X falls near it (the near-shore drones at worldX
+   ≈85–104, the Forward Distribution Hub at ≈91.5, the Integrated Air
+   Defense C2 Network at ≈85) — all sit below 105 regardless of where
+   `lateralLayout`'s hash-spread puts their Z, so none end up standing in a
+   depression. `buildWater()` was a single fixed-width rectangle; it now
+   builds per-row from the *same* `coastThresholdAt(z)` curve
+   `coastalDepression()` carves into the terrain, so the glossy water
+   surface and the tinted, depressed ground under it can't drift apart.
+
+**Flagged, not fixed here:** pulling the inlet in far enough to put real
+water under the three existing near-shore drones (rather than the honest-but-
+modest reach above) means either knowing their `lateralLayout` Z ahead of a
+build that runs before they're placed, or moving their
+`distance_km_from_zero` — a placement/data change, which is explicitly
+Pass 15's job ("review every asset's distance-from-front for doctrinal
+plausibility... add `placement_rationale`"), not a terrain pass's. Recorded
+in `docs/BACKLOG.md`.
+
+## 5. The destroyed bridge + pontoon crossing
+
+Item 5's literal ask ("add a bridge... if a river, make it destroyed +
+pontoon rather than intact") was conditioned on choosing a river; §4 chose
+coastline instead. Built the destroyed-bridge-plus-pontoon anyway, at the
+new inlet — it's more representative of this war regardless of which water
+feature carries it, and the inlet is exactly the kind of water a crossing
+narrative belongs next to.
+
+`buildCoastalBridge()` (`scenery.ts`) is **not** placed through the generic
+`LANDMARKS` anchor-and-rotate system every other landmark uses — deliberately.
+A bridge's entire job is reacting to the ground (and the water) changing
+height along its length; a single anchor point with a fixed local shape
+can't do that against a noise-carved, z-dependent coastline. It calls
+`terrainHeight()`/`WATER_LEVEL_Y` directly per segment: deck height is
+`max(groundHeight, waterLevel) + clearance` — adaptive, not hand-tuned
+against the same procedural coastline the water plane fights the same
+battle against. The collapsed centre segment (rubble slab + exposed
+rebar, same visual language as the existing `buildRuinedInfrastructure`)
+sags to the water-based height rather than the ground-based one, which reads
+correctly as "fallen," not as a bug.
+
+**A real placement bug, caught by checking the actual numbers rather than
+trusting the span:** the first version spanned z 34–78 with the collapsed
+segment at its geometric middle (z≈56). Sampling `terrainHeight()` along the
+bridge's actual x showed only **one** point in that whole span
+(z=50, the inlet's true centre) was genuinely below `WATER_LEVEL_Y` —
+`COAST_INLET_SIGMA` (9) makes for a much narrower true inlet than the wider
+span assumed, so the "collapsed, fallen into the water" segment was landing
+on ground that was never wet. Tightened to z 42–60 (7 segments, collapse at
+index 3 — z≈51, on the real wet centre) and re-verified the same way. Same
+lesson as §1: a plausible-looking span against procedural, noise-shaped
+geometry is a guess until it's sampled.
+
+The pontoon crossing sits offset in x from the destroyed span — a chain of
+low floats plus a segmented walkway (segmented, not one long plank, for the
+same reason the bridge deck is segmented: a single straight beam across a
+noise-wobbled shoreline would clip it somewhere along its length), each
+independently leveled between its own two floats via the same adaptive
+height formula.
+
+## 6. The zero-line seam, and contested-zone dressing
+
+**Confirmed by screenshot before touching anything**, per the brief's own
+instruction to confirm rather than assume: a close, low-angle shot of the
+existing zero line showed a bright white `LineBasicMaterial` polyline
+running the full strip length at a fixed z-step of 3, hugging noisy terrain
+height — a jagged, glowing zigzag that reads exactly like a rendering
+artifact, not a battlefield feature. That was `Scene3D.tsx`'s "zero
+line" stripe. Removed outright, not replaced with a subtler version of the
+same idea — the terrain's own scar/damage tint (`terrainHeight()`,
+pre-existing), the density of `props.ts`'s crater/wreck scatter (already
+concentrated at x≈0), and this pass's new static smoke already mark the
+line as *fought over* without drawing a line on top of it.
+
+**Smoke** (`buildSmokeColumn()`): static, layered, widening, fading discs
+drifting slightly off vertical — standing in for an animated particle system
+this scene doesn't have, consistent with the rest of the file (nothing else
+here animates either; `props.ts`'s own header explains why instancing, not
+motion, is where this scene spends its budget). `depthWrite: false` on the
+shared `SMOKE` material stops overlapping puffs fighting each other's depth
+test as the camera orbits. Three placed near the immediate line, both sides.
+
+**Forest patch / elevated treeline / built-up block** — three new landmark
+kinds, explicitly terrain *features* for Pass 15 to site tactical positions
+into (artillery cover, a drone position, urban infantry ground), not the
+positions themselves — that's next pass's job per `PLANNING.md`'s own
+dependency order. `buildForestPatch()` and `buildElevatedTreeline()` use a
+new `buildTree()` (trunk + full canopy — the "still has cover" silhouette,
+distinct on purpose from `props.ts`'s bare-trunk damaged-ground read).
+`buildBuiltUpBlock()` reuses `buildHouse()`'s existing condition tiers at a
+denser cluster radius rather than inventing a third building shape. Two
+seeded variants each (`_a`/`_b`), same convention `villageRuined`/
+`Damaged`/`Intact` already established — a repeated kind at one seed would
+be a visible stamp. Placed within the first ~20 km on each side, where that
+siting will actually happen; a forest patch at 140 km would be scenery no
+future pass could use.
+
+**The OSM inset exclusion.** `buildScenery()` now skips any `LANDMARKS` entry
+whose world position falls inside `osmInsetBounds()`'s footprint — a generic
+village drawn on top of the real rail junction would read as a bug, not two
+honest layers. Checked against the actual anchor (side_a, 20 km) at build
+time; nothing currently in `LANDMARKS` collided, so this is a guard for
+whoever edits either list next, not a fix for something broken today.
+
+## Where the brief and prior passes disagreed
+
+**1. "Extend the coast to wrap around where the frontline meets it"** — done,
+but modestly (126 → 105 world units at the inlet's peak, not all the way to
+the line) rather than literally. A more dramatic pull-in was tried first and
+rejected on the numbers: it would have put the existing near-shore naval
+drones' ground marker inside a water depression depending on where
+`lateralLayout`'s hash-spread happened to land their Z — an unacceptable
+side effect for a terrain pass to cause silently. §4 above has the checked
+margin.
+
+**2. "Add a bridge... make it destroyed if a river was added"** — a river
+was not added (§4's decision). Built the destroyed-bridge-plus-pontoon
+anyway, since it's independently more representative of this war and the
+new inlet gives it somewhere honest to cross. Flagged as a literal-brief
+deviation rather than silently reinterpreting "if a river" as "regardless."
+
+**3. Tree/dressing density is stylistic, not the literal OSM numbers** — see
+§1 and §3. Both are flagged explicitly in-code, not just here, because the
+literal numbers are sitting right there in the data and the temptation to
+"restore realism" by putting them back is real; both comments explain why
+that specific temptation reproduces a bug this pass fixed.
+
+**4. `road`/`river` feature classes are fetched but not rendered.** The
+brief's item 1 asks for rail extrusion and tree instancing specifically;
+roads and rivers are in `data/osm/pokrovsk.inset.json`'s source
+(`pokrovsk.json`) but `build-osm-inset.mjs` doesn't even carry them into the
+derived file. Scope trim, flagged in `docs/BACKLOG.md` rather than either
+silently expanded or silently dropped.
+
+## Regression guard
+
+Pass 8's four invariants (label collision, lateral spread, `platform_domain`
+grounding, side rings) and Pass 13's render-loop/gesture work are untouched —
+`git diff --stat` against the branch point shows this pass's changes
+confined to `src/three/{terrain3d,scenery,props,osmTerrain}.ts` (new),
+`src/config/osm.ts` (new), `src/pages/AboutPage.tsx`, `data/osm/*`, and
+`scripts/build-osm-inset.mjs` (new). `src/three/Scene3D.tsx`'s only touch is
+wiring the inset group in/out alongside terrain/scenery and deleting the
+zero-line stripe — the render loop, drag handling and ruler from Pass 13 are
+byte-for-byte unchanged.
+
+## Verification
+
+`npm run build` clean throughout (chunk sizes noted in §1/§2 rather than
+hidden). `npm run smoke` — Pass 13's 14 gesture-driven checks — 14/14, both
+before this pass's changes and after, confirming nothing here regressed
+label declutter, drag, or the ruler. `npm run perf`: draws 426 → 448 (+22 for
+the new bridge/rail/tree/smoke geometry, still well under Pass 13's
+845-draw pre-optimization baseline), CPU/frame numbers unchanged within
+noise.
+
+Visual, by screenshot at every claim rather than by reading the formula (the
+standard this pass's own two bugs argue for): the removed zero-line seam,
+before and after, at the same close oblique angle that first showed it;
+individual tree instances resolving cleanly (not a solid mass) inside the
+inset's frame at three different `MIN_TREE_GAP_WORLD` values; the rail
+ribbon visible at its final lift/width/colour, confirmed present via a
+debug-magenta pass first since the real material was initially
+indistinguishable from terrain at a glance; the symmetric coast rendering
+correctly around an existing side_b naval asset (real water, dry ground
+under the nearby land-domain SAM) and around a side_a naval asset near the
+inset's flank; the About page's new section and the 3D view's corner credit,
+both rendering the same string from `src/config/osm.ts`; default framing,
+mobile width (390×780), and the full routed-page set for no visual
+regression elsewhere.
+
+**Not independently re-verified by screenshot: the coastal bridge's exact
+on-screen appearance.** Its geometry was checked numerically instead
+(§5 — sampling `terrainHeight()` along its actual x/z span to confirm the
+collapsed segment lands on genuinely-submerged ground, deck heights clear
+both ground and water at every sampled point) after several screenshot
+attempts failed to frame the exact camera angle needed for a small,
+specific set-piece at this scale — the same category of "requires precise
+positioning to see" as several pre-existing landmarks (`buildFuelDepot`,
+`buildCommandPost`) that were never individually screenshotted in earlier
+passes either. Flagged rather than silently claimed as visually confirmed;
+worth a direct look next session before Pass 15 builds anything near it.

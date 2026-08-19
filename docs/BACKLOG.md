@@ -6,6 +6,56 @@ gets listed here rather than silently dropped or silently worked around.
 
 ---
 
+## Open — Pass 14 (world and terrain)
+
+### Three side_a naval drones still sit on dry ground
+`Sonobot-5` (60 km), `MANTAS T-12` (83 km), `Magura V5` (120 km) are
+`domain: "sea"` but the coastal
+water rework (`docs/DECISIONS.md` Pass 14 §4) deliberately stopped short of
+reaching them: their worldX (≈85–104) sits just inside the 105-unit inlet
+threshold chosen specifically to avoid submerging them or their neighbours
+regardless of `lateralLayout`'s hash-assigned Z. Real fix needs either the
+distance-from-front review Pass 15 already owns ("review every asset's
+distance-from-front for doctrinal plausibility... add `placement_rationale`")
+or a way to give a specific asset a fixed Z ahead of the layout pass — worth
+deciding which when Pass 15 starts, not guessing at now.
+
+### `road`/`river` OSM feature classes fetched but not rendered
+`data/osm/pokrovsk.json` has 99 roads and 3 rivers; `scripts/build-osm-inset.mjs`
+doesn't carry either into the derived `pokrovsk.inset.json`, and
+`osmTerrain.ts` doesn't draw them. The brief's item 1 asked for rail
+extrusion + tree instancing specifically — this is a scope trim, not a
+missed requirement, but the data is sitting there for whoever wants to
+extend the inset next.
+
+### `data/osm/kramatorsk.json` still doesn't exist
+Same blocker as every prior pass that touched this: the fetch can't run
+inside an agent sandbox (egress proxy 403s Overpass and every mirror). The
+phone/GeoJSON-export route that produced `pokrovsk.json` (`docs/OSM_PIPELINE.md`)
+would get it. Once fetched, it needs its own `scripts/build-osm-inset.mjs
+--aoi=kramatorsk` run and its own inset placement — likely on side_b, to
+balance the roster of "real terrain" patches across sides.
+
+### The coastal bridge was verified numerically, not visually
+`docs/DECISIONS.md` Pass 14 §5/Verification: the destroyed bridge + pontoon
+crossing's geometry was confirmed correct by sampling `terrainHeight()`
+along its actual span (collapsed segment lands on genuinely-submerged
+ground, deck clears both ground and water everywhere else), after several
+screenshot attempts failed to find the exact camera angle for a small
+set-piece at this scale. Worth a direct look before Pass 15 sites anything
+near it (side_a, world-X ≈ −112, z 42–60).
+
+### Scene3D's bundle grew ~165 KB (gzipped ~56 KB) for the OSM inset
+585 KB → 750 KB minified, 152 KB → 208 KB gzipped, from
+`data/osm/pokrovsk.inset.json` (~140 KB) plus the new rendering code. Already
+trimmed once (the derived-file split in `docs/DECISIONS.md` Pass 14 §1 exists
+specifically to keep this number down) — further reduction would mean
+compressing the inset data itself (e.g. quantised/delta-coded coordinates)
+or deferring the inset's own construction behind a second lazy boundary
+inside Scene3D. Not attempted here; flagged rather than left unmeasured.
+
+---
+
 ## Open — Pass 13 (performance and interaction)
 
 ### The drop hitch is halved, not eliminated
