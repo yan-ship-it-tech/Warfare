@@ -1,0 +1,63 @@
+{
+  "id": "side_a-armor-bvs-10-viking",
+  "name": "BvS 10 Viking",
+  "side": "side_a",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "armor",
+  "distance_km_from_zero": 7,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "armor-apc",
+  "representative_system": "BvS 10 Viking — Tracked all-terrain armored carrier",
+  "icon_image": "/icons/bvs-10-viking.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Donated (no unit price disclosed)",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Spec",
+      "value": "12.7mm + 7.62mm MGs"
+    },
+    {
+      "label": "Spec 2",
+      "value": "two-module articulated hull (front 4 troops, rear 8)"
+    },
+    {
+      "label": "Range",
+      "value": "amphibious, 5-7km/h in water"
+    }
+  ],
+  "short_role": "Tracked all-terrain armored carrier",
+  "characteristics": [
+    "12.7mm + 7.62mm MGs",
+    "two-module articulated hull (front 4 troops, rear 8)",
+    "amphibious, 5-7km/h in water",
+    "Strength: Articulated tracked design gives strong cross-country/soft-ground mobility unusual among donated APCs",
+    "Limitation: Niche platform originally designed for Arctic/soft-terrain use, not purpose-built for the mixed terrain of the Ukrainian front",
+    "Estimated quantity available: Donated numbers not fully disclosed"
+  ],
+  "employment_notes": "One of the less common donated APC types, valued for mobility in wet/muddy conditions that immobilize wheeled vehicles",
+  "contrast_vs_traditional": "The Viking's articulated, all-terrain hull exists to move across ground that has no road at all — originally an Arctic and amphibious design case. That happens to be a direct answer to the problem facing wheeled vehicles on this front: predictable road movement is exactly what persistent drone ISR watches for, so a carrier that never needed the road in the first place sidesteps that vulnerability rather than having to out-drive it.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — BvS10",
+      "url": "https://en.wikipedia.org/wiki/BvS10"
+    },
+    {
+      "label": "Army Recognition — Netherlands delivers BvS-10 Viking to Ukraine",
+      "url": "https://armyrecognition.com/news/army-news/army-news-2024/netherlands-delivers-28-viking-armored-vehicles-to-ukrainian-forces"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "id": "side_a-armor-m1126-icv-stryker",
+  "name": "M1126 ICV Stryker",
+  "side": "side_a",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "armor",
+  "distance_km_from_zero": 6,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "armor-ifv",
+  "representative_system": "M1126 ICV Stryker — Wheeled armored fighting vehicle",
+  "icon_image": "/icons/m1126-icv-stryker.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Donated (no unit price disclosed)",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Salvo / launcher",
+      "value": "40mm automatic grenade launcher, 12.7mm MG"
+    },
+    {
+      "label": "Spec",
+      "value": "8x8 wheeled"
+    },
+    {
+      "label": "Spec 3",
+      "value": "9 dismounts"
+    }
+  ],
+  "short_role": "Wheeled armored fighting vehicle",
+  "characteristics": [
+    "40mm automatic grenade launcher, 12.7mm MG",
+    "8x8 wheeled",
+    "9 dismounts",
+    "Strength: Wheeled mobility gives higher road speed and lower maintenance burden than tracked IFVs; multiple mission variants share one chassis",
+    "Limitation: Wheeled platform has less cross-country capability than tracked IFVs in mud/off-road conditions common on the front",
+    "Estimated quantity available: Delivered as part of a wider announced package; exact totals not fully disclosed"
+  ],
+  "employment_notes": "Part of a wider Stryker family donation (ICV, reconnaissance, medical evacuation, and 105mm gun-armed MGS variants each separately cataloged) giving Ukraine a flexible wheeled fleet",
+  "contrast_vs_traditional": "Stryker's whole design case was road-mobility — wheeled speed to outrun a threat and reach the objective before it could react. That same predictable road movement is precisely what standoff drone reconnaissance watches for: the doctrine.md finding that detection is a multi-day pattern-of-life problem applies as much to vehicle routes as to launch-team positions, so the speed that once meant survivability now also means visibility.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — M1126 Infantry Carrier Vehicle",
+      "url": "https://en.wikipedia.org/wiki/M1126_infantry_carrier_vehicle"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "sourced_low_confidence",
+    "independent_sources": 1,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Rests only on tertiary reference works; wants a primary or trade source."
+    ]
+  }
+}

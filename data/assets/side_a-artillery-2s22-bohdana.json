@@ -1,0 +1,63 @@
+{
+  "id": "side_a-artillery-2s22-bohdana",
+  "name": "2S22 Bohdana",
+  "side": "side_a",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "artillery",
+  "distance_km_from_zero": 14,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "artillery-self-propelled",
+  "representative_system": "2S22 Bohdana — Self-propelled artillery (wheeled, domestic)",
+  "icon_image": "/icons/2s22-bohdana.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Domestic production, unit cost not publicly disclosed",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Spec",
+      "value": "155mm/152mm-compatible"
+    },
+    {
+      "label": "Spec 2",
+      "value": "6x8 or 8x8 wheeled chassis"
+    },
+    {
+      "label": "Range",
+      "value": "range up to ~42km with extended-range rounds"
+    }
+  ],
+  "short_role": "Self-propelled artillery (wheeled, domestic)",
+  "characteristics": [
+    "155mm/152mm-compatible",
+    "6x8 or 8x8 wheeled chassis",
+    "range up to ~42km with extended-range rounds",
+    "Strength: Domestically produced, so not dependent on foreign donation pipelines or export approval; wheeled mobility supports rapid displacement",
+    "Limitation: Domestic production volume is smaller than the scale of donated Western systems; specific performance figures are less independently verified than donated NATO equipment",
+    "Estimated quantity available: Production ongoing; total fielded not publicly disclosed"
+  ],
+  "employment_notes": "Ukraine's first mass-produced domestic modern SPG, symbolically and practically important as a hedge against donor-dependency for artillery",
+  "contrast_vs_traditional": "Bohdana is Ukraine's own wartime answer to the same problem Caesar solves for its NATO donors: a wheeled chassis built specifically to displace faster than a drone-cued counter-battery response, produced domestically because doctrine.md's minutes-scale kill chain finding made dwell-time survivability a requirement no import pipeline could guarantee fast enough on its own.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — 2S22 Bohdana",
+      "url": "https://en.wikipedia.org/wiki/2S22_Bohdana"
+    },
+    {
+      "label": "Army Technology — 2S22 Bohdana Self-Propelled Howitzer",
+      "url": "https://www.army-technology.com/projects/2s22-bohdana-howitzer-ukraine/"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

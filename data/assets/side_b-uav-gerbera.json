@@ -1,0 +1,68 @@
+{
+  "id": "side_b-uav-gerbera",
+  "name": "Gerbera",
+  "side": "side_b",
+  "domain": "air",
+  "echelon": "tactical",
+  "group": "uav",
+  "distance_km_from_zero": 18,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "uav-strike",
+  "representative_system": "Gerbera — Low-cost decoy / multifunctional drone",
+  "icon_image": "/icons/gerbera.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": 10000,
+    "display": "~$10,000 (Wikipedia); $5,000-100,000 range cited in user-supplied catalog depending on configuration",
+    "confidence": "estimated"
+  },
+  "key_facts": [
+    {
+      "label": "Warhead",
+      "value": "18kg drone weight, optional <7kg warhead"
+    },
+    {
+      "label": "Spec",
+      "value": "2.5m wingspan"
+    },
+    {
+      "label": "Range",
+      "value": "600km range (300-600km decoy config per Wikipedia)"
+    }
+  ],
+  "short_role": "Low-cost decoy / multifunctional drone",
+  "characteristics": [
+    "18kg drone weight, optional <7kg warhead",
+    "2.5m wingspan",
+    "600km range (300-600km decoy config per Wikipedia)",
+    "up to 160km/h",
+    "3,000m altitude",
+    "internal combustion engine",
+    "Strength: Cheap enough to be expended purely as a radar/interceptor decoy, saturating air defense attention and ammunition even when unarmed",
+    "Limitation: As an armed variant its warhead is small (<7kg) compared to Shahed-136/Geran-2's 50-90kg",
+    "Estimated quantity available: Mass produced; exact fleet size not disclosed"
+  ],
+  "employment_notes": "Deliberately flown in mixed swarms alongside Shahed/Geran-2 and Italmas drones so defenders cannot easily distinguish real threats from decoys - a direct, deliberate exploitation of the cost-asymmetry dynamic",
+  "contrast_vs_traditional": "Gerbera is explicitly built to be mistaken for a Shahed on radar and burn through interceptor stocks meant for the real thing — a decoy doing traditional electronic-warfare deception's job with cheap airframes instead of jamming, which is as much a part of the EW-dependent picture doctrine.md describes as any radio-frequency system on this map.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — Gerbera (drone)",
+      "url": "https://en.wikipedia.org/wiki/Gerbera_(drone)"
+    },
+    {
+      "label": "Militarnyi — Russians significantly modernized Shahed and Gerbera drones",
+      "url": "https://militarnyi.com/en/news/ukrainian-defense-intelligence-russians-significantly-modernized-shahed-and-gerbera-drones/"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Specs meet the bar but the unit cost is an estimate — cost is not verified."
+    ]
+  }
+}

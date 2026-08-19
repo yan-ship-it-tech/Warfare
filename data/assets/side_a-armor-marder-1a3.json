@@ -1,0 +1,64 @@
+{
+  "id": "side_a-armor-marder-1a3",
+  "name": "Marder 1A3",
+  "side": "side_a",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "armor",
+  "distance_km_from_zero": 6,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "armor-ifv",
+  "representative_system": "Marder 1A3 — Infantry fighting vehicle",
+  "icon_image": "/icons/marder-1a3.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Donated (no unit price disclosed)",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Main armament",
+      "value": "25mm autocannon, Milan ATGM launcher, 7.62mm MG"
+    },
+    {
+      "label": "Weight",
+      "value": "28.2t"
+    },
+    {
+      "label": "Spec",
+      "value": "6 dismounts"
+    }
+  ],
+  "short_role": "Infantry fighting vehicle",
+  "characteristics": [
+    "25mm autocannon, Milan ATGM launcher, 7.62mm MG",
+    "28.2t",
+    "6 dismounts",
+    "effective cannon range ~1,100m",
+    "Strength: Well-proven Cold War IFV design, integrated ATGM gives organic anti-armor capability beyond the autocannon",
+    "Limitation: Aging design (1970s) relative to newer IFVs donated to Ukraine; aluminium armor lighter than modern composite types",
+    "Estimated quantity available: Donated in the dozens; exact current total not fully disclosed"
+  ],
+  "employment_notes": "One of the earliest Western IFVs delivered (2023), used to reinforce mechanized infantry as Soviet-legacy BMP stocks depleted",
+  "contrast_vs_traditional": "Marder doctrine paired IFVs with tanks in a combined-arms breakthrough, using armor to protect dismounting infantry at the objective. On a front where a moving column is exactly what persistent drone ISR is built to find, getting infantry to a position increasingly means dismounting well short of it and moving the last stretch on foot under cover — the IFV's armor now protects the approach, not the arrival.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — Marder (infantry fighting vehicle)",
+      "url": "https://en.wikipedia.org/wiki/Marder_(infantry_fighting_vehicle)"
+    },
+    {
+      "label": "Army Recognition — Marder 1A3 first combat mission in Ukraine",
+      "url": "https://www.armyrecognition.com/focus-analysis-conflicts/army/conflicts-in-the-world/russia-ukraine-war-2022/marder-1a3-ifv-joins-ukraine-s-elite-unit-in-its-maiden-combat-mission"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "id": "side_b-artillery-2s19-msta-s",
+  "name": "2S19 Msta-S",
+  "side": "side_b",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "artillery",
+  "distance_km_from_zero": 18,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "artillery-self-propelled",
+  "representative_system": "2S19 Msta-S — Self-propelled artillery (tracked)",
+  "icon_image": "/icons/2s19-msta-s.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "No current market price; Soviet/Russian design, 1989-present",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Spec",
+      "value": "152.4mm howitzer"
+    },
+    {
+      "label": "Engine",
+      "value": "T-80 running gear with T-72 diesel engine"
+    },
+    {
+      "label": "Spec 3",
+      "value": "semi-automatic laying system, automatic loader"
+    }
+  ],
+  "short_role": "Self-propelled artillery (tracked)",
+  "characteristics": [
+    "152.4mm howitzer",
+    "T-80 running gear with T-72 diesel engine",
+    "semi-automatic laying system, automatic loader",
+    "Strength: Well-proven, mass-produced Russian standard SPG with a large existing fleet and logistics base",
+    "Limitation: Older-generation autoloader and fire-control compared to Western systems like PzH2000",
+    "Estimated quantity available: Large pre-war fleet; current operational count reduced by attrition, not fully disclosed"
+  ],
+  "employment_notes": "Russia's baseline standard SPG throughout the war, functionally the Russian-side counterpart to Ukraine's donated M109/PzH2000 in the tool's artillery comparison",
+  "contrast_vs_traditional": "The same shoot-and-scoot pressure applies on the Russian side of the line: a tracked Soviet-lineage gun built for sustained fire missions now displaces as fast as its crew can manage once a round is downrange, because the drone spotting a firing position feeds counter-battery fire on the same minutes-scale timeline doctrine.md documents for the kill chain generally, not just for Ukrainian-fired systems.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — 2S19 Msta",
+      "url": "https://en.wikipedia.org/wiki/2S19_Msta"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "sourced_low_confidence",
+    "independent_sources": 1,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Rests only on tertiary reference works; wants a primary or trade source."
+    ]
+  }
+}

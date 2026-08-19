@@ -1,0 +1,63 @@
+{
+  "id": "side_b-armor-bmp-3",
+  "name": "BMP-3",
+  "side": "side_b",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "armor",
+  "distance_km_from_zero": 5,
+  "operating_range_km": null,
+  "band_id": "tactical",
+  "category": "armor-ifv",
+  "representative_system": "BMP-3 — Infantry fighting vehicle",
+  "icon_image": "/icons/bmp-3.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Legacy/continuing production, 2,000+ built - no clean current unit price",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Main armament",
+      "value": "100mm 2A70 gun + 30mm 2A72 autocannon + AGS-30 grenade launcher (Bakhcha-U/Berezhok turret)"
+    },
+    {
+      "label": "Weight",
+      "value": "18.7t"
+    },
+    {
+      "label": "Crew",
+      "value": "3 crew + 7 troops"
+    }
+  ],
+  "short_role": "Infantry fighting vehicle",
+  "characteristics": [
+    "100mm 2A70 gun + 30mm 2A72 autocannon + AGS-30 grenade launcher (Bakhcha-U/Berezhok turret)",
+    "18.7t",
+    "3 crew + 7 troops",
+    "Strength: Unusual dual-gun armament (100mm + 30mm) gives both anti-armor and anti-personnel capability from one turret",
+    "Limitation: Aluminium-alloy armor is lighter than steel but still thin relative to drone/ATGM threats now common",
+    "Estimated quantity available: Continuing limited production; current fielded total not fully disclosed"
+  ],
+  "employment_notes": "Represents Russia's most modern mass-fielded IFV design, but like the BMP-2 has proven highly vulnerable to top-attack drone strikes that its era of design never anticipated",
+  "contrast_vs_traditional": "The BMP-3's larger 100mm gun and improved protection over the BMP-2 were built to win the vehicle-vs-vehicle fight that dominated Soviet mechanized doctrine. Neither addresses the threat actually killing IFVs now — a top-attack drone strike doesn't care about turret armament — which is the same gap the doctrine.md figure on drone-attributed losses points at across every armored category.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — BMP-3",
+      "url": "https://en.wikipedia.org/wiki/BMP-3"
+    },
+    {
+      "label": "Army Recognition — Russia increases BMP-3 production for the Ukraine war",
+      "url": "https://www.armyrecognition.com/news/army-news/2026/russia-increases-bmp-3-ifv-production-40-with-new-drone-and-mine-protection-for-ukraine-war"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

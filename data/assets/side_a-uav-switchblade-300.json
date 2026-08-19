@@ -1,0 +1,61 @@
+{
+  "id": "side_a-uav-switchblade-300",
+  "name": "Switchblade 300",
+  "side": "side_a",
+  "domain": "air",
+  "echelon": "tactical",
+  "group": "uav",
+  "distance_km_from_zero": 5,
+  "operating_range_km": null,
+  "band_id": "tactical",
+  "category": "uav-strike",
+  "representative_system": "Switchblade 300 — Loitering munition (man-portable)",
+  "icon_image": "/icons/switchblade-300.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": 38000,
+    "display": "Donated (unit cost historically cited around $6,000-70,000 depending on generation/source)",
+    "confidence": "estimated"
+  },
+  "key_facts": [
+    {
+      "label": "Spec",
+      "value": "Backpack-portable"
+    },
+    {
+      "label": "Warhead",
+      "value": "short-range, small anti-personnel/light-vehicle warhead"
+    },
+    {
+      "label": "Endurance",
+      "value": "~15min flight time class"
+    }
+  ],
+  "short_role": "Loitering munition (man-portable)",
+  "characteristics": [
+    "Backpack-portable",
+    "short-range, small anti-personnel/light-vehicle warhead",
+    "~15min flight time class",
+    "Strength: Man-portable at squad/platoon level, giving small units organic precision strike without waiting for a supporting asset",
+    "Limitation: Very short range and endurance compared to larger loitering munitions like Lancet",
+    "Estimated quantity available: Delivered in the low thousands across multiple aid packages; exact current total not disclosed"
+  ],
+  "employment_notes": "Represents the U.S. donation of loitering munitions specifically to push precision-strike capability down to the smallest tactical units",
+  "contrast_vs_traditional": "A man-portable loitering munition puts precision-strike capability traditionally reserved for artillery or air support directly in an infantry squad's hands — the doctrine.md finding that kill chains are now distributed down to squad level rather than concentrated at higher HQ, made literal as a piece of individual-unit equipment.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — Switchblade (missile)",
+      "url": "https://en.wikipedia.org/wiki/Switchblade_(missile)"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "sourced_low_confidence",
+    "independent_sources": 1,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Rests only on tertiary reference works; wants a primary or trade source."
+    ]
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "id": "side_b-armor-t-90m-proryv",
+  "name": "T-90M 'Proryv'",
+  "side": "side_b",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "armor",
+  "distance_km_from_zero": 3,
+  "operating_range_km": null,
+  "band_id": "tactical",
+  "category": "armor-main-battle-tank",
+  "representative_system": "T-90M 'Proryv' — Main battle tank",
+  "icon_image": "/icons/t-90m-proryv.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": 4500000,
+    "display": "~$4.5M per unit (destroyed-unit valuation reported by Euromaidan Press)",
+    "confidence": "estimated"
+  },
+  "key_facts": [
+    {
+      "label": "Main armament",
+      "value": "125mm smoothbore + Relikt ERA + Shtora-1 soft-kill APS"
+    },
+    {
+      "label": "Spec",
+      "value": "combines T-72 chassis with upgraded T-80-derived turret systems"
+    },
+    {
+      "label": "Spec 3",
+      "value": "See characteristics"
+    }
+  ],
+  "short_role": "Main battle tank",
+  "characteristics": [
+    "125mm smoothbore + Relikt ERA + Shtora-1 soft-kill APS",
+    "combines T-72 chassis with upgraded T-80-derived turret systems",
+    "Strength: Russia's most modern tank actually fielded at scale (T-14 Armata is not); improved crew protection over base T-72/T-90",
+    "Limitation: Only ~67 in active service at war's start — by Dec 2024 open-source tracking (Oryx) had already confirmed 100 losses, i.e. more losses than the starting fleet, meaning most in service now are wartime production",
+    "Estimated quantity available: ~200 in active service by late 2025 per Janes reporting (grown from ~50 in 2022 via wartime production, ~150-250/yr claimed production rate)"
+  ],
+  "employment_notes": "Billed by Russian officials as 'the best tank in the world' pre-war; loss count exceeding starting inventory is one of the starkest illustrations of attrition-vs-modernization tension in this war",
+  "contrast_vs_traditional": "Russia's most modern fielded MBT still gets photographed with welded-on \"cope cage\" slat armor over the turret — an improvised, crew-level answer to top-attack drone strikes that the factory-armor doctrine behind the T-90M never accounted for. It is a concrete illustration of the doctrine.md finding that FPV saturation, not frontal armor class, now sets survivability at the front.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Army Recognition — T-90M production ramp-up",
+      "url": "https://armyrecognition.com/news/army-news/2025/alert-russia-increases-production-of-most-modern-t-90m-tank-to-300-yearly-with-target-of-1-000-by-2028"
+    },
+    {
+      "label": "GlobalSecurity.org — T-90M Proryv-3",
+      "url": "https://www.globalsecurity.org/military/world/russia/t-90m-proryv-3.htm"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Specs meet the bar but the unit cost is an estimate — cost is not verified."
+    ]
+  }
+}

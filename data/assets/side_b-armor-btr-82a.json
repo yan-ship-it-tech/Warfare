@@ -1,0 +1,61 @@
+{
+  "id": "side_b-armor-btr-82a",
+  "name": "BTR-82A",
+  "side": "side_b",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "armor",
+  "distance_km_from_zero": 7,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "armor-apc",
+  "representative_system": "BTR-82A — Wheeled armored personnel carrier",
+  "icon_image": "/icons/btr-82a.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "No clean current unit price; 5,000+ units produced historically",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Main armament",
+      "value": "2A72 30mm autocannon (upgraded from BTR-80's machine-gun-only armament), 8x8 wheeled, amphibious"
+    },
+    {
+      "label": "Spec 2",
+      "value": "See characteristics"
+    },
+    {
+      "label": "Spec 3",
+      "value": "See characteristics"
+    }
+  ],
+  "short_role": "Wheeled armored personnel carrier",
+  "characteristics": [
+    "2A72 30mm autocannon (upgraded from BTR-80's machine-gun-only armament), 8x8 wheeled, amphibious",
+    "Strength: Autocannon upgrade over the older BTR-80 gives real direct-fire capability rather than just troop transport",
+    "Limitation: Wheeled platform less capable off-road than tracked IFVs; thin armor typical of the BTR family",
+    "Estimated quantity available: Widely fielded; exact current total not fully disclosed"
+  ],
+  "employment_notes": "Represents the modernization pathway Russia used to upgrade its large legacy BTR-80 fleet incrementally rather than replace it outright",
+  "contrast_vs_traditional": "Wheeled APC doctrine like the BTR-82A's traded protection for road-speed troop transport behind the line. That tradeoff assumed the route itself was relatively safe once past the immediate front — an assumption the drone-dense corridor doctrine.md documents running roughly 30 km either side of the line has quietly erased for wheeled movement well behind what used to count as the forward edge.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Army Technology — BTR-82A Armoured Personnel Carrier",
+      "url": "https://www.army-technology.com/projects/btr-82a-armoured-personnel-carrier/"
+    },
+    {
+      "label": "Army Recognition — BTR-82A / BTR-82AM technical data",
+      "url": "https://www.armyrecognition.com/military-products/army/armoured-personnel-carriers/wheeled-vehicles/btr-82a-russia-uk"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

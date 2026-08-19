@@ -1,0 +1,65 @@
+{
+  "id": "side_a-artillery-m109-paladin",
+  "name": "M109 Paladin",
+  "side": "side_a",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "artillery",
+  "distance_km_from_zero": 16,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "artillery-self-propelled",
+  "representative_system": "M109 Paladin — Self-propelled artillery (tracked)",
+  "icon_image": "/icons/m109-paladin.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Donated (no unit price disclosed)",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Spec",
+      "value": "34 rounds onboard"
+    },
+    {
+      "label": "Range",
+      "value": "range up to 50km with guided projectile, 18km conventional"
+    },
+    {
+      "label": "Rate of fire",
+      "value": "~10 rounds/min"
+    }
+  ],
+  "short_role": "Self-propelled artillery (tracked)",
+  "characteristics": [
+    "34 rounds onboard",
+    "range up to 50km with guided projectile, 18km conventional",
+    "~10 rounds/min",
+    "24-31t",
+    "6-person crew",
+    "Strength: Widely available across NATO stockpiles, giving a large parts/ammunition supply base",
+    "Limitation: Lighter armor and shorter baseline range than PzH2000; older chassis design",
+    "Estimated quantity available: Delivered in significant numbers across multiple donor nations"
+  ],
+  "employment_notes": "One of the most numerous donated SPG types by simple availability across many donor nations' surplus stocks",
+  "contrast_vs_traditional": "Older than Caesar or PzH 2000 and correspondingly slower to displace, the Paladin illustrates the same doctrine.md pressure from the other side: legacy self-propelled guns built around Cold War-era counter-battery timelines are simply less matched to a fight where the response to a firing signature can arrive in minutes rather than the tens of minutes those platforms were designed to tolerate.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "GlobalMilitary.net — M109 Paladin specifications",
+      "url": "https://www.globalmilitary.net/vehicles/m109/"
+    },
+    {
+      "label": "Army Recognition — M109A6 Paladin key to Ukraine's artillery",
+      "url": "https://www.armyrecognition.com/focus-analysis-conflicts/army/conflicts-in-the-world/russia-ukraine-war-2022/analysis-us-m109a6-paladin-155mm-howitzer-key-to-ukraines-artillery-superiority-in-the-fight-against-russia"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

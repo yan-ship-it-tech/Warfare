@@ -1,0 +1,62 @@
+{
+  "id": "side_b-artillery-2s7-pion-malka",
+  "name": "2S7 Pion / Malka",
+  "side": "side_b",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "artillery",
+  "distance_km_from_zero": 12,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "artillery-self-propelled",
+  "representative_system": "2S7 Pion / Malka — Self-propelled artillery (heavy, tracked)",
+  "icon_image": "/icons/2s7-pion-malka.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "No current market price; Soviet-era design",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Spec",
+      "value": "203mm howitzer - the largest-caliber SPG in wide use in this war"
+    },
+    {
+      "label": "Spec 2",
+      "value": "tracked chassis"
+    },
+    {
+      "label": "Spec 3",
+      "value": "See characteristics"
+    }
+  ],
+  "short_role": "Self-propelled artillery (heavy, tracked)",
+  "characteristics": [
+    "203mm howitzer - the largest-caliber SPG in wide use in this war",
+    "tracked chassis",
+    "Strength: Extreme range and shell weight compared to standard 152mm/155mm systems",
+    "Limitation: Very heavy and slow to reposition; 203mm ammunition is far less abundant than standard 152mm stock",
+    "Estimated quantity available: Reserve stock reactivation; exact fielded total not disclosed"
+  ],
+  "employment_notes": "A Cold War heavy-artillery type reactivated from reserve stock due to wartime attrition of more modern systems - fits the same 'reactivated Soviet-era equipment' pattern documented for Russian tanks",
+  "contrast_vs_traditional": "The Pion/Malka's 203mm gun was built for Cold War-scale mass artillery duels at extreme range, when a gun this large mattered more for its throw weight than its footprint. Its size is now closer to a liability than an asset — concealment and rapid displacement, the traits that matter most under persistent drone observation, are exactly what a vehicle this large struggles to do well.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — 2S7 Pion",
+      "url": "https://en.wikipedia.org/wiki/2S7_Pion"
+    },
+    {
+      "label": "Military Factory — 2S7 Pion/Malka 203mm SPH",
+      "url": "https://www.militaryfactory.com/armor/detail.php?armor_id=143"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

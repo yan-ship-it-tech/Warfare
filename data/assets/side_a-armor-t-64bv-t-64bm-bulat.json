@@ -1,0 +1,63 @@
+{
+  "id": "side_a-armor-t-64bv-t-64bm-bulat",
+  "name": "T-64BV / T-64BM Bulat",
+  "side": "side_a",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "armor",
+  "distance_km_from_zero": 3,
+  "operating_range_km": null,
+  "band_id": "tactical",
+  "category": "armor-main-battle-tank",
+  "representative_system": "T-64BV / T-64BM Bulat — Main battle tank (Soviet-legacy, Ukrainian-upgraded)",
+  "icon_image": "/icons/t-64bv-t-64bm-bulat.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Legacy Soviet stock, not purchased; Bulat upgrade program cost not publicly itemized per unit",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Main armament",
+      "value": "125mm smoothbore, autoloader"
+    },
+    {
+      "label": "Protection",
+      "value": "T-64BM Bulat adds Ukrainian Nozh ERA and improved optics"
+    },
+    {
+      "label": "Weight",
+      "value": "~45t (Bulat)"
+    }
+  ],
+  "short_role": "Main battle tank (Soviet-legacy, Ukrainian-upgraded)",
+  "characteristics": [
+    "125mm smoothbore, autoloader",
+    "T-64BM Bulat adds Ukrainian Nozh ERA and improved optics",
+    "~45t (Bulat)",
+    "Strength: Most numerous pre-war Ukrainian MBT; crews highly experienced on the type; fast autoloader",
+    "Limitation: Fleet is irreplaceable — no foreign source for more T-64s once lost, unlike T-72/T-80 which allies also operate; underpowered engine for added ERA weight",
+    "Estimated quantity available: ~250-300 T-64BV/BM estimated remaining as of early 2023 reporting; further attrition since"
+  ],
+  "employment_notes": "Ukraine went to war with ~800 T-64s; roughly half lost within the first year; increasingly used as static/indirect fire platforms as the fleet depletes, since losses can't be replaced from abroad",
+  "contrast_vs_traditional": "Cold War Soviet armor doctrine massed T-64s in echelon for a breakthrough, with losses expected but absorbed by numbers. Ukraine is fighting with the same airframes that doctrine assumed would be replaced from a Soviet-scale production line that no longer exists, so each Bulat upgrade is a bet on keeping a 1960s-era hull survivable against a threat — top-attack FPVs — its designers never modeled, rather than a step toward a successor design.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "GlobalSecurity.org — T-64BM Bulat design",
+      "url": "https://www.globalsecurity.org/military/world/ukraine/t-64bm-design.htm"
+    },
+    {
+      "label": "Army Recognition — T-64BM Bulat technical data",
+      "url": "https://www.armyrecognition.com/military-products/army/main-battle-tanks/main-battle-tanks/t-64bm-bulat-ukraine-uk"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

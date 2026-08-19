@@ -1,0 +1,65 @@
+{
+  "id": "side_a-armor-m1a1-abrams",
+  "name": "M1A1 Abrams",
+  "side": "side_a",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "armor",
+  "distance_km_from_zero": 4,
+  "operating_range_km": null,
+  "band_id": "tactical",
+  "category": "armor-main-battle-tank",
+  "representative_system": "M1A1 Abrams — Main battle tank",
+  "icon_image": "/icons/m1a1-abrams.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": 5000000,
+    "display": "Donated (US export/refurb cost historically ~$4-6M per unit class for M1A1 variants)",
+    "confidence": "estimated"
+  },
+  "key_facts": [
+    {
+      "label": "Main armament",
+      "value": "120mm smoothbore gun (NATO-standard, shared with Leopard 2)"
+    },
+    {
+      "label": "Engine",
+      "value": "gas turbine engine"
+    },
+    {
+      "label": "Protection",
+      "value": "~2A4-era Abrams standard, not latest M1A2 SEPv3"
+    }
+  ],
+  "short_role": "Main battle tank",
+  "characteristics": [
+    "120mm smoothbore gun (NATO-standard, shared with Leopard 2)",
+    "gas turbine engine",
+    "~2A4-era Abrams standard, not latest M1A2 SEPv3",
+    "Strength: Same ammo family as Leopard 2 simplifies logistics; strong frontal armor",
+    "Limitation: Gas turbine is fuel-hungry and maintenance-intensive; the variant sent is an older M1A1 standard, not the newest US configuration",
+    "Estimated quantity available: 31 delivered"
+  ],
+  "employment_notes": "31 delivered (2023); used sparingly and reportedly withdrawn from frontline use at points due to drone vulnerability — illustrates the broader 'any MBT is a target' finding rather than being Abrams-specific",
+  "contrast_vs_traditional": "Abrams doctrine assumed a resupply chain moving fuel and ammunition behind the front under a friendly air umbrella — a fair assumption for a gas-turbine tank that burns through fuel fast. Persistent drone ISR turns that same resupply route into the most-watched terrain in the sector, so keeping an Abrams fighting now depends on a logistics tail that can dodge exactly the kind of standoff observation the tank itself was never built to out-drive.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "National Security Journal — Ukraine's M1A1 Abrams fleet",
+      "url": "https://nationalsecurityjournal.org/ukraine-has-49-new-m1a1-abrams-tanks-and-america-isnt-happy-one-bit/"
+    },
+    {
+      "label": "GlobalMilitary.net — M1A1 Abrams specifications",
+      "url": "https://www.globalmilitary.net/vehicles/m1-a1-abrams/"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Specs meet the bar but the unit cost is an estimate — cost is not verified."
+    ]
+  }
+}

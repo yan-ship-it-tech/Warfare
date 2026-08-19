@@ -1,0 +1,64 @@
+{
+  "id": "side_a-uav-aq-400-scythe",
+  "name": "AQ-400 Scythe",
+  "side": "side_a",
+  "domain": "air",
+  "echelon": "strategic",
+  "group": "uav",
+  "distance_km_from_zero": 375,
+  "operating_range_km": null,
+  "band_id": "strategic_rear",
+  "category": "uav-strike-deep",
+  "representative_system": "AQ-400 Scythe — One-way attack drone (deep strike, volunteer-developed)",
+  "icon_image": "/icons/aq-400-scythe.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Not publicly disclosed; deliberately low-cost design philosophy",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Spec",
+      "value": "Crude box-like fuselage, tandem wings"
+    },
+    {
+      "label": "Range",
+      "value": "range 750km"
+    },
+    {
+      "label": "Payload",
+      "value": "payload 32kg (up to ~70kg with reduced range)"
+    }
+  ],
+  "short_role": "One-way attack drone (deep strike, volunteer-developed)",
+  "characteristics": [
+    "Crude box-like fuselage, tandem wings",
+    "range 750km",
+    "payload 32kg (up to ~70kg with reduced range)",
+    "undercarriage replaceable with dolly/launch rail",
+    "Strength: Deliberately optimized for cheap, fast production (Terminal Autonomy volunteer project) rather than aerodynamic refinement - trades some performance for producibility and cost",
+    "Limitation: Shorter range than some competitors (Beaver, Zozulia) though with a heavier payload option",
+    "Estimated quantity available: In serial production; exact numbers not disclosed"
+  ],
+  "employment_notes": "A volunteer-originated project that reached serial production - a direct example of the decentralized, bottom-up defense-industry pattern (mirrored by Lithuania's VytisTech/Ukraine's Brave1 model) rather than top-down state design",
+  "contrast_vs_traditional": "Volunteer-developed rather than centrally programmed, Scythe is another instance of the doctrine.md force-structure finding that procurement for this class of system is often decentralized — a deep-strike capability fielded because a unit or developer built one, not because a traditional acquisition process specified and funded it.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — Terminal Autonomy AQ-400 Scythe",
+      "url": "https://en.wikipedia.org/wiki/Terminal_Autonomy_AQ-400_Scythe"
+    },
+    {
+      "label": "Militarnyi — Ukrainian military received AQ-400 Scythe UAVs",
+      "url": "https://militarnyi.com/en/news/the-ukrainian-military-received-aq-400-scythe-long-range-unmanned-aerial-vehicles/"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

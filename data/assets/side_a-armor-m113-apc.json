@@ -1,0 +1,63 @@
+{
+  "id": "side_a-armor-m113-apc",
+  "name": "M113 APC",
+  "side": "side_a",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "armor",
+  "distance_km_from_zero": 6,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "armor-apc",
+  "representative_system": "M113 APC — Tracked armored personnel carrier",
+  "icon_image": "/icons/m113-apc.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Donated (no unit price disclosed)",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Spec",
+      "value": "12.7mm MG, ammo 2,000 rounds"
+    },
+    {
+      "label": "Spec 2",
+      "value": "11 dismounts"
+    },
+    {
+      "label": "Range",
+      "value": "amphibious on early models (5-7km/h in water)"
+    }
+  ],
+  "short_role": "Tracked armored personnel carrier",
+  "characteristics": [
+    "12.7mm MG, ammo 2,000 rounds",
+    "11 dismounts",
+    "amphibious on early models (5-7km/h in water)",
+    "Strength: Simple, extremely widely produced design with a huge global logistics/parts base",
+    "Limitation: 1960s-era design, minimal armor by modern standards, primarily a battlefield taxi rather than a fighting vehicle",
+    "Estimated quantity available: Donated in significant numbers across multiple donor nations; exact total not fully disclosed"
+  ],
+  "employment_notes": "Represents the largest single category of Western-donated tracked vehicles by volume, used to move infantry and casualties rather than fight from",
+  "contrast_vs_traditional": "A Vietnam-era design still in front-line use isn't a survivability story — it's an attrition-economics one. On a battlefield where the doctrine.md figure puts 60–70% of equipment losses on drones rather than direct fire, a simple, numerous, cheaply replaceable carrier is arguably better matched to the loss rate than a more exquisite platform would be, which is not the reasoning that put it in service originally.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Militarnyi — M113: NATO's 'workhorse' in the Defense Forces of Ukraine",
+      "url": "https://militarnyi.com/en/articles/m113-nato-s-workhorse-in-defense-forces-of-ukraine/"
+    },
+    {
+      "label": "GlobalSecurity.org — M113 in Ukrainian service",
+      "url": "https://www.globalsecurity.org/military/world//ukraine/ua-m113.htm"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

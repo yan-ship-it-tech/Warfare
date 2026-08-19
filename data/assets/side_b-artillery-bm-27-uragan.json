@@ -1,0 +1,61 @@
+{
+  "id": "side_b-artillery-bm-27-uragan",
+  "name": "BM-27 Uragan",
+  "side": "side_b",
+  "domain": "land",
+  "echelon": "operational",
+  "group": "artillery",
+  "distance_km_from_zero": 15,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "artillery-rocket",
+  "representative_system": "BM-27 Uragan — Multiple launch rocket system (unguided, long-range)",
+  "icon_image": "/icons/bm-27-uragan.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "No current market price; Soviet-era design",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Range",
+      "value": "16-tube 220mm unguided rocket launcher, longer range than BM-21 Grad"
+    },
+    {
+      "label": "Spec 2",
+      "value": "See characteristics"
+    },
+    {
+      "label": "Spec 3",
+      "value": "See characteristics"
+    }
+  ],
+  "short_role": "Multiple launch rocket system (unguided, long-range)",
+  "characteristics": [
+    "16-tube 220mm unguided rocket launcher, longer range than BM-21 Grad",
+    "Strength: Longer reach than Grad while retaining the simplicity/cost advantage of unguided rockets",
+    "Limitation: Still unguided, so accuracy is far below Ukraine's guided MLRS types at comparable range",
+    "Estimated quantity available: Fleet size not fully disclosed"
+  ],
+  "employment_notes": "Fills the mid-range gap between the short-range Grad and Russia's very long-range Smerch/Tornado systems",
+  "contrast_vs_traditional": "Uragan fires unguided rockets in a saturating barrage — pure mass-artillery-era doctrine, largely unchanged from its original design intent. It's a useful reminder that not every system on this battlefield has modernized at the same pace: cheap volume fire against an area target still has a role even as the doctrine.md throughline elsewhere is precision, ISR-cued, minutes-scale strikes.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — BM-27 Uragan",
+      "url": "https://en.wikipedia.org/wiki/BM-27_Uragan"
+    },
+    {
+      "label": "Army Technology — Uragan 9K57 MLRS",
+      "url": "https://www.army-technology.com/projects/uragan/"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "id": "side_b-air-defense-s-400-triumf",
+  "name": "S-400 'Triumf'",
+  "side": "side_b",
+  "domain": "air",
+  "echelon": "operational",
+  "group": "air_defense",
+  "distance_km_from_zero": 42,
+  "operating_range_km": null,
+  "band_id": "op_deep",
+  "category": "air-defense-long-range",
+  "representative_system": "S-400 'Triumf' — Long-range SAM / ABM",
+  "icon_image": "/icons/s-400-triumf.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": 500000000,
+    "display": "~$500M domestic / $1-1.25B export per battery incl. reserve missiles (2021 figures)",
+    "confidence": "estimated"
+  },
+  "key_facts": [
+    {
+      "label": "Range",
+      "value": "Multi-missile system: ranges from 40km (9M96) up to 400km (40N6E)"
+    },
+    {
+      "label": "Spec",
+      "value": "engages aircraft, cruise and ballistic missiles"
+    },
+    {
+      "label": "Spec 3",
+      "value": "See characteristics"
+    }
+  ],
+  "short_role": "Long-range SAM / ABM",
+  "characteristics": [
+    "Multi-missile system: ranges from 40km (9M96) up to 400km (40N6E)",
+    "engages aircraft, cruise and ballistic missiles",
+    "Strength: Longest engagement envelope of any system in this catalog; integrates with Buk/Pantsir into a single layered network",
+    "Limitation: Extremely expensive per battery; primarily a homeland/rear-area asset rather than something used far forward near the line",
+    "Estimated quantity available: Estimated 50-60+ battalions in Russian service pre-war (exact current operational count not fully disclosed)"
+  ],
+  "employment_notes": "Anchors Russia's own multi-layer IADS (integrated air defense system) — the same layered logic (long/medium/short + hard-kill/soft-kill) both sides converge on independently, worth pairing with Ukraine's Patriot/NASAMS/IRIS-T/Gepard stack as a direct comparison",
+  "contrast_vs_traditional": "S-400 doctrine was built to deny an opposing air force freedom of maneuver at long range against manned aircraft and ballistic threats — a genuinely different problem from the thousands of small, cheap drones now also filling the sky, many flying below or beneath the economic threshold a system this expensive was ever meant to engage. That gap is exactly why a short-range layer like Tor-M2 sits underneath it doing the day-to-day work, not because the long-range system failed at its actual job.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "GlobalSecurity.org — S-400 Triumf / SA-21 Growler",
+      "url": "https://www.globalsecurity.org/military/world/russia/s-400.htm"
+    },
+    {
+      "label": "CSIS Missile Threat — S-400 Triumf",
+      "url": "https://missilethreat.csis.org/defsys/s-400-triumf/"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Specs meet the bar but the unit cost is an estimate — cost is not verified."
+    ]
+  }
+}

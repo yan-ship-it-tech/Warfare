@@ -1,0 +1,61 @@
+{
+  "id": "side_b-artillery-tos-1a",
+  "name": "TOS-1A",
+  "side": "side_b",
+  "domain": "land",
+  "echelon": "operational",
+  "group": "artillery",
+  "distance_km_from_zero": 21,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "artillery-rocket",
+  "representative_system": "TOS-1A — Heavy flamethrower / thermobaric MLRS",
+  "icon_image": "/icons/tos-1a.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "No current market price; Soviet/Russian design",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Range",
+      "value": "24-tube 220mm thermobaric rocket launcher, built on a T-72 chassis, short range (~6-10km class)"
+    },
+    {
+      "label": "Spec 2",
+      "value": "See characteristics"
+    },
+    {
+      "label": "Spec 3",
+      "value": "See characteristics"
+    }
+  ],
+  "short_role": "Heavy flamethrower / thermobaric MLRS",
+  "characteristics": [
+    "24-tube 220mm thermobaric rocket launcher, built on a T-72 chassis, short range (~6-10km class)",
+    "Strength: Thermobaric warheads are especially effective against fortified positions and trench networks",
+    "Limitation: Very short range compared to standard MLRS, forcing it close to the line where it is a high-value target if located",
+    "Estimated quantity available: Fleet size not fully disclosed"
+  ],
+  "employment_notes": "Used specifically against dug-in infantry and fortified positions - a direct counter to the trench/fortification-heavy defensive style both sides have adopted",
+  "contrast_vs_traditional": "Thermobaric rocket fire exists to defeat exactly the passive countermeasures doctrine.md documents infantry adopting against everything else on this battlefield — trench side-niches, \"G\"-shaped dugout exits, dispersed fighting positions built to survive an FPV or a single artillery round. A short-range weapon built for mass and blast overpressure is one of the few tools that still punches through a fortified position rather than having to pick it apart target by target.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — TOS-1",
+      "url": "https://en.wikipedia.org/wiki/TOS-1"
+    },
+    {
+      "label": "GlobalSecurity.org — TOS-1A Solntsepek",
+      "url": "https://www.globalsecurity.org/military/world/russia/tos-1a.htm"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

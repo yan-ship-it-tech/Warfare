@@ -1,0 +1,65 @@
+{
+  "id": "side_b-armor-t-14-armata",
+  "name": "T-14 Armata",
+  "side": "side_b",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "armor",
+  "distance_km_from_zero": 4,
+  "operating_range_km": null,
+  "band_id": "tactical",
+  "category": "armor-main-battle-tank",
+  "representative_system": "T-14 Armata — Main battle tank (next-generation, limited fielding)",
+  "icon_image": "/icons/t-14-armata.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": 3500000,
+    "display": "Not publicly disclosed; unofficial estimates run well above $3-4M given low-rate production",
+    "confidence": "estimated"
+  },
+  "key_facts": [
+    {
+      "label": "Crew",
+      "value": "Unmanned turret (crew in armored capsule in hull)"
+    },
+    {
+      "label": "Main armament",
+      "value": "125mm gun with autoloader"
+    },
+    {
+      "label": "Spec",
+      "value": "designed-in modularity for future upgrades"
+    }
+  ],
+  "short_role": "Main battle tank (next-generation, limited fielding)",
+  "characteristics": [
+    "Unmanned turret (crew in armored capsule in hull)",
+    "125mm gun with autoloader",
+    "designed-in modularity for future upgrades",
+    "Strength: On paper, the most advanced Russian tank design; crew survivability concept (isolated capsule) is a genuine design advance",
+    "Limitation: Effectively absent from combat use in Ukraine as of available reporting; serial production reportedly minimal to non-existent; not risked in-theater, reportedly due to reputational cost of a combat loss",
+    "Estimated quantity available: ~20 units reported to exist; effectively none confirmed deployed to Ukraine"
+  ],
+  "employment_notes": "The clearest case in this catalog of a system that exists mainly in announcements rather than combat use — worth including specifically as a contrast to the T-90M/T-80BVM/T-72B3 entries, which are all combat-proven at scale",
+  "contrast_vs_traditional": "Armata was designed to lead armored spearheads with an unmanned turret and active protection against guided munitions. Reporting on its combat record shows the opposite has happened — it has been kept mostly out of front-line engagement rather than leading assaults — which is itself evidence for the doctrine.md finding that exquisite, expensive platforms are the ones a drone-saturated front makes hardest to risk, not the ones best suited to dominate it.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — T-14 Armata",
+      "url": "https://en.wikipedia.org/wiki/T-14_Armata"
+    },
+    {
+      "label": "Army Technology — T-14 Armata Main Battle Tank",
+      "url": "https://www.army-technology.com/projects/t-14-armata-main-battle-tank/"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Specs meet the bar but the unit cost is an estimate — cost is not verified."
+    ]
+  }
+}

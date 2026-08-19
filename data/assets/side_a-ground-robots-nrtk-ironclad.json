@@ -1,0 +1,66 @@
+{
+  "id": "side_a-ground-robots-nrtk-ironclad",
+  "name": "NRTK Ironclad",
+  "side": "side_a",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "ground_robots",
+  "distance_km_from_zero": 2,
+  "operating_range_km": null,
+  "band_id": "tactical",
+  "category": "ground-robot-combat",
+  "representative_system": "NRTK Ironclad — Ground robot (fire support)",
+  "icon_image": "/icons/nrtk-ironclad.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Domestic production, unit cost not publicly disclosed",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Range",
+      "value": "12.7mm Browning MG (1,000 rounds, range up to 2,000m)"
+    },
+    {
+      "label": "Spec",
+      "value": "load capacity 350kg"
+    },
+    {
+      "label": "Spec 3",
+      "value": "range 5km direct/10km with repeater/20km via fiber-optic"
+    }
+  ],
+  "short_role": "Ground robot (fire support)",
+  "characteristics": [
+    "12.7mm Browning MG (1,000 rounds, range up to 2,000m)",
+    "load capacity 350kg",
+    "range 5km direct/10km with repeater/20km via fiber-optic",
+    "up to 20km/h",
+    "hybrid engine",
+    "1,950kg",
+    "Strength: Bulletproof armor and modular combat payload options; fiber-optic control option is immune to RF jamming",
+    "Limitation: Wheeled platform's cross-country mobility is more limited than tracked combat UGVs",
+    "Estimated quantity available: Fielded numbers not publicly disclosed"
+  ],
+  "employment_notes": "Provides direct fire support from a remote position, letting infantry suppress enemy positions without exposing personnel - a concrete example of casualty-reduction through robotics",
+  "contrast_vs_traditional": "Traditional infantry assault doctrine puts soldiers first through the most dangerous seconds of a breach or a fortified approach. A remotely operated fire-support ground robot exists to put a machine into exactly that moment instead of a person — a direct answer to the doctrine.md finding that FPV and mine density have made close assault the highest-casualty phase of an engagement.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Euromaidan Press — Ironclad wheeled combat robot",
+      "url": "https://euromaidanpress.com/2024/01/13/ironclad-ukrainian-wheeled-combat-robot-destroys-russian-positions/"
+    },
+    {
+      "label": "Army Recognition — Ukraine to deploy articulated Ironclad UGV",
+      "url": "https://armyrecognition.com/focus-analysis-conflicts/army/conflicts-in-the-world/russia-ukraine-war-2022/ukraine-to-deploy-articulated-ironclad-ugv-in-combat-operations"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

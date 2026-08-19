@@ -1,0 +1,64 @@
+{
+  "id": "side_a-artillery-caesar-155mm-self-propelled-gun",
+  "name": "Caesar 155mm Self-Propelled Gun",
+  "side": "side_a",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "artillery",
+  "distance_km_from_zero": 14,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "artillery-self-propelled",
+  "representative_system": "Caesar 155mm Self-Propelled Gun — Self-propelled artillery (wheeled)",
+  "icon_image": "/icons/caesar-155mm-self-propelled-gun.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Donated (no unit price disclosed)",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Spec",
+      "value": "6x6 wheeled chassis"
+    },
+    {
+      "label": "Range",
+      "value": "range ~30-42km depending on round"
+    },
+    {
+      "label": "Engine",
+      "value": "~1,000hp"
+    }
+  ],
+  "short_role": "Self-propelled artillery (wheeled)",
+  "characteristics": [
+    "6x6 wheeled chassis",
+    "range ~30-42km depending on round",
+    "~1,000hp",
+    "5-person crew",
+    "Strength: Wheeled chassis gives much faster road displacement than tracked SPGs, valuable for shoot-and-scoot tactics",
+    "Limitation: Lighter armor protection than tracked SPGs like PzH2000; wheeled mobility is worse off-road than tracked",
+    "Estimated quantity available: Dozens delivered across multiple donation tranches"
+  ],
+  "employment_notes": "French-donated system that became one of Ukraine's most publicized artillery types; wheeled design specifically suits the rapid-displacement doctrine forced by drone-cued counter-battery fire",
+  "contrast_vs_traditional": "Traditional artillery doctrine sited guns for sustained fire missions from a fixed position, trading exposure for volume of fire. Modern counter-battery radar and persistent drone spotting make dwell time itself the vulnerability, which is exactly what Caesar's wheeled \"shoot and scoot\" design answers — firing and displacing in under a minute is a direct doctrinal response to the kill chain doctrine.md describes collapsing to single-digit minutes, not a convenience feature.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — CAESAR self-propelled howitzer",
+      "url": "https://en.wikipedia.org/wiki/CAESAR_self-propelled_howitzer"
+    },
+    {
+      "label": "Army Recognition — CAESAR howitzers in Ukraine",
+      "url": "https://www.armyrecognition.com/focus-analysis-conflicts/army/conflicts-in-the-world/russia-ukraine-war-2022/french-caesar-155mm-howitzers-in-ukraine-considered-a-nightmare-for-russian-forces"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

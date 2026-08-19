@@ -1,0 +1,62 @@
+{
+  "id": "side_a-uav-punisher",
+  "name": "Punisher",
+  "side": "side_a",
+  "domain": "air",
+  "echelon": "tactical",
+  "group": "uav",
+  "distance_km_from_zero": 6,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "uav-strike",
+  "representative_system": "Punisher — Strike UAV (domestic)",
+  "icon_image": "/icons/punisher.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Domestic production, unit cost not publicly disclosed",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Protection",
+      "value": "Fixed-wing, operates in a hunter-killer pair with a separate Spectre reconnaissance drone"
+    },
+    {
+      "label": "Spec 2",
+      "value": "night operations capable"
+    },
+    {
+      "label": "Spec 3",
+      "value": "See characteristics"
+    }
+  ],
+  "short_role": "Strike UAV (domestic)",
+  "characteristics": [
+    "Fixed-wing, operates in a hunter-killer pair with a separate Spectre reconnaissance drone",
+    "night operations capable",
+    "Strength: Domestic design paired specifically with its own reconnaissance drone for a purpose-built kill chain, rather than relying on ad hoc pairing",
+    "Limitation: Less publicly documented performance data than Western-donated or more famous domestic systems like Bayraktar",
+    "Estimated quantity available: Fielded numbers not publicly disclosed"
+  ],
+  "employment_notes": "An early and influential domestic hunter-killer pairing concept that prefigured the reconnaissance-strike drone pairing pattern now standard across the war",
+  "contrast_vs_traditional": "A domestically developed strike UAV built specifically for Ukraine's own operating pattern reflects the doctrine.md force-structure point about decentralized procurement: units and volunteer developers are fielding purpose-built strike drones on their own timeline rather than waiting on a centralized program to specify and procure one, the same bottom-up pattern documented for EW gear.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Military Factory — UA Dynamics Punisher reusable attack drone",
+      "url": "https://www.militaryfactory.com/aircraft/detail.php?aircraft_id=2494"
+    },
+    {
+      "label": "UkraineWorld — The Punisher: an impressive drone produced in Ukraine",
+      "url": "https://ukraineworld.org/en/articles/analysis/punisher-drone-ukraine"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

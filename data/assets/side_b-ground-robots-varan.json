@@ -1,0 +1,58 @@
+{
+  "id": "side_b-ground-robots-varan",
+  "name": "Varan",
+  "side": "side_b",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "ground_robots",
+  "distance_km_from_zero": 3,
+  "operating_range_km": null,
+  "band_id": "tactical",
+  "category": "ground-robot-multipurpose",
+  "representative_system": "Varan — Ground robot (tracked, modular, combat-capable)",
+  "icon_image": "/icons/varan.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Not publicly disclosed",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Spec",
+      "value": "Tracked"
+    },
+    {
+      "label": "Engine",
+      "value": "modular mission equipment including reconnaissance, EW, engineering, and weapons from machine guns to ATGMs (Kornet demonstrated)"
+    },
+    {
+      "label": "Spec 3",
+      "value": "See characteristics"
+    }
+  ],
+  "short_role": "Ground robot (tracked, modular, combat-capable)",
+  "characteristics": [
+    "Tracked",
+    "modular mission equipment including reconnaissance, EW, engineering, and weapons from machine guns to ATGMs (Kornet demonstrated)",
+    "Strength: Heavier and more modular than smaller logistics-focused UGVs like Kurier or Omich-2; single chassis can be reconfigured as transport, engineering, or combat vehicle",
+    "Limitation: As with most Russian combat-capable UGVs, actual battlefield deployment record is thinner than its demonstrated capability set",
+    "Estimated quantity available: Fielded numbers not disclosed"
+  ],
+  "employment_notes": "Represents the higher end of Russia's push toward a single modular chassis serving multiple roles rather than building separate dedicated platforms - the same philosophy as the Impuls family",
+  "contrast_vs_traditional": "A modular tracked UGV capable of combat roles extends the same logic Uran-9 and the Ukrainian combat robots share: traditional doctrine assumed a crewed vehicle for direct-fire engagement, and a front where drone strikes and mines account for most losses gives every incentive to field an unmanned substitute wherever the mission allows it.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Militarnyi — Russian unmanned ground vehicles deployed against Ukraine",
+      "url": "https://militarnyi.com/en/articles/russian-unmanned-ground-vehicles-deployed-in-the-war-against-ukraine/"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "sourced_low_confidence",
+    "independent_sources": 1,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "id": "side_a-air-defense-nasams",
+  "name": "NASAMS",
+  "side": "side_a",
+  "domain": "air",
+  "echelon": "operational",
+  "group": "air_defense",
+  "distance_km_from_zero": 19,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "air-defense-medium-range",
+  "representative_system": "NASAMS — Medium-range SAM",
+  "icon_image": "/icons/nasams.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": 259500000,
+    "display": "AIM-120 AMRAAM interceptor ~$1.0-1.2M each; battery cost $91-428M depending on configuration",
+    "confidence": "estimated"
+  },
+  "key_facts": [
+    {
+      "label": "Spec",
+      "value": "Uses AIM-9X and AMRAAM missiles"
+    },
+    {
+      "label": "Salvo / launcher",
+      "value": "networked, distributed launcher architecture (not single vehicle)"
+    },
+    {
+      "label": "Spec 3",
+      "value": "See characteristics"
+    }
+  ],
+  "short_role": "Medium-range SAM",
+  "characteristics": [
+    "Uses AIM-9X and AMRAAM missiles",
+    "networked, distributed launcher architecture (not single vehicle)",
+    "Strength: 94-100% reported intercept rate in Ukraine service; protected Kyiv early with strong results vs cruise missiles",
+    "Limitation: AMRAAM interceptor cost is high relative to drone/rocket threats it also gets tasked against",
+    "Estimated quantity available: Multiple batteries in service since 2022; exact current count not fully disclosed"
+  ],
+  "employment_notes": "One of the first Western SAMs credited with a 100% intercept rate defending Kyiv; validated distributed/networked SAM architecture as survivable under sustained bombardment",
+  "contrast_vs_traditional": "Point-defense SAM doctrine like NASAMS' covered a handful of high-value fixed sites against a manned-aircraft or cruise-missile threat. A sky now also saturated with cheap one-way attack drones means density and layering matter as much as any single battery's range — the doctrine.md finding that soft-kill and hard-kill defenses have to stack together, not stand alone.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — NASAMS",
+      "url": "https://en.wikipedia.org/wiki/NASAMS"
+    },
+    {
+      "label": "Kongsberg — NASAMS Air Defence System (manufacturer)",
+      "url": "https://www.kongsberg.com/what-we-do/defence-and-security/integrated-air-and-missile-defence/nasams-air-defence-system/"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Specs meet the bar but the unit cost is an estimate — cost is not verified."
+    ]
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "id": "side_b-ground-robots-omich-2",
+  "name": "Omich-2",
+  "side": "side_b",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "ground_robots",
+  "distance_km_from_zero": 3,
+  "operating_range_km": null,
+  "band_id": "tactical",
+  "category": "ground-robot-logistics",
+  "representative_system": "Omich-2 — Ground robot (logistics/transport/casevac)",
+  "icon_image": "/icons/omich-2.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Not publicly disclosed",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Payload",
+      "value": "Payload up to 350kg"
+    },
+    {
+      "label": "Weight",
+      "value": "weight ~650kg"
+    },
+    {
+      "label": "Endurance",
+      "value": "endurance up to 40min"
+    }
+  ],
+  "short_role": "Ground robot (logistics/transport/casevac)",
+  "characteristics": [
+    "Payload up to 350kg",
+    "weight ~650kg",
+    "endurance up to 40min",
+    "range up to 20km",
+    "Strength: Multi-role: ammunition/equipment delivery, assault group transport, and casualty evacuation in one platform",
+    "Limitation: Short endurance (40min) and range (20km) relative to Ukraine's Starlink-relay-extended logistics UGVs",
+    "Estimated quantity available: Fielded numbers not disclosed"
+  ],
+  "employment_notes": "Represents the practical center of gravity of Russian ground robotics use - moving supplies and wounded through exposed ground rather than combat, mirroring the same logistics-first pattern seen across Ukrainian UGV use",
+  "contrast_vs_traditional": "Omich-2's logistics, transport, and casualty-evacuation role mirrors NPRK Mul on the Ukrainian side — both sides converging independently on unmanned platforms for the specific job of moving supplies and wounded across the same watched ground that makes manned resupply increasingly costly, per the doctrine.md finding on how densely observed this front actually is.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Defence Blog — Russian Airborne units evaluate Omich-2",
+      "url": "https://defence-blog.com/russian-airborne-units-evaluate-omich-2-unmanned-vehicle/"
+    },
+    {
+      "label": "Militarnyi — Russian Omich robotic platform spotted near the combat zone",
+      "url": "https://militarnyi.com/en/news/russian-omich-robotic-platform-spotted-near-the-combat-zone/"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

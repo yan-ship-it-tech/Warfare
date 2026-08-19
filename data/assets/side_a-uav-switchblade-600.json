@@ -1,0 +1,59 @@
+{
+  "id": "side_a-uav-switchblade-600",
+  "name": "Switchblade 600",
+  "side": "side_a",
+  "domain": "air",
+  "echelon": "tactical",
+  "group": "uav",
+  "distance_km_from_zero": 6,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "uav-strike",
+  "representative_system": "Switchblade 600 — Loitering munition (anti-armor)",
+  "icon_image": "/icons/switchblade-600.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Donated (unit cost not publicly disclosed; larger and more expensive than the 300 variant)",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Protection",
+      "value": "Anti-armor warhead (shaped charge), longer range/endurance than Switchblade 300, man-in-the-loop targeting"
+    },
+    {
+      "label": "Spec 2",
+      "value": "See characteristics"
+    },
+    {
+      "label": "Spec 3",
+      "value": "See characteristics"
+    }
+  ],
+  "short_role": "Loitering munition (anti-armor)",
+  "characteristics": [
+    "Anti-armor warhead (shaped charge), longer range/endurance than Switchblade 300, man-in-the-loop targeting",
+    "Strength: Purpose-built anti-armor capability at the loitering-munition scale, filling a niche between man-portable ATGMs and larger strike UAVs",
+    "Limitation: Larger and heavier than the 300 variant, reducing man-portability",
+    "Estimated quantity available: Delivered numbers not fully disclosed"
+  ],
+  "employment_notes": "Donated specifically to give infantry-scale anti-armor precision strike, functionally similar in role to Russia's Lancet",
+  "contrast_vs_traditional": "The 600's anti-armor warhead extends the same squad-level distributed-kill-chain logic as the 300 to a target class — tanks and hardened vehicles — that traditional doctrine held was an anti-tank-guided-missile or close-air-support job. A loitering munition doing that from an infantry-level launch point compresses that chain to the same single-digit-minute timeline doctrine.md describes for the rest of the drone-mediated kill chain.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — Switchblade (missile)",
+      "url": "https://en.wikipedia.org/wiki/Switchblade_(missile)"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "sourced_low_confidence",
+    "independent_sources": 1,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Rests only on tertiary reference works; wants a primary or trade source."
+    ]
+  }
+}

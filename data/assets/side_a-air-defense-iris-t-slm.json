@@ -1,0 +1,62 @@
+{
+  "id": "side_a-air-defense-iris-t-slm",
+  "name": "IRIS-T SLM",
+  "side": "side_a",
+  "domain": "air",
+  "echelon": "operational",
+  "group": "air_defense",
+  "distance_km_from_zero": 18,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "air-defense-medium-range",
+  "representative_system": "IRIS-T SLM — Medium-range SAM",
+  "icon_image": "/icons/iris-t-slm.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "~€140M per fire unit (2022); missile ~€250-565K depending on variant/buyer",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Spec",
+      "value": "Infrared-seeking missile (immune to RF jamming, unlike radar-guided types)"
+    },
+    {
+      "label": "Range",
+      "value": "SLM variant ~40km range"
+    },
+    {
+      "label": "Spec 3",
+      "value": "See characteristics"
+    }
+  ],
+  "short_role": "Medium-range SAM",
+  "characteristics": [
+    "Infrared-seeking missile (immune to RF jamming, unlike radar-guided types)",
+    "SLM variant ~40km range",
+    "Strength: Highest reported intercept rate of any deployed system in Ukraine (~99%, 240+ confirmed kills incl. a single engagement downing 15 cruise missiles)",
+    "Limitation: Limited numbers relative to the scale of Russian strike campaigns; IR seeker can be affected by flares/decoys in theory though not widely reported as exploited yet",
+    "Estimated quantity available: Multiple systems delivered under a $1.4B German package (2023) plus follow-on deliveries"
+  ],
+  "employment_notes": "German IRIS-T deliveries (from Nov 2022) became one of the standout performers of the air defense campaign; its immunity to RF jamming is a direct answer to the EW-saturated environment described elsewhere in this war",
+  "contrast_vs_traditional": "IRIS-T SLM repurposes an air-to-air missile design into a ground-launched medium-range interceptor — not the purpose-built system Cold War SAM doctrine would have specified, but a pragmatic stretch of existing NATO inventory to cover a gap. That kind of improvisation under saturation, not a clean doctrinal fit, is closer to how this war's air-defense picture has actually been assembled.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — IRIS-T SL",
+      "url": "https://en.wikipedia.org/wiki/IRIS-T_SL"
+    },
+    {
+      "label": "Militarnyi — IRIS-T SLM tested in Ukraine",
+      "url": "https://militarnyi.com/en/news/iris-t-slm-air-defense-system-tested-in-ukraine-now-installed-on-german-navy-frigate/"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

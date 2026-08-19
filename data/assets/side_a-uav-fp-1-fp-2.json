@@ -1,0 +1,63 @@
+{
+  "id": "side_a-uav-fp-1-fp-2",
+  "name": "FP-1 / FP-2",
+  "side": "side_a",
+  "domain": "air",
+  "echelon": "strategic",
+  "group": "uav",
+  "distance_km_from_zero": 308,
+  "operating_range_km": null,
+  "band_id": "strategic_rear",
+  "category": "uav-strike-deep",
+  "representative_system": "FP-1 / FP-2 — One-way attack drone (deep strike)",
+  "icon_image": "/icons/fp-1-fp-2.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Not publicly disclosed",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Spec",
+      "value": "Twin-boom design"
+    },
+    {
+      "label": "Warhead",
+      "value": "40kg blast-fragmentation warhead (25kg tetryl HE + 15kg steel balls)"
+    },
+    {
+      "label": "Control link",
+      "value": "Starlink (or equivalent satellite) link enabling FPV control during terminal approach"
+    }
+  ],
+  "short_role": "One-way attack drone (deep strike)",
+  "characteristics": [
+    "Twin-boom design",
+    "40kg blast-fragmentation warhead (25kg tetryl HE + 15kg steel balls)",
+    "Starlink (or equivalent satellite) link enabling FPV control during terminal approach",
+    "Strength: Satellite-relayed terminal guidance gives precision approach unusual among long-range OWA-UAVs, most of which fly pre-programmed routes with no terminal correction",
+    "Limitation: Reliance on satellite comms for terminal guidance is itself a dependency that could be targeted by counter-satellite-communications EW if that capability matures",
+    "Estimated quantity available: Major, ongoing production; exact numbers not disclosed"
+  ],
+  "employment_notes": "Became one of the 'household name' assets of Ukraine's strategic strike campaign; the Starlink-guided terminal phase is a direct extension of the same satellite-comms dependency pattern documented across FPV and reconnaissance drones",
+  "contrast_vs_traditional": "Like the Beaver, FP-1/FP-2 push the deep-strike layer doctrine.md describes running from 10 to 150+ km out past its traditional bounds — a role that used to require a cruise missile or a manned strike sortie now costs a small fraction of either, changing what a defender has to budget for rather than just what it has to intercept.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — Fire Point FP-1",
+      "url": "https://en.wikipedia.org/wiki/Fire_Point_FP-1"
+    },
+    {
+      "label": "Covert Shores (H I Sutton) — Ukrainian FP-1/FP-2 deep strike drones",
+      "url": "https://www.hisutton.com/FP-1-Drone.html"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

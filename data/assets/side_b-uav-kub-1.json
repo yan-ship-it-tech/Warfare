@@ -1,0 +1,69 @@
+{
+  "id": "side_b-uav-kub-1",
+  "name": "KUB-1",
+  "side": "side_b",
+  "domain": "air",
+  "echelon": "tactical",
+  "group": "uav",
+  "distance_km_from_zero": 6,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "uav-strike",
+  "representative_system": "KUB-1 — Loitering munition (small)",
+  "icon_image": "/icons/kub-1.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": 37000,
+    "display": "$37,000 (per user-supplied catalog)",
+    "confidence": "estimated"
+  },
+  "key_facts": [
+    {
+      "label": "Warhead",
+      "value": "7kg drone weight, <3kg warhead"
+    },
+    {
+      "label": "Spec",
+      "value": "2.8m wingspan"
+    },
+    {
+      "label": "Range",
+      "value": "40km flight range"
+    }
+  ],
+  "short_role": "Loitering munition (small)",
+  "characteristics": [
+    "7kg drone weight, <3kg warhead",
+    "2.8m wingspan",
+    "40km flight range",
+    "120km/h",
+    "2,000m altitude",
+    "30min endurance",
+    "electric",
+    "Strength: Compact and simple, giving a lower-cost alternative to the larger Lancet for smaller targets",
+    "Limitation: Smaller warhead and shorter range than Lancet, limiting it to lighter targets",
+    "Estimated quantity available: Fleet size not disclosed"
+  ],
+  "employment_notes": "Represents the lower end of Russia's loitering-munition tier, illustrating a deliberate range of munition sizes matched to target value rather than a one-size-fits-all approach",
+  "contrast_vs_traditional": "A small loitering munition brings the same squad/company-level precision-strike capability doctrine.md documents for Switchblade to the Russian side of the line — a further data point for the finding that distributed, organic strike capability at low echelon, not centralized fires, increasingly does this kind of engagement on both sides.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — ZALA Kub-BLA",
+      "url": "https://en.wikipedia.org/wiki/ZALA_Kub-BLA"
+    },
+    {
+      "label": "Army Recognition — Russia confirms deployment of KUB loitering munition",
+      "url": "https://www.armyrecognition.com/focus-analysis-conflicts/army/conflicts-in-the-world/russia-ukraine-war-2022/russia-confirms-deployement-in-ukraine-of-new-kub-loitering-munition-able-to-reach-target-at-50-km"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Specs meet the bar but the unit cost is an estimate — cost is not verified."
+    ]
+  }
+}

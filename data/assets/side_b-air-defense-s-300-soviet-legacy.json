@@ -1,0 +1,61 @@
+{
+  "id": "side_b-air-defense-s-300-soviet-legacy",
+  "name": "S-300 (Soviet-legacy)",
+  "side": "side_b",
+  "domain": "air",
+  "echelon": "operational",
+  "group": "air_defense",
+  "distance_km_from_zero": 46,
+  "operating_range_km": null,
+  "band_id": "op_deep",
+  "category": "air-defense-long-range",
+  "representative_system": "S-300 (Soviet-legacy) — Legacy long-range SAM",
+  "icon_image": "/icons/s-300-soviet-legacy.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Soviet-legacy stock; no current market unit price",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Range",
+      "value": "~75-150km range depending on missile/variant"
+    },
+    {
+      "label": "Spec",
+      "value": "radar-guided"
+    },
+    {
+      "label": "Spec 3",
+      "value": "predates S-400"
+    }
+  ],
+  "short_role": "Legacy long-range SAM",
+  "characteristics": [
+    "~75-150km range depending on missile/variant",
+    "radar-guided",
+    "predates S-400",
+    "Strength: Very large pre-war stockpile; still forms a major share of Russia's IADS alongside S-400",
+    "Limitation: Older radar-guidance technology than IRIS-T-class IR seekers; some S-300 airframes have reportedly been repurposed for surface-to-surface strikes on Ukrainian targets, a role well outside its original air-defense design intent",
+    "Estimated quantity available: Large pre-war inventory (widely cited in the hundreds of launchers); current operational count not fully public"
+  ],
+  "employment_notes": "Same dual role illustrated on the Ukrainian side (S-300 repurposed for strikes) shows up independently in Russian use too — worth flagging in the Lessons Learned page as a cross-side pattern rather than a one-sided observation",
+  "contrast_vs_traditional": "Both sides field descendants of the same Soviet S-300 lineage, and on the Russian side it is increasingly used for surface strikes against ground targets rather than the air-defense role it was designed for — existing inventory repurposed to a new mission because it's on hand, not because it's the doctrinally correct tool, a pattern that recurs across legacy Soviet-era systems on this battlefield.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — S-300 missile system",
+      "url": "https://en.wikipedia.org/wiki/S-300_missile_system"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "sourced_low_confidence",
+    "independent_sources": 1,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Rests only on tertiary reference works; wants a primary or trade source."
+    ]
+  }
+}

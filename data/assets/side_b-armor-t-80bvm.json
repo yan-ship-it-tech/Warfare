@@ -1,0 +1,63 @@
+{
+  "id": "side_b-armor-t-80bvm",
+  "name": "T-80BVM",
+  "side": "side_b",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "armor",
+  "distance_km_from_zero": 5,
+  "operating_range_km": null,
+  "band_id": "tactical",
+  "category": "armor-main-battle-tank",
+  "representative_system": "T-80BVM — Main battle tank",
+  "icon_image": "/icons/t-80bvm.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "No clean public unit price; produced via modernization of Soviet-era T-80 hulls",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Engine",
+      "value": "Gas turbine engine (fast but fuel-hungry)"
+    },
+    {
+      "label": "Protection",
+      "value": "Relikt ERA"
+    },
+    {
+      "label": "Spec",
+      "value": "modern Sosna-U sight"
+    }
+  ],
+  "short_role": "Main battle tank",
+  "characteristics": [
+    "Gas turbine engine (fast but fuel-hungry)",
+    "Relikt ERA",
+    "modern Sosna-U sight",
+    "Strength: Best cold-weather/high-altitude performance among Russian MBTs due to turbine engine; heavily upgraded over base T-80",
+    "Limitation: Turbine engine has poor fuel economy and higher maintenance burden than diesel T-72/T-90 family; Russia lost effectively its entire pre-war T-80 fleet (~1,200) over the course of the war",
+    "Estimated quantity available: Grew from ~100 to ~280 in fielded units by late 2025 (Janes), rebuilt from deep storage stock rather than new production"
+  ],
+  "employment_notes": "Entire pre-war T-80 inventory (~1,200) has been expended and replaced by continued modernization of stored hulls — the clearest single data point for how thoroughly Soviet-era stockpiles are being consumed",
+  "contrast_vs_traditional": "Like the Abrams, the T-80BVM's gas-turbine engine trades fuel economy for speed and cold-weather reliability — a Cold War tradeoff made for a rapid maneuver war across open terrain. Reactivated from strategic reserve rather than built new, it now fights under the same constraint as every other armored asset here: whichever side controls the lower sky over the sector sets how close it can be positioned, not the tank's own speed or protection.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Army Recognition — T-80BVM technical data",
+      "url": "https://www.armyrecognition.com/military-products/army/main-battle-tanks/main-battle-tanks/t-80bvm-mbt-main-battle-tank-technical-data"
+    },
+    {
+      "label": "GlobalSecurity.org — T-80 characteristics",
+      "url": "https://www.globalsecurity.org/military/world/russia/t-80.htm"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

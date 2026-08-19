@@ -1,0 +1,66 @@
+{
+  "id": "side_a-armor-challenger-2",
+  "name": "Challenger 2",
+  "side": "side_a",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "armor",
+  "distance_km_from_zero": 5,
+  "operating_range_km": null,
+  "band_id": "tactical",
+  "category": "armor-main-battle-tank",
+  "representative_system": "Challenger 2 — Main battle tank",
+  "icon_image": "/icons/challenger-2.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": 6500000,
+    "display": "Donated (UK MoD did not publish a unit price; broadly estimated $5-8M class)",
+    "confidence": "estimated"
+  },
+  "key_facts": [
+    {
+      "label": "Main armament",
+      "value": "120mm rifled gun (unique among donated types)"
+    },
+    {
+      "label": "Protection",
+      "value": "Chobham/Dorchester composite armor"
+    },
+    {
+      "label": "Engine",
+      "value": "1,200hp engine"
+    }
+  ],
+  "short_role": "Main battle tank",
+  "characteristics": [
+    "120mm rifled gun (unique among donated types)",
+    "Chobham/Dorchester composite armor",
+    "1,200hp engine",
+    "~62.5t",
+    "Strength: Very heavy armor protection; proven survivability record",
+    "Limitation: Rifled gun = separate ammo logistics from NATO 120mm smoothbore standard; heavy for cross-country mobility; no blow-out ammo panels (unlike Abrams/Leopard)",
+    "Estimated quantity available: ~14 delivered, several confirmed lost by 2025"
+  ],
+  "employment_notes": "Only 14 delivered (2023), assigned to 82nd Air Assault Brigade; used in the 2023 counteroffensive and Kursk incursion; by mid-2025 several lost to drones/ATGMs, illustrating how even top-tier Western armor isn't drone-proof",
+  "contrast_vs_traditional": "Challenger 2's composite armor was built against Cold War kinetic and chemical-energy rounds fired from other tanks at the front glacis, not against a $500 FPV diving onto the thin engine deck from directly above — an angle no Cold War threat approached from. Whether it gets committed at all now turns less on its armor class than on which side holds the lower sky over that sector, the same finding that governs every armored vehicle on this line.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Army Recognition — Challenger 2 in Ukraine (deployment, specs)",
+      "url": "https://www.armyrecognition.com/focus-analysis-conflicts/army/conflicts-in-the-world/russia-ukraine-war-2022/ukrainian-forces-deploy-british-donated-challenger-2-tanks-in-first-ever-offensive-on-russian-soil"
+    },
+    {
+      "label": "GlobalSecurity.org — Challenger 2 in Ukrainian service",
+      "url": "https://www.globalsecurity.org/military/world/ukraine/ua-challenger2.htm"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Specs meet the bar but the unit cost is an estimate — cost is not verified."
+    ]
+  }
+}

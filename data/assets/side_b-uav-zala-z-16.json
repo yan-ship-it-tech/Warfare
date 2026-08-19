@@ -1,0 +1,71 @@
+{
+  "id": "side_b-uav-zala-z-16",
+  "name": "Zala Z-16",
+  "side": "side_b",
+  "domain": "air",
+  "echelon": "tactical",
+  "group": "uav",
+  "distance_km_from_zero": 6,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "uav-reconnaissance",
+  "representative_system": "Zala Z-16 — Reconnaissance UAV",
+  "icon_image": "/icons/zala-z-16.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": 70000,
+    "display": "$70,000 (per user-supplied catalog)",
+    "confidence": "estimated"
+  },
+  "key_facts": [
+    {
+      "label": "Spec",
+      "value": "10.5kg"
+    },
+    {
+      "label": "Spec 2",
+      "value": "2.8m wingspan"
+    },
+    {
+      "label": "Range",
+      "value": "75km comms range"
+    }
+  ],
+  "short_role": "Reconnaissance UAV",
+  "characteristics": [
+    "10.5kg",
+    "2.8m wingspan",
+    "75km comms range",
+    "65-110km/h",
+    "5,000m altitude",
+    "~4hr endurance",
+    "electric",
+    "has stated evasion mechanisms",
+    "wide-angle upper-hemisphere camera",
+    "Strength: Electric propulsion (quieter than internal-combustion types like Orlan-10); has active evasion mechanisms against counter-drone systems",
+    "Limitation: Shorter comms range and lower speed than larger reconnaissance types like Orlan-10 or Supercam",
+    "Estimated quantity available: Fleet size not disclosed"
+  ],
+  "employment_notes": "Part of the large Zala family (multiple numbered variants cataloged) reflecting Russia's iterative, many-variant approach to tactical drone development",
+  "contrast_vs_traditional": "A small tactical reconnaissance UAV doing the same job traditional doctrine assigned to a forward observer or a manned spotter aircraft — except cheaply enough to fly constantly rather than occasionally, which is what makes the doctrine.md finding on multi-day pattern-of-life detection possible in the first place: persistent low-cost overwatch, not a single flight, is what maps a sector.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Army Recognition — Russia upgrades Zala Z-16 with AI",
+      "url": "https://www.armyrecognition.com/focus-analysis-conflicts/army/conflicts-in-the-world/russia-ukraine-war-2022/russia-upgrades-zala-z-16-reconnaissance-drone-with-ai-to-autonomously-evade-ukrainian-drone-interceptors"
+    },
+    {
+      "label": "ZALA Aero — Z-16E product page (manufacturer)",
+      "url": "https://zala-aero.com/en/product/zala-z-16/"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Specs meet the bar but the unit cost is an estimate — cost is not verified."
+    ]
+  }
+}

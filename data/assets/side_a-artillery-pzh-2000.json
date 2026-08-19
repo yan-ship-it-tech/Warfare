@@ -1,0 +1,65 @@
+{
+  "id": "side_a-artillery-pzh-2000",
+  "name": "PzH 2000",
+  "side": "side_a",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "artillery",
+  "distance_km_from_zero": 18,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "artillery-self-propelled",
+  "representative_system": "PzH 2000 — Self-propelled artillery (tracked)",
+  "icon_image": "/icons/pzh-2000.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Donated (no unit price disclosed)",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Spec",
+      "value": "60 rounds onboard"
+    },
+    {
+      "label": "Protection",
+      "value": "range up to 60km with guided projectile, 40km active-reactive, 30km conventional"
+    },
+    {
+      "label": "Rate of fire",
+      "value": "~10 rounds/min"
+    }
+  ],
+  "short_role": "Self-propelled artillery (tracked)",
+  "characteristics": [
+    "60 rounds onboard",
+    "range up to 60km with guided projectile, 40km active-reactive, 30km conventional",
+    "~10 rounds/min",
+    "55.3t",
+    "5-person crew",
+    "Strength: Longest range and highest rate of fire among Ukraine's donated SPGs; heavy armor protection relative to wheeled types",
+    "Limitation: Very heavy (55t+), demanding on transport and bridging infrastructure; complex to maintain",
+    "Estimated quantity available: Dozens delivered (Germany + other European donors)"
+  ],
+  "employment_notes": "Considered one of the most capable SPGs in the war on paper; heavy logistics footprint has limited how many can be sustained forward at once",
+  "contrast_vs_traditional": "PzH 2000 was built for NATO's Cold War rate-of-fire doctrine — massed, sustained barrages from a position expected to stay concealed for the mission. Against a drone that can loiter over a firing position and hand a target to counter-battery fire within minutes, the same rate of fire that was the platform's original selling point is now also what keeps a crew in place long enough to be found.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "GlobalSecurity.org — PzH 2000 self-propelled howitzer",
+      "url": "https://www.globalsecurity.org/military/world/europe/pzh2000.htm"
+    },
+    {
+      "label": "Army Recognition — German PzH 2000 howitzers for Ukraine",
+      "url": "https://www.armyrecognition.com/archives/archives-land-defense/land-defense-2024/exclusive-german-pzh-2000-howitzers-empower-ukraine-to-strike-deep-into-russian-territory"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

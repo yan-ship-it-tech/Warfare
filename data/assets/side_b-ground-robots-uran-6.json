@@ -1,0 +1,61 @@
+{
+  "id": "side_b-ground-robots-uran-6",
+  "name": "Uran-6",
+  "side": "side_b",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "ground_robots",
+  "distance_km_from_zero": 4,
+  "operating_range_km": null,
+  "band_id": "tactical",
+  "category": "ground-robot-engineering",
+  "representative_system": "Uran-6 — Ground robot (remote mine clearance)",
+  "icon_image": "/icons/uran-6.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Not publicly disclosed",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Protection",
+      "value": "Tracked, remotely operated, interchangeable mine-clearing attachment"
+    },
+    {
+      "label": "Spec 2",
+      "value": "See characteristics"
+    },
+    {
+      "label": "Spec 3",
+      "value": "See characteristics"
+    }
+  ],
+  "short_role": "Ground robot (remote mine clearance)",
+  "characteristics": [
+    "Tracked, remotely operated, interchangeable mine-clearing attachment",
+    "Strength: Combat-proven across multiple conflicts (Syria, Nagorno-Karabakh 2020, Ukraine since 2022) rather than an experimental/exhibition-only system",
+    "Limitation: Purpose-limited to mine clearance; not a combat or logistics platform",
+    "Estimated quantity available: Fielded numbers not disclosed"
+  ],
+  "employment_notes": "One of the few Russian UGV types with an actual multi-conflict deployment record predating this war, rather than being purpose-built or first fielded in Ukraine",
+  "contrast_vs_traditional": "Remote mine clearance is one of the oldest unmanned-ground-vehicle roles precisely because it was always understood as too dangerous for a person to do repeatedly — the same logic doctrine.md documents now extending to fire support and logistics UGVs generally: if a task doesn't require a person physically present, a drone-saturated battlefield gives every reason not to put one there.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Army Technology — Uran-6 Mine-Clearing Robot",
+      "url": "https://www.army-technology.com/projects/uran-6-mine-clearing-robot/"
+    },
+    {
+      "label": "Army Recognition — Russian Southern District engineers receive Uran-6",
+      "url": "https://armyrecognition.com/news/army-news/2020/russian-southern-district-engineers-receive-advanced-uran-6-mine-clearance-robot"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

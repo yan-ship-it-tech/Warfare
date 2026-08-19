@@ -1,0 +1,63 @@
+{
+  "id": "side_a-uav-an-196-lyutyy",
+  "name": "AN-196 Lyutyy",
+  "side": "side_a",
+  "domain": "air",
+  "echelon": "strategic",
+  "group": "uav",
+  "distance_km_from_zero": 274,
+  "operating_range_km": null,
+  "band_id": "strategic_rear",
+  "category": "uav-strike-deep",
+  "representative_system": "AN-196 Lyutyy — One-way attack drone (large, deep strike)",
+  "icon_image": "/icons/an-196-lyutyy.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Not publicly disclosed; light-aircraft-like construction suggests higher unit cost than smaller types",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Spec",
+      "value": "Light aircraft-style construction"
+    },
+    {
+      "label": "Payload",
+      "value": "longer range and greater payload than most other Ukrainian long-range types per available reporting"
+    },
+    {
+      "label": "Spec 3",
+      "value": "visually related to the pre-war Antonov AN-BK-1 Horlytsia design"
+    }
+  ],
+  "short_role": "One-way attack drone (large, deep strike)",
+  "characteristics": [
+    "Light aircraft-style construction",
+    "longer range and greater payload than most other Ukrainian long-range types per available reporting",
+    "visually related to the pre-war Antonov AN-BK-1 Horlytsia design",
+    "Strength: Larger airframe allows more range/payload than smaller purpose-built loitering-style long-range drones",
+    "Limitation: Higher apparent unit cost due to more sophisticated light-aircraft construction, versus the deliberately cheap, disposable design philosophy of types like AQ-400 Scythe",
+    "Estimated quantity available: Production status confirmed; exact numbers not disclosed"
+  ],
+  "employment_notes": "Confirmed as an Antonov/Ukroboronprom design - a state aerospace manufacturer pivoting from traditional aircraft production to drone production after the 2022 invasion, illustrating industrial adaptation under wartime pressure",
+  "contrast_vs_traditional": "A larger one-way attack airframe with greater payload than the FP or Beaver family, Lyutyy is part of the same shift: deep-strike reach that traditional doctrine priced in missiles or manned sorties is now available as a mass-producible drone, which changes the economics of a defender's interception problem more than it changes the physics of the strike itself.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — Liutyi",
+      "url": "https://en.wikipedia.org/wiki/Liutyi"
+    },
+    {
+      "label": "Covert Shores (H I Sutton) — Guide to Ukraine's long-range attack drones",
+      "url": "https://www.hisutton.com/Ukraine-OWA-UAVs.html"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

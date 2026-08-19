@@ -1,0 +1,64 @@
+{
+  "id": "side_b-uav-supercam-s350",
+  "name": "Supercam S350",
+  "side": "side_b",
+  "domain": "air",
+  "echelon": "tactical",
+  "group": "uav",
+  "distance_km_from_zero": 6,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "uav-reconnaissance",
+  "representative_system": "Supercam S350 — Reconnaissance UAV",
+  "icon_image": "/icons/supercam-s350.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": 145000,
+    "display": "~$145,000 (per user-supplied catalog)",
+    "confidence": "estimated"
+  },
+  "key_facts": [
+    {
+      "label": "Spec",
+      "value": "15.5kg"
+    },
+    {
+      "label": "Spec 2",
+      "value": "2.8m wingspan"
+    },
+    {
+      "label": "Range",
+      "value": "100-120km comms range"
+    }
+  ],
+  "short_role": "Reconnaissance UAV",
+  "characteristics": [
+    "15.5kg",
+    "2.8m wingspan",
+    "100-120km comms range",
+    "65-120km/h",
+    "5,000m altitude",
+    "4.2hr endurance",
+    "electric",
+    "no stated evasion mechanisms",
+    "Strength: Longer comms range (100-120km) than the Zala Z-16 in the same general weight class",
+    "Limitation: No stated counter-drone evasion mechanisms, unlike some competing types in the same catalog",
+    "Estimated quantity available: Fleet size not disclosed"
+  ],
+  "employment_notes": "Represents a separate Russian manufacturer/product line from Zala and Orlan, indicating a fragmented rather than single-standardized Russian tactical drone industrial base",
+  "contrast_vs_traditional": "Supercam fills the same persistent tactical-reconnaissance niche as Zala Z-16 — cheap enough and simple enough to fly repeatedly over a sector, which is precisely the pattern doctrine.md describes letting both sides map enemy positions over 2–7 days rather than through any single high-value reconnaissance sortie.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Army Recognition — Russia unveils Supercam S350",
+      "url": "https://www.armyrecognition.com/archives/archives-defense-exhibitions/2026-archives-news-defense-exhibitions/world-defense-show-2026/russia-unveils-supercam-s350-drone-with-240-km-range-for-artillery-targeting-operations-2"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "sourced_low_confidence",
+    "independent_sources": 1,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

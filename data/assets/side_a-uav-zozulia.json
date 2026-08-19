@@ -1,0 +1,59 @@
+{
+  "id": "side_a-uav-zozulia",
+  "name": "Zozulia",
+  "side": "side_a",
+  "domain": "air",
+  "echelon": "strategic",
+  "group": "uav",
+  "distance_km_from_zero": 1050,
+  "operating_range_km": null,
+  "band_id": "deep_strategic",
+  "category": "uav-strike-deep",
+  "representative_system": "Zozulia — One-way attack drone (extreme range)",
+  "icon_image": "/icons/zozulia.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Not publicly disclosed",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Warhead",
+      "value": "Range reported at 2,100km with a deduced (unstated) light warhead, or approximately 1,000km carrying a 50kg warhead"
+    },
+    {
+      "label": "Control link",
+      "value": "likely Starlink-connected"
+    },
+    {
+      "label": "Spec",
+      "value": "revealed 2025, increasingly visible in use during 2026"
+    }
+  ],
+  "short_role": "One-way attack drone (extreme range)",
+  "characteristics": [
+    "Range reported at 2,100km with a deduced (unstated) light warhead, or approximately 1,000km carrying a 50kg warhead",
+    "likely Starlink-connected",
+    "revealed 2025, increasingly visible in use during 2026",
+    "Strength: Longest reported range of any Ukrainian long-range strike drone in this catalog - a direct range/payload trade-off choice favoring reach over warhead size",
+    "Limitation: Very new (2025 reveal), so combat track record and reliability are less established than older types like Beaver or FP-1",
+    "Estimated quantity available: Newly introduced; production scale not yet disclosed"
+  ],
+  "employment_notes": "Represents the newest and longest-reaching type in Ukraine's deep-strike drone family, continuing the trend of each successive domestic design pushing range further into Russian territory",
+  "contrast_vs_traditional": "An extreme-range one-way attack drone is the clearest version of the doctrine.md point made explicit for cross-border strikes: once the delivery method is a mass-producible airframe rather than a missile, distance from the front stops being a reliable protective factor at all, for targets that traditional doctrine treated as safely out of reach.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Euromaidan Press — Zozulia drones striking Russian supply lines",
+      "url": "https://euromaidanpress.com/2026/04/29/zozulia-drone/"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "sourced_low_confidence",
+    "independent_sources": 1,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

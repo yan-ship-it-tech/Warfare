@@ -1,0 +1,62 @@
+{
+  "id": "side_b-air-defense-buk-m3",
+  "name": "Buk-M3",
+  "side": "side_b",
+  "domain": "air",
+  "echelon": "operational",
+  "group": "air_defense",
+  "distance_km_from_zero": 17,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "air-defense-medium-range",
+  "representative_system": "Buk-M3 — Medium-range SAM",
+  "icon_image": "/icons/buk-m3.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "No clean public unit price disclosed",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Range",
+      "value": "~35km horizontal / ~45km altitude engagement envelope"
+    },
+    {
+      "label": "Salvo / launcher",
+      "value": "6 ready-to-fire missiles per launcher, truck-mounted"
+    },
+    {
+      "label": "Spec 3",
+      "value": "See characteristics"
+    }
+  ],
+  "short_role": "Medium-range SAM",
+  "characteristics": [
+    "~35km horizontal / ~45km altitude engagement envelope",
+    "6 ready-to-fire missiles per launcher, truck-mounted",
+    "Strength: Modern evolution of a combat-proven family (Buk-M1/M2 in wide service since the 1980s); road-mobile, self-contained fire units",
+    "Limitation: Radar-guided (jammable, unlike IR-seeking IRIS-T on the Ukrainian side); the Buk family's most infamous incident (MH17, 2014, Buk-M1 variant) remains a lasting reputational issue for the system class",
+    "Estimated quantity available: Fielded numbers not fully disclosed; integrated into the wider S-400/Buk/Pantsir layered network per Russian MoD reporting"
+  ],
+  "employment_notes": "Represents Russia's medium-range SAM layer, functionally the counterpart to Ukraine's NASAMS/IRIS-T tier — useful direct comparison pairing in the tool's Lessons Learned material",
+  "contrast_vs_traditional": "Buk-M3 is the modern descendant of a Soviet-era medium-range SAM lineage built to screen against manned strike aircraft. Layered underneath EW jamming and above short-range point defense, it illustrates the doctrine.md finding that no single air-defense system carries the fight alone anymore — the stack, not any one battery's range, is what has to hold.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Army Recognition — Buk-M3 Viking 9K317M technical data",
+      "url": "https://www.armyrecognition.com/military-products/army/air-defense-systems/air-defense-vehicles/buk-m3-9k317m-medium-range-air-defense-missile-system-technical-data-sheet-specifications-11312154"
+    },
+    {
+      "label": "Missilery.info — 9K317M Buk-M3",
+      "url": "https://en.missilery.info/missile/bukm3"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

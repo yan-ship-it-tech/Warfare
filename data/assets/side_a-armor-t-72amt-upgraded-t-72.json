@@ -1,0 +1,60 @@
+{
+  "id": "side_a-armor-t-72amt-upgraded-t-72",
+  "name": "T-72AMT / upgraded T-72",
+  "side": "side_a",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "armor",
+  "distance_km_from_zero": 4,
+  "operating_range_km": null,
+  "band_id": "tactical",
+  "category": "armor-main-battle-tank",
+  "representative_system": "T-72AMT / upgraded T-72 — Main battle tank (Soviet-legacy, upgraded)",
+  "icon_image": "/icons/t-72amt-upgraded-t-72.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Legacy stock + Czech/Polish donated T-72 variants; no clean unit price",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Main armament",
+      "value": "125mm smoothbore, autoloader"
+    },
+    {
+      "label": "Sensor",
+      "value": "AMT variant adds modern optics/comms over base T-72"
+    },
+    {
+      "label": "Spec 3",
+      "value": "See characteristics"
+    }
+  ],
+  "short_role": "Main battle tank (Soviet-legacy, upgraded)",
+  "characteristics": [
+    "125mm smoothbore, autoloader",
+    "AMT variant adds modern optics/comms over base T-72",
+    "Strength: Widely available across donor nations (Poland, Czechia); simple, well-understood platform",
+    "Limitation: Autoloader carousel is a known catastrophic-loss vulnerability (turret-toss) if ammo cooks off; less armor than Western types",
+    "Estimated quantity available: Pre-war ~86 T-72AV/B1 + T-72AMT organic; hundreds more via Polish/Czech donation programs (exact totals not fully disclosed)"
+  ],
+  "employment_notes": "Bridges the gap between depleting T-64 stock and arriving Western tanks; donated T-72 variants (many upgraded to NATO-adjacent standards) became a major share of the fleet by 2023-2024",
+  "contrast_vs_traditional": "The T-72's original doctrine role was a mass-produced breakthrough tank, cheap enough to lose in quantity. The AMT package — added ERA, jammers, slat cages — is a direct field response to the modern threat that actually kills tanks now: not the anti-tank guided missiles the base design was armored against, but a top-attack FPV costing a few hundred dollars, which inverts the original cost calculus the platform was built around.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — T-72 (general lineage; AMT is a Ukrainian modernization of the same base tank)",
+      "url": "https://en.wikipedia.org/wiki/T-72"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "sourced_low_confidence",
+    "independent_sources": 1,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Rests only on tertiary reference works; wants a primary or trade source."
+    ]
+  }
+}

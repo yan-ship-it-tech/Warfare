@@ -1,0 +1,63 @@
+{
+  "id": "side_a-air-defense-s-300-buk-m1-soviet-legacy",
+  "name": "S-300 / Buk-M1 (Soviet-legacy)",
+  "side": "side_a",
+  "domain": "air",
+  "echelon": "operational",
+  "group": "air_defense",
+  "distance_km_from_zero": 22,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "air-defense-medium-range",
+  "representative_system": "S-300 / Buk-M1 (Soviet-legacy) — Legacy medium/long-range SAM",
+  "icon_image": "/icons/s-300-buk-m1-soviet-legacy.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Soviet-legacy stock, not purchased; no current market unit price",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Range",
+      "value": "S-300: ~75-150km depending on missile"
+    },
+    {
+      "label": "Spec 2",
+      "value": "Buk-M1: ~35km"
+    },
+    {
+      "label": "Spec",
+      "value": "both radar-guided, pre-date modern Western networked SAM design"
+    }
+  ],
+  "short_role": "Legacy medium/long-range SAM",
+  "characteristics": [
+    "S-300: ~75-150km depending on missile",
+    "Buk-M1: ~35km",
+    "both radar-guided, pre-date modern Western networked SAM design",
+    "Strength: Formed the backbone of Ukrainian air defense before Western systems arrived; large pre-war stockpile",
+    "Limitation: Radar-guided (more jammable than IR-seeking IRIS-T); missile stocks are finite with no ongoing Russian-sourced resupply; some S-300 units have been repurposed for surface-to-surface strikes late in the war due to interceptor shortages",
+    "Estimated quantity available: Pre-war inventory in the hundreds of launchers across S-300 variants; current operational count not fully public"
+  ],
+  "employment_notes": "Still carries a large share of the day-to-day air defense workload despite Western systems getting the attention; illustrates that legacy Soviet systems remain load-bearing infrastructure, not just a transitional stopgap",
+  "contrast_vs_traditional": "Ukraine is defending its own skies with the same Soviet-lineage systems its adversary also still fields — both sides' air defense pictures descend from the same design family. Legacy point-defense doctrine assumed a belt of these systems could screen against a manned-aircraft threat; against a sky also full of cheap FPVs and one-way attack drones, no single belt of legacy SAMs was ever going to be dense enough on its own.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — S-300 missile system",
+      "url": "https://en.wikipedia.org/wiki/S-300_missile_system"
+    },
+    {
+      "label": "Militarnyi — Ukraine's modernized Buk-M1 under FrankenSAM",
+      "url": "https://militarnyi.com/en/news/ukrainian-defence-forces-received-modernized-buk-m1-air-defense-systems/"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

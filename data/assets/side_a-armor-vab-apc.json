@@ -1,0 +1,65 @@
+{
+  "id": "side_a-armor-vab-apc",
+  "name": "VAB APC",
+  "side": "side_a",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "armor",
+  "distance_km_from_zero": 6,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "armor-apc",
+  "representative_system": "VAB APC — Wheeled armored personnel carrier",
+  "icon_image": "/icons/vab-apc.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Donated (no unit price disclosed)",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Spec",
+      "value": "12.7mm MG, ammo 500 rounds"
+    },
+    {
+      "label": "Spec 2",
+      "value": "10 dismounts"
+    },
+    {
+      "label": "Weight",
+      "value": "13.6t"
+    }
+  ],
+  "short_role": "Wheeled armored personnel carrier",
+  "characteristics": [
+    "12.7mm MG, ammo 500 rounds",
+    "10 dismounts",
+    "13.6t",
+    "300hp, 110km/h road speed, 1,000km range",
+    "amphibious",
+    "Strength: Long operational range and good road speed relative to weight; simple maintenance",
+    "Limitation: Aging French 1970s design with light armor by current standards",
+    "Estimated quantity available: Donated numbers not fully disclosed"
+  ],
+  "employment_notes": "French-donated wheeled APC adding to the patchwork of donor-nation vehicle types Ukraine must maintain in parallel",
+  "contrast_vs_traditional": "Like the M113, the VAB's continued relevance here has less to do with the wheeled-mobility doctrine it was designed around and more to do with being an attritable, easily sourced personnel carrier in a war that is consuming vehicles faster than any single donor nation's newest platforms can replace them.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — Véhicule de l'Avant Blindé (VAB)",
+      "url": "https://en.wikipedia.org/wiki/V%C3%A9hicule_de_l%27Avant_Blind%C3%A9"
+    },
+    {
+      "label": "Militarnyi — Ukrainian servicemen using French VAB APCs",
+      "url": "https://militarnyi.com/en/news/the-ukrainian-servicemen-are-using-the-french-vab-armored-personnel-carriers-on-the-front-line/"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

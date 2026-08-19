@@ -1,0 +1,62 @@
+{
+  "id": "side_b-armor-t-62m-refurbished-reserve-stock",
+  "name": "T-62M (refurbished reserve stock)",
+  "side": "side_b",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "armor",
+  "distance_km_from_zero": 5,
+  "operating_range_km": null,
+  "band_id": "tactical",
+  "category": "armor-main-battle-tank",
+  "representative_system": "T-62M (refurbished reserve stock) — Main battle tank (1960s-era, reactivated)",
+  "icon_image": "/icons/t-62m-refurbished-reserve-stock.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "No meaningful current market value — reactivated from deep storage, not purchased",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Main armament",
+      "value": "115mm rifled gun (a full generation behind 125mm smoothbore standard)"
+    },
+    {
+      "label": "Spec",
+      "value": "minimal modern electronics even in 'M' refurbishment"
+    },
+    {
+      "label": "Spec 3",
+      "value": "See characteristics"
+    }
+  ],
+  "short_role": "Main battle tank (1960s-era, reactivated)",
+  "characteristics": [
+    "115mm rifled gun (a full generation behind 125mm smoothbore standard)",
+    "minimal modern electronics even in 'M' refurbishment",
+    "Strength: Available in large numbers from deep Soviet-era storage; simple to operate",
+    "Limitation: Obsolete armor and firepower by any current standard; withdrawn from Russian active service over a decade before the war, now reactivated purely due to attrition of modern types",
+    "Estimated quantity available: Reactivation numbers not precisely disclosed; drawn from a Soviet-era storage pool understood to still hold thousands of pre-1970s AFVs"
+  ],
+  "employment_notes": "Direct evidence that wartime attrition has forced Russia into 1960s-era equipment it had formally retired — a stronger illustration of matériel strain than any modern-tank statistic",
+  "contrast_vs_traditional": "A 1960s-era tank pulled from decades of strategic storage is the clearest illustration of the doctrine.md figure that 60–70% of equipment losses on both sides are now attributed to drones, not tank-on-tank engagements: modern armor is being consumed faster than factories can replace it, so reserve stock built for a different war gets pressed into this one on sheer attritional arithmetic rather than because it is well matched to the threat it will face.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Army Recognition — Russia reactivates T-62M/T-62MV for Ukraine",
+      "url": "https://www.armyrecognition.com/focus-analysis-conflicts/army/conflicts-in-the-world/russia-ukraine-war-2022/russia-keeps-upgrading-soviet-era-t-62m-and-t-62mv-tanks-for-combat-in-ukraine"
+    },
+    {
+      "label": "GlobalSecurity.org — T-62MW tanks, Ukraine 2022",
+      "url": "https://www.globalsecurity.org/military/world/russia/t-62-2022.htm"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

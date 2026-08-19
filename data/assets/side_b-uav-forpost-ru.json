@@ -1,0 +1,69 @@
+{
+  "id": "side_b-uav-forpost-ru",
+  "name": "Forpost-RU",
+  "side": "side_b",
+  "domain": "air",
+  "echelon": "tactical",
+  "group": "uav",
+  "distance_km_from_zero": 7,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "uav-strike",
+  "representative_system": "Forpost-RU — Strike-reconnaissance UAV (Israeli-derived, license-built)",
+  "icon_image": "/icons/forpost-ru.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": 3500000,
+    "display": "$3,500,000 (per user-supplied catalog)",
+    "confidence": "estimated"
+  },
+  "key_facts": [
+    {
+      "label": "Weight",
+      "value": "1,150kg drone weight"
+    },
+    {
+      "label": "Spec",
+      "value": "9.1m wingspan"
+    },
+    {
+      "label": "Range",
+      "value": "250km comms range"
+    }
+  ],
+  "short_role": "Strike-reconnaissance UAV (Israeli-derived, license-built)",
+  "characteristics": [
+    "1,150kg drone weight",
+    "9.1m wingspan",
+    "250km comms range",
+    "110-220km/h",
+    "6,000m altitude",
+    "18hr endurance",
+    "internal combustion engine",
+    "Strength: Largest and most expensive UAV in this catalog batch; long endurance and high-altitude operation",
+    "Limitation: Very high unit cost makes it the least numerous, most operationally cautious-to-risk type in the fleet",
+    "Estimated quantity available: Small fleet; exact total not disclosed"
+  ],
+  "employment_notes": "A license-built derivative of an Israeli design (IAI Searcher), illustrating that Russia's higher-end UAV fleet has historically depended partly on pre-war foreign technology transfer rather than fully domestic design",
+  "contrast_vs_traditional": "A license-built derivative of an Israeli design, Forpost-RU is another case of existing airframe knowledge repurposed rather than a clean-sheet program — traditional procurement doctrine planning for a decade-long development cycle has given way, across this war, to adapting whatever design and supply chain is actually available on a wartime timeline.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Military Factory — Forpost ISR drone",
+      "url": "https://www.militaryfactory.com/aircraft/detail.php?aircraft_id=1486"
+    },
+    {
+      "label": "GlobalMilitary.net — IAI Forpost specs",
+      "url": "https://www.globalmilitary.net/aircraft/forpost/"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Specs meet the bar but the unit cost is an estimate — cost is not verified."
+    ]
+  }
+}

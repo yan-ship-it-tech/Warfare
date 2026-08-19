@@ -1,0 +1,68 @@
+{
+  "id": "side_b-uav-shahed-136-geran-2",
+  "name": "Shahed-136 / Geran-2",
+  "side": "side_b",
+  "domain": "air",
+  "echelon": "tactical",
+  "group": "uav",
+  "distance_km_from_zero": 18,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "uav-strike",
+  "representative_system": "Shahed-136 / Geran-2 — Long-range one-way attack drone",
+  "icon_image": "/icons/shahed-136-geran-2.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": 45000,
+    "display": "$20,000-70,000 depending on source and production generation (domestic Russian production estimated higher than original Iranian export cost)",
+    "confidence": "estimated"
+  },
+  "key_facts": [
+    {
+      "label": "Spec",
+      "value": "~200kg mass"
+    },
+    {
+      "label": "Spec 2",
+      "value": "3.5m length, 2.5m wingspan"
+    },
+    {
+      "label": "Warhead",
+      "value": "50kg warhead (up to 90kg in later Russian variants)"
+    }
+  ],
+  "short_role": "Long-range one-way attack drone",
+  "characteristics": [
+    "~200kg mass",
+    "3.5m length, 2.5m wingspan",
+    "50kg warhead (up to 90kg in later Russian variants)",
+    "~2,500km stated range (1,700km demonstrated)",
+    "~185km/h",
+    "GNSS/INS guidance, no seeker in baseline configuration",
+    "Strength: Very long range and low cost per unit enable mass 'saturation' raids that overwhelm air defense economically, not just numerically",
+    "Limitation: No optical seeker in the baseline version - it can only strike pre-programmed fixed coordinates, not moving or newly-appearing targets",
+    "Estimated quantity available: Mass produced at the Alabuga facility in Tatarstan; production rate estimated in the hundreds to low thousands per month by mid-2020s reporting"
+  ],
+  "employment_notes": "The single clearest embodiment of the cost-asymmetry problem discussed throughout the doctrine reference: a ~$20-50K drone forcing the use of $400K-$5M interceptors to shoot it down",
+  "contrast_vs_traditional": "Long-range one-way attack drones invert the traditional cost logic of deep strike — where a cruise missile or manned bomber sortie once carried a cost per strike in the hundreds of thousands to millions of dollars, mass-produced Shahed/Geran strikes trade precision and survivability for sheer volume, saturating air defense economically rather than penetrating it technically.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — HESA Shahed 136",
+      "url": "https://en.wikipedia.org/wiki/HESA_Shahed_136"
+    },
+    {
+      "label": "Covert Shores (H I Sutton) — Guide to Russian Shahed/Geran strike drones",
+      "url": "https://www.hisutton.com/Russian-Geran-Shahed-Drones.html"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Specs meet the bar but the unit cost is an estimate — cost is not verified."
+    ]
+  }
+}

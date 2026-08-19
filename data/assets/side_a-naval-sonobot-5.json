@@ -1,0 +1,56 @@
+{
+  "id": "side_a-naval-sonobot-5",
+  "name": "Sonobot-5",
+  "side": "side_a",
+  "domain": "sea",
+  "echelon": "operational",
+  "group": "naval",
+  "distance_km_from_zero": 60,
+  "operating_range_km": null,
+  "band_id": "op_deep",
+  "category": "naval-usv",
+  "representative_system": "Sonobot-5 — Uncrewed surface vessel (survey/reconnaissance)",
+  "icon_image": "/icons/sonobot-5.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Donated (no unit price disclosed)",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Range",
+      "value": "Range 30km"
+    },
+    {
+      "label": "Speed",
+      "value": "speed up to 18kt"
+    },
+    {
+      "label": "Spec",
+      "value": "running time up to 9 hours"
+    }
+  ],
+  "short_role": "Uncrewed surface vessel (survey/reconnaissance)",
+  "characteristics": [
+    "Range 30km",
+    "speed up to 18kt",
+    "running time up to 9 hours",
+    "Strength: Purpose-built for survey/reconnaissance rather than strike, complementing kamikaze USVs like Magura with a persistent-presence role",
+    "Limitation: Short range relative to strike-focused USVs like Magura V5",
+    "Estimated quantity available: Donated numbers not fully disclosed"
+  ],
+  "employment_notes": "Represents the reconnaissance/ISR layer of the naval drone ecosystem, paired conceptually with strike USVs the way air recon drones pair with FPV strike drones",
+  "contrast_vs_traditional": "A small survey and reconnaissance USV does a job — hydrographic and reconnaissance work near a contested coastline — that traditional naval doctrine assigned to a crewed vessel operating under real risk of loss. An uncrewed platform removes that risk for exactly the kind of persistent, repetitive presence the doctrine.md pattern-of-life detection finding describes for ground reconnaissance, applied to the water instead.",
+  "connections": [],
+  "sources": [],
+  "editable": true,
+  "verification": {
+    "status": "unverified",
+    "independent_sources": 0,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Written from doctrine.md and general knowledge; no per-asset citation yet."
+    ]
+  }
+}

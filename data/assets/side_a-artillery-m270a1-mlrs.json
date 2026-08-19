@@ -1,0 +1,61 @@
+{
+  "id": "side_a-artillery-m270a1-mlrs",
+  "name": "M270A1 MLRS",
+  "side": "side_a",
+  "domain": "land",
+  "echelon": "operational",
+  "group": "artillery",
+  "distance_km_from_zero": 18,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "artillery-rocket",
+  "representative_system": "M270A1 MLRS — Multiple launch rocket system (tracked)",
+  "icon_image": "/icons/m270a1-mlrs.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Donated (no unit price disclosed)",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Range",
+      "value": "12-round GMLRS pod (double HIMARS' magazine), tracked chassis, similar guided-rocket range to HIMARS"
+    },
+    {
+      "label": "Spec 2",
+      "value": "See characteristics"
+    },
+    {
+      "label": "Spec 3",
+      "value": "See characteristics"
+    }
+  ],
+  "short_role": "Multiple launch rocket system (tracked)",
+  "characteristics": [
+    "12-round GMLRS pod (double HIMARS' magazine), tracked chassis, similar guided-rocket range to HIMARS",
+    "Strength: Larger onboard magazine than HIMARS for sustained fire missions before reloading",
+    "Limitation: Tracked chassis is slower on roads and more maintenance-intensive than HIMARS' wheeled chassis",
+    "Estimated quantity available: Delivered in smaller numbers than HIMARS; exact total not fully disclosed"
+  ],
+  "employment_notes": "Provides the same deep-strike guided-rocket capability as HIMARS with greater immediate firepower per launcher, at the cost of mobility",
+  "contrast_vs_traditional": "MLRS doctrine originally meant massed, unguided rocket barrages against area targets. Fired with GMLRS precision-guided rounds and cued by drone reconnaissance, it does the same job HIMARS does elsewhere on this map — a single ISR-identified target struck in minutes rather than an area saturated on a schedule — the same shift from area to precision fires doctrine.md describes for the whole deep-strike layer.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — M270 Multiple Launch Rocket System",
+      "url": "https://en.wikipedia.org/wiki/M270_Multiple_Launch_Rocket_System"
+    },
+    {
+      "label": "Army Technology — Norway, UK to provide more M270 MLRS to Ukraine",
+      "url": "https://www.army-technology.com/news/norway-uk-m270-mlrs-ukraine/"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

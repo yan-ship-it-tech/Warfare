@@ -1,0 +1,62 @@
+{
+  "id": "side_a-naval-mantas-t-12",
+  "name": "MANTAS T-12",
+  "side": "side_a",
+  "domain": "sea",
+  "echelon": "operational",
+  "group": "naval",
+  "distance_km_from_zero": 83,
+  "operating_range_km": null,
+  "band_id": "op_deep",
+  "category": "naval-usv",
+  "representative_system": "MANTAS T-12 — Uncrewed surface vessel (multi-role)",
+  "icon_image": "/icons/mantas-t-12.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Donated (no unit price disclosed)",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Range",
+      "value": "Range 250km"
+    },
+    {
+      "label": "Speed",
+      "value": "speed up to 35kt"
+    },
+    {
+      "label": "Spec 3",
+      "value": "See characteristics"
+    }
+  ],
+  "short_role": "Uncrewed surface vessel (multi-role)",
+  "characteristics": [
+    "Range 250km",
+    "speed up to 35kt",
+    "Strength: Higher speed than Sonobot-5, suited to faster patrol/intercept-style tasking",
+    "Limitation: Range shorter than Magura V5's 800km strike-optimized profile",
+    "Estimated quantity available: Donated numbers not fully disclosed"
+  ],
+  "employment_notes": "Donated Western USV adding patrol/multi-role capability alongside Ukraine's domestic strike-focused USV fleet",
+  "contrast_vs_traditional": "MANTAS extends the same USV logic Ukraine's larger kamikaze naval drones (like Magura) have already demonstrated at Black Sea scale: a multi-role uncrewed surface vessel doing reconnaissance or strike work a traditional navy would have risked a crewed patrol boat on, at a fraction of the cost and none of the crew risk if it's lost.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "MARTAC Systems — MANTAS T12 (manufacturer)",
+      "url": "https://martacsystems.com/products/t12/"
+    },
+    {
+      "label": "Naval Technology — MANTAS T-Series USVs",
+      "url": "https://www.naval-technology.com/projects/mantas-t-series-unmanned-surface-vessels-usv/"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

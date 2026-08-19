@@ -1,0 +1,58 @@
+{
+  "id": "side_b-air-defense-tor-m2",
+  "name": "Tor-M2",
+  "side": "side_b",
+  "domain": "air",
+  "echelon": "operational",
+  "group": "air_defense",
+  "distance_km_from_zero": 5,
+  "operating_range_km": null,
+  "band_id": "tactical",
+  "category": "air-defense-short-range",
+  "representative_system": "Tor-M2 — Short-range mobile SAM",
+  "icon_image": "/icons/tor-m2.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "No clean public unit price disclosed",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Range",
+      "value": "~30km engagement range (per some reporting"
+    },
+    {
+      "label": "Protection",
+      "value": "other sources cite shorter ~12-16km for base Tor variants), 8 ready-to-fire missiles, fully mobile/autonomous operation"
+    },
+    {
+      "label": "Spec 3",
+      "value": "See characteristics"
+    }
+  ],
+  "short_role": "Short-range mobile SAM",
+  "characteristics": [
+    "~30km engagement range (per some reporting",
+    "other sources cite shorter ~12-16km for base Tor variants), 8 ready-to-fire missiles, fully mobile/autonomous operation",
+    "Strength: Fast reaction time; designed specifically for point defense of maneuver units, not just fixed sites",
+    "Limitation: Short range means point-defense only; specification figures vary notably between sources (worth flagging as a live discrepancy rather than picking one silently)",
+    "Estimated quantity available: Fielded numbers not fully disclosed"
+  ],
+  "employment_notes": "Positioned as short-range protection for maneuver forces and rear-area sites against drones, PGMs and low-flying aircraft — the Russian-side functional counterpart to Ukraine's Gepard in the layered air defense comparison",
+  "contrast_vs_traditional": "Tor-M2 was built as short-range point defense against manned aircraft and cruise missiles. Most of its actual engagements now are against slow, cheap FPVs and Shahed-family drones — a multi-hundred-thousand-dollar interceptor fired at a target costing a few tens of thousands of dollars, the same cost-asymmetry inversion doctrine.md notes for HIMARS-vs-FPV fires, just running in the opposite direction here.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Army Recognition — Tor-M2 (SA-15) technical data",
+      "url": "https://www.armyrecognition.com/military-products/army/air-defense-systems/air-defense-vehicles/tor-m2-russia-uk"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "sourced_low_confidence",
+    "independent_sources": 1,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

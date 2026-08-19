@@ -1,0 +1,57 @@
+{
+  "id": "side_a-ground-robots-krab-m1",
+  "name": "Krab-M1",
+  "side": "side_a",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "ground_robots",
+  "distance_km_from_zero": 2,
+  "operating_range_km": null,
+  "band_id": "tactical",
+  "category": "ground-robot-combat",
+  "representative_system": "Krab-M1 — Ground robot (fire support)",
+  "icon_image": "/icons/krab-m1.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Domestic production, unit cost not publicly disclosed",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Spec",
+      "value": "7.62mm PKT MG (550 rounds) or RPG-7"
+    },
+    {
+      "label": "Spec 2",
+      "value": "traction force up to 300kg"
+    },
+    {
+      "label": "Range",
+      "value": "tank-target recognition range up to 2km"
+    }
+  ],
+  "short_role": "Ground robot (fire support)",
+  "characteristics": [
+    "7.62mm PKT MG (550 rounds) or RPG-7",
+    "traction force up to 300kg",
+    "tank-target recognition range up to 2km",
+    "electric",
+    "Strength: Automated target-recognition assist for anti-tank use is unusual among the smaller Ukrainian combat UGVs",
+    "Limitation: Small chassis limits payload/armor compared to larger platforms",
+    "Estimated quantity available: Fielded numbers not publicly disclosed"
+  ],
+  "employment_notes": "One of several parallel Ukrainian combat UGV designs (alongside Ironclad and Moroz), reflecting a deliberately decentralized, many-small-vendors approach to ground robotics rather than one standardized platform",
+  "contrast_vs_traditional": "Like Ironclad, Krab-M1 is a remotely operated fire-support platform built to take the highest-risk seconds of close engagement away from a human crew — the same doctrine.md-documented shift toward unmanned platforms absorbing the exposure that traditional assault doctrine put on infantry directly.",
+  "connections": [],
+  "sources": [],
+  "editable": true,
+  "verification": {
+    "status": "unverified",
+    "independent_sources": 0,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Written from doctrine.md and general knowledge; no per-asset citation yet."
+    ]
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "id": "side_a-uav-uj-26-beaver-bober",
+  "name": "UJ-26 Beaver (Bober)",
+  "side": "side_a",
+  "domain": "air",
+  "echelon": "strategic",
+  "group": "uav",
+  "distance_km_from_zero": 500,
+  "operating_range_km": null,
+  "band_id": "strategic_rear",
+  "category": "uav-strike-deep",
+  "representative_system": "UJ-26 Beaver (Bober) — One-way attack drone (deep strike)",
+  "icon_image": "/icons/uj-26-beaver-bober.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Not publicly disclosed",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Spec",
+      "value": "Canard layout, sleek fuselage, inverted tail"
+    },
+    {
+      "label": "Range",
+      "value": "range ~1,000km"
+    },
+    {
+      "label": "Payload",
+      "value": "payload ~20kg"
+    }
+  ],
+  "short_role": "One-way attack drone (deep strike)",
+  "characteristics": [
+    "Canard layout, sleek fuselage, inverted tail",
+    "range ~1,000km",
+    "payload ~20kg",
+    "introduced 2023, reportedly in mass production",
+    "Strength: Longer range than most contemporaries at the time of introduction; mass production gives sustained strike tempo rather than one-off attacks",
+    "Limitation: Payload (20kg) is modest compared to newer purpose-built strike types like FP-1/FP-2's 40kg warhead",
+    "Estimated quantity available: Reportedly in mass production; exact numbers not disclosed"
+  ],
+  "employment_notes": "One of the earliest Ukrainian deep-strike drones to repeatedly hit Moscow and other targets deep in Russia, establishing the template other domestic long-range types followed",
+  "contrast_vs_traditional": "Traditional deep-strike doctrine assumed reach came from a missile's range or a bomber's radius of action, and that targets hundreds of kilometres from the front were accordingly safe. A mass-producible one-way attack drone extends that reach for a fraction of a cruise missile's cost, the same collapse of the distance-equals-safety assumption doctrine.md notes for cross-border strike UAVs generally.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — Bober (drone)",
+      "url": "https://en.wikipedia.org/wiki/Bober_(drone)"
+    },
+    {
+      "label": "Covert Shores (H I Sutton) — Guide to Ukraine's long-range attack drones",
+      "url": "https://www.hisutton.com/Ukraine-OWA-UAVs.html"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

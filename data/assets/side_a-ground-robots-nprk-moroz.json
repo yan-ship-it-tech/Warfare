@@ -1,0 +1,64 @@
+{
+  "id": "side_a-ground-robots-nprk-moroz",
+  "name": "NPRK Moroz",
+  "side": "side_a",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "ground_robots",
+  "distance_km_from_zero": 2,
+  "operating_range_km": null,
+  "band_id": "tactical",
+  "category": "ground-robot-combat",
+  "representative_system": "NPRK Moroz — Ground robot (fire support / logistics)",
+  "icon_image": "/icons/nprk-moroz.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Domestic production, unit cost not publicly disclosed",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Range",
+      "value": "7.62mm PKM MG (550 rounds, range up to 1,000m)"
+    },
+    {
+      "label": "Spec",
+      "value": "traction force up to 300kg"
+    },
+    {
+      "label": "Spec 3",
+      "value": "standby/observation time up to 48hr"
+    }
+  ],
+  "short_role": "Ground robot (fire support / logistics)",
+  "characteristics": [
+    "7.62mm PKM MG (550 rounds, range up to 1,000m)",
+    "traction force up to 300kg",
+    "standby/observation time up to 48hr",
+    "electric with diesel-generator backup",
+    "Strength: Long standby endurance (48hr) suits extended overwatch positions; dual electric/diesel-generator power",
+    "Limitation: Lighter armament than larger combat UGVs like Ironclad; smaller traction/load capacity",
+    "Estimated quantity available: Fielded numbers not publicly disclosed"
+  ],
+  "employment_notes": "Multifunctional design combining fire support and trailer-based transport in one small, cheap platform - illustrating the trend toward small, disposable, purpose-built ground robots rather than large multi-role ones",
+  "contrast_vs_traditional": "Moroz splits its role between fire support and logistics — itself a sign that traditional doctrine's separate categories for combat and resupply vehicles are blurring at the small-UGV scale, where a single remotely operated platform is cheap enough to be worth building for more than one mission rather than specializing the way a manned vehicle would.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Defense Express — Brave1 unveils the MOROZ reconnaissance system",
+      "url": "https://en.defence-ua.com/news/brave1_unveils_the_moroz_reconnaissance_system-10774.html"
+    },
+    {
+      "label": "Modern War Institute — Networked for War: lessons from Ukraine's ground robots",
+      "url": "https://mwi.westpoint.edu/networked-for-war-lessons-from-ukraines-ground-robots/"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

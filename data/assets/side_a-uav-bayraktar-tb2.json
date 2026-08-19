@@ -1,0 +1,61 @@
+{
+  "id": "side_a-uav-bayraktar-tb2",
+  "name": "Bayraktar TB2",
+  "side": "side_a",
+  "domain": "air",
+  "echelon": "tactical",
+  "group": "uav",
+  "distance_km_from_zero": 6,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "uav-strike",
+  "representative_system": "Bayraktar TB2 — Medium-altitude strike/reconnaissance UAV",
+  "icon_image": "/icons/bayraktar-tb2.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": 1500000,
+    "display": "~$1-2M per system component (widely cited estimate, not officially disclosed)",
+    "confidence": "estimated"
+  },
+  "key_facts": [
+    {
+      "label": "Endurance",
+      "value": "Endurance ~24hr"
+    },
+    {
+      "label": "Payload",
+      "value": "carries MAM-L/MAM-C laser-guided munitions"
+    },
+    {
+      "label": "Control link",
+      "value": "satellite + line-of-sight control"
+    }
+  ],
+  "short_role": "Medium-altitude strike/reconnaissance UAV",
+  "characteristics": [
+    "Endurance ~24hr",
+    "carries MAM-L/MAM-C laser-guided munitions",
+    "satellite + line-of-sight control",
+    "Strength: Combines long-endurance ISR with an organic strike capability in one airframe, unlike pure-recon or pure-strike drone types",
+    "Limitation: Vulnerable to modern integrated air defense at altitude and range once opposing SAM coverage is dense - effectiveness dropped sharply after the war's opening weeks as Russian air defense adapted",
+    "Estimated quantity available: Dozens in service; exact current total not disclosed"
+  ],
+  "employment_notes": "Iconic in the war's opening phase for strikes on armor and logistics columns; its reduced later-war effectiveness against a denser Russian IADS is itself a widely-cited lesson about air defense adaptation",
+  "contrast_vs_traditional": "TB2 opened the war as the headline example of an armed medium-altitude UAV doing a job traditional airpower doctrine reserved for manned strike aircraft — find, track and strike a target without risking a pilot. Persistent short-range air defense has since pushed it out of contested airspace near the front, which is itself the doctrine.md finding in miniature: control of the lower sky, not a platform's own capability, sets where it can actually operate.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — Bayraktar TB2",
+      "url": "https://en.wikipedia.org/wiki/Bayraktar_TB2"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "sourced_low_confidence",
+    "independent_sources": 1,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Rests only on tertiary reference works; wants a primary or trade source."
+    ]
+  }
+}

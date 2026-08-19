@@ -1,0 +1,69 @@
+{
+  "id": "side_b-uav-orion",
+  "name": "Orion",
+  "side": "side_b",
+  "domain": "air",
+  "echelon": "tactical",
+  "group": "uav",
+  "distance_km_from_zero": 7,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "category": "uav-strike",
+  "representative_system": "Orion — Medium-altitude long-endurance UAV",
+  "icon_image": "/icons/orion.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": 1500000,
+    "display": "$1,500,000 (per user-supplied catalog)",
+    "confidence": "estimated"
+  },
+  "key_facts": [
+    {
+      "label": "Weight",
+      "value": "550kg drone weight"
+    },
+    {
+      "label": "Spec",
+      "value": "16m wingspan"
+    },
+    {
+      "label": "Range",
+      "value": "250km comms range"
+    }
+  ],
+  "short_role": "Medium-altitude long-endurance UAV",
+  "characteristics": [
+    "550kg drone weight",
+    "16m wingspan",
+    "250km comms range",
+    "120-200km/h",
+    "7,500m altitude",
+    "24hr endurance",
+    "internal combustion engine",
+    "Strength: Class-leading endurance and altitude among Russian UAVs in this catalog, comparable in role to Western MALE drones like Bayraktar TB2",
+    "Limitation: High unit cost relative to the mass-produced smaller UAV types, making it a higher-value target if lost",
+    "Estimated quantity available: Small fleet; exact total not disclosed"
+  ],
+  "employment_notes": "Represents Russia's attempt to field a MALE-class strategic/operational reconnaissance-strike drone comparable to Bayraktar TB2, at a much higher unit cost than its small tactical drone fleet",
+  "contrast_vs_traditional": "Orion fills the medium-altitude, long-endurance strike-reconnaissance role TB2 fills on the other side of the line — both platforms chasing the same traditional-airpower job of persistent overwatch plus precision strike without a pilot at risk, and both constrained by the same doctrine.md finding that whoever controls the lower sky over a sector, not either platform's specifications, decides how close it can safely operate.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — Kronshtadt Orion",
+      "url": "https://en.wikipedia.org/wiki/Kronshtadt_Orion"
+    },
+    {
+      "label": "The National Interest — Is the Orion UAV Russia's answer to Ukraine's Turkish drones?",
+      "url": "https://nationalinterest.org/blog/buzz/orion-uav-russias-answer-ukraines-turkish-drones-198374"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Specs meet the bar but the unit cost is an estimate — cost is not verified."
+    ]
+  }
+}

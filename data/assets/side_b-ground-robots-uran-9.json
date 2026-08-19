@@ -1,0 +1,61 @@
+{
+  "id": "side_b-ground-robots-uran-9",
+  "name": "Uran-9",
+  "side": "side_b",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "ground_robots",
+  "distance_km_from_zero": 2,
+  "operating_range_km": null,
+  "band_id": "tactical",
+  "category": "ground-robot-combat",
+  "representative_system": "Uran-9 — Ground robot (armed, remotely controlled)",
+  "icon_image": "/icons/uran-9.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Not publicly disclosed",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Main armament",
+      "value": "2A72 30mm automatic cannon, coaxial 7.62mm MG, Ataka ATGMs, Shmel-M rocket flamethrowers"
+    },
+    {
+      "label": "Spec 2",
+      "value": "See characteristics"
+    },
+    {
+      "label": "Spec 3",
+      "value": "See characteristics"
+    }
+  ],
+  "short_role": "Ground robot (armed, remotely controlled)",
+  "characteristics": [
+    "2A72 30mm automatic cannon, coaxial 7.62mm MG, Ataka ATGMs, Shmel-M rocket flamethrowers",
+    "Strength: Most heavily armed Russian UGV design with a public combat-role concept (facility security, reconnaissance, engaging personnel/equipment)",
+    "Limitation: Despite pre-war development and claimed Syria/Ukraine deployment, has not achieved widespread battlefield use - a real system that never scaled",
+    "Estimated quantity available: Limited deployment; not widely fielded despite years of development"
+  ],
+  "employment_notes": "Illustrates the gap between demonstrated/exhibition capability and actual battlefield deployment that runs through Russian combat-UGV development generally, per the source's own framing",
+  "contrast_vs_traditional": "Uran-9 is Russia's armed, remotely controlled answer to the same problem Ukrainian combat UGVs solve on the other side of the line: putting firepower into a contested position without putting a crew there, reflecting the doctrine.md-documented shift of the most casualty-heavy moments of an engagement onto unmanned platforms on both sides.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Wikipedia — Uran-9",
+      "url": "https://en.wikipedia.org/wiki/Uran-9"
+    },
+    {
+      "label": "Army Technology — Uran-9 Unmanned Ground Combat Vehicle",
+      "url": "https://www.army-technology.com/projects/uran-9-unmanned-ground-combat-vehicle/"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}

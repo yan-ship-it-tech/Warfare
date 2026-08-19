@@ -1,0 +1,63 @@
+{
+  "id": "side_a-ground-robots-nrtk-ratel-s",
+  "name": "NRTK Ratel-S",
+  "side": "side_a",
+  "domain": "land",
+  "echelon": "tactical",
+  "group": "ground_robots",
+  "distance_km_from_zero": 3,
+  "operating_range_km": null,
+  "band_id": "tactical",
+  "category": "ground-robot-multipurpose",
+  "representative_system": "NRTK Ratel-S — Ground robot (mining / kamikaze / transport)",
+  "icon_image": "/icons/nrtk-ratel-s.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Domestic production, unit cost not publicly disclosed",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Spec",
+      "value": "Multifunctional: transportation, remote mine-laying, and kamikaze (self-detonating) use"
+    },
+    {
+      "label": "Engine",
+      "value": "electric engine"
+    },
+    {
+      "label": "Spec 3",
+      "value": "hardened against EW interference"
+    }
+  ],
+  "short_role": "Ground robot (mining / kamikaze / transport)",
+  "characteristics": [
+    "Multifunctional: transportation, remote mine-laying, and kamikaze (self-detonating) use",
+    "electric engine",
+    "hardened against EW interference",
+    "Strength: Stable operation under electronic warfare conditions; flexible role (can be reconfigured for different missions)",
+    "Limitation: Small compact platform, limited payload relative to larger logistics UGVs",
+    "Estimated quantity available: Fielded numbers not publicly disclosed"
+  ],
+  "employment_notes": "Represents the ground equivalent of the FPV drone's 'miner'/kamikaze pattern described in the FPV tactics reference, extended to a wheeled ground platform",
+  "contrast_vs_traditional": "A ground robot that can mine, deliver a kamikaze charge, or simply transport supplies depending on how it's fitted reflects the same doctrine.md force-structure pattern documented for drone units: small, cheap, remotely operated platforms procured and adapted at unit level for whatever the sector needs, rather than issued as a single-purpose system from a central program.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "Defense Express — Ratel S suicide UGV-drone specifications",
+      "url": "https://en.defence-ua.com/weapon_and_tech/ukrainian_officials_reveal_the_ratel_s_suicide_ugv_drone_specifications_included-8355.html"
+    },
+    {
+      "label": "Army Recognition — Ratel S used to destroy a bridge",
+      "url": "https://www.armyrecognition.com/focus-analysis-conflicts/army/conflicts-in-the-world/russia-ukraine-war-2022/ukrainian-forces-use-ratel-s-ground-robot-to-revolutionize-robotic-warfare-in-bridge-destruction"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
+}
