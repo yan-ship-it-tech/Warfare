@@ -7,6 +7,13 @@ and `docs/BACKLOG.md` (known gaps). This file holds what's coming next.
 then transcribed here as a numbered brief before each Claude Code pass. Each pass
 gets its own section. Sessions read `CLAUDE.md` → `DECISIONS.md` → this file.
 
+**Per-pass paste-in briefs:** `docs/CLAUDE_CODE_BRIEFS_PASS13-18.md` holds the
+self-contained brief text for each of Passes 13–18 below, one section per pass, meant
+to be pasted into a fresh Claude Code session at the start of that pass. It compresses
+out the background this file carries — read the relevant pass section here first. Pass
+16's source data (`docs/3d-model-sourcing-manifest.xlsx`) is committed alongside it so
+that pass has something to work from without anything needing to be pasted in.
+
 **Scope decision for this whole push:** work on the **3D WebGL view only**
 (`src/three/`). The 2D schematic view (`src/scene/`) is explicitly deferred — it's
 cheap to bring back into line once the 3D view settles. Do not spend pass budget on it.
@@ -122,7 +129,7 @@ of war in Ukraine."
 
 ## Pass 16 — 3D model integration
 
-Depends on: Pass 13 (perf headroom). Source data: `3d-model-sourcing-manifest.xlsx`
+Depends on: Pass 13 (perf headroom). Source data: `docs/3d-model-sourcing-manifest.xlsx`
 (72 assets — 47 sourced free, 8 need license verification, 17 have no free source).
 
 1. **License filter first.** Reject game-ripped models outright (real legal exposure for a
