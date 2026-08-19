@@ -1837,3 +1837,56 @@ code — both were only found by actually running the gesture:
   `overrides.customAssets` across a reload.
 - Library: filtered by side and by category, expanded a row, and exercised
   all three actions from it.
+
+# Pass 12 — model style guide (documentation/consistency, no feature work)
+
+Brief: write a short model style guide alongside this file, based on the
+best-looking assets already in the scene, use it to audit the existing 3D
+models, flag deviations — no new features. `docs/MODEL_STYLE_GUIDE.md`.
+
+The reference set is the 11-asset hero tier in `src/three/models.ts` —
+chosen because it's the one file with an explicit, self-enforced
+consistency rule already (`export const HERO_MATERIALS = [...]`, five
+shared materials, box+cylinder-only primitives), not a subjective pick.
+Every number in the guide (poly-budget range, segment-count ceiling,
+roughness/metalness bands, saturation band) was measured off the actual
+source — grepped geometry constructors and material declarations across
+`models.ts`, `scenery.ts`, `props.ts`, `terrain3d.ts`, then computed HSL
+saturation and pairwise RGB distance in Python — not asserted from general
+low-poly-aesthetic knowledge. Worth being explicit that this was measured,
+not eyeballed, since a style guide's numbers are only as good as their
+source.
+
+One real, fixable inconsistency came out of it: `scenery.ts` declares 19
+one-off materials with no shared/exported list the way `models.ts` does,
+and at least four pairs are close enough in RGB distance (2.2–13.0 out of a
+441-max scale) to be visually redundant — `PIER_WOOD` vs. a `props.ts` tree
+colour, `WALL_RUINED` vs. `RUBBLE` in the same file, `SANDBAG` vs.
+`WALL_INTACT` in the same file, `CONCRETE_DARK` vs. `PIER_WOOD` in the same
+file. Everything else audited clean: `flatShading: true` has zero
+exceptions across all four files; primitive vocabulary (box+cylinder-only
+for hero models, a wider set for scenery) is a documented split, not scope
+creep; segment counts (4–14) and primitive counts (6–25) hold across every
+file, hero and scenery alike; the three deliberate saturation/roughness
+accents (`GLASS`, `EMBER`, the Pass 10 water plane) are each already
+commented as intentional at the point they're declared. `ROOF_INTACT`/
+`ROOF_DAMAGED` sit a little hot on saturation relative to everything else
+and aren't marked as an accent — flagged as a smaller, arguable case rather
+than a clear violation.
+
+**Not fixed in this pass, on purpose**: the material-consolidation and
+`SCENERY_MATERIALS`-export follow-up the audit recommends is left as a
+recommendation, not applied. The brief was documentation and audit — making
+that specific code change would have been the "no new features" instruction
+undercut by exactly the kind of drive-by edit this pass exists to name
+instead of quietly making.
+
+## Where the brief and prior passes disagreed
+
+Nothing to flag — this pass didn't touch runtime code at all
+(`git status` after: two new/changed files, both docs). The one judgment
+call worth naming: the brief said "flag which ones deviate" in the plural,
+and the honest finding is that three of four files (`models.ts`, `props.ts`,
+`terrain3d.ts`) don't deviate at all — reported that plainly rather than
+manufacturing findings to make the audit look more thorough than the
+codebase actually warranted.

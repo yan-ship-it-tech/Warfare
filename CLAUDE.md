@@ -52,6 +52,7 @@ making an architectural change, not optional history.
 | `docs/CONTENT_PIPELINE.md` | **Read before adding or editing asset content.** Two-pass process: draft a category, then verify it in a *separate* sitting via `node scripts/audit-content.mjs --write`, which derives each asset's `verification` status from its `sources` array (never hand-authored). |
 | `docs/BACKLOG.md` | Everything flagged but not done — category gaps, deferred decisions, things explicitly decided against. Check here before assuming a gap was overlooked. |
 | `docs/DEPLOY_SYNC_WORKER.md` | Human walkthrough for deploying the Worker (one remaining manual step: `wrangler deploy` + two repo secrets). |
+| `docs/MODEL_STYLE_GUIDE.md` | **Read before adding or editing any 3D geometry** in `src/three/`. Proportions, poly budget, material/palette rules and silhouette conventions, measured off the hero tier (`models.ts`) and audited against `scenery.ts`/`props.ts`/`terrain3d.ts` — see Pass 12. |
 | `scripts/` | `audit-content.mjs` (verification), `import-catalog.py` + `fill-sources.py` (spreadsheet → asset JSON, the repeatable path for the next ad hoc content drop). |
 
 ## Commands
