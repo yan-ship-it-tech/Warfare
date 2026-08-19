@@ -5,9 +5,12 @@
 // sourcing tag it came from, so a lesson is as traceable as an asset.
 //
 // The part that matters: a lesson is not a paragraph, it is a pointer at the
-// map. "Show on map" frames that lesson's assets in the 3D view and dims the
-// rest, so the claim gets demonstrated on the same objects the rest of the
-// tool is built from instead of being asserted alongside them.
+// map. "Show on the battlefield" flies the camera to that lesson's assets and
+// puts the whole app into scenario-focus mode (src/state/viewState.tsx's
+// FocusRequest) — everything else dims/blurs in both renderers — so the claim
+// gets demonstrated on the same objects the rest of the tool is built from
+// instead of being asserted alongside them. Exit via the banner, Escape, or
+// clicking empty battlefield.
 import { useState } from "react";
 import { CONNECTION_STYLE, SIDE_ACCENT } from "../config/ui";
 import { useViewState } from "../state/viewState";
@@ -19,13 +22,15 @@ export function LessonsPage({ world }: PageProps) {
   const router = useRouter();
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  const showOnMap = (assetIds: string[]) => {
+  const showOnMap = (assetIds: string[], label: string) => {
     // The 3D view is the one that can actually fly a camera; switching first
     // means the button does the same thing regardless of which view you were
-    // in when you pressed it.
+    // in when you pressed it. focusAssets() now doubles as "scenario focus
+    // mode" — everything not in assetIds dims/blurs in both renderers, not
+    // just the 3D one, so the effect survives a later switch to Schematic.
     if (view.renderMode !== "terrain3d") view.setRenderMode("terrain3d");
     view.select(null);
-    view.focusAssets(assetIds);
+    view.focusAssets(assetIds, label);
     router.navigate("/");
   };
 
@@ -95,7 +100,7 @@ export function LessonsPage({ world }: PageProps) {
                           className="lessons__asset"
                           style={{ ["--side" as string]: SIDE_ACCENT[a.side].base }}
                           onClick={() => {
-                            showOnMap(lesson.asset_ids);
+                            showOnMap(lesson.asset_ids, lesson.title);
                             view.select(a.id);
                           }}
                           title={a.short_role}
@@ -106,8 +111,12 @@ export function LessonsPage({ world }: PageProps) {
                     </div>
                   </div>
 
-                  <button type="button" className="btn" onClick={() => showOnMap(lesson.asset_ids)}>
-                    ▶ Show all {linked.length} on the map
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() => showOnMap(lesson.asset_ids, lesson.title)}
+                  >
+                    ▶ Show all {linked.length} on the battlefield
                   </button>
                 </div>
               )}

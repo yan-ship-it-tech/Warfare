@@ -251,6 +251,28 @@ export function worldXFor(side: Side, km: number, proj: Projection): number {
   return (proj.xFor(side, km, 0) - proj.centerXPx) / PX_PER_UNIT;
 }
 
+/** Inverse of worldXFor — world-unit X (magnitude, either side) back to km.
+ *  Used by drag-to-reposition (Scene3D.tsx) to turn a drop point back into a
+ *  distance override. Binary search rather than a closed-form inverse: the
+ *  forward direction goes through `Projection.xFor()`, which folds in the
+ *  lane-oblique term and the zero-line gutter, and reproducing that algebra
+ *  here would have to stay in lockstep with projection.ts by hand. km→x is
+ *  monotonic (kmToOffsetPx never decreases), so this converges in a fixed
+ *  number of steps regardless of how many bands exist or how the piecewise
+ *  per-band scale is shaped. */
+export function worldXToKm(side: Side, worldX: number, proj: Projection): number {
+  const target = Math.abs(worldX);
+  const maxKm = proj.spans.length ? proj.spans[proj.spans.length - 1].displayMaxKm : 0;
+  let lo = 0;
+  let hi = maxKm;
+  for (let i = 0; i < 40; i++) {
+    const mid = (lo + hi) / 2;
+    if (Math.abs(worldXFor(side, mid, proj)) < target) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
 /** Total half-extent of the world along X, world units. */
 export function worldHalfWidth(proj: Projection): number {
   return (proj.halfWidthPx + 70) / PX_PER_UNIT;

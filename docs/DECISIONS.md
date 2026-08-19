@@ -1608,3 +1608,232 @@ and the terrain/scenery changes introduced no new warnings). Right-drag pan
 in headless Chromium needed a mouse-down point clear of any label overlay to
 register at all — a test-harness quirk, not an app behaviour change; noted
 here in case a future pass's headless verification hits the same thing.
+
+---
+
+# Pass 11 — interactivity: scenario focus mode, drag-to-reposition, asset library
+
+Three-item brief: fix "show on the battlefield" and turn it into a real
+scenario-focus mode; make assets draggable (ground pinned to terrain, air
+pinned to its elevation band) with non-mutating duplication for swarm/
+scenario building; a new asset library page. Explicitly told to stop and
+flag rather than ship a half-working version if the highlight/blur logic got
+complicated — it didn't, but two other things in this pass did get
+genuinely complicated before landing, and both are called out below because
+they were caught by testing the actual gesture, not by reading the code.
+
+## 1. Scenario focus mode — what was actually broken
+
+**Diagnosis first, since "broken" needed to be pinned down before fixing
+it.** The mechanism existed (`ViewState.focusRequest`, wired from the
+Lessons page since Pass 6) and partially worked: the camera flew to the
+lesson's assets and their DOM labels dimmed. Three real defects, not one:
+
+- **No way out.** `clearFocus()` was written and exported and never called
+  from anywhere. Once a lesson dimmed the map, that state was permanent for
+  the rest of the session short of firing another focus request.
+- **Selecting anything outside the focus set looked broken.** `is-dimmed`
+  didn't check selection/hover, so clicking a dimmed asset to compare it
+  against the highlighted lesson opened its detail panel while the asset
+  itself sat at 18% opacity — a selected thing rendered as barely visible is
+  exactly the "half-working" outcome the brief warned about.
+- **Only the DOM labels dimmed.** The WebGL markers (the octahedron icons
+  actually sitting on the terrain) stayed at full brightness regardless of
+  focus, and the Schematic (2D) view had zero awareness of `focusRequest` at
+  all — switching views mid-lesson silently dropped the whole effect.
+
+**What shipped**, all reusing the existing `focusRequest` mechanism rather
+than adding a second one:
+
+- `FocusRequest` gained an optional `label` (lesson title / asset name),
+  surfaced in a new `ScenarioFocusBanner` — the entry AND the one deliberate
+  exit besides Escape. Every place that calls `focusAssets()` (Lessons, the
+  Asset editor's "view on map", the new library page) now passes a label.
+- Real exits: the banner's own button, and Escape (a new tier between
+  "close a panel" and "deselect" — see App.tsx). Deliberately **not** added
+  to a background click in either view — that gesture already means
+  "deselect," and overloading it to also silently drop scenario focus felt
+  like the wrong kind of surprise mid-demo. Flagged as a scope choice, not
+  an oversight.
+- Dimming now excludes anything selected or hovered, in both the label class
+  computation and the 3D marker material pass — the exact bug above.
+- **3D markers dim/desaturate now, not just labels.** The octahedron marker,
+  its side ring and its fill all blend toward a flat grey and drop opacity
+  when outside the focus set, computed in the same per-frame loop that
+  already set selection/hover emphasis (`Scene3D.tsx`). Hero models (11
+  assets with real geometry, Pass 6) are deliberately **not** touched — their
+  materials are cached and cloned per `models.ts`'s own comment ("Models are
+  cached per builder and cloned"), and mutating a clone's material without
+  first checking whether that mutation reaches back to the shared cache was
+  a real risk not worth taking for a cosmetic dim. Flagged rather than
+  silently scoped out: a focused/dimmed hero model still gets the marker+
+  ring treatment every asset gets, just not a dimmed model on top of it.
+- **2D view now participates.** `Scene.tsx` computes a `scenarioFocusSet`
+  from `focusRequest` and, when active, it takes over `AssetNode`'s fade
+  treatment entirely (a new `is-focus-dimmed`/`is-focused` pair, blurred via
+  real CSS `filter: blur()` — cheap and exact for DOM, unlike the WebGL
+  layer) rather than combining with the pre-existing hover/select-neighbour
+  fade (`is-faded`), so the two mechanisms can't disagree about what's
+  dimmed. `ConnectionsOverlay` got the same override: with a scenario focus
+  active, an edge is "in focus" only when BOTH ends are in the named set —
+  literally the dependency line the lesson is about — rather than the
+  ordinary single-node hover/select emphasis.
+- **"Blur," read honestly.** A real screen-space blur needs a post-
+  processing pass (`EffectComposer` or similar) that doesn't exist in this
+  renderer and wasn't worth adding for a dim effect. The DOM layers (2D
+  nodes, 3D labels) get genuine `filter: blur()` since that's free there;
+  the WebGL markers get desaturate+dim instead. Documented in both places
+  rather than silently substituting one for the other and calling it done.
+
+## 2. Drag-to-reposition — two real bugs caught only by testing the gesture
+
+**The feature is 3D-only, flagged deliberately.** "The battlefield" in this
+codebase's own language is the 3D view (`Scene3D.tsx`'s file header literally
+opens "The WebGL battlefield"); the Schematic view's vertical axis is a
+domain lane plus auto-packed sub-row, not a free coordinate anything could
+drag to. The Schematic view already supports repositioning along the one
+axis it does own — `distance_km_from_zero`, editable from the detail panel
+since Pass 2 — and a drag there would just be a mouse-driven version of that
+same field. Building a second, different lateral concept for 2D to make
+"draggable" literal everywhere felt like solving a problem nobody has; not
+done, flagged here rather than silently scoped down.
+
+**Mechanics.** `AssetOverride` gains `lateral_offset_world?: number` — a
+3D-only layout preference, deliberately kept out of the `Asset` schema
+(`types.ts`) since it's not sourced data, the same reasoning that already
+keeps `platform_domain` inference separate from authored fields.
+`worldMapping.ts` gains `worldXToKm()`, the literal inverse Pass 1 predicted
+("`offsetPxToKm` specifically so drag-to-reposition can convert a drop x
+back into a distance") — implemented as a bounded binary search rather than
+inverting `Projection.xFor()`'s algebra by hand, since that algebra folds in
+the lane-oblique term and the zero-gutter and reproducing it by hand would
+have to stay in lockstep with `projection.ts` forever. `lateralLayout()`
+now takes a manually-placed asset OUT of the auto-spread/relaxation pass
+entirely rather than feeding it in and nudging the result — the relaxation
+pass exists to keep *auto*-placed assets from colliding, and running a
+user-dropped one through it would silently move it again right after the
+user let go. During the drag, every live update goes through the exact
+same `worldPlacement()` every asset is placed with on load — that's the
+entire mechanism behind "ground stays pinned to terrain height, air stays
+in its band": only km (via `worldXToKm`) and z move; Y is whatever
+`worldPlacement()` says it should be at the new point, same as day one.
+
+**Bug 1 — hit-testing off the wrong surface.** First implementation
+raycasted the WebGL marker meshes from a `pointerdown` on the canvas,
+capture-phase on the mount div so it could beat `OrbitControls`' own
+listener to `controls.enabled = false`. It typechecked, built, and was
+*wrong*: the DOM pin (name + km label) sits `LABEL_LIFT_PX` plus its own
+height above the marker's actual screen point — grabbing the visible,
+obviously-clickable label almost always raycasts past the small octahedron
+sitting well below it. Caught only by actually dragging a pin in a headless
+run and finding the distance hadn't moved. Rebuilt around the pin itself:
+`onPointerDown` on the `.pin3d` button, which also turns out simpler — the
+pin lives in a sibling overlay div, never inside `renderer.domElement`, so
+`OrbitControls` never sees the gesture at all and there's no priority race
+to win in the first place.
+
+**Bug 2 — a stable-looking callback that wasn't.** The pin-based rewrite
+still failed silently: `pointerdown` fired, nothing else did. Root cause was
+a `useCallback` dependency array holding the entire `view` object (`[...,
+overrides.setAssetOverride, view]`) so it would have `view.select` for the
+post-drop confirmation. `view` gets a new identity on essentially every
+hover, and an unrelated cleanup effect keyed on that same callback's
+identity was tearing down the `pointerup`/`pointermove` window listeners the
+instant a hover fired mid-drag — which a real drag gesture does constantly,
+crossing other pins on the way. The fix is one word: depend on `view.select`
+(a stable `useState` setter) instead of `view`. Verified by an actual
+Playwright drag before and after: 0% success, then a real distance change
+persisted to the override store, both confirmed by reading `localStorage`
+directly rather than trusting the UI alone. Neither bug would have been
+caught by a code read — both needed the gesture actually run.
+
+## 3. Duplicate — reuses the Asset editor's own store, not a new one
+
+`DetailPanel.tsx` gained a "⧉ Duplicate" button. It writes into
+`overrides.customAssets` — the exact mechanism `AssetEditorPanel` already
+uses for brand-new assets (Pass 7) — so a duplicate is a real, independent
+`Asset` record from the moment it's created: draggable, editable, deletable,
+and it never touches the `data/assets/*.json` file it was copied from. Text
+fields bake in whatever local edits the original currently shows (its
+effective role/characteristics/employment/contrast, not necessarily the
+shipped file's own) since the clone is meant to drift independently from
+here on. `connections` copy verbatim — a duplicated Lancet keeps the same
+Starlink/ISR dependency edges the original declares, which is the correct
+read of "swarm/scenario building": five of the same asset should share the
+same real dependency, not five orphans. New id/name collision handling
+walks `-copy`, `-copy-2`, ... against both the shipped roster and existing
+custom assets.
+
+## 4. Asset library page
+
+`src/pages/AssetLibraryPage.tsx`, registered in `pages/registry.tsx` per
+that file's own note that this page was coming ("costs one entry here plus
+the component itself" — it did). Filters by side and by category (the
+`data/groups.json` taxonomy, same chips `CategoryFilterMenu` already uses)
+plus a name/category text search, added beyond the literal ask because at
+90 assets "browse by category and side" alone still leaves a long list —
+flagged as a small addition, not a silent scope change. Selecting a row
+expands it in place (same interaction language as the Lessons page's own
+list) to show its role and three actions:
+
+- **View detail** — `view.select()` + navigate home, same pattern
+  `DataHealthPage` already uses to jump from an issue to its asset.
+- **Show on battlefield** — calls `focusAssets([id], name)`, i.e. scenario
+  focus mode from §1 applied to a single asset. Free reuse: the library
+  page didn't need its own spotlight mechanism, item 1's already is one.
+- **Edit** — branches on what kind of asset it is rather than pretending
+  there's one editing surface for both. A custom asset (built in, or
+  duplicated via, the Asset editor) opens that form directly in edit mode,
+  via a new one-shot `ViewState.editorTarget`/`requestEditAsset()` — the
+  same consume-once pattern `focusRequest`'s nonce already established. A
+  shipped asset opens the detail panel instead, which is genuinely where its
+  inline edit controls live (`AssetEditorPanel.tsx`'s own file header is
+  explicit that its form can't touch a shipped asset's fields — extending it
+  to do so was out of scope for this pass and would cut against that
+  file's own stated design).
+
+## Where the brief and prior passes disagreed
+
+1. **Drag-to-reposition scoped to the 3D view only.** See §2 — the brief's
+   wording ("make assets draggable on the battlefield") reads naturally as
+   the 3D view in this codebase's own vocabulary, and the 2D view's vertical
+   axis has no free coordinate to drag along without inventing one.
+2. **"Blur" is real CSS blur on the DOM layers (2D nodes, 3D labels) and
+   desaturate+dim on the WebGL markers**, not a literal blur everywhere —
+   see §1. A post-processing pass for the 3D canvas was judged not worth
+   adding for a dim effect.
+3. **Hero models don't participate in scenario-focus dimming.** See §1 —
+   their materials are cached/cloned per `models.ts`, and mutating a clone
+   without checking whether the cache is shared was a risk not worth taking.
+4. **Background click does not clear scenario focus**, only the banner and
+   Escape do. See §1 — overloading the existing "click empty space to
+   deselect" gesture felt like the wrong kind of surprise mid-demo.
+5. **Asset library's search box** wasn't asked for; added because the ask
+   ("browse by category and side") still leaves 90 assets to scroll without
+   one.
+
+## Verification
+
+`npx tsc --noEmit` and `npm run build` clean throughout. No test suite
+exists, so this pass leaned harder than most on the headless Playwright
+harness precisely because §2's two bugs were both invisible from reading the
+code — both were only found by actually running the gesture:
+
+- Scenario focus: triggered from the Lessons page, confirmed the banner
+  text/count, confirmed dimmed-pin and focused-pin counts, confirmed a
+  dimmed pin becomes fully visible on selection (the bug this pass fixed),
+  confirmed the banner and all dimming clear on both its own Exit button and
+  Escape, and confirmed the identical spotlight mechanism fires correctly
+  from the library page's "Show on battlefield" for a single asset.
+- Drag: selected an asset, read its distance from the detail panel,
+  performed an actual multi-step `mouse.move`/`down`/`move`/`up` sequence
+  on its pin, and confirmed both the on-screen distance AND the raw
+  `localStorage` override record changed to match — not just that the UI
+  looked different. Also confirmed a plain click (no movement) still
+  selects normally and writes no override, so the drag threshold isn't
+  accidentally eating ordinary clicks.
+- Duplicate: selected a shipped asset, clicked Duplicate, confirmed a new
+  `(copy)`-suffixed asset was selected and it persisted in
+  `overrides.customAssets` across a reload.
+- Library: filtered by side and by category, expanded a row, and exercised
+  all three actions from it.

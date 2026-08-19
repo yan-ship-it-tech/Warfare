@@ -26,7 +26,7 @@
 //      That's the same deliberate scope line docs/BACKLOG.md #22 already
 //      draws for 16 of the 27 originally-shipped assets, not a gap unique to
 //      this feature.
-import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import type { Asset, ConnectionType, Domain, Echelon, Side } from "../types";
 import type { WorldModel } from "../data/model";
 import { resolveBand } from "../data/model";
@@ -175,6 +175,23 @@ export function AssetEditorPanel({ world }: { world: WorldModel }) {
   const [imageWarning, setImageWarning] = useState<string | null>(null);
   const [justSavedId, setJustSavedId] = useState<string | null>(null);
 
+  // The Asset Library page can ask to open straight into edit mode for a
+  // specific asset (ViewState.editorTarget) instead of the list. Only meant
+  // for a custom asset — this form can't edit a shipped one (see the file
+  // header) — so a shipped-asset id or a stale/deleted one is just consumed
+  // and dropped rather than left to keep re-firing.
+  useEffect(() => {
+    if (view.openPanel !== "editor" || !view.editorTarget) return;
+    const target = overrides.customAssets[view.editorTarget];
+    if (target) {
+      setEditingId(target.id);
+      setDraft(draftFromAsset(target));
+      setJustSavedId(null);
+      setMode("form");
+    }
+    view.clearEditorTarget();
+  }, [view.openPanel, view.editorTarget, overrides.customAssets, view.clearEditorTarget]);
+
   if (view.openPanel !== "editor") return null;
 
   const customList = Object.values(overrides.customAssets).sort((a, b) => a.name.localeCompare(b.name));
@@ -293,7 +310,7 @@ export function AssetEditorPanel({ world }: { world: WorldModel }) {
   const viewOnMap = (id: string) => {
     if (view.renderMode !== "terrain3d") view.setRenderMode("terrain3d");
     view.select(id);
-    view.focusAssets([id]);
+    view.focusAssets([id], world.assetsById.get(id)?.name);
     view.setOpenPanel(null);
   };
 

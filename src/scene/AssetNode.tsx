@@ -23,6 +23,12 @@ interface Props {
   hovered: boolean;
   /** Dimmed when a selection elsewhere has focus and this node is not connected to it. */
   faded: boolean;
+  /** Scenario-focus mode is active (ViewState.focusRequest) and this node is
+   *  outside the named set — a stronger, blurred dim, distinct from `faded`'s
+   *  quick hover-preview fade. See styles.css for why they're separate classes. */
+  focusDimmed: boolean;
+  /** Scenario-focus mode is active and this node IS in the named set. */
+  focused: boolean;
   /** Bumped to replay the vignette without re-selecting. */
   replayNonce: number;
   /** This node's label lost the declutter pass, so it renders icon-only and
@@ -37,6 +43,8 @@ export function AssetNode({
   selected,
   hovered,
   faded,
+  focusDimmed,
+  focused,
   replayNonce,
   labelCollapsed,
   onSelect,
@@ -87,6 +95,8 @@ export function AssetNode({
     selected ? "is-selected" : "",
     hovered ? "is-hovered" : "",
     faded ? "is-faded" : "",
+    focusDimmed ? "is-focus-dimmed" : "",
+    focused ? "is-focused" : "",
     labelCollapsed ? "is-label-collapsed" : "",
   ]
     .filter(Boolean)

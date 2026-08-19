@@ -29,6 +29,7 @@ import {
   worldPlacement,
   lateralLayout,
   worldXFor,
+  worldXToKm,
   worldHalfWidth,
   DOMAIN_ALTITUDE,
   STRIP_HALF_Z,
@@ -45,6 +46,13 @@ import {
 const ELEVATED_ALTITUDE_THRESHOLD = 2;
 
 const BG = new THREE.Color("#0a0d13");
+/** Scenario-focus mode's "not in this scenario" treatment for the WebGL
+ *  marker/ring/fill trio: desaturate toward this flat grey rather than a
+ *  literal blur (a real screen-space blur needs a post-processing pass this
+ *  scene doesn't have — see docs/DECISIONS.md for why that was scoped out).
+ *  The DOM labels (.pin3d.is-dimmed) DO get a real CSS blur on top of this,
+ *  since that layer has no such constraint. */
+const FOCUS_DIM_COLOR = new THREE.Color(0x565a62);
 
 // ── label declutter tuning ───────────────────────────────────────────────
 /** Screen box a titled label reserves. Must match .pin3d's real footprint or
@@ -108,10 +116,16 @@ interface Entry {
   anchor: THREE.Vector3;
   marker: THREE.Mesh;
   ring: THREE.Mesh;
+  fill: THREE.Mesh;
   lod: THREE.LOD | null;
   /** Grounded assets can be hidden behind terrain; elevated ones effectively
    *  cannot, so they skip the occlusion probe entirely. */
   grounded: boolean;
+  /** The marker/ring/fill's real colour, so scenario-focus dimming (which
+   *  desaturates toward grey per frame) has something to restore to without
+   *  re-reading it off the material each time. */
+  baseColor: THREE.Color;
+  sideColorHex: THREE.Color;
 }
 
 /**
@@ -171,8 +185,23 @@ export function Scene3D({ world }: { world: WorldModel }) {
   // later if bands are edited live. Margin lets the target reach past the
   // strip's edge, just not disappear into empty fog.
   const panBoundXRef = useRef(120);
+  /** In-progress drag-to-reposition state, read/written by the pin's
+   *  pointerdown/move/up handlers below. A ref, not state, so a pointermove
+   *  doesn't force a re-render 60 times a second — same reasoning as every
+   *  other ref the render loop touches. null when nothing is being dragged. */
+  const dragRef = useRef<{ id: string; startClientX: number; startClientY: number; moved: boolean } | null>(null);
+  const dragRaycasterRef = useRef(new THREE.Raycaster());
+  const dragPlaneRef = useRef(new THREE.Plane());
+  const dragHitRef = useRef(new THREE.Vector3());
 
   const proj = useMemo(() => buildProjection(world.bands, world.domains), [world.bands, world.domains]);
+  // The engine-setup effect below runs once on mount; the drag handlers it
+  // registers need the CURRENT projection whenever a band edit changes it
+  // later, so they read this ref rather than closing over `proj` by value.
+  const projRef = useRef(proj);
+  useEffect(() => {
+    projRef.current = proj;
+  }, [proj]);
 
   const nodes = useMemo<SceneNode[]>(() => {
     const list: SceneNode[] = world.assets
@@ -333,18 +362,47 @@ export function Scene3D({ world }: { world: WorldModel }) {
           sy < -LABEL_H ||
           sy - LABEL_LIFT_PX - LABEL_H > h;
 
+        // Scenario-focus mode: dim/desaturate everything not in the active
+        // focus set, unless the user has selected or hovered it directly —
+        // without that override, opening a lesson and then clicking some
+        // other asset to compare it would leave the very thing you clicked
+        // on nearly invisible, which is the "half-working" outcome the brief
+        // warned against.
+        const isStubEntry = entry.node.kind === "stub";
+        const inFocusMode = focusIds !== null;
+        const inFocusSet = !inFocusMode || focusIds!.has(entry.id);
+        const dimmed = inFocusMode && !inFocusSet && !pinned;
+        const highlighted = inFocusMode && inFocusSet && !pinned;
+
         const mat = entry.marker.material as THREE.MeshStandardMaterial;
-        mat.emissiveIntensity = isSel ? 2.4 : isHov ? 1.5 : 0.75;
+        const ringMat = entry.ring.material as THREE.MeshBasicMaterial;
+        const fillMat = entry.fill.material as THREE.MeshBasicMaterial;
+        if (dimmed) {
+          mat.color.copy(FOCUS_DIM_COLOR);
+          mat.emissive.copy(FOCUS_DIM_COLOR);
+          mat.emissiveIntensity = 0.2;
+          mat.opacity = (isStubEntry ? 0.55 : 1) * 0.22;
+          ringMat.color.copy(FOCUS_DIM_COLOR);
+          fillMat.color.copy(FOCUS_DIM_COLOR);
+          ringMat.opacity = 0.1;
+          fillMat.opacity = 0.04;
+        } else {
+          mat.color.copy(entry.baseColor);
+          mat.emissive.copy(entry.baseColor);
+          mat.emissiveIntensity = isSel ? 2.4 : isHov ? 1.5 : highlighted ? 1.05 : 0.75;
+          mat.opacity = isStubEntry ? 0.55 : 1;
+          ringMat.color.copy(entry.sideColorHex);
+          fillMat.color.copy(entry.sideColorHex);
+          // Side ring tracks selection too — the persistent cue gets brighter
+          // rather than being replaced by a different one. A scenario-focus
+          // member gets the same treatment one notch down, so the highlighted
+          // set reads as a group without every member looking selected.
+          ringMat.opacity = isSel ? 0.95 : isHov ? 0.7 : highlighted ? 0.62 : 0.42;
+          fillMat.opacity = isSel || isHov ? 0.13 : highlighted ? 0.2 : 0.13;
+        }
         const s = isSel ? 1.6 : isHov ? 1.3 : 1;
         entry.marker.scale.setScalar(s);
         entry.marker.rotation.y += 0.006;
-        // Side ring tracks selection too — the persistent cue gets brighter
-        // rather than being replaced by a different one.
-        (entry.ring.material as THREE.MeshBasicMaterial).opacity = isSel
-          ? 0.95
-          : isHov
-            ? 0.7
-            : 0.42;
 
         let tier: LabelTier;
         if (behind || offscreen) {
@@ -509,15 +567,28 @@ export function Scene3D({ world }: { world: WorldModel }) {
     root.name = "assets";
     const entries: Entry[] = [];
 
+    // Manually-dragged assets (AssetOverride.lateral_offset_world) sit out of
+    // the auto layout entirely rather than being fed into it and then nudged
+    // — lateralLayout()'s relaxation pass exists to keep AUTO-placed assets
+    // from colliding, and running a manually-placed one through it would
+    // silently move it again right after the user dropped it there.
+    const manualZ = new Map<string, number>();
+    for (const node of nodes) {
+      const z = overrides.assetOverrides[node.id]?.lateral_offset_world;
+      if (typeof z === "number") manualZ.set(node.id, z);
+    }
+
     // Breadth layout first: every asset needs to know its cohort before any of
     // them can be positioned, so this cannot be folded into the loop below.
     const lateral = lateralLayout(
-      nodes.map((n) => ({
-        id: n.id,
-        side: nodeSide(n),
-        km: nodeDistance(n),
-        platformDomain: nodePlatformDomain(n),
-      })),
+      nodes
+        .filter((n) => !manualZ.has(n.id))
+        .map((n) => ({
+          id: n.id,
+          side: nodeSide(n),
+          km: nodeDistance(n),
+          platformDomain: nodePlatformDomain(n),
+        })),
       proj,
     );
 
@@ -532,7 +603,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
         side,
         platformDomain,
         km,
-        z: lateral.get(node.id) ?? 0,
+        z: manualZ.get(node.id) ?? lateral.get(node.id) ?? 0,
         proj,
         terrainHeightAt: terrainHeight,
       });
@@ -576,7 +647,10 @@ export function Scene3D({ world }: { world: WorldModel }) {
         emissiveIntensity: 0.75,
         flatShading: true,
         roughness: 0.4,
-        transparent: isStub,
+        // Always transparent, not just for stubs — scenario-focus mode
+        // modulates opacity on every marker per frame (see the tick loop),
+        // and a material created opaque silently ignores opacity writes.
+        transparent: true,
         opacity: isStub ? 0.55 : 1,
       });
       const marker = new THREE.Mesh(new THREE.OctahedronGeometry(1.5, 0), markerMat);
@@ -649,8 +723,11 @@ export function Scene3D({ world }: { world: WorldModel }) {
         anchor: new THREE.Vector3(pos.x, pos.y + markerY, pos.z),
         marker,
         ring,
+        fill,
         lod,
         grounded: !elevated,
+        baseColor: new THREE.Color(isStub ? "#8b93a3" : accent),
+        sideColorHex: new THREE.Color(sideColor),
       });
     }
 
@@ -669,7 +746,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
       });
       entriesRef.current = [];
     };
-  }, [nodes, proj, ready]);
+  }, [nodes, proj, ready, overrides.assetOverrides]);
 
   // Selection/hover are read by the render loop from refs so that hovering a
   // node does not re-run the scene-building effects above.
@@ -721,6 +798,125 @@ export function Scene3D({ world }: { world: WorldModel }) {
     }
   }, [view.focusRequest, flyTo]);
 
+  // ── drag-to-reposition ────────────────────────────────────────────────
+  // Hangs off the DOM pin's pointerdown, not a canvas raycast: the pin is
+  // this scene's real hit-target (see the file header — every label stays a
+  // real DOM <button> for exactly this reason), and it visually sits well
+  // above its marker's actual screen point (LABEL_LIFT_PX + the label's own
+  // height) — a canvas raycast at the pin's screen position would mostly
+  // miss the marker underneath it. Starting from the pin also means this
+  // never has to fight OrbitControls for pointerdown priority: the pin lives
+  // in a sibling overlay div, not inside `renderer.domElement`, so
+  // OrbitControls' own listener never sees this gesture at all.
+  //
+  // Only real assets are draggable, not pending stubs — a stub's position is
+  // inferred from its id, not authored, so there's nothing to drag it TO.
+  // "Ground assets stay pinned to terrain height, air assets stay in their
+  // elevation band" falls out of reusing worldPlacement() — the same
+  // function every asset is placed with initially — for every live update
+  // during the drag rather than reimplementing that rule here: only km (via
+  // worldXToKm) and z move; Y is whatever worldPlacement() says it should be
+  // at the new (x, z), same as it was on load.
+  const ndcFromClient = useCallback((clientX: number, clientY: number): THREE.Vector2 => {
+    const renderer = rendererRef.current;
+    if (!renderer) return new THREE.Vector2();
+    const rect = renderer.domElement.getBoundingClientRect();
+    return new THREE.Vector2(
+      ((clientX - rect.left) / rect.width) * 2 - 1,
+      -((clientY - rect.top) / rect.height) * 2 + 1,
+    );
+  }, []);
+
+  const onPinDragMove = useCallback(
+    (e: PointerEvent) => {
+      const drag = dragRef.current;
+      const camera = cameraRef.current;
+      if (!drag || !camera) return;
+      if (!drag.moved) {
+        if (Math.hypot(e.clientX - drag.startClientX, e.clientY - drag.startClientY) < 4) return;
+        drag.moved = true;
+      }
+      const entry = entriesRef.current.find((x) => x.id === drag.id);
+      if (!entry) return;
+      const raycaster = dragRaycasterRef.current;
+      raycaster.setFromCamera(ndcFromClient(e.clientX, e.clientY), camera);
+      if (!raycaster.ray.intersectPlane(dragPlaneRef.current, dragHitRef.current)) return;
+
+      const side = nodeSide(entry.node);
+      const platformDomain = nodePlatformDomain(entry.node);
+      const proj = projRef.current;
+      // Clamped to this asset's own side: a drag repositions where a real
+      // system stands, not which side of the war it's on, so crossing the
+      // zero line clamps to it rather than reassigning `side`.
+      const km = worldXToKm(side, dragHitRef.current.x, proj);
+      const z = THREE.MathUtils.clamp(dragHitRef.current.z, -STRIP_HALF_Z, STRIP_HALF_Z);
+      const next = worldPlacement({ side, platformDomain, km, z, proj, terrainHeightAt: terrainHeight });
+      entry.group.position.set(next.x, next.y, next.z);
+      const markerY = entry.grounded ? 1.4 : 7.5;
+      entry.anchor.set(next.x, next.y + markerY, next.z);
+    },
+    [ndcFromClient],
+  );
+
+  const onPinDragEnd = useCallback(() => {
+    window.removeEventListener("pointermove", onPinDragMove);
+    window.removeEventListener("pointerup", onPinDragEnd);
+    const controls = controlsRef.current;
+    if (controls) controls.enabled = true;
+    const drag = dragRef.current;
+    dragRef.current = null;
+    if (!drag || !drag.moved) return;
+    const entry = entriesRef.current.find((x) => x.id === drag.id);
+    if (!entry) return;
+    const side = nodeSide(entry.node);
+    const km = worldXToKm(side, entry.group.position.x, projRef.current);
+    // Committed to the SAME overrides store every other edit in this app
+    // uses (src/state/overridesState.tsx) — a dropped asset is a placement
+    // edit, not a new kind of state. This is what makes the drop survive the
+    // full rebuild the next render triggers (the "asset objects" effect
+    // above), what the detail panel's "edited locally" tag picks up, and
+    // what Export/the sync worker carry along with everything else.
+    overrides.setAssetOverride(entry.id, {
+      distance_km_from_zero: Math.max(0, Math.round(km * 10) / 10),
+      lateral_offset_world: Math.round(entry.group.position.z * 100) / 100,
+    });
+    // Selecting the dropped asset is the drop's confirmation — the detail
+    // panel opens showing its new distance rather than leaving the only
+    // feedback to whatever the marker looks like from the current camera.
+    view.select(entry.id);
+    // Depend on view.select specifically, not `view` — `view` gets a new
+    // identity on every hover, and this function's reference has to stay
+    // stable across a drag: the cleanup effect just below tears down the
+    // listeners whenever THIS reference changes, and if a hover fired mid-
+    // drag and swapped it out, the pointerup that ends the drag would never
+    // reach it. That was a real bug here, caught by testing an actual drag
+    // rather than just reading the handler code.
+  }, [onPinDragMove, overrides.setAssetOverride, view.select]);
+
+  const onPinDragStart = useCallback(
+    (id: string, e: React.PointerEvent) => {
+      if (e.button !== 0) return; // primary button/touch only
+      const entry = entriesRef.current.find((x) => x.id === id);
+      if (!entry) return;
+      const controls = controlsRef.current;
+      if (controls) controls.enabled = false;
+      dragPlaneRef.current.setFromNormalAndCoplanarPoint(new THREE.Vector3(0, 1, 0), entry.group.position);
+      dragRef.current = { id, startClientX: e.clientX, startClientY: e.clientY, moved: false };
+      window.addEventListener("pointermove", onPinDragMove);
+      window.addEventListener("pointerup", onPinDragEnd);
+    },
+    [onPinDragMove, onPinDragEnd],
+  );
+
+  // Drags in progress must not survive an unmount (route away mid-drag, etc.)
+  useEffect(() => {
+    return () => {
+      window.removeEventListener("pointermove", onPinDragMove);
+      window.removeEventListener("pointerup", onPinDragEnd);
+      dragRef.current = null;
+    };
+  }, [onPinDragMove, onPinDragEnd]);
+
   // Raycast so the models themselves are clickable, not just their labels.
   const onCanvasClick = useCallback(
     (e: React.MouseEvent) => {
@@ -763,7 +959,15 @@ export function Scene3D({ world }: { world: WorldModel }) {
           interface. */}
       <div className="scene3d__labels">
         {labels.map((l) => {
-          const dimmed = focusSet ? !focusSet.includes(l.id) : false;
+          const isSel = view.selectedId === l.id;
+          const isHov = view.hoveredId === l.id;
+          // Selected/hovered overrides dimming — otherwise clicking on
+          // something outside the focus set to compare it against the
+          // highlighted scenario would render it as a nearly-invisible
+          // "selected" pin, which is the exact half-working state the brief
+          // called out.
+          const dimmed = focusSet ? !focusSet.includes(l.id) && !isSel && !isHov : false;
+          const focused = focusSet ? focusSet.includes(l.id) && !isSel && !isHov : false;
           const isDot = l.tier === "dot";
           return (
             <button
@@ -773,9 +977,10 @@ export function Scene3D({ world }: { world: WorldModel }) {
                 "pin3d",
                 `pin3d--${l.side}`,
                 l.isStub ? "pin3d--stub" : "",
-                view.selectedId === l.id ? "is-selected" : "",
-                view.hoveredId === l.id ? "is-hovered" : "",
+                isSel ? "is-selected" : "",
+                isHov ? "is-hovered" : "",
                 dimmed ? "is-dimmed" : "",
+                focused ? "is-focused" : "",
                 isDot ? "is-collapsed" : "",
               ]
                 .filter(Boolean)
@@ -797,6 +1002,9 @@ export function Scene3D({ world }: { world: WorldModel }) {
               onClick={(e) => {
                 e.stopPropagation();
                 view.select(l.id);
+              }}
+              onPointerDown={(e) => {
+                if (!l.isStub) onPinDragStart(l.id, e);
               }}
               onMouseEnter={() => view.hover(l.id)}
               onMouseLeave={() => view.hover(null)}

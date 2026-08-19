@@ -32,10 +32,17 @@ export type RenderMode = "terrain3d" | "schematic";
 
 /** A request to point the 3D camera at a set of assets — raised by selection
  *  and by the Lessons page, consumed by Scene3D. The nonce makes re-issuing
- *  the same set a distinct event, so clicking one lesson twice re-frames it. */
+ *  the same set a distinct event, so clicking one lesson twice re-frames it.
+ *
+ *  This doubles as "scenario focus mode": while set, both renderers dim/blur
+ *  every asset NOT in `assetIds` so the named set reads as a worked example
+ *  rather than competing with the full ~90-asset roster for attention. `label`
+ *  is what raised it (a lesson title, an asset name) — surfaced in the exit
+ *  banner so leaving focus mode is never a guess about what mode you're in. */
 export interface FocusRequest {
   assetIds: string[];
   nonce: number;
+  label?: string;
 }
 
 export interface ViewState {
@@ -43,7 +50,7 @@ export interface ViewState {
   setRenderMode: (m: RenderMode) => void;
 
   focusRequest: FocusRequest | null;
-  focusAssets: (assetIds: string[]) => void;
+  focusAssets: (assetIds: string[], label?: string) => void;
   clearFocus: () => void;
 
   /** Uniform CSS-transform scale on the whole scene — the "zoom" control.
@@ -85,6 +92,18 @@ export interface ViewState {
 
   openPanel: PanelId;
   setOpenPanel: (p: PanelId) => void;
+
+  /** Consume-once request from the Asset Library page: "open the Asset
+   *  editor already in edit mode for this id." Only meaningful for a custom
+   *  asset (one living in overrides.customAssets) — AssetEditorPanel can
+   *  only ever edit those, by design (see its own file header): a shipped
+   *  asset's fields are edited inline in DetailPanel instead. Cleared by
+   *  AssetEditorPanel right after it acts on it, same one-shot pattern as
+   *  focusRequest's nonce but simpler since there's nothing to re-trigger on
+   *  a repeat click — opening the editor on the same id twice is a no-op. */
+  editorTarget: string | null;
+  requestEditAsset: (id: string) => void;
+  clearEditorTarget: () => void;
 }
 
 const ALL_CONNECTION_TYPES: ConnectionType[] = [
@@ -120,6 +139,7 @@ export function ViewStateProvider({ children }: { children: ReactNode }) {
   );
   const [hiddenGroups, setHiddenGroups] = useState<Set<AssetGroup>>(() => new Set());
   const [openPanel, setOpenPanel] = useState<PanelId>(null);
+  const [editorTarget, setEditorTarget] = useState<string | null>(null);
 
   const toggleConnectionType = useCallback((t: ConnectionType) => {
     setConnectionTypes((prev) => {
@@ -154,9 +174,15 @@ export function ViewStateProvider({ children }: { children: ReactNode }) {
   const showAllGroups = useCallback(() => setHiddenGroups(new Set()), []);
   const hideAllGroups = useCallback((allGroupIds: AssetGroup[]) => setHiddenGroups(new Set(allGroupIds)), []);
 
-  const focusAssets = useCallback((assetIds: string[]) => {
+  const requestEditAsset = useCallback((id: string) => {
+    setEditorTarget(id);
+    setOpenPanel("editor");
+  }, []);
+  const clearEditorTarget = useCallback(() => setEditorTarget(null), []);
+
+  const focusAssets = useCallback((assetIds: string[], label?: string) => {
     focusNonce.current += 1;
-    setFocusRequest({ assetIds, nonce: focusNonce.current });
+    setFocusRequest({ assetIds, nonce: focusNonce.current, label });
   }, []);
 
   const clearFocus = useCallback(() => setFocusRequest(null), []);
@@ -199,6 +225,9 @@ export function ViewStateProvider({ children }: { children: ReactNode }) {
       hideAllGroups,
       openPanel,
       setOpenPanel,
+      editorTarget,
+      requestEditAsset,
+      clearEditorTarget,
     }),
     [
       renderMode,
@@ -222,6 +251,9 @@ export function ViewStateProvider({ children }: { children: ReactNode }) {
       showAllGroups,
       hideAllGroups,
       openPanel,
+      editorTarget,
+      requestEditAsset,
+      clearEditorTarget,
     ],
   );
 

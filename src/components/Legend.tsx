@@ -71,7 +71,7 @@ export function Legend({ world }: { world: WorldModel }) {
           collide. */}
       <p className="legend__hint">
         {view.renderMode === "terrain3d"
-          ? "Drag to orbit · scroll to zoom · right-drag to pan · click an asset for detail"
+          ? "Drag empty ground to orbit · scroll to zoom · right-drag to pan · click an asset for detail · drag an asset to reposition it"
           : "Scroll ← → for distance from the zero line · ↑ ↓ between domain layers · click an asset for detail"}
       </p>
       {view.renderMode === "terrain3d" && (
