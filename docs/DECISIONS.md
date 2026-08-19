@@ -1608,3 +1608,148 @@ and the terrain/scenery changes introduced no new warnings). Right-drag pan
 in headless Chromium needed a mouse-down point clear of any label overlay to
 register at all — a test-harness quirk, not an app behaviour change; noted
 here in case a future pass's headless verification hits the same thing.
+
+---
+
+# Pass 11 — OSM rail & tree-line pipeline (fetch + reduce; integration deferred)
+
+Brief: an out-of-band spec for pulling real OpenStreetMap line features — rail
+lines, windbreak tree rows, roads, rivers — for two Donetsk Oblast AOIs
+(Pokrovsk first, Kramatorsk later), reducing them to an ordered point list per
+feature, projecting to local X/Z, and committing the result as a static JSON
+asset. The brief explicitly scopes this pass to the fetch step only: the
+integration (extrusion / tree instancing / SVG paths) is "blocked on the
+diagnostic" — i.e. on knowing whether the renderer is real 3D or 2.5D sprites —
+and is to be prompted separately. Nothing in `src/` is touched by this pass.
+
+## 1. The fetch is blocked at the egress proxy, and the file is absent, not faked
+
+`https://overpass-api.de/api/interpreter` answers `403 Forbidden` to CONNECT
+through this environment's proxy, as do `overpass.kumi.systems`,
+`overpass.private.coffee`, `overpass.osm.ch`, `z.overpass-api.de`,
+`lz4.overpass-api.de` and `api.openstreetmap.org`. The proxy's status endpoint
+classifies it as `connect_rejected — gateway answered 403 to CONNECT (policy
+denial …)`, and `/root/.ccr/README.md` is explicit that policy denials are
+reported rather than routed around. Six hosts was enough to establish it is an
+allowlist rather than one mirror having a bad day; testing further would have
+been probing the policy, not diagnosing a fault.
+
+The deliverable named in the brief — `osm-terrain-data.json` committed to the
+repo — therefore does not exist at the end of this pass, and the alternative
+was never on the table: hand-writing plausible coordinates for a real town and
+committing them under `source.api: "Overpass API"` would produce a file
+indistinguishable from real OSM data while being invented. Same reasoning the
+repo already applies to `verification` being derived rather than asserted, and
+to "not publicly disclosed" being a valid cost value.
+
+What ships instead is the whole pipeline with a network-free path through it,
+so the missing step is a one-minute human action rather than a re-do:
+`--print-query` emits the exact Overpass QL for overpass-turbo.eu, and
+`--raw=<file>` runs the entire reduce/project/write stage against a saved
+response. `docs/OSM_PIPELINE.md` documents both routes.
+
+## 2. Two stages in one file, and only the first one needs the network
+
+`fetch` retrieves and saves; `reduce` classifies → simplifies → projects →
+writes. Keeping `reduce` pure and separately invocable pays off beyond this
+sandbox: re-projecting or re-simplifying committed data must not mean hitting a
+rate-limited volunteer service again.
+
+The fetch stage retries 2/4/8/16 s across three mirrors, but treats 400 and 403
+as answers rather than glitches and fails immediately on them — the same
+distinction the harness's own git-retry guidance draws.
+
+## 3. Projection: metric, and deliberately not "scene units"
+
+Equirectangular about the AOI centre, WGS84 metre-per-degree series evaluated
+once at the origin latitude, output in km with +X east and +Z south (north is
+−Z, so a top-down camera reads north-up). Over a 17 km box the linearisation
+error is far below the 5 m simplification tolerance.
+
+The brief says "project to local X/Z **scene** coordinates". This emits metric
+km instead, and that is the one substantive deviation in the pass. The scene's
+X axis is band-compressed distance from the zero line (Pass 5/6) — non-linear
+by design, so that a 0–5 km FPV envelope and a 500 km strike target fit one
+legible axis. Feeding real geography through it stretches 17 km of ground
+across band boundaries at different rates, which bends a straight rail line
+visibly. Emitting metric km makes the pipeline's output honest and leaves the
+three real resolutions (metric inset in one band / lateral-Z only / a separate
+real-geography view) open for the integration prompt to choose between. They
+all consume the same metric frame, so nothing is lost by not choosing here.
+Flagged in `docs/BACKLOG.md` as a product decision, not a code detail.
+
+## 4. Douglas–Peucker at 5 m, on the projected points
+
+OSM rail ways carry survey-grade vertex density that no view at this scale can
+resolve. The tolerance is applied to the metric points so it means metres in
+both axes rather than degrees meaning different things along lat and lon;
+endpoints are always kept, so a line never shortens. `--tolerance=0` disables
+it, and `length_km` is measured on the full vertex list before simplification —
+the length is a fact about the feature, not about how coarsely it is stored.
+
+## 5. `type` follows the brief; `closed` + `tags` carry what it flattens
+
+The brief folds `natural=tree_row`, `landuse=forest` and `natural=wood` into
+one `tree_row` type, so that is the type they carry. But a windbreak is a line
+to instance trees *along* and a wood is a polygon to *fill*, so every feature
+also keeps a `closed` flag and its raw tags. Kept the brief's schema, added
+what a renderer will otherwise have to guess — flagged rather than quietly
+re-designed.
+
+Also on schema: `counts.skipped` reports every element that did not become a
+feature by reason (`no_geometry`, `unclassified`, `not_requested`,
+`degenerate`), and output is sorted by `(type, osm_id)` with all numbers
+rounded, so a re-run is byte-identical and git shows a real data change or
+nothing at all. The "degrade visibly, never silently" philosophy from
+`validateAsset()` applied to a data script.
+
+## 6. ODbL — the one place fetching data does carry an obligation
+
+OSM is ODbL 1.0: rendering these features requires a visible "© OpenStreetMap
+contributors" credit. The attribution string is written into every output
+file's `source` block so it travels with the data rather than living only in a
+doc, but nothing renders it yet — that lands on the integration pass and is in
+the backlog.
+
+This is not a breach of CLAUDE.md's "authored geometry only, never fetched
+binary assets" rule. That rule exists because a fetched model or icon carries a
+license nobody in the session can actually read (Pass 4/5). Coordinates from a
+named source under a known, attributed, share-alike license are the case the
+rule was drawn around — the credit is the price, and it is not optional.
+
+## Where the brief and prior passes disagreed
+
+1. **Metric km, not scene units** (§3). The brief's step 3 asks for scene
+   coordinates; the scene's X axis is not geographic, so honest scene
+   coordinates for real geography do not currently exist. Biggest deviation in
+   the pass and the reason the integration prompt now has a second question to
+   answer alongside the renderer diagnostic.
+2. **`timeout:180` and one merged query, not four at `timeout:25`.** Four
+   classes over a 17 km box regularly exceeds 25 s on a busy mirror, and one
+   query is a third of the load on a volunteer-run service.
+3. **Output at `data/osm/<aoi>.json`, not a single `osm-terrain-data.json`.**
+   The brief names one file, then immediately describes running the same
+   script against a second AOI — one file per AOI is what that implies, and it
+   keeps Pokrovsk and Kramatorsk from overwriting each other.
+4. **The committed data file is missing** (§1). Not a judgment call — the fetch
+   is blocked — but it is the brief's actual deliverable, so it is named here
+   rather than buried in a doc.
+
+## Verification
+
+No `src/` changes, but `npm run build` and `npx tsc --noEmit` were run anyway
+and are clean. The reduce stage was exercised against a hand-built Overpass
+fixture covering every branch: a collinear rail way (3 → 2 vertices), a rail
+way with a ~1.1 m kink (simplified away at 5 m, retained at `--tolerance=0`), a
+closed `landuse=forest` ring (`closed: true`), a river with a `null` geometry
+entry (dropped, line stays contiguous), a `highway=secondary` way, an untagged
+building way (`unclassified`), a single-vertex way (`degenerate`) and a bare
+node (`no_geometry`) — all six expected features out, all three skip buckets
+non-zero. Projection checked by hand against the constants: 0.01° of longitude
+at 48.2828° N came back as 0.742 km east and 0.01° of latitude as 1.112 km,
+matching the WGS84 series to the millimetre. Re-running on the same input
+produced a byte-identical file (`cmp` clean). The live fetch path was run twice
+and failed as described in §1; `--features=` filtering, `--tolerance=` bounds,
+unknown-AOI and unknown-feature-class errors all exercised. The fixture lives
+in the session scratchpad rather than the repo — there is no test harness here
+to run it from, and a committed fixture nothing executes is a file that rots.

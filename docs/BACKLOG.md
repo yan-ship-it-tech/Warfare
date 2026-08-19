@@ -6,6 +6,43 @@ gets listed here rather than silently dropped or silently worked around.
 
 ---
 
+## Blocked / open — Pass 11 (OSM rail & tree-line pipeline)
+
+### The Pokrovsk fetch itself — blocked on egress, not on effort
+`scripts/fetch-osm-data.mjs` is written and its reduce/projection half is
+exercised and deterministic, but no agent session can run the fetch: this
+environment's egress proxy answers 403 to CONNECT for `overpass-api.de`
+and every mirror tried (`kumi.systems`, `private.coffee`, `osm.ch`,
+`z.`/`lz4.overpass-api.de`, `api.openstreetmap.org`). Host-allowlist
+denial, so it will not resolve by retrying. `data/osm/pokrovsk.json` is
+therefore absent rather than fabricated — see `docs/OSM_PIPELINE.md` for
+the two ways a human can produce it in about a minute (run the script, or
+paste the query into overpass-turbo.eu and feed the export to `--raw=`).
+
+### ODbL attribution is owed the moment anything renders
+OSM data requires a visible "© OpenStreetMap contributors" credit. The
+string ships inside every output file's `source` block, but nothing draws
+it yet. Whoever does the integration pass owes it a place on screen —
+`AboutPage` and/or a corner credit in the view that draws the lines.
+
+### Real geography vs. the band-compressed X axis — a product decision
+The scene's X axis is non-linear distance-from-the-zero-line, not metres
+(`src/three/worldMapping.ts`, `docs/DECISIONS.md` Pass 5/6). A 17 km AOI
+laid over it at the default bands crosses band boundaries and stretches
+non-uniformly, which visibly bends a straight rail line. Three ways out —
+metric inset inside one band, lateral-only (Z) use, or a separate
+real-geography view — are laid out in `docs/OSM_PIPELINE.md`. This needs
+picking *before* extrusion/instancing code is written, and it is a
+different question from the renderer diagnostic (3D meshes vs. 2.5D
+sprites) the integration prompt is already waiting on.
+
+### Multipolygon forests are not fetched
+The brief's queries select ways only, and the script follows that. Large
+forests mapped as OSM *relations* will be missing. Worth revisiting once
+there is real data to look at and the tree coverage can be judged.
+
+---
+
 ## Resolved in Pass 10
 
 ### Terrain destruction gradient
