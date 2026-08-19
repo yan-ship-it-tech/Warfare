@@ -1,16 +1,17 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from "react";
 import { DEFAULT_BANDS, loadWorld } from "./data/loader";
 import { Scene } from "./scene/Scene";
-import { Toolbar } from "./components/Toolbar";
+import { AppHeader } from "./components/AppHeader";
+import { NavDrawer } from "./components/NavDrawer";
+import { PageShell } from "./components/PageShell";
 import { DetailPanel } from "./components/DetailPanel";
-import { AboutPanel } from "./components/AboutPanel";
-import { DataHealthPanel } from "./components/DataHealthPanel";
 import { BandsEditorPanel } from "./components/BandsEditorPanel";
-import { LessonsPanel } from "./components/LessonsPanel";
 import { AssetEditorPanel } from "./components/AssetEditorPanel";
 import { Legend } from "./components/Legend";
 import { ViewStateProvider, useViewState } from "./state/viewState";
 import { OverridesProvider, useOverrides } from "./state/overridesState";
+import { RouterProvider, useRouter } from "./state/router";
+import { findPage } from "./pages/registry";
 
 // three.js plus the terrain/model builders are by far the heaviest thing in
 // the bundle. Lazy so the app shell, the data layer and the schematic view
@@ -21,12 +22,14 @@ const Scene3D = lazy(() => import("./three/Scene3D"));
 function AppInner() {
   const view = useViewState();
   const overrides = useOverrides();
+  const router = useRouter();
   const world = useMemo(
     () => loadWorld(overrides.bands, overrides.assetOverrides, overrides.customAssets),
     [overrides.bands, overrides.assetOverrides, overrides.customAssets],
   );
   const [replayNonce, setReplayNonce] = useState(0);
   const replay = useCallback(() => setReplayNonce((n) => n + 1), []);
+  const page = findPage(router.path);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -38,24 +41,36 @@ function AppInner() {
     return () => window.removeEventListener("keydown", onKey);
   }, [view]);
 
+  // Routed pages get a real, bookmarkable title, same as any other page in
+  // this app would — not load-bearing for anything else.
+  useEffect(() => {
+    document.title = page ? `${page.title} — Multi-Domain Battlefield` : "Multi-Domain Battlefield";
+  }, [page]);
+
   return (
     <div className={`app${view.selectedId ? " has-detail" : ""}`}>
-      <Toolbar world={world} />
+      <AppHeader world={world} />
+      <NavDrawer world={world} />
       <main className="app__main">
-        {view.renderMode === "terrain3d" ? (
-          <Suspense fallback={<div className="scene3d__loading">Building terrain…</div>}>
-            <Scene3D world={world} />
-          </Suspense>
+        {page ? (
+          <PageShell title={page.title} onClose={() => router.navigate("/")}>
+            <page.Component world={world} />
+          </PageShell>
         ) : (
-          <Scene world={world} replayNonce={replayNonce} />
+          <>
+            {view.renderMode === "terrain3d" ? (
+              <Suspense fallback={<div className="scene3d__loading">Building terrain…</div>}>
+                <Scene3D world={world} />
+              </Suspense>
+            ) : (
+              <Scene world={world} replayNonce={replayNonce} />
+            )}
+            <Legend world={world} />
+          </>
         )}
-        <Legend world={world} />
       </main>
       <DetailPanel world={world} onReplay={replay} />
-      <AboutPanel world={world} />
-      <DataHealthPanel world={world} />
       <BandsEditorPanel />
-      <LessonsPanel world={world} />
       <AssetEditorPanel world={world} />
     </div>
   );
@@ -65,7 +80,9 @@ export function App() {
   return (
     <ViewStateProvider>
       <OverridesProvider defaultBands={DEFAULT_BANDS}>
-        <AppInner />
+        <RouterProvider>
+          <AppInner />
+        </RouterProvider>
       </OverridesProvider>
     </ViewStateProvider>
   );

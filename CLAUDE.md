@@ -16,7 +16,7 @@ Two renderers, both real, neither a mockup:
   `<button>` elements stay the labels and hit-targets, positioned by
   projecting world coordinates to screen space every frame. Terrain is
   synthetic (deterministic value noise), never real geography — see
-  "Why this isn't a real map" in `src/components/AboutPanel.tsx`.
+  "Why this isn't a real map" in `src/pages/AboutPage.tsx`.
 - **Schematic 2D cross-section view** — `src/scene/`, one toolbar click
   away. Owns the distance ruler, the band editor's live feedback, and the
   dependency-line overlay; the 3D view reads the same underlying
@@ -44,7 +44,9 @@ making an architectural change, not optional history.
 | `src/scene/labelGrid.ts` | The one label-collision index both renderers share (uniform grid, cost scales with local crowding rather than roster size). |
 | `src/three/` | The WebGL scene: `Scene3D.tsx` (main component), `worldMapping.ts` (world-unit conversion + `DOMAIN_ALTITUDE`), `terrain3d.ts` (synthetic terrain), `models.ts` (`HERO_BUILDERS` — authored, not sourced, low-poly 3D models for a subset of assets), `scenery.ts` (decorative trench lines/obstacle belts/power plant/etc., not clickable), `props.ts` (instanced scatter — trees/craters). |
 | `src/state/overridesState.tsx` + `persistence.ts` | The live-edit layer: distance-band edits, per-asset placement/text/media overrides, and brand-new assets built in the Asset Editor all persist here — to `localStorage` by default, or a shared Cloudflare Worker if `VITE_SYNC_URL` is configured (see `docs/DEPLOY_SYNC_WORKER.md`). |
-| `src/components/` | `Toolbar`, `DetailPanel` (per-asset view + inline edit controls), `AssetEditorPanel` (build a whole new asset from scratch, live), `DataHealthPanel`, `BandsEditorPanel`, `LessonsPanel`, `AboutPanel`, `Legend`, `SyncControls`, `CategoryFilterMenu`. |
+| `src/components/` | `AppHeader` (hamburger + brand) + `NavDrawer` (every toggle/filter, plus nav links to the routed pages below — Pass 9 replaced the old stacked-button `Toolbar` with this), `PageShell` (chrome for a routed page), `DetailPanel` (per-asset view + inline edit controls), `AssetEditorPanel` (build a whole new asset from scratch, live), `BandsEditorPanel`, `Legend`, `SyncControls`, `CategoryFilterMenu`. |
+| `src/pages/` | Routed pages — `registry.tsx` (the `PAGES` array `NavDrawer`/`App.tsx` read; add a page by adding one entry here plus a component, see Pass 9), `DataHealthPage`, `LessonsPage`, `AboutPage`. |
+| `src/state/router.tsx` | Hash-based router (`#/health`, `#/lessons`, `#/about`) — not pushState, since GitHub Pages project sites have no server-side rewrite for it. Extends the `#bench` escape hatch `main.tsx` already used for the same reason. |
 | `worker/` | Cloudflare Worker + KV — the real shared-sync backend, written and dry-run verified but **not deployable from an agent session** (no Cloudflare credentials here — needs a human with an account). |
 | `docs/doctrine.md` | The sourced narrative spine. Every asset's `contrast_vs_traditional` and `employment_notes` should pull framing from here, not invent it fresh. |
 | `docs/CONTENT_PIPELINE.md` | **Read before adding or editing asset content.** Two-pass process: draft a category, then verify it in a *separate* sitting via `node scripts/audit-content.mjs --write`, which derives each asset's `verification` status from its `sources` array (never hand-authored). |

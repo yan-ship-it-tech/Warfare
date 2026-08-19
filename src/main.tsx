@@ -22,4 +22,10 @@ createRoot(document.getElementById("root")!).render(
 );
 
 // Switching to or from #bench swaps the whole app; a reload keeps it simple.
-window.addEventListener("hashchange", () => window.location.reload());
+// Everything else in the hash is the in-app router's (#/health, #/lessons,
+// ...) — those are handled by RouterProvider and must NOT reload, or every
+// drawer navigation would blow away app state.
+window.addEventListener("hashchange", () => {
+  const nowBench = window.location.hash.replace("#", "") === "bench";
+  if (nowBench !== isBench) window.location.reload();
+});

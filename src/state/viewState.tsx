@@ -15,7 +15,13 @@ import {
 } from "react";
 import type { AssetGroup, ConnectionType, Side } from "../types";
 
-export type PanelId = "about" | "health" | "bands" | "categories" | "lessons" | "editor" | null;
+// "nav" is the hamburger drawer. About/Data health/Key lessons used to live
+// here as PanelIds (gated modals); they're routed pages now (see
+// src/state/router.tsx, src/pages/) — the router owns their visibility, not
+// this single-slot panel gate. Bands/categories/editor stay panel-gated:
+// they're live-editing surfaces meant to float over the map you're editing,
+// not standalone pages, and nothing in this pass asked them to change.
+export type PanelId = "nav" | "bands" | "categories" | "editor" | null;
 
 /** Pass 6 keeps BOTH renderers rather than replacing one with the other.
  *  Pass 5 removed a view outright and the immediate feedback was "I can't see

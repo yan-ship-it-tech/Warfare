@@ -1303,3 +1303,106 @@ session doesn't re-chase them:
    tactical.json` references `gallery/leleka-100-launch.jpg`, which does not
    exist and 404s. Dangling since Pass 6. It is a content defect, and this
    pass was scoped to rendering. Logged in BACKLOG.md instead.
+
+# Pass 9 — navigation & IA: hamburger drawer, routed pages
+
+The brief: replace the stacked-button toolbar with a hamburger drawer; turn
+Data health, Key lessons and About/disclaimer from modals into real routed
+pages with the same content; structure routing so a page type is cheap to
+add, since an asset library page is coming later; no visual/terrain content
+changes.
+
+## 1. Routing is hash-based, not pushState
+
+`vite.config.ts` serves this app from GitHub Pages as a project site at
+`/Warfare/` with no server-side rewrite — a direct load of a pushState URL
+like `/Warfare/health` 404s before React ever runs, since there's no
+`404.html` SPA-fallback trick in this repo. `main.tsx` already carved out
+`#bench` as a hash-based escape hatch for the render-bench harness, on
+exactly this constraint. `src/state/router.tsx` extends the same mechanism
+rather than introducing pushState (which would need the 404 workaround) or a
+router dependency (nothing in this app needed one before, and the whole
+router is ~50 lines): `#/health`, `#/lessons`, `#/about` are real,
+bookmarkable, back-button-aware URLs that survive a hard reload — verified
+with a Playwright pass that reloads mid-route. `#bench`'s own hard-reload
+behavior had to be narrowed first: `main.tsx` reloaded the page on *every*
+`hashchange` before this pass, which would have blown away app state on
+every drawer navigation. It now reloads only when bench mode is entered or
+left; in-app route changes are handled by `RouterProvider` without a reload.
+
+## 2. Page registry, not a switch statement
+
+`src/pages/registry.tsx` is the one place that knows what pages exist — path,
+title, nav label, an optional live badge computed from `WorldModel` (issue
+counts, lesson counts), and the component. `NavDrawer` renders its nav list
+by mapping `PAGES`; `App.tsx` resolves the current route with `findPage()`.
+Adding the asset library page mentioned as coming later is meant to cost one
+entry in this array plus the page component — no changes to the router, the
+drawer, or the app shell.
+
+## 3. What counts as a "page" vs. what stays a panel
+
+Only About, Data health and Key lessons were named — Categories, Distance
+bands and Asset editor stay `PanelId`-gated floating panels/popovers, not
+routes. They're live-editing surfaces meant to float over the map you're
+editing (Categories in particular is deliberately a popover rather than a
+modal, per its own file header, so filtering feels like adjusting a live
+view rather than leaving it), where About/Data health/Lessons are read-only
+reference content with no reason to stay anchored to the map underneath.
+Treating all six identically would have been a more literal reading of "the
+control panel" but would have broken that distinction for no asked-for
+reason — flagged here rather than done quietly.
+
+## 4. Drawer open/close semantics
+
+`PanelId` gained `"nav"` for the drawer and lost `"about"`/`"health"`/
+`"lessons"` (now router-owned, not panel-owned). Because `openPanel` is a
+single-slot gate, opening Categories/Distance bands/Asset editor from inside
+the drawer closes the drawer for free — no extra wiring needed. Toggle-only
+controls (view mode, sides, overlays, link types) don't touch `openPanel` at
+all, so flipping several of them in a row leaves the drawer open, which is
+the expected way to use a filter panel. Page-nav links close the drawer
+explicitly on click, since navigating replaces what the drawer was floating
+over.
+
+## 5. Content diff is chrome-only
+
+Each page component (`src/pages/{About,DataHealth,Lessons}Page.tsx`) is the
+former modal's body verbatim, minus the `.modal`/`.modal__scrim`/close-button
+wrapper (now `PageShell`) and minus the `openPanel` gate (now the router).
+The three `setOpenPanel(null)`-on-action calls (jump to an asset from a
+health issue, "show on map" from a lesson) became `navigate("/")` — same
+effect, closing the overlay and returning to the map, just phrased as
+routing home instead of dismissing a panel. Typography (`.modal__body h2/h3/
+p/ul/li`) is shared with `.page__inner` via extended selectors rather than
+duplicated, so the two chromes can't visually drift apart by accident.
+
+## Where the brief and prior passes disagreed
+
+1. **A small addition beyond the literal ask:** the hamburger button carries
+   a small red dot when there's a data error, so the "something needs
+   attention" signal the old toolbar gave for free (the Data health chip's
+   `has-error` state, visible at a glance) doesn't silently disappear behind
+   a closed drawer.
+2. **`document.title` now changes per route** (`"Data health — Multi-Domain
+   Battlefield"`, etc.). Not asked for, but it's what makes a route feel like
+   a real page rather than a modal with a new address, and it's a few lines.
+3. **Not done:** Escape does not navigate a routed page back to "/" — it only
+   closes panels/drawer and clears selection, unchanged from before. Pages
+   close via their own ✕ or the browser back button (hash history), which
+   already exist; adding a second close path for pages only felt like scope
+   creep on a pass explicitly scoped to structure, not new interaction
+   surface.
+
+## Verification
+
+`npm run typecheck` and `npm run build` clean. A headless Playwright pass
+(Chromium + swiftshader, per the repo's usual harness) against
+`npm run preview` confirmed: the old `.toolbar` is gone; the drawer opens
+and lists all three pages plus their live badges; navigating to each page
+sets the corresponding `#/...` hash, renders `.page`, and closes the drawer;
+a hard reload on `#/health` reproduces the same page (the whole point of
+choosing hash routing over pushState here); closing a page returns to `#`
+empty-hash and the map; a toggle click (3D → Schematic) inside the drawer
+leaves the drawer open; and `#bench` still loads the render-bench harness
+untouched.
