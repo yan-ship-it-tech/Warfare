@@ -1,0 +1,90 @@
+id,name,side,category,model_tier
+side_a-air-defense-cuas-gepard,Gepard SPAAG,Ukraine,cuas-gun,Hero
+side_a-air-defense-iris-t-slm,IRIS-T SLM,Ukraine,air-defense-medium-range,Icon
+side_a-air-defense-long-patriot,Patriot (PAC-3 MSE),Ukraine,air-defense-long-range,Hero
+side_a-air-defense-nasams,NASAMS,Ukraine,air-defense-medium-range,Icon
+side_a-air-defense-s-300-buk-m1-soviet-legacy,S-300 / Buk-M1 (Soviet-legacy),Ukraine,air-defense-medium-range,Icon
+side_a-air-defense-short-stinger,FIM-92 Stinger,Ukraine,air-defense-short-range,Icon
+side_a-armor-bvs-10-viking,BvS 10 Viking,Ukraine,armor-apc,Icon
+side_a-armor-challenger-2,Challenger 2,Ukraine,armor-main-battle-tank,Icon
+side_a-armor-leopard2,Leopard 2A6,Ukraine,armor-main-battle-tank,Hero
+side_a-armor-m1126-icv-stryker,M1126 ICV Stryker,Ukraine,armor-ifv,Icon
+side_a-armor-m113-apc,M113 APC,Ukraine,armor-apc,Icon
+side_a-armor-m1a1-abrams,M1A1 Abrams,Ukraine,armor-main-battle-tank,Icon
+side_a-armor-marder-1a3,Marder 1A3,Ukraine,armor-ifv,Icon
+side_a-armor-t-64bv-t-64bm-bulat,T-64BV / T-64BM Bulat,Ukraine,armor-main-battle-tank,Icon
+side_a-armor-t-72amt-upgraded-t-72,T-72AMT / upgraded T-72,Ukraine,armor-main-battle-tank,Icon
+side_a-armor-vab-apc,VAB APC,Ukraine,armor-apc,Icon
+side_a-artillery-2s22-bohdana,2S22 Bohdana,Ukraine,artillery-self-propelled,Icon
+side_a-artillery-caesar-155mm-self-propelled-gun,Caesar 155mm Self-Propelled Gun,Ukraine,artillery-self-propelled,Icon
+side_a-artillery-himars-m142,HIMARS (M142),Ukraine,artillery-rocket-deep-strike,Hero
+side_a-artillery-m109-paladin,M109 Paladin,Ukraine,artillery-self-propelled,Icon
+side_a-artillery-m270a1-mlrs,M270A1 MLRS,Ukraine,artillery-rocket,Icon
+side_a-artillery-m777,M777 155mm Towed Howitzer,Ukraine,artillery,Hero
+side_a-artillery-pzh-2000,PzH 2000,Ukraine,artillery-self-propelled,Icon
+side_a-c2-comms-starlink,Starlink Terminal,Ukraine,satcom-comms,Icon
+side_a-c2-integrated-air-defense-network,Integrated Air Defense C2 Network,Ukraine,c2-battle-management,Icon
+side_a-ew-jammer-bukovel,Bukovel-AD,Ukraine,ew-counter-uas,Icon
+side_a-ground-robots-krab-m1,Krab-M1,Ukraine,ground-robot-combat,Icon
+side_a-ground-robots-nprk-moroz,NPRK Moroz,Ukraine,ground-robot-combat,Icon
+side_a-ground-robots-nprk-mul,"NPRK ""Mul""",Ukraine,ground-robot-logistics,Icon
+side_a-ground-robots-nrtk-ironclad,NRTK Ironclad,Ukraine,ground-robot-combat,Icon
+side_a-ground-robots-nrtk-ratel-s,NRTK Ratel-S,Ukraine,ground-robot-multipurpose,Icon
+side_a-logistics-hub-op-deep,Forward Distribution Hub,Ukraine,logistics-hub,Icon
+side_a-medical-casevac-chain,Point of Injury / Casualty Collection Point,Ukraine,medical-casevac,Icon
+side_a-naval-mantas-t-12,MANTAS T-12,Ukraine,naval-usv,Icon
+side_a-naval-sonobot-5,Sonobot-5,Ukraine,naval-usv,Icon
+side_a-naval-usv-magura,Magura V5,Ukraine,naval-usv-strike,Icon
+side_a-space-isr-satellite-commercial,Commercial SAR/Optical ISR Constellation,Ukraine,space-isr,Icon
+side_a-strategic-target-power-plant,Power Generation & Grid Node,Ukraine,strategic-infrastructure-target,Icon
+side_a-uav-an-196-lyutyy,AN-196 Lyutyy,Ukraine,uav-strike-deep,Icon
+side_a-uav-aq-400-scythe,AQ-400 Scythe,Ukraine,uav-strike-deep,Icon
+side_a-uav-bayraktar-tb2,Bayraktar TB2,Ukraine,uav-strike,Icon
+side_a-uav-fp-1-fp-2,FP-1 / FP-2,Ukraine,uav-strike-deep,Icon
+side_a-uav-punisher,Punisher,Ukraine,uav-strike,Icon
+side_a-uav-reconnaissance-tactical,Leleka-100,Ukraine,uav-reconnaissance,Hero
+side_a-uav-strike-deep-crossborder,Truck-Launched Deep-Strike FPV Swarm,Ukraine,uav-strike-strategic-sabotage,Icon
+side_a-uav-switchblade-300,Switchblade 300,Ukraine,uav-strike,Icon
+side_a-uav-switchblade-600,Switchblade 600,Ukraine,uav-strike,Icon
+side_a-uav-uj-26-beaver-bober,UJ-26 Beaver (Bober),Ukraine,uav-strike-deep,Icon
+side_a-uav-zozulia,Zozulia,Ukraine,uav-strike-deep,Icon
+side_b-air-defense-buk-m3,Buk-M3,Russia,air-defense-medium-range,Icon
+side_b-air-defense-s-300-soviet-legacy,S-300 (Soviet-legacy),Russia,air-defense-long-range,Icon
+side_b-air-defense-s-400-triumf,S-400 'Triumf',Russia,air-defense-long-range,Icon
+side_b-air-defense-short-pantsir,Pantsir-S1,Russia,air-defense-short-range,Hero
+side_b-air-defense-tor-m2,Tor-M2,Russia,air-defense-short-range,Icon
+side_b-armor-bmp-2,BMP-2,Russia,armor-ifv,Icon
+side_b-armor-bmp-3,BMP-3,Russia,armor-ifv,Icon
+side_b-armor-btr-82a,BTR-82A,Russia,armor-apc,Icon
+side_b-armor-t-14-armata,T-14 Armata,Russia,armor-main-battle-tank,Icon
+side_b-armor-t-62m-refurbished-reserve-stock,T-62M (refurbished reserve stock),Russia,armor-main-battle-tank,Icon
+side_b-armor-t-80bvm,T-80BVM,Russia,armor-main-battle-tank,Icon
+side_b-armor-t-90m-proryv,T-90M 'Proryv',Russia,armor-main-battle-tank,Icon
+side_b-armor-t72,T-72 (various modernized variants),Russia,armor-main-battle-tank,Hero
+side_b-artillery-2s19-msta-s,2S19 Msta-S,Russia,artillery-self-propelled,Icon
+side_b-artillery-2s7-pion-malka,2S7 Pion / Malka,Russia,artillery-self-propelled,Icon
+side_b-artillery-bm-27-uragan,BM-27 Uragan,Russia,artillery-rocket,Icon
+side_b-artillery-mlrs-grad,BM-21 Grad,Russia,artillery-rocket,Hero
+side_b-artillery-tos-1a,TOS-1A,Russia,artillery-rocket,Icon
+side_b-c2-comms-strelets,Strelets Reconnaissance-Fire Terminal,Russia,c2-squad-level,Icon
+side_b-ew-jammer-zhitel,R-330Zh Zhitel,Russia,ew-jamming,Icon
+side_b-ground-robots-kurier,Kurier,Russia,ground-robot-logistics,Icon
+side_b-ground-robots-omich-2,Omich-2,Russia,ground-robot-logistics,Icon
+side_b-ground-robots-uran-6,Uran-6,Russia,ground-robot-engineering,Icon
+side_b-ground-robots-uran-9,Uran-9,Russia,ground-robot-combat,Icon
+side_b-ground-robots-varan,Varan,Russia,ground-robot-multipurpose,Icon
+side_b-logistics-hub-op-near,Near-Rear Logistics Point,Russia,logistics-hub,Icon
+side_b-medical-casevac-chain,Point of Injury / Casualty Collection Point,Russia,medical-casevac,Icon
+side_b-naval-admiral-grigorovich,Admiral Grigorovich-class frigate (Project 11356R),Russia,naval-frigate,Icon
+side_b-naval-fleet-black-sea,Black Sea Fleet Surface Presence,Russia,naval-surface-fleet,Icon
+side_b-naval-kilo-636-3,Improved Kilo-class submarine (Project 636.3),Russia,naval-submarine,Icon
+side_b-strategic-target-power-plant,Power Generation & Grid Node,Russia,strategic-infrastructure-target,Icon
+side_b-uav-forpost-ru,Forpost-RU,Russia,uav-strike,Icon
+side_b-uav-gerbera,Gerbera,Russia,uav-strike,Icon
+side_b-uav-kub-1,KUB-1,Russia,uav-strike,Icon
+side_b-uav-orion,Orion,Russia,uav-strike,Icon
+side_b-uav-reconnaissance-tactical,Orlan-10,Russia,uav-reconnaissance,Hero
+side_b-uav-shahed-136-geran-2,Shahed-136 / Geran-2,Russia,uav-strike,Icon
+side_b-uav-strike-lancet,Lancet Loitering Munition,Russia,uav-strike,Hero
+side_b-uav-supercam-s350,Supercam S350,Russia,uav-reconnaissance,Icon
+side_b-uav-zala-z-16,Zala Z-16,Russia,uav-reconnaissance,Icon
