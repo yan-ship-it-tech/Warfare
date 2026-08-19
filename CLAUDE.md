@@ -64,7 +64,9 @@ reading order for any session is `CLAUDE.md` → `DECISIONS.md` →
 | `docs/3d-model-sourcing-manifest.xlsx` | Pass 16's source list — 72 candidate 3D models (47 with a free sourced candidate, 8 flagged "Weak/Verify", 17 with no free source), with license/attribution info per row. Read before starting Pass 16. |
 | `docs/DEPLOY_SYNC_WORKER.md` | Human walkthrough for deploying the Worker (one remaining manual step: `wrangler deploy` + two repo secrets). |
 | `docs/MODEL_STYLE_GUIDE.md` | **Read before adding or editing any 3D geometry** in `src/three/`. Proportions, poly budget, material/palette rules and silhouette conventions, measured off the hero tier (`models.ts`) and audited against `scenery.ts`/`props.ts`/`terrain3d.ts` — see Pass 12. |
-| `scripts/` | `audit-content.mjs` (verification), `fetch-osm-data.mjs` (Overpass → `data/osm/<aoi>.json`; two stages, and `--raw=` runs the second one with no network), `import-catalog.py` + `fill-sources.py` (spreadsheet → asset JSON, the repeatable path for the next ad hoc content drop). |
+| `exports/` | Generated sourcing worksheets — the current roster flattened to CSV/JSON/Markdown/XLSX so 3D models and photographs can be sourced against it. Derived output: regenerate with `scripts/export-equipment-list.mjs`, never hand-edit. |
+| `docs/3d-model-sourcing-manifest.json` | Greppable twin of the Pass 16 manifest `.xlsx` (same 72 rows). Written by `scripts/export-equipment-xlsx.py --dump-manifest`; read by the exporter so it can carry prior sourcing status into the new worksheets. |
+| `scripts/` | `audit-content.mjs` (verification), `export-equipment-list.mjs` + `export-equipment-xlsx.py` (roster → `exports/` sourcing worksheets), `fetch-osm-data.mjs` (Overpass → `data/osm/<aoi>.json`; two stages, and `--raw=` runs the second one with no network), `import-catalog.py` + `fill-sources.py` (spreadsheet → asset JSON, the repeatable path for the next ad hoc content drop). |
 
 ## Commands
 
@@ -75,6 +77,8 @@ npm run typecheck    # tsc --noEmit only, faster iteration
 npm run preview      # serve the production build locally
 node scripts/audit-content.mjs [--write]   # content verification pass
 node scripts/fetch-osm-data.mjs [--aoi=pokrovsk|kramatorsk]   # OSM extract → data/osm/
+node scripts/export-equipment-list.mjs      # roster → exports/ (CSV + JSON + Markdown), no deps
+python3 scripts/export-equipment-xlsx.py    # exports/equipment-sourcing.xlsx (needs openpyxl)
 ```
 
 No test suite exists yet — validate changes with `npm run build` plus a

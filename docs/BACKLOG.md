@@ -6,6 +6,29 @@ gets listed here rather than silently dropped or silently worked around.
 
 ---
 
+## Open — imagery (found while exporting the sourcing worksheets)
+
+### 77 of 89 `icon_image` values point at files that don't exist
+Every asset carries an `icon_image`, but only 12 of them are real images
+(Wikimedia Commons `Special:FilePath` links). The other 77 are
+`/icons/<slug>.png` paths minted by the Asset Editor
+(`src/components/AssetEditorPanel.tsx`) and by the duplicate/stub path in
+`DetailPanel.tsx` — there is no `public/icons/` directory in this repo, so
+nothing resolves. Nothing is visibly broken today because the map glyph
+comes from the authored SVG set in `src/icons/registry.tsx`, which
+deliberately never reads `icon_image` (Pass 5); the field is schema-only.
+
+Two things to decide, neither urgent:
+- Whether `icon_image` should stay a mintable-but-dangling path at all, or
+  whether the editor should leave it empty until something real is set.
+- Where sourced photography lands. `gallery_images` is the field the detail
+  panel actually renders, and only 15 assets have any — that, not
+  `icon_image`, is where a picture-sourcing pass should deposit results.
+
+See `exports/EQUIPMENT_SOURCING.md` for the per-asset breakdown.
+
+---
+
 ## Blocked / open — Pass 11 (OSM rail & tree-line pipeline)
 
 ### The Pokrovsk fetch — resolved (Pass 12); Kramatorsk still open
