@@ -23,12 +23,14 @@ npm run build:standalone # single-file build for publishing as a static artifact
 npm run preview          # serve the production build
 ```
 
+Run `node scripts/audit-content.mjs` for the content verification report.
+
 Open `#bench` (e.g. `http://localhost:5173/#bench`) for the renderer
 head-to-head that settled the layered-DOM vs. WebGL question. See
 [docs/DECISIONS.md](docs/DECISIONS.md) for the numbers and the reasoning, and
 [docs/BACKLOG.md](docs/BACKLOG.md) for what's flagged but not yet resolved
-(most notably: real photos/video are blocked in this environment and need
-files supplied directly — see the backlog for why).
+(most notably: a shared sync endpoint needs standing up — the adapter ships,
+the URL is yours to create).
 
 **Public URL:** pushes to this branch auto-build and deploy to GitHub Pages
 via `.github/workflows/deploy-pages.yml`. One-time setup if not already done:
@@ -36,12 +38,17 @@ repo Settings → Pages → Source → "GitHub Actions".
 
 ## What's here
 
-- Scrollable, illustrated cross-section — deliberately not a real map (tried
-  in an earlier pass, reverted; see docs/DECISIONS.md Pass 5). A generated
-  topographic-style ground plane (contour lines, directional shading, no
-  photography), each domain lane stepping back and dimming slightly for a
-  2.5D read, and air/space assets floating above their true position on a
-  visible tether. A zoom control scales the whole scene as one unit.
+- **3D terrain view (default)** — a real WebGL scene: perspective camera you
+  can orbit, a synthetic stylized terrain strip (rolling steppe, a churned
+  scar along the zero line, instanced treelines and craters), distance fog,
+  and altitude that actually means altitude — air and space assets sit above
+  the ground plane on a tether to their true position. Eleven hero assets
+  carry real low-poly 3D models; the rest are markers. Deliberately not a
+  real map: satellite geography was tried in Pass 4 and reverted because it
+  cannot share one legible axis across 0–5 km and 500 km+ (docs/DECISIONS.md).
+  Labels stay DOM buttons — crisp, tabbable, screen-reader reachable.
+- **Schematic view** — one toolbar click away, and still the home of the
+  distance ruler, the live band editor and the dependency-line overlay.
   Horizontal scroll moves toward and through the
   zero line into the opposing side; vertical scroll moves between domain
   layers. A single persistent ruler labels distance independently per side —
@@ -61,8 +68,18 @@ repo Settings → Pages → Source → "GitHub Actions".
   show any same-side, same-role system from `data/catalog/` instead — e.g.
   Russia's armor slot showing T-90M instead of the default T-72B3 — without
   touching its position, connections, or role narrative.
-- Editable distance bands and per-asset placement, both live and persisted
-  to this browser (no backend yet — see the backlog).
+- **Key lessons** — 10 lessons seeded from `docs/doctrine.md`, each carrying
+  the doctrine section and source tag behind it, and each pointing at the
+  assets that demonstrate it: "show on map" flies the 3D camera to that set
+  and dims the rest.
+- **Verification status on every asset** — `verified · N sources`,
+  `1 source only`, or `unverified`, derived from the citations by
+  `scripts/audit-content.mjs` rather than hand-written. See
+  [docs/CONTENT_PIPELINE.md](docs/CONTENT_PIPELINE.md).
+- Editable distance bands and per-asset placement, live. Storage is pluggable
+  (`src/state/persistence.ts`): this browser by default, a shared REST store
+  when `VITE_SYNC_URL` is set, plus Export/Import to move a working set
+  between devices with no backend at all.
 - Category show/hide across 18 groups, independent of the domain layers.
 - Dependency overlay with a distinct stroke per connection type, direction
   arrows, per-edge descriptions on hover, and hover-to-isolate a node's
@@ -106,6 +123,12 @@ src/
     loader.ts             globs, validates, merges edges, builds pending stubs
     validate.ts           runtime schema checks
     model.ts              loader-derived types (does not extend the schema)
+  three/
+    worldMapping.ts       band-compressed px → 3D world coords (pure)
+    terrain3d.ts          synthetic stylized terrain heightfield
+    models.ts             procedural low-poly hero models
+    props.ts              instanced trees / craters / scrub
+    Scene3D.tsx           the WebGL scene (lazy-loaded)
   scene/
     projection.ts         battlefield → screen geometry (pure, no DOM)
     Scene.tsx             scroll container, lanes, rail
@@ -116,7 +139,11 @@ src/
   components/             detail panel, toolbar, about, data health, legend
   icons/registry.tsx      uniform illustrated icon set
   bench/Bench.tsx         DOM vs. WebGL benchmark (#bench)
-docs/DECISIONS.md         stack, rendering call, open items, what's deferred
+  three/                  (see above)
+scripts/audit-content.mjs content verification audit
+docs/DECISIONS.md         stack, rendering calls, open items, what's deferred
+docs/CONTENT_PIPELINE.md  two-pass drafting/verification process
+docs/doctrine.md          the sourced narrative spine; seeds data/lessons.json
 ```
 
 ## Sources

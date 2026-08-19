@@ -6,7 +6,42 @@ gets listed here rather than silently dropped or silently worked around.
 
 ---
 
-## Resolved this pass (Pass 5)
+## Resolved in Pass 6
+
+### 16. Genuine 3D rendering
+`src/three/` — WebGL scene, perspective camera, synthetic stylized terrain
+strip, distance fog. Hybrid: WebGL draws the world, DOM `<button>`s stay the
+labels and hit targets. Both views kept (3D leads, Schematic one click away).
+See `docs/DECISIONS.md` Pass 6 §1.
+
+### 17. 3D models for a hero tier
+Eleven assets across both sides get real geometry, authored procedurally in
+`src/three/models.ts` rather than sourced — see the upgrade path below for
+the rest, and Pass 6 §2 for why authored beat sourced here.
+
+### 18. Two-pass content pipeline
+`docs/CONTENT_PIPELINE.md` + `scripts/audit-content.mjs`. Applied
+retroactively to all 27 shipped assets: 19 verified, 1 low-confidence,
+7 unverified — every one of them now says which it is, in its own panel.
+
+### 19. Key Lessons page
+`data/lessons.json`, 10 lessons seeded from `docs/doctrine.md`, each linked
+to the assets that demonstrate it and able to fly the 3D camera to them.
+
+### 20. Performance pass
+Instanced scatter props (3 draw calls for ~1,900 objects), LOD on hero
+models, device-aware prop budget, `React.lazy` on the whole 3D module
+(main bundle 400 kB / 3D chunk 561 kB on demand), screen-space label
+declutter.
+
+### 11. Real backend — seam done, endpoint outstanding
+`src/state/persistence.ts` makes storage pluggable and ships a real REST
+adapter plus export/import. What is *not* done is standing up an endpoint —
+see item 21 below, which is now the actual remaining work.
+
+---
+
+## Resolved in Pass 5
 
 ### 1. Real photos of equipment — done for 12 of 27, kept detail-panel-only
 Sourced real, licensed photos (Wikimedia Commons, via `Special:FilePath`
@@ -64,6 +99,24 @@ teaching tool. `src/map/` and the `maplibre-gl` dependency are gone; see
 
 ---
 
+## Needs a decision from you, not code
+
+### 21. Stand up a sync endpoint (the real remaining half of #11)
+The adapter, the REST client, export/import and the storage badge all ship.
+What is missing is a URL. It cannot be invented here: this is a static site
+on GitHub Pages, so any hosted-JSON-store credential would ship inside the
+public client bundle and be readable by anyone — a write-capable key
+published that way invites the shared state being wiped.
+
+**Recommendation:** a Cloudflare Worker over a KV namespace, ~20 lines, free
+at this scale, fronting `VITE_SYNC_URL`. The contract the adapter expects is
+two calls (`GET`/`PUT` one JSON document) and is documented at the bottom of
+`src/state/persistence.ts`. Needs an account, so it is yours to create.
+Until then the badge in the toolbar honestly reads "This browser only", and
+Export/Import moves a working set between devices with no key involved.
+
+---
+
 ## Blocked — needs something from outside this session
 
 ### 2. Video that survives a page reload
@@ -93,6 +146,26 @@ Operation Spiderweb, Gepard's 10-drone engagement). Extending it to the rest
 of the 27 assets — and to new ones as they're added — is straightforward
 but is real per-asset research work, same shape as the original asset
 build-out. Natural to do category-by-category like the rest of the content.
+
+### 22. Extend the hero-model tier beyond 11 assets
+Eleven assets have real geometry; the other 16 (plus every future one) use
+the marker + label treatment. That split is a deliberate scope line, not a
+gap that was overlooked — the hero tier was chosen as what actually gets
+clicked in a live demo. Extending it is mechanical: add a builder function
+to `HERO_BUILDERS` in `src/three/models.ts` keyed by asset id, and the LOD,
+instancing and selection wiring pick it up with no other change. Natural
+candidates next: Starlink terminal, the Magura V5 USV, a logistics truck,
+a casevac vehicle.
+
+### 23. Close the 7 unverified assets
+The composite nodes (logistics hubs, casevac chains, both power-plant
+nodes, Strelets) are `unverified` — written from doctrine.md and general
+knowledge. Legitimate for a node standing in for a class of thing rather
+than a named system, but each should either earn two independent sources
+or be explicitly re-labelled as a composite in its own copy. Follow
+`docs/CONTENT_PIPELINE.md` pass 2. Also: six otherwise-verified assets
+carry `estimated` costs and are flagged as such — cost verification is the
+narrower, harder half.
 
 ### 5. Build out the remaining catalog entries as full map assets
 Your two catalogs carry ~53 systems; 14 are currently placed on the map with

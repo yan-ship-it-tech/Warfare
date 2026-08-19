@@ -12,18 +12,25 @@
   "representative_system": "Composite — a generic thermal/hydro generation plant and grid substation, not a named facility",
   "icon_image": "/icons/power-plant.png",
   "gallery_images": [],
-
   "cost": {
     "unit_cost_usd": null,
     "display": "Not a procured unit — infrastructure whose value is measured in grid capacity and repair cost after a strike, not a purchase price",
     "confidence": "unknown"
   },
   "key_facts": [
-    { "label": "Why it matters", "value": "One node can cascade outages across a wide grid area" },
-    { "label": "Defended by", "value": "Layered short/point air defense rather than any organic defense" },
-    { "label": "Repair tempo", "value": "Repeated strikes outpace repair during sustained campaigns" }
+    {
+      "label": "Why it matters",
+      "value": "One node can cascade outages across a wide grid area"
+    },
+    {
+      "label": "Defended by",
+      "value": "Layered short/point air defense rather than any organic defense"
+    },
+    {
+      "label": "Repair tempo",
+      "value": "Repeated strikes outpace repair during sustained campaigns"
+    }
   ],
-
   "short_role": "Representative strategic-rear infrastructure target — mirrors the equivalent node on the other side for a symmetric picture of what deep-strike systems on both sides can reach.",
   "characteristics": [
     "A single generation or transformer node failure can cascade into outages well beyond the immediate facility",
@@ -32,11 +39,20 @@
   ],
   "employment_notes": "Exists on the map to represent the category the master brief calls out explicitly — strategic/operational/tactical targets at varying depth — mirrored on this side for symmetry with the equivalent node on the other.",
   "contrast_vs_traditional": "Strategic infrastructure has always been a wartime target; what changed is the volume and reach of what can now attack it, and the corresponding reach of point-defense systems now dedicated to protecting fixed civilian-facing infrastructure rather than only military positions.",
-
   "connections": [],
-
   "sources": [
-    { "label": "Composite/illustrative — no single named facility; category per master prompt asset list", "url": "" }
+    {
+      "label": "Composite/illustrative — no single named facility; category per master prompt asset list",
+      "url": ""
+    }
   ],
-  "editable": true
+  "editable": true,
+  "verification": {
+    "status": "unverified",
+    "independent_sources": 0,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Written from doctrine.md and general knowledge; no per-asset citation yet."
+    ]
+  }
 }

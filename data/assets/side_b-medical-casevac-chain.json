@@ -6,24 +6,34 @@
   "echelon": "tactical",
   "group": "medical",
   "distance_km_from_zero": 2,
-  "operating_range_km": { "min_km": 0, "max_km": 5 },
+  "operating_range_km": {
+    "min_km": 0,
+    "max_km": 5
+  },
   "band_id": "tactical",
   "category": "medical-casevac",
   "representative_system": "Point-of-injury care + forward Casualty Collection Point (CCP) — the first link in the evacuation chain",
   "icon_image": "/icons/casevac-ccp.png",
   "gallery_images": [],
-
   "cost": {
     "unit_cost_usd": null,
     "display": "Personnel- and process-driven, not a procured unit",
     "confidence": "unknown"
   },
   "key_facts": [
-    { "label": "First link in", "value": "POI → CCP → stabilization → definitive care chain" },
-    { "label": "Exposure", "value": "Short move to the CCP falls inside the FPV strike envelope" },
-    { "label": "Constraint", "value": "Same drone density that finds targets finds evacuation routes" }
+    {
+      "label": "First link in",
+      "value": "POI → CCP → stabilization → definitive care chain"
+    },
+    {
+      "label": "Exposure",
+      "value": "Short move to the CCP falls inside the FPV strike envelope"
+    },
+    {
+      "label": "Constraint",
+      "value": "Same drone density that finds targets finds evacuation routes"
+    }
   ],
-
   "short_role": "The first link in the evacuation chain — point-of-injury first aid and a forward collection point before movement rearward.",
   "characteristics": [
     "First aid at point of injury, then movement to a covered/concealed CCP",
@@ -32,11 +42,20 @@
   ],
   "employment_notes": "Evacuation timing is dictated by the same persistent overhead drone presence that governs everything else at this depth — movement windows open and close around detected drone activity rather than following a fixed schedule.",
   "contrast_vs_traditional": "The entire evacuation chain now operates inside the FPV strike envelope from the very first leg, which traditional casevac planning — built around a relatively permissive rear area — did not have to account for at anything like this intensity.",
-
   "connections": [],
-
   "sources": [
-    { "label": "Master prompt category reference — medical/casevac chain, point of injury through definitive care (general pattern, not asset-specific sourcing)", "url": "" }
+    {
+      "label": "Master prompt category reference — medical/casevac chain, point of injury through definitive care (general pattern, not asset-specific sourcing)",
+      "url": ""
+    }
   ],
-  "editable": true
+  "editable": true,
+  "verification": {
+    "status": "unverified",
+    "independent_sources": 0,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Written from doctrine.md and general knowledge; no per-asset citation yet."
+    ]
+  }
 }

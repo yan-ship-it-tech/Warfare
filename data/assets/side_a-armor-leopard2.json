@@ -81,5 +81,13 @@
       "url": "https://commons.wikimedia.org/wiki/File:Leopard_2_tank.JPG"
     }
   ],
-  "editable": true
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Specs meet the bar but the unit cost is an estimate — cost is not verified."
+    ]
+  }
 }

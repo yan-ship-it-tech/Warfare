@@ -9,14 +9,37 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import type { AssetGroup, ConnectionType, Side } from "../types";
 
-export type PanelId = "about" | "health" | "bands" | "categories" | null;
+export type PanelId = "about" | "health" | "bands" | "categories" | "lessons" | null;
+
+/** Pass 6 keeps BOTH renderers rather than replacing one with the other.
+ *  Pass 5 removed a view outright and the immediate feedback was "I can't see
+ *  the map anymore" — so the 3D terrain view leads, and the schematic
+ *  cross-section (ruler, band editor, dependency overlay) stays one click
+ *  away rather than being deleted for it. */
+export type RenderMode = "terrain3d" | "schematic";
+
+/** A request to point the 3D camera at a set of assets — raised by selection
+ *  and by the Lessons page, consumed by Scene3D. The nonce makes re-issuing
+ *  the same set a distinct event, so clicking one lesson twice re-frames it. */
+export interface FocusRequest {
+  assetIds: string[];
+  nonce: number;
+}
 
 export interface ViewState {
+  renderMode: RenderMode;
+  setRenderMode: (m: RenderMode) => void;
+
+  focusRequest: FocusRequest | null;
+  focusAssets: (assetIds: string[]) => void;
+  clearFocus: () => void;
+
   /** Uniform CSS-transform scale on the whole scene — the "zoom" control.
    *  Distinct from the browser/OS zoom: this scales node icons, labels and
    *  the terrain background together so they grow as a unit, independent of
@@ -73,6 +96,9 @@ const ZOOM_MIN = 0.6;
 const ZOOM_MAX = 2;
 
 export function ViewStateProvider({ children }: { children: ReactNode }) {
+  const [renderMode, setRenderMode] = useState<RenderMode>("terrain3d");
+  const [focusRequest, setFocusRequest] = useState<FocusRequest | null>(null);
+  const focusNonce = useRef(0);
   const [sceneZoom, setSceneZoomRaw] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -122,6 +148,13 @@ export function ViewStateProvider({ children }: { children: ReactNode }) {
   const showAllGroups = useCallback(() => setHiddenGroups(new Set()), []);
   const hideAllGroups = useCallback((allGroupIds: AssetGroup[]) => setHiddenGroups(new Set(allGroupIds)), []);
 
+  const focusAssets = useCallback((assetIds: string[]) => {
+    focusNonce.current += 1;
+    setFocusRequest({ assetIds, nonce: focusNonce.current });
+  }, []);
+
+  const clearFocus = useCallback(() => setFocusRequest(null), []);
+
   const setSceneZoom = useCallback((z: number | ((prev: number) => number)) => {
     setSceneZoomRaw((prev) => {
       const next = typeof z === "function" ? z(prev) : z;
@@ -131,6 +164,11 @@ export function ViewStateProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<ViewState>(
     () => ({
+      renderMode,
+      setRenderMode,
+      focusRequest,
+      focusAssets,
+      clearFocus,
       sceneZoom,
       setSceneZoom,
       selectedId,
@@ -157,6 +195,10 @@ export function ViewStateProvider({ children }: { children: ReactNode }) {
       setOpenPanel,
     }),
     [
+      renderMode,
+      focusRequest,
+      focusAssets,
+      clearFocus,
       sceneZoom,
       setSceneZoom,
       selectedId,

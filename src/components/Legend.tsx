@@ -19,9 +19,13 @@ export function Legend({ world }: { world: WorldModel }) {
           </>
         )}
       </p>
+      {/* The navigation hint is per-renderer — the 3D view has no scroll axes,
+          and telling someone to scroll left-right in an orbit camera is worse
+          than saying nothing. */}
       <p className="legend__hint">
-        Scroll ← → for distance from the zero line · ↑ ↓ between domain layers · click an asset for
-        detail
+        {view.renderMode === "terrain3d"
+          ? "Drag to orbit · scroll to zoom · click an asset for detail"
+          : "Scroll ← → for distance from the zero line · ↑ ↓ between domain layers · click an asset for detail"}
       </p>
       <p className="legend__sides">
         {SIDE_LABELS.side_a.short} rear is to the left, {SIDE_LABELS.side_b.short} rear to the right.

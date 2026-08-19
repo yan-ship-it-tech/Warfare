@@ -12,18 +12,25 @@
   "representative_system": "Generic battalion/regimental near-rear supply point — composite, not a named facility",
   "icon_image": "/icons/logistics-hub.png",
   "gallery_images": [],
-
   "cost": {
     "unit_cost_usd": null,
     "display": "Not a procured unit — a facility/throughput node, not something with a per-unit price",
     "confidence": "unknown"
   },
   "key_facts": [
-    { "label": "Function", "value": "Fuel, ammunition and FPV/drone resupply for near-line units" },
-    { "label": "Movement to line", "value": "Segmented over several days with radio silence during offensive builds" },
-    { "label": "Typical depth", "value": "Just inside the ~30 km drone-dense corridor either side of the front" }
+    {
+      "label": "Function",
+      "value": "Fuel, ammunition and FPV/drone resupply for near-line units"
+    },
+    {
+      "label": "Movement to line",
+      "value": "Segmented over several days with radio silence during offensive builds"
+    },
+    {
+      "label": "Typical depth",
+      "value": "Just inside the ~30 km drone-dense corridor either side of the front"
+    }
   ],
-
   "short_role": "Near-rear point that pushes fuel, ammunition and drone airframes forward to units operating within the drone-dense corridor.",
   "characteristics": [
     "Sits inside the ~30 km band either side of the front where persistent drone coverage genuinely dominates",
@@ -32,11 +39,20 @@
   ],
   "employment_notes": "Feeds tank and drone units operating close to the line, where a single detected supply run can draw an immediate strike. Consumption here is dominated by FPV airframes rather than artillery shells — a single intensive-tempo drone company can burn through thousands of airframes a month, reshaping what 'resupply' even means compared to a Cold War-era ammunition point.",
   "contrast_vs_traditional": "Sitting inside the drone-dense corridor changes what 'near-rear and relatively safe' means — this point is well within the zone where persistent drone coverage dominates, not behind it. That has pushed movement discipline (staggered segments, radio silence, paper orders instead of radio traffic) down to a level that used to only apply to units actually crossing the line.",
-
   "connections": [],
-
   "sources": [
-    { "label": "Andrey Markin, 'Summary of Combat Experience of the SVO' — movement/logistics patterns referenced in doctrine reference", "url": "" }
+    {
+      "label": "Andrey Markin, 'Summary of Combat Experience of the SVO' — movement/logistics patterns referenced in doctrine reference",
+      "url": ""
+    }
   ],
-  "editable": true
+  "editable": true,
+  "verification": {
+    "status": "unverified",
+    "independent_sources": 0,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Written from doctrine.md and general knowledge; no per-asset citation yet."
+    ]
+  }
 }

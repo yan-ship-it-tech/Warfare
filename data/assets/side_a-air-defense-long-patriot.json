@@ -85,5 +85,11 @@
       "url": "https://commons.wikimedia.org/wiki/File:MIM-104_Patriot.JPG"
     }
   ],
-  "editable": true
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 4,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
 }

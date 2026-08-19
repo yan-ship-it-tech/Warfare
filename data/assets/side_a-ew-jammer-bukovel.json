@@ -7,24 +7,34 @@
   "group": "ew",
   "comparison_group": "electronic_warfare",
   "distance_km_from_zero": 8,
-  "operating_range_km": { "min_km": 2, "max_km": 20 },
+  "operating_range_km": {
+    "min_km": 2,
+    "max_km": 20
+  },
   "band_id": "op_near",
   "category": "ew-counter-uas",
   "representative_system": "Proximus Bukovel-AD",
   "icon_image": "/icons/bukovel-ad.png",
   "gallery_images": [],
-
   "cost": {
     "unit_cost_usd": null,
     "display": "Not publicly disclosed",
     "confidence": "unknown"
   },
   "key_facts": [
-    { "label": "Detection range", "value": "Up to ~100 km (passive RF)" },
-    { "label": "Jamming range", "value": "~20 km against UAV control/data links" },
-    { "label": "Networking", "value": "Up to 9 units linked for wide-area coverage" }
+    {
+      "label": "Detection range",
+      "value": "Up to ~100 km (passive RF)"
+    },
+    {
+      "label": "Jamming range",
+      "value": "~20 km against UAV control/data links"
+    },
+    {
+      "label": "Networking",
+      "value": "Up to 9 units linked for wide-area coverage"
+    }
   ],
-
   "short_role": "Ukrainian mobile counter-drone electronic warfare system — detects, tracks and jams enemy UAV control and navigation links.",
   "characteristics": [
     "Passive RF detection and direction-finding across 290–6,000 MHz, triangulating a UAV's position without emitting first",
@@ -34,16 +44,37 @@
   ],
   "employment_notes": "Sits back from the immediate line to cover a wide arc of airspace rather than a single position, feeding detections into the wider air-defense and EW picture as much as jamming directly. Passive-first detection matters: emitting a jamming signal before you've located a target gives away your own position, so the system listens before it transmits.",
   "contrast_vs_traditional": "Traditional EW targeted enemy radios and radar. This generation of EW is built specifically around the drone threat — detecting and denying the control and navigation links a UAV needs to function at all. It also illustrates the doctrine reference's point about decentralized EW procurement: units fielding their own jammers can create overlapping, uncoordinated 'unofficial EW fields' that degrade friendly drone performance as a side effect, which is a real coordination cost of pushing EW capability down to lower echelons.",
-
   "connections": [
-    { "target_id": "side_a-c2-integrated-air-defense-network", "type": "data_c2", "description": "Reports detected and jammed UAV tracks into the wider air picture." },
-    { "target_id": "side_a-logistics-hub-op-deep", "type": "maintenance", "description": "Field maintenance and antenna/electronics spares." }
+    {
+      "target_id": "side_a-c2-integrated-air-defense-network",
+      "type": "data_c2",
+      "description": "Reports detected and jammed UAV tracks into the wider air picture."
+    },
+    {
+      "target_id": "side_a-logistics-hub-op-deep",
+      "type": "maintenance",
+      "description": "Field maintenance and antenna/electronics spares."
+    }
   ],
-
   "sources": [
-    { "label": "Wikipedia — Bukovel (counter unmanned aircraft system)", "url": "https://en.wikipedia.org/wiki/Bukovel_(counter_unmanned_aircraft_system)" },
-    { "label": "New Atlas — Ukraine's rapid rise as an anti-drone powerhouse", "url": "https://newatlas.com/military/ukraines-anti-drone-expertise-rise/" },
-    { "label": "Militarnyi — Bukovel-AD EW system 'landed' Russian ZALA UAV", "url": "https://militarnyi.com/en/news/ukrainian-bukovel-ad-ew-system-landed-russian-zala-421-16e2-uav/" }
+    {
+      "label": "Wikipedia — Bukovel (counter unmanned aircraft system)",
+      "url": "https://en.wikipedia.org/wiki/Bukovel_(counter_unmanned_aircraft_system)"
+    },
+    {
+      "label": "New Atlas — Ukraine's rapid rise as an anti-drone powerhouse",
+      "url": "https://newatlas.com/military/ukraines-anti-drone-expertise-rise/"
+    },
+    {
+      "label": "Militarnyi — Bukovel-AD EW system 'landed' Russian ZALA UAV",
+      "url": "https://militarnyi.com/en/news/ukrainian-bukovel-ad-ew-system-landed-russian-zala-421-16e2-uav/"
+    }
   ],
-  "editable": true
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 3,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
 }

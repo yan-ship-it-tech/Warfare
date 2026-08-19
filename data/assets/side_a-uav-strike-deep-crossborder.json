@@ -6,24 +6,34 @@
   "echelon": "strategic",
   "group": "uav",
   "distance_km_from_zero": 4300,
-  "operating_range_km": { "min_km": 0, "max_km": 4300 },
+  "operating_range_km": {
+    "min_km": 0,
+    "max_km": 4300
+  },
   "band_id": "deep_strategic",
   "category": "uav-strike-strategic-sabotage",
   "representative_system": "Composite representation of Ukraine's 'Operation Spiderweb' method (June 1, 2025) — FPV drones smuggled by commercial truck and launched from inside Russian territory",
   "icon_image": "/icons/deep-strike-fpv.png",
   "gallery_images": [],
-
   "cost": {
     "unit_cost_usd": null,
     "display": "Individual FPV airframes cost roughly the same as any other FPV drone (low thousands of dollars each); the operation's value is asymmetric — an estimated $7B in damage to a fleet of strategic bombers from a low-cost drone/logistics effort",
     "confidence": "estimated"
   },
   "key_facts": [
-    { "label": "Confirmed reach", "value": "4,300 km from Ukraine (Belaya airbase, Irkutsk region)" },
-    { "label": "Method", "value": "FPV drones hidden in modified trucks, launched via remote-opened roof panels" },
-    { "label": "Reported scale", "value": "117 drones, 5 airbases, 41 aircraft reportedly hit" }
+    {
+      "label": "Confirmed reach",
+      "value": "4,300 km from Ukraine (Belaya airbase, Irkutsk region)"
+    },
+    {
+      "label": "Method",
+      "value": "FPV drones hidden in modified trucks, launched via remote-opened roof panels"
+    },
+    {
+      "label": "Reported scale",
+      "value": "117 drones, 5 airbases, 41 aircraft reportedly hit"
+    }
   ],
-
   "short_role": "Not a single vehicle — a method: FPV drones smuggled deep into enemy territory by truck, then launched within a few kilometers of the target itself.",
   "characteristics": [
     "Airframes are ordinary short-range FPV drones, not long-range cruise missiles — the 'range' comes from covert ground transport, not flight endurance",
@@ -33,27 +43,51 @@
   ],
   "employment_notes": "This entry's distance on the map (~4,300 km) represents the operation's confirmed reach, not a drone physically flying that far — the FPV airframes themselves only had to cover the last few kilometers from a parked truck to the target. The distance is achieved by defeating border and internal security over months, not by any flight characteristic of the drone. Deliberately minimal live operator control was used near the target for exactly the reason doctrine calls out about deconfliction and detection risk this deep in denied territory.",
   "contrast_vs_traditional": "Traditional deep-strike doctrine assumed reach came from a missile's range or an aircraft's radius of action, and that a target 4,300 km from the front was accordingly safe. Smuggling ordinary short-range FPV drones to within line of sight of the target collapses that assumption entirely — the front line and national borders stop being a meaningful protective distance at all once the delivery method is a truck rather than a missile, which is as significant a shift as the minutes-scale kill chain described elsewhere in this doctrine set.",
-
   "notable_events": [
     {
       "date": "2025-06-01",
       "title": "Operation Spiderweb",
       "description": "117 FPV drones, smuggled into Russia by truck over an extended covert operation, launched simultaneously against 5 strategic bomber airbases up to 4,300 km from Ukraine (including Belaya in Irkutsk region, Siberia). Reportedly struck 41 aircraft including Tu-95, Tu-22M3 and Tu-160 strategic bombers and an A-50 airborne early-warning aircraft — estimated at billions of dollars in damage to Russia's strategic bomber fleet.",
       "sources": [
-        { "label": "Wikipedia — Operation Spiderweb", "url": "https://en.wikipedia.org/wiki/Operation_Spiderweb" },
-        { "label": "CNN — Operation Spiderweb: Ukraine hits air bases thousands of miles inside Russia", "url": "https://www.cnn.com/2025/06/01/europe/ukraine-drones-russia-airbases-intl" }
+        {
+          "label": "Wikipedia — Operation Spiderweb",
+          "url": "https://en.wikipedia.org/wiki/Operation_Spiderweb"
+        },
+        {
+          "label": "CNN — Operation Spiderweb: Ukraine hits air bases thousands of miles inside Russia",
+          "url": "https://www.cnn.com/2025/06/01/europe/ukraine-drones-russia-airbases-intl"
+        }
       ]
     }
   ],
-
   "connections": [
-    { "target_id": "side_a-space-isr-satellite-commercial", "type": "data_c2", "description": "Pre-mission target imagery used to plan airbase approach and aircraft dispersal patterns." }
+    {
+      "target_id": "side_a-space-isr-satellite-commercial",
+      "type": "data_c2",
+      "description": "Pre-mission target imagery used to plan airbase approach and aircraft dispersal patterns."
+    }
   ],
-
   "sources": [
-    { "label": "Wikipedia — Operation Spiderweb", "url": "https://en.wikipedia.org/wiki/Operation_Spiderweb" },
-    { "label": "CNN — Operation Spiderweb: Ukraine hits air bases thousands of miles inside Russia", "url": "https://www.cnn.com/2025/06/01/europe/ukraine-drones-russia-airbases-intl" },
-    { "label": "CSIS — How Ukraine's Operation 'Spider's Web' Redefines Asymmetric Warfare", "url": "https://www.csis.org/analysis/how-ukraines-spider-web-operation-redefines-asymmetric-warfare" }
+    {
+      "label": "Wikipedia — Operation Spiderweb",
+      "url": "https://en.wikipedia.org/wiki/Operation_Spiderweb"
+    },
+    {
+      "label": "CNN — Operation Spiderweb: Ukraine hits air bases thousands of miles inside Russia",
+      "url": "https://www.cnn.com/2025/06/01/europe/ukraine-drones-russia-airbases-intl"
+    },
+    {
+      "label": "CSIS — How Ukraine's Operation 'Spider's Web' Redefines Asymmetric Warfare",
+      "url": "https://www.csis.org/analysis/how-ukraines-spider-web-operation-redefines-asymmetric-warfare"
+    }
   ],
-  "editable": true
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 3,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Specs meet the bar but the unit cost is an estimate — cost is not verified."
+    ]
+  }
 }

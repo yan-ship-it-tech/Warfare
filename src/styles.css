@@ -1634,3 +1634,233 @@ code { font-family: var(--mono); font-size: 0.92em; }
 .geo-pin--stub .geo-pin__name { color: var(--text-3); font-style: italic; }
 
 .maplibregl-ctrl-attrib { font-size: 10px !important; }
+
+/* ── 3D terrain view ────────────────────────────────────────────────── */
+.scene3d { position: absolute; inset: 0; overflow: hidden; }
+.scene3d__mount { position: absolute; inset: 0; }
+.scene3d__canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+
+.scene3d__loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--text-3);
+  font-size: 13px;
+  letter-spacing: 0.05em;
+}
+
+/* Labels sit above the canvas but must not eat the orbit drag — only the
+   pins themselves take pointer events. */
+.scene3d__labels { position: absolute; inset: 0; pointer-events: none; }
+
+.pin3d {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 3px 8px 4px;
+  border-radius: 7px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  background: rgba(8, 11, 17, 0.82);
+  backdrop-filter: blur(3px);
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 140ms, border-color 140ms, transform 60ms linear;
+  will-change: transform;
+}
+
+.pin3d::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  width: 1px;
+  height: 6px;
+  background: color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+/* Capped so a long name can't exceed the box the declutter pass reserved
+   for it — otherwise the collision test is measuring the wrong rectangle. */
+.pin3d__name {
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  max-width: 124px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pin3d__km { font-family: var(--mono); font-size: 9px; color: var(--text-3); line-height: 1.1; }
+
+.pin3d:hover, .pin3d.is-hovered {
+  border-color: color-mix(in srgb, var(--accent) 90%, transparent);
+  z-index: 2000 !important;
+}
+.pin3d.is-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent);
+  z-index: 2001 !important;
+}
+.pin3d--stub { border-style: dashed; opacity: 0.7; }
+.pin3d--stub .pin3d__name { font-style: italic; color: var(--text-3); }
+.pin3d.is-dimmed { opacity: 0.18; }
+.pin3d.is-behind { display: none; }
+
+.scene3d__legend {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(8, 11, 17, 0.7);
+  border: 1px solid var(--line);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+.scene3d__side--a { color: var(--text-2); }
+.scene3d__side--b { color: var(--text-2); }
+.scene3d__zero { color: var(--text); font-weight: 600; }
+
+.scene3d__hint {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  max-width: 380px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  background: rgba(10, 13, 19, 0.8);
+  border: 1px solid var(--line);
+  color: var(--text-3);
+  font-size: 10.5px;
+  line-height: 1.5;
+  pointer-events: none;
+}
+
+/* ── lessons ────────────────────────────────────────────────────────── */
+.modal__body--wide { max-width: 760px; }
+
+.lessons { list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+
+.lessons__item {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.018);
+  overflow: hidden;
+}
+.lessons__item.is-open { border-color: var(--line-2); background: rgba(255, 255, 255, 0.03); }
+
+.lessons__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.lessons__head:hover { background: rgba(255, 255, 255, 0.025); }
+
+.lessons__num {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+  padding-top: 3px;
+  flex: 0 0 auto;
+}
+.lessons__title { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.lessons__title b { font-size: 13.5px; color: var(--text); }
+.lessons__title em { font-size: 12px; font-style: normal; color: var(--text-2); line-height: 1.5; }
+.lessons__chev { color: var(--text-3); font-size: 11px; padding-top: 3px; }
+
+.lessons__body { padding: 0 14px 14px 38px; display: flex; flex-direction: column; gap: 12px; }
+.lessons__body > p { margin: 0; font-size: 12.5px; line-height: 1.65; color: var(--text-2); }
+
+.lessons__meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.lessons__source { font-family: var(--mono); font-size: 10px; color: var(--text-3); }
+
+.lessons__links-label {
+  display: block;
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
+
+.lessons__links { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.lessons__links .lessons__links-label { margin: 0 4px 0 0; }
+.lessons__chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; }
+.lessons__chip i { width: 12px; height: 2px; border-radius: 1px; display: inline-block; }
+
+.lessons__asset-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.lessons__asset {
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--side) 45%, transparent);
+  background: color-mix(in srgb, var(--side) 12%, transparent);
+  color: var(--text);
+  font-size: 11px;
+  cursor: pointer;
+}
+.lessons__asset:hover { border-color: var(--side); background: color-mix(in srgb, var(--side) 22%, transparent); }
+
+.verify-notes { margin: 0 0 10px; padding-left: 15px; display: flex; flex-direction: column; gap: 4px; }
+.verify-notes li { font-size: 11px; line-height: 1.5; color: var(--text-3); }
+
+/* ── sync / edit storage ────────────────────────────────────────────── */
+.sync__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  border: 1px solid var(--line);
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.sync__badge--local { border-color: color-mix(in srgb, var(--warn) 35%, transparent); }
+.sync__badge--shared { border-color: color-mix(in srgb, var(--ok) 45%, transparent); color: var(--text); }
+.sync__badge em { font-style: normal; font-size: 9.5px; color: var(--text-3); }
+.sync__badge em.is-err { color: var(--err); }
+.sync__msg { font-size: 10.5px; color: var(--text-3); }
+
+/* Decluttered labels collapse to a dot rather than disappearing — they stay
+   hoverable, tabbable and screen-reader reachable, which is the whole reason
+   these are DOM buttons and not sprites. */
+.pin3d.is-collapsed {
+  padding: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--accent) 55%, rgba(8, 11, 17, 0.9));
+}
+.pin3d.is-collapsed .pin3d__name,
+.pin3d.is-collapsed .pin3d__km { display: none; }
+.pin3d.is-collapsed::after { display: none; }
+.pin3d.is-collapsed:hover,
+.pin3d.is-collapsed:focus-visible {
+  width: auto;
+  height: auto;
+  border-radius: 7px;
+  padding: 3px 8px 4px;
+  background: rgba(8, 11, 17, 0.92);
+}
+.pin3d.is-collapsed:hover .pin3d__name,
+.pin3d.is-collapsed:focus-visible .pin3d__name,
+.pin3d.is-collapsed:hover .pin3d__km,
+.pin3d.is-collapsed:focus-visible .pin3d__km { display: block; }

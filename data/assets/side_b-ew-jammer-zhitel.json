@@ -7,24 +7,34 @@
   "group": "ew",
   "comparison_group": "electronic_warfare",
   "distance_km_from_zero": 15,
-  "operating_range_km": { "min_km": 5, "max_km": 25 },
+  "operating_range_km": {
+    "min_km": 5,
+    "max_km": 25
+  },
   "band_id": "op_near",
   "category": "ew-jamming",
   "representative_system": "R-330Zh Zhitel (NVP Protek)",
   "icon_image": "/icons/r330zh-zhitel.png",
   "gallery_images": [],
-
   "cost": {
     "unit_cost_usd": null,
     "display": "Not publicly disclosed — described in reporting as one of the more sophisticated, expensive pieces of Russian EW equipment fielded",
     "confidence": "unknown"
   },
   "key_facts": [
-    { "label": "Jamming range", "value": "~20–25 km (ground); ~50 km against airborne comms" },
-    { "label": "Targets", "value": "GPS/GLONASS, satellite phones (Inmarsat/Iridium), GSM base stations" },
-    { "label": "Platform", "value": "Truck-mounted (Ural/KamAZ), two-vehicle set" }
+    {
+      "label": "Jamming range",
+      "value": "~20–25 km (ground); ~50 km against airborne comms"
+    },
+    {
+      "label": "Targets",
+      "value": "GPS/GLONASS, satellite phones (Inmarsat/Iridium), GSM base stations"
+    },
+    {
+      "label": "Platform",
+      "value": "Truck-mounted (Ural/KamAZ), two-vehicle set"
+    }
   ],
-
   "short_role": "Truck-mounted jamming station targeting satellite navigation, satellite phones and cellular networks over a wide radius.",
   "characteristics": [
     "Two-element system: a reconnaissance/operator vehicle plus a trailer-mounted jamming array",
@@ -33,15 +43,32 @@
   ],
   "employment_notes": "Positioned to deny navigation and satellite comms over a wide area rather than protect one specific unit — its value is denying GPS-guided munitions and satellite-linked drones their positioning and control links across a broad radius, at the cost of being a large, valuable, and therefore high-priority target once its emissions are triangulated.",
   "contrast_vs_traditional": "This is the mechanism behind the doctrine finding that EW is the invisible battlefield everything else depends on: a single system like this can degrade GPS-guided precision munitions and satellite-linked drone control over a wide radius, meaning a fight that looks like it's about tanks and artillery is often actually being won or lost in a frequency band nobody on the ground can see.",
-
   "connections": [
-    { "target_id": "side_b-logistics-hub-op-near", "type": "maintenance", "description": "Field maintenance for the truck-mounted jamming station." }
+    {
+      "target_id": "side_b-logistics-hub-op-near",
+      "type": "maintenance",
+      "description": "Field maintenance for the truck-mounted jamming station."
+    }
   ],
-
   "sources": [
-    { "label": "Wikipedia — R-330Zh Zhitel", "url": "https://en.wikipedia.org/wiki/R-330Zh_Zhitel" },
-    { "label": "Army Recognition — R-330Zh Zhitel jamming station, Russia", "url": "https://www.armyrecognition.com/military-products/army/electronic-warfare/r-330zh-jamming-station-russia-uik" },
-    { "label": "Kyiv Post — Analysis: Russia's Electronic Warfare Equipment", "url": "https://www.kyivpost.com/analysis/32435" }
+    {
+      "label": "Wikipedia — R-330Zh Zhitel",
+      "url": "https://en.wikipedia.org/wiki/R-330Zh_Zhitel"
+    },
+    {
+      "label": "Army Recognition — R-330Zh Zhitel jamming station, Russia",
+      "url": "https://www.armyrecognition.com/military-products/army/electronic-warfare/r-330zh-jamming-station-russia-uik"
+    },
+    {
+      "label": "Kyiv Post — Analysis: Russia's Electronic Warfare Equipment",
+      "url": "https://www.kyivpost.com/analysis/32435"
+    }
   ],
-  "editable": true
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 3,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
 }

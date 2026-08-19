@@ -21,13 +21,17 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import type { DistanceBand } from "../types";
-
-const BANDS_KEY = "warfare-twin:bands:v1";
-const ASSET_OVERRIDES_KEY = "warfare-twin:asset-overrides:v1";
+import {
+  activeAdapter,
+  downloadStore,
+  parseStore,
+  type StoreShape,
+} from "./persistence";
 
 /** A user-supplied picture or clip attached to an asset from the detail
  *  panel. Images are re-encoded to a size-capped data URL and persist like
@@ -62,24 +66,6 @@ export interface AssetOverride {
   customMedia?: CustomMedia[];
 }
 
-function readJSON<T>(key: string): T | null {
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeJSON(key: string, value: unknown) {
-  try {
-    window.localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    // Private browsing / quota — edits still work for this session, just
-    // won't survive a reload. Not worth surfacing as an app-level error.
-  }
-}
-
 let bandIdSeq = 0;
 function newBandId() {
   bandIdSeq += 1;
@@ -94,6 +80,16 @@ export interface OverridesState {
   addBand: () => void;
   removeBand: (id: string) => void;
   resetBands: () => void;
+
+  /** Where edits are being persisted, and whether that reaches other people.
+   *  Surfaced in the UI rather than assumed — "saved" meaning two different
+   *  things depending on build config is exactly the kind of thing that
+   *  should never be implicit. */
+  storageLabel: string;
+  storageIsShared: boolean;
+  syncState: "idle" | "loading" | "saving" | "error";
+  exportEdits: () => void;
+  importEdits: (file: File) => Promise<void>;
 
   assetOverrides: Record<string, AssetOverride>;
   setAssetOverride: (id: string, patch: AssetOverride) => void;
@@ -116,19 +112,55 @@ export function OverridesProvider({
   defaultBands: DistanceBand[];
   children: ReactNode;
 }) {
-  const [bands, setBands] = useState<DistanceBand[] | null>(() => readJSON<DistanceBand[]>(BANDS_KEY));
-  const [assetOverrides, setAssetOverrides] = useState<Record<string, AssetOverride>>(
-    () => readJSON<Record<string, AssetOverride>>(ASSET_OVERRIDES_KEY) ?? {},
-  );
+  const [bands, setBands] = useState<DistanceBand[] | null>(null);
+  const [assetOverrides, setAssetOverrides] = useState<Record<string, AssetOverride>>({});
+  const [syncState, setSyncState] = useState<"idle" | "loading" | "saving" | "error">("loading");
+  // Nothing is written back until the initial load has landed, or an empty
+  // first render would immediately overwrite a populated remote store.
+  const hydrated = useRef(false);
 
   useEffect(() => {
-    if (bands) writeJSON(BANDS_KEY, bands);
-    else window.localStorage.removeItem(BANDS_KEY);
-  }, [bands]);
+    let cancelled = false;
+    activeAdapter
+      .load()
+      .then((data) => {
+        if (cancelled || !data) return;
+        setBands(data.bands ?? null);
+        setAssetOverrides(data.assetOverrides ?? {});
+      })
+      .catch(() => setSyncState("error"))
+      .finally(() => {
+        if (cancelled) return;
+        hydrated.current = true;
+        setSyncState((s) => (s === "error" ? s : "idle"));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
+  // Debounced so dragging a band slider is one write, not forty.
   useEffect(() => {
-    writeJSON(ASSET_OVERRIDES_KEY, assetOverrides);
-  }, [assetOverrides]);
+    if (!hydrated.current) return;
+    setSyncState("saving");
+    const t = window.setTimeout(() => {
+      void activeAdapter
+        .save({ version: 1, updated_at: new Date().toISOString(), bands, assetOverrides })
+        .then(() => setSyncState("idle"))
+        .catch(() => setSyncState("error"));
+    }, 400);
+    return () => window.clearTimeout(t);
+  }, [bands, assetOverrides]);
+
+  const exportEdits = useCallback(() => {
+    downloadStore({ version: 1, updated_at: new Date().toISOString(), bands, assetOverrides });
+  }, [bands, assetOverrides]);
+
+  const importEdits = useCallback(async (file: File) => {
+    const parsed: StoreShape = parseStore(await file.text());
+    setBands(parsed.bands);
+    setAssetOverrides(parsed.assetOverrides);
+  }, []);
 
   const ensureCustom = useCallback(
     (mutate: (draft: DistanceBand[]) => DistanceBand[]) => {
@@ -224,6 +256,11 @@ export function OverridesProvider({
       addBand,
       removeBand,
       resetBands,
+      storageLabel: activeAdapter.label,
+      storageIsShared: activeAdapter.shared,
+      syncState,
+      exportEdits,
+      importEdits,
       assetOverrides,
       setAssetOverride,
       resetAssetOverride,
@@ -239,6 +276,9 @@ export function OverridesProvider({
       addBand,
       removeBand,
       resetBands,
+      syncState,
+      exportEdits,
+      importEdits,
       assetOverrides,
       setAssetOverride,
       resetAssetOverride,

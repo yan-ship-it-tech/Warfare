@@ -312,7 +312,34 @@ function AssetDetail({
       <MediaSection asset={asset} accent={accent} />
 
       <section className="detail__section">
-        <h3>Sources</h3>
+        <h3>
+          Sources
+          {asset.verification && (
+            <span
+              className={`tag tag--${
+                asset.verification.status === "verified"
+                  ? "ok"
+                  : asset.verification.status === "sourced_low_confidence"
+                    ? "info"
+                    : "warn"
+              }`}
+              title={`Audited ${asset.verification.last_audit} — ${asset.verification.independent_sources} independent named source(s). See docs/CONTENT_PIPELINE.md.`}
+            >
+              {asset.verification.status === "verified"
+                ? `verified · ${asset.verification.independent_sources} sources`
+                : asset.verification.status === "sourced_low_confidence"
+                  ? "1 source only"
+                  : "unverified"}
+            </span>
+          )}
+        </h3>
+        {asset.verification && asset.verification.notes.length > 0 && (
+          <ul className="verify-notes">
+            {asset.verification.notes.map((n, i) => (
+              <li key={i}>{n}</li>
+            ))}
+          </ul>
+        )}
         {citable.length > 0 ? (
           <ul className="sources">
             {citable.map((s) => (

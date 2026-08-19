@@ -80,5 +80,13 @@
       "url": "https://commons.wikimedia.org/wiki/File:1_multiple_rocket_launcher_BM-21_Grad.JPG"
     }
   ],
-  "editable": true
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Specs meet the bar but the unit cost is an estimate — cost is not verified."
+    ]
+  }
 }

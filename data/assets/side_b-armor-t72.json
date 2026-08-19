@@ -79,7 +79,23 @@
     {
       "label": "Wikimedia Commons — T-72 tank",
       "url": "https://commons.wikimedia.org/wiki/File:Tank_T-72.JPG"
+    },
+    {
+      "label": "Army Technology — T-72B3M Main Battle Tank (armament, fire control, protection)",
+      "url": "https://www.army-technology.com/projects/t-72b3m-main-battle-tank/"
+    },
+    {
+      "label": "Weaponsystems.net — T-72B3 (125mm 2A46M-5, Kontakt-5/Relikt ERA, 46 t combat weight)",
+      "url": "https://weaponsystems.net/system/1410-T-72B3"
     }
   ],
-  "editable": true
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 3,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Specs meet the bar but the unit cost is an estimate — cost is not verified."
+    ]
+  }
 }

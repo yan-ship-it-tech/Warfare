@@ -74,6 +74,28 @@ export interface LowerSkyControl {
   without_control: { closest_deploy_km: number; note: string };
 }
 
+/**
+ * One entry on the Key Lessons page. Seeded from docs/doctrine.md rather than
+ * written independently — `doctrine_ref` and `source_tag` point back at the
+ * section and sourcing key the claim came from, so a lesson stays traceable
+ * the same way an asset's `sources` array does.
+ *
+ * `asset_ids` is what makes a lesson demonstrable rather than merely stated:
+ * they are the worked example on the map, and selecting the lesson frames
+ * exactly those assets in the 3D view.
+ */
+export interface Lesson {
+  id: string;
+  order: number;
+  title: string;
+  summary: string;
+  detail: string;
+  doctrine_ref: string;
+  source_tag: string;
+  asset_ids: string[];
+  connection_types: string[];
+}
+
 export interface GroupDef {
   id: AssetGroup;
   label: string;
@@ -92,6 +114,7 @@ export interface WorldModel {
   stubs: PendingStub[];
   stubsById: Map<string, PendingStub>;
   connections: ResolvedConnection[];
+  lessons: Lesson[];
   doctrineMarkers: DoctrineMarker[];
   lowerSky: LowerSkyControl | null;
   issues: DataIssue[];

@@ -578,3 +578,205 @@ resets stay independent (docs/BACKLOG.md #7's ask, now partly done):
   card with a consistent header) directly answering "looks disorganized" —
   the earlier layout was a flat run of paragraphs with uneven gaps wherever
   an asset happened to be missing an optional field.
+
+---
+
+# Pass 6 — WebGL rendering, hero models, content pipeline, lessons, persistence
+
+Six-part brief. Working through it surfaced three places where the framing
+collided with something learned building Passes 1, 4 and 5 — those are called
+out inline rather than quietly worked around.
+
+## 1. Rendering: this redirects Pass 1's call, and does not touch Pass 5's
+
+Two earlier decisions are in scope here and they deserve different treatment.
+
+**Pass 5's finding stands, unmodified.** Real/satellite geography cannot put a
+0–5 km FPV envelope and a 500 km deep-strike target on one legible axis. That
+was correct and it is still correct. The non-linear per-band screen allocation
+in `src/scene/projection.ts` is untouched by this pass — `src/three/worldMapping.ts`
+consumes `Projection.xFor()` and converts px to world units, and does not
+recompute distance in any form. The 3D view and the schematic view therefore
+cannot disagree about where anything is, by construction rather than by
+discipline.
+
+**Pass 1's "layered DOM, not WebGL" is redirected, not reversed.** That
+decision was correct for the question it asked and wrong to keep applying to
+the question now being asked. The benchmark measured *2D sprite throughput* —
+N quads moving every frame — and found DOM and WebGL tied at the workload this
+tool sees, so the tie-break went to text crispness, hit-testing, focus order
+and aria semantics. All of that reasoning survives. What changed is the
+requirement: a perspective camera over displaced terrain with per-asset
+geometry and distance fog is not a faster way to draw sprites, it is a
+category DOM cannot express at all. There was no benchmark result to overturn
+because there was no benchmark for this.
+
+So the resolution is a **hybrid, and the hybrid is the point rather than a
+compromise**: WebGL draws the ground, the models, the fog and the camera; every
+label and hit target stays a real DOM `<button>` positioned by projecting its
+world anchor to screen each frame. That keeps all four things Pass 1 chose DOM
+for. `#bench` is left in place — its numbers are still the honest answer to the
+2D question, and deleting it would erase the reasoning.
+
+**Both views are kept.** Pass 5 removed a view outright and the immediate
+feedback was "I can't see the map anymore." Not repeating that: 3D terrain
+leads, Schematic is one toolbar click away, and it keeps the things the 3D view
+genuinely does not have — the distance ruler, the band editor's live feedback,
+and the dependency-line overlay.
+
+### The synthetic terrain
+`src/three/terrain3d.ts` generates a deterministic value-noise heightfield:
+rolling steppe relief, a shallow draw across the strip, and a churned scar
+concentrated on the zero line whose crater density falls off either side. That
+scar is doing explanatory work, not decoration — it is the visual answer to
+"why is everything pushed back from the line." Amplitude is deliberately low.
+Inventing mountains to make a 3D view look dramatic would be the same
+dishonesty the Pass 4 terrain-exaggeration note called out.
+
+Scope is a representative strip, per the brief: a few km wide on Z, the full
+rear-to-rear depth on X. Depth cues are `THREE.Fog` (150–640 world units)
+plus the low sun angle and flat shading.
+
+### The axis mapping, and what Z is for
+- **X** — band-compressed distance, straight from `Projection.xFor()`.
+- **Y** — altitude. This is the thing the 2D view could never express: air and
+  space sit genuinely above the ground plane rather than in a lane below it.
+- **Z** — lateral position across the strip. Ground-level domains (land,
+  logistics, medical, C2) share Y = 0 and separate on Z, because stacking
+  logistics *above* land would assert a height difference that isn't real. Z
+  carries no distance claim and says so in the file.
+
+## 2. Hero models are authored, not sourced — and that was forced, then preferred
+
+Eleven assets across both sides get real geometry (two MBTs, HIMARS, M777,
+BM-21, Patriot, two short-range AD, a loitering munition, two recon UAVs).
+Everything else stays a marker.
+
+**Licensing, as asked — checked rather than assumed.** The brief said to check
+and document licensing on anything sourced. Doing that honestly ruled sourcing
+out: this environment cannot fetch binary files (the egress proxy denies them,
+established in Passes 3–4 and unchanged), so any third-party `.glb` would be a
+URL referenced sight-unseen under a licence I could not open and read. That is
+precisely the "assumed-clear" case the brief warned against. Procedural
+geometry removes the question — the licence is the repo's own, and what shipped
+is verifiably what is in `src/three/models.ts`. It also lands the aesthetic the
+brief asked for directly: deliberately stylized low-poly *is* primitives.
+
+Models are cached per builder and cloned, so eleven hero assets cost seven
+geometry builds. Scale is deliberately oversized relative to true scale — a
+to-scale tank on this compressed axis would be sub-pixel; same convention as an
+icon on a map.
+
+## 3. Content pipeline — and an integrity catch it immediately paid for
+
+Full process in `docs/CONTENT_PIPELINE.md`. Draft a whole category in one
+sitting; verify the same batch in a separate, later sitting; `verified` needs
+two **independent** named sources, one source is `sourced_low_confidence`,
+general knowledge stays `unverified`.
+
+The `verification` block on each asset is **derived, never authored** —
+`node scripts/audit-content.mjs --write` computes it from `sources`. A
+hand-written confidence field drifts from the citations underneath it, and a
+stale "verified" stamp is worse than none.
+
+"Independent" is where this is stricter than a link count, and it caught a real
+problem on the first run: **Wikimedia Commons links are excluded entirely.**
+Pass 4 added those as photo credits. Counting an image credit as evidence for a
+range or a unit price would have promoted assets to "verified" on the strength
+of a photograph — and it had already done so silently: **T-72 appeared to have
+two independent sources and actually had one plus a photo credit.** It has since
+been genuinely verified (Army Technology, Weaponsystems.net) and is now
+`verified` on the real bar. Wikipedia counts but is tracked separately, so an
+asset resting only on tertiary references is reported rather than passing
+quietly. Cost is audited separately from specs, because in a procurement
+conversation the price is the figure most likely to be challenged.
+
+Retroactive audit of all 27 shipped assets: **19 verified, 1 low-confidence,
+7 unverified.** The 7 are the composite nodes (logistics hubs, casevac chains,
+the two representative power-plant nodes, Strelets) — legitimate for a node
+standing in for a class of thing rather than a specific system, but flagged in
+the panel rather than passing silently. Six otherwise-verified assets carry
+estimated costs and now say so.
+
+## 4. Key Lessons — seeded from doctrine.md, and pointed at the map
+
+`data/lessons.json`, ten lessons, each carrying the `doctrine_ref` section and
+`source_tag` it came from, so a lesson is exactly as traceable as an asset.
+Nothing was written fresh; this is `docs/doctrine.md`'s existing sourced
+findings restructured.
+
+The part that matters is that a lesson is a **pointer at the map, not a
+paragraph**. Each names real `asset_ids`; "Show on map" switches to the 3D
+view, eases the camera to frame that set, and dims everything else. Verified
+end-to-end: the lower-sky lesson frames its 6 assets and dims the other 23.
+Adding a lesson is adding a JSON entry — same contract as assets.
+
+## 5. Persistence — where the brief's framing hits a wall, and what shipped
+
+**The conflict, stated plainly.** The brief asked for a hosted JSON store,
+lowest-friction, over-engineering discouraged. This app is a static site on
+GitHub Pages: there is no server of ours in the request path, so any
+credential such a store needs would ship *inside the client bundle* — readable
+in devtools and committed to a public repo. A write-capable key published that
+way is not a shortcut; it is an invitation to wipe the shared state. Shipping
+that quietly and calling it "persistence" would have been the wrong call, so
+this pass built the seam and the safe path instead of hardcoding a key.
+
+What shipped in `src/state/persistence.ts`:
+- **The adapter seam.** `overridesState` is now storage-agnostic. This is what
+  backlog #11 actually asked for — going remote is a config change, not a
+  refactor.
+- **A real REST adapter**, configured from `VITE_SYNC_URL` / `VITE_SYNC_TOKEN`
+  at build time rather than a literal in source. Contract is two calls
+  (`GET`/`PUT` one JSON document), small enough for a ~20-line worker. It
+  saves locally *first* and treats the remote write as a bonus, so a network
+  failure degrades to the old behaviour instead of losing an edit.
+- **Export / import**, which is the genuinely zero-backend way to move a
+  working set between devices today, with no key to leak.
+- **An honest storage badge in the toolbar.** "Saved" means two different
+  things depending on build config, and a demo where one person's edits
+  silently fail to reach anyone else is exactly what that label prevents.
+
+Hydration guards against a real bug: state does not write back until the
+initial load lands, or an empty first render would immediately overwrite a
+populated remote store.
+
+**Still open, and it needs a decision, not code:** whose endpoint. A Cloudflare
+Worker with a KV namespace fronting `VITE_SYNC_URL` is ~20 lines and free at
+this scale; that is the recommendation. It needs an account, so it is yours to
+create, not mine to invent.
+
+## 6. Performance — done alongside, not after
+
+- **Instancing** for scatter props — trees, craters, scrub are one
+  `InstancedMesh` each: three draw calls for ~1,900 objects. This is where
+  instancing genuinely earns its place; the eleven hero models are unique
+  objects and would gain nothing from it.
+- **LOD** on every hero model: full geometry near, a box proxy from 165 units,
+  nothing from 420.
+- **Device-aware prop budget** — halved on ≤4 cores or narrow viewports,
+  rather than one fixed number that is either wasteful on a laptop or
+  unusable on a phone.
+- **Lazy loading**: three.js and the whole 3D module are a `React.lazy` import.
+  Measured — main bundle 400 kB, `Scene3D` chunk 561 kB loaded only on demand.
+  A device that falls back to Schematic never downloads a 3D engine it will
+  not run.
+- **Label decluttering**, added after the first render showed the tactical band
+  collapsing into an unreadable stack of overlapping labels. Nearest-first
+  screen-space collision test; losers collapse to a dot that expands on hover
+  or focus rather than being removed, so they stay hoverable, tabbable and
+  screen-reader reachable — otherwise the declutter would have given away the
+  accessibility argument this hybrid exists to keep.
+
+## Where the brief and prior passes disagreed
+
+1. **"Move from 2.5D to 3D"** read as replace. Kept both instead — Pass 5's
+   removal of a view produced immediate "I can't see the map anymore" feedback,
+   and the schematic view still owns the ruler, the band editor and the
+   dependency overlay.
+2. **"Check and document licensing on anything sourced"** turned out to rule
+   out sourcing altogether here, because the binary-fetch block means any
+   licence would be assumed rather than read. Authored geometry instead.
+3. **"Even a simple hosted JSON store"** is not safely reachable from a static
+   public-repo deployment without publishing a write key. Built the seam, the
+   REST adapter, export/import, and a recommendation — not a committed secret.

@@ -4,6 +4,7 @@ import { CONNECTION_STYLE, SIDE_ACCENT, SIDE_LABELS } from "../config/ui";
 import { ALL_CONNECTION_TYPES, useViewState } from "../state/viewState";
 import { useOverrides } from "../state/overridesState";
 import { CategoryFilterMenu } from "./CategoryFilterMenu";
+import { SyncControls } from "./SyncControls";
 
 export function Toolbar({ world }: { world: WorldModel }) {
   const view = useViewState();
@@ -22,6 +23,26 @@ export function Toolbar({ world }: { world: WorldModel }) {
           <h1>Multi-Domain Battlefield</h1>
           <p>Digital twin — illustrative teaching model</p>
         </div>
+      </div>
+
+      <div className="toolbar__group" role="group" aria-label="View">
+        <span className="toolbar__legend">View</span>
+        <button
+          type="button"
+          className={`chip${view.renderMode === "terrain3d" ? " is-on" : ""}`}
+          onClick={() => view.setRenderMode("terrain3d")}
+          title="3D terrain — synthetic stylized cross-section, orbitable camera"
+        >
+          3D terrain
+        </button>
+        <button
+          type="button"
+          className={`chip${view.renderMode === "schematic" ? " is-on" : ""}`}
+          onClick={() => view.setRenderMode("schematic")}
+          title="Schematic cross-section — the flat teaching view with the distance ruler and dependency overlay"
+        >
+          Schematic
+        </button>
       </div>
 
       <div className="toolbar__group" role="group" aria-label="Sides">
@@ -116,6 +137,8 @@ export function Toolbar({ world }: { world: WorldModel }) {
         })}
       </div>
 
+      <SyncControls />
+
       <div className="toolbar__spacer" />
 
       <div className="toolbar__group">
@@ -128,6 +151,15 @@ export function Toolbar({ world }: { world: WorldModel }) {
           <em className="chip__count">
             {errors ? `${errors}!` : warnings ? warnings : world.issues.length}
           </em>
+        </button>
+        <button
+          type="button"
+          className={`chip chip--panel${view.openPanel === "lessons" ? " is-on" : ""}`}
+          onClick={() => view.setOpenPanel(view.openPanel === "lessons" ? null : "lessons")}
+          title="Key lessons from the doctrine reference, each linked to the assets that demonstrate it"
+        >
+          Key lessons
+          <em className="chip__count">{world.lessons.length}</em>
         </button>
         <button
           type="button"

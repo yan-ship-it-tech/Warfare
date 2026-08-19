@@ -6,24 +6,34 @@
   "echelon": "tactical",
   "group": "medical",
   "distance_km_from_zero": 2,
-  "operating_range_km": { "min_km": 0, "max_km": 5 },
+  "operating_range_km": {
+    "min_km": 0,
+    "max_km": 5
+  },
   "band_id": "tactical",
   "category": "medical-casevac",
   "representative_system": "Point-of-injury care + forward Casualty Collection Point (CCP) — the first link in the evacuation chain",
   "icon_image": "/icons/casevac-ccp.png",
   "gallery_images": [],
-
   "cost": {
     "unit_cost_usd": null,
     "display": "Personnel- and process-driven, not a procured unit — cost sits in training, medevac vehicles/drones and blood-product logistics rather than a single price",
     "confidence": "unknown"
   },
   "key_facts": [
-    { "label": "First link in", "value": "POI → CCP → stabilization → definitive care chain" },
-    { "label": "Increasing use of", "value": "Ground-robot and drone casevac for the last, most exposed leg" },
-    { "label": "Golden hour", "value": "Drone/artillery density near the line makes even a short move high-risk" }
+    {
+      "label": "First link in",
+      "value": "POI → CCP → stabilization → definitive care chain"
+    },
+    {
+      "label": "Increasing use of",
+      "value": "Ground-robot and drone casevac for the last, most exposed leg"
+    },
+    {
+      "label": "Golden hour",
+      "value": "Drone/artillery density near the line makes even a short move high-risk"
+    }
   ],
-
   "short_role": "The first link in the evacuation chain — point-of-injury first aid and a forward collection point before movement toward stabilization care.",
   "characteristics": [
     "Combat medic/buddy first aid at point of injury, then movement to a covered/concealed CCP",
@@ -32,11 +42,20 @@
   ],
   "employment_notes": "The riskiest leg of the whole medical chain is the shortest one — moving a casualty from point of injury to the CCP within a zone under constant drone observation. That risk is exactly why ground-robot and drone casevac has grown: an unmanned platform can make that short exposed run without risking a second casualty.",
   "contrast_vs_traditional": "Traditional casevac assumed the most dangerous exposure was the vehicle move to the rear; here, the first few hundred meters under a persistent drone's view can be the most dangerous leg of the entire chain, which is why that specific segment is where ground robots and small drones have been adopted fastest rather than at the rear of the chain.",
-
   "connections": [],
-
   "sources": [
-    { "label": "Master prompt category reference — medical/casevac chain, point of injury through definitive care (general pattern, not asset-specific sourcing)", "url": "" }
+    {
+      "label": "Master prompt category reference — medical/casevac chain, point of injury through definitive care (general pattern, not asset-specific sourcing)",
+      "url": ""
+    }
   ],
-  "editable": true
+  "editable": true,
+  "verification": {
+    "status": "unverified",
+    "independent_sources": 0,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Written from doctrine.md and general knowledge; no per-asset citation yet."
+    ]
+  }
 }

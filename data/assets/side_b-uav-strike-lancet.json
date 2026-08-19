@@ -86,5 +86,11 @@
       "url": "https://commons.wikimedia.org/wiki/File:ZALA_Lancet_at_IDEX_2025.jpg"
     }
   ],
-  "editable": true
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 3,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
 }

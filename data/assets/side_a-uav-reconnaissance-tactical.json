@@ -7,24 +7,36 @@
   "group": "uav",
   "comparison_group": "reconnaissance_uav",
   "distance_km_from_zero": 4,
-  "operating_range_km": { "min_km": 1, "max_km": 5 },
+  "operating_range_km": {
+    "min_km": 1,
+    "max_km": 5
+  },
   "band_id": "tactical",
   "category": "uav-reconnaissance",
   "representative_system": "DeViRo Leleka-100",
   "icon_image": "/icons/leleka-100.png",
-  "gallery_images": ["/gallery/leleka-100-launch.jpg"],
-
+  "gallery_images": [
+    "/gallery/leleka-100-launch.jpg"
+  ],
   "cost": {
     "unit_cost_usd": 240000,
     "display": "~$240K per airframe (a two-drone + ground-station complex runs ~$480K)",
     "confidence": "reported"
   },
   "key_facts": [
-    { "label": "Endurance", "value": "~2.5 hours" },
-    { "label": "Operating range", "value": "~100 km; ~45 km video/radio link" },
-    { "label": "Payload", "value": "Day/night gimbal camera, real-time geolocation" }
+    {
+      "label": "Endurance",
+      "value": "~2.5 hours"
+    },
+    {
+      "label": "Operating range",
+      "value": "~100 km; ~45 km video/radio link"
+    },
+    {
+      "label": "Payload",
+      "value": "Day/night gimbal camera, real-time geolocation"
+    }
   ],
-
   "short_role": "Catapult-launched fixed-wing ISR drone that finds and confirms targets for artillery and strike drones close to the line.",
   "characteristics": [
     "Kevlar/carbon-fiber composite airframe, 5.5 kg MTOW",
@@ -34,20 +46,36 @@
   ],
   "employment_notes": "Operates as the 'second line' of close reconnaissance — activated within seconds of a detection to confirm and refine a target before handing off coordinates to a howitzer or a strike drone. Crews displace frequently: a drone's return flight path and landing point are exactly what an enemy team watches for, so the same pattern-of-life discipline that finds enemy positions applies to this crew too.",
   "contrast_vs_traditional": "Traditional reconnaissance meant scouts or a manned aircraft reporting up a chain that took hours to act on. A tactical recon drone like this closes that to single-digit minutes when paired directly with a firing asset, and it operates inside the close-reconnaissance band — roughly 1–5 km — that gets activated almost as soon as something is detected. The tradeoff: the crew is now huntable by the exact same 'follow it home' pattern-of-life method it uses against the other side.",
-
   "reactive_behavior": {
     "animation_id": "recon_uav_orbit",
     "description": "On select: drone launches, orbits a point, streams a target marker back to the ground station."
   },
-
   "connections": [
-    { "target_id": "side_a-c2-comms-starlink", "type": "data_c2", "description": "Relays video/telemetry over satellite comms when terrestrial links are jammed or unavailable." }
+    {
+      "target_id": "side_a-c2-comms-starlink",
+      "type": "data_c2",
+      "description": "Relays video/telemetry over satellite comms when terrestrial links are jammed or unavailable."
+    }
   ],
-
   "sources": [
-    { "label": "Wikipedia — DeViRo Leleka-100", "url": "https://en.wikipedia.org/wiki/Leleka-100" },
-    { "label": "Army Technology — Leleka-100 UAV, Ukraine", "url": "https://www.army-technology.com/projects/leleka-100-unmanned-aerial-vehicle-uav-ukraine/" },
-    { "label": "Gagadget — Come Back Alive Foundation Leleka-100 purchase cost", "url": "https://gagadget.com/en/146687-the-first-ukrainian-leleka-100-drones-purchased-by-the-come-back-alive-foundation-for-1200000-are-already-in-the-sky/" }
+    {
+      "label": "Wikipedia — DeViRo Leleka-100",
+      "url": "https://en.wikipedia.org/wiki/Leleka-100"
+    },
+    {
+      "label": "Army Technology — Leleka-100 UAV, Ukraine",
+      "url": "https://www.army-technology.com/projects/leleka-100-unmanned-aerial-vehicle-uav-ukraine/"
+    },
+    {
+      "label": "Gagadget — Come Back Alive Foundation Leleka-100 purchase cost",
+      "url": "https://gagadget.com/en/146687-the-first-ukrainian-leleka-100-drones-purchased-by-the-come-back-alive-foundation-for-1200000-are-already-in-the-sky/"
+    }
   ],
-  "editable": true
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 3,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
 }

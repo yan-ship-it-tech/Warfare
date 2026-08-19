@@ -125,5 +125,21 @@ export interface Asset {
 
   sources: { label: string; url: string }[];
 
+  /** Stamped by `node scripts/audit-content.mjs --write` — the verification
+   *  half of the two-pass content pipeline (docs/CONTENT_PIPELINE.md).
+   *  Never hand-edited: it is derived from `sources` so it cannot drift into
+   *  claiming a confidence the citations do not support.
+   *
+   *  verified                ≥2 independent named sources (distinct outlets;
+   *                          image-credit links are excluded from the count)
+   *  sourced_low_confidence   exactly 1 named source
+   *  unverified               general knowledge / doctrine.md only */
+  verification?: {
+    status: "verified" | "sourced_low_confidence" | "unverified";
+    independent_sources: number;
+    last_audit: string;
+    notes: string[];
+  };
+
   editable: true;                        // scaffold marker — all assets are user-editable
 }

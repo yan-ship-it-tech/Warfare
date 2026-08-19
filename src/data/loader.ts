@@ -18,6 +18,7 @@ import type {
   PendingStub,
   ResolvedConnection,
   WorldModel,
+  Lesson,
 } from "./model";
 import { validateAsset } from "./validate";
 import type { AssetOverride } from "../state/overridesState";
@@ -27,6 +28,7 @@ import domainsJson from "../../data/domains.json";
 import groupsJson from "../../data/groups.json";
 import connectionsJson from "../../data/connections.json";
 import doctrineJson from "../../data/doctrine_markers.json";
+import lessonsJson from "../../data/lessons.json";
 
 const assetModules = import.meta.glob<{ default: unknown }>("../../data/assets/*.json", {
   eager: true,
@@ -340,6 +342,9 @@ export function loadWorld(
     stubs: [...stubsById.values()],
     stubsById,
     connections,
+    lessons: [...((lessonsJson as { lessons?: Lesson[] }).lessons ?? [])].sort(
+      (a, b) => a.order - b.order,
+    ),
     doctrineMarkers: doctrine.markers ?? [],
     lowerSky: doctrine.lower_sky_control ?? null,
     issues,

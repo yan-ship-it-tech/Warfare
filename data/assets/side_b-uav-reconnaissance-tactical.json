@@ -68,5 +68,13 @@
       "url": "https://commons.wikimedia.org/wiki/File:UAV_Orlan-10.JPG"
     }
   ],
-  "editable": true
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-19",
+    "notes": [
+      "Specs meet the bar but the unit cost is an estimate — cost is not verified."
+    ]
+  }
 }

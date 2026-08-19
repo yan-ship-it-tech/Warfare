@@ -21,10 +21,14 @@ export function AboutPanel({ world }: { world: WorldModel }) {
         <h3>Reading the view</h3>
         <p>
           The zero line runs down the middle. {SIDE_LABELS.side_a.short}'s rear recedes to the left,
-          {" "}{SIDE_LABELS.side_b.short}'s to the right; scrolling straight through the middle takes you
-          from one side's deep rear to the other's. Vertical position is the domain layer, not
-          altitude — the stack steps sideways as it goes down so the layers read as a cut through the
-          battlefield rather than a flat chart.
+          {" "}{SIDE_LABELS.side_b.short}'s to the right; moving straight through the middle takes you
+          from one side's deep rear to the other's. In the <b>3D view</b>, height is genuine altitude —
+          air and space assets sit above the ground plane on a tether down to their true position,
+          while ground-level domains (land, logistics, medical, C2) share the surface and separate
+          sideways across the strip instead, because stacking logistics <em>above</em> land would
+          assert a height difference that isn't real. In the <b>Schematic view</b>, vertical position
+          is the domain layer rather than altitude, and the stack steps sideways as it descends so the
+          layers read as a cut through the battlefield.
         </p>
         <p>
           Distance bands do not share a linear scale. Nothing legible can put 0–5 km and 150 km+ on
@@ -81,19 +85,51 @@ export function AboutPanel({ world }: { world: WorldModel }) {
           unverified rather than presented as fact. Data health lists every one of those flags.
         </p>
 
+        <h3>Key lessons</h3>
+        <p>
+          The "Key lessons" button opens ten lessons drawn from the same sourced doctrine reference
+          every asset's "what changed vs. traditional warfare" field is written against. Each names
+          the doctrine section and source tag behind it, and — the part that matters — points at the
+          assets on this map that demonstrate it. "Show on map" flies the camera to that set and dims
+          everything else, so a claim gets shown on the same objects the rest of the tool is built
+          from rather than asserted alongside them.
+        </p>
+
+        <h3>How confident is each asset?</h3>
+        <p>
+          Every asset now carries a verification status next to its Sources, derived from its
+          citations rather than hand-written: <b>verified</b> means two or more independent named
+          sources, <b>1 source only</b> means exactly one, <b>unverified</b> means it was written
+          from the doctrine reference and general knowledge. Independence is enforced strictly —
+          multiple links to one outlet count once, and image credits are excluded entirely, because
+          a photograph evidences the photo and not the range or the price. Of the 27 assets: 19
+          verified, 1 single-source, 7 unverified (the composite nodes — logistics hubs, casevac
+          chains, the representative infrastructure nodes). Six otherwise-verified assets carry
+          estimated rather than confirmed costs and say so.
+        </p>
+
         <h3>Why this isn't a real map</h3>
         <p>
-          A literal satellite-photo map was tried (Pass 4) and reverted (Pass 5) — real geography
-          fights the non-linear distance-band compression this tool depends on (0–5 km and 500+ km
-          cannot share one real-world scale and still be legible), and it read as a battle-management
-          system rather than a teaching tool. The battlefield here is deliberately illustrated instead:
-          a topographic-style ground texture (procedurally generated — contour lines, directional
-          shading, no photography), each domain lane stepping back and dimming slightly as it goes
-          down for a 2.5D cross-section read, and air/space assets floating above their true position
-          on a visible tether — all decorative, layered on top of coordinates that are otherwise exactly
-          what the ruler and the detail panel agree on. Zoom controls (bottom right) scale the whole
-          scene, icons and terrain together, as one unit. See docs/DECISIONS.md Pass 5 for the full
-          reasoning and what was tried first.
+          A literal satellite-photo map was tried and reverted: real geography cannot put a 0–5 km
+          FPV envelope and a 500 km deep-strike target on one legible axis, which is exactly what the
+          non-linear distance bands exist to solve, and a photoreal basemap read as a
+          battle-management system rather than a teaching tool. The 3D view is a genuine WebGL scene
+          — orbitable perspective camera, real elevation geometry, distance fog — over a
+          <em>synthetic</em> terrain strip: rolling steppe, a churned scar along the zero line, and
+          instanced treelines and craters, all generated, none of it anywhere in particular. Relief is
+          deliberately low, because the ground this depicts is open rolling steppe and inventing
+          mountains to make a 3D view look dramatic would be its own dishonesty. Distance along the
+          axis is band-compressed exactly as in the Schematic view — the 3D view reads the same
+          projection, so the two cannot disagree about where anything is. Scope is a representative
+          strip a few kilometres wide and the full rear-to-rear depth.
+        </p>
+        <p>
+          Eleven assets carry real low-poly 3D models, authored as geometry in this repository rather
+          than downloaded — which also settles the licensing question, since a third-party model
+          would have had to be trusted sight-unseen. Everything else is a marker; that split is a
+          scope line, tracked in docs/BACKLOG.md rather than left as a silent gap. The Schematic view
+          is one click away in the toolbar and still owns the distance ruler, the band editor and the
+          dependency-line overlay.
         </p>
 
         <h3>Equipment photography — sourced, not generated</h3>
@@ -124,8 +160,10 @@ export function AboutPanel({ world }: { world: WorldModel }) {
             — different sourcing problem from equipment stills; see docs/BACKLOG.md.</li>
           <li>The dependency-line overlay on the terrain background is fine at rest but doesn't yet
             route parallel edges apart on a dense hub — hover still isolates them (see BACKLOG #8).</li>
-          <li>A backend — every edit in this panel (text, media, placement, system-swap) persists to
-            this browser's local storage only, not shared across devices or people.</li>
+          <li>A shared backend. Storage is now pluggable and a REST adapter ships, but no endpoint is
+            configured — so edits still save to this browser only (the toolbar badge says which).
+            Use Export/Import to move a working set between devices meanwhile. The endpoint can't be
+            created from inside this app: a static site would have to publish its write key.</li>
           <li>Drag-to-reposition an asset directly from the map, rather than the numeric editor.</li>
           <li>Per-asset reactive vignettes beyond the four already wired up — everything else falls
             back to a neutral pulse.</li>

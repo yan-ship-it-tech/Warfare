@@ -89,5 +89,11 @@
       "url": "https://commons.wikimedia.org/wiki/File:Flakpanzer_Gepard_SPAAG.JPG"
     }
   ],
-  "editable": true
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 3,
+    "last_audit": "2026-08-19",
+    "notes": []
+  }
 }
