@@ -124,7 +124,9 @@ fetch-osm-data.mjs — pull rail/tree/road/river lines for an AOI
   --features=a,b      subset of: ${Object.keys(FEATURE_CLASSES).join(",")}  (default: all)
   --tolerance=<m>     Douglas-Peucker tolerance in metres (default: 5, 0 disables)
   --endpoint=<url>    force one Overpass endpoint instead of the mirror list
-  --raw=<file>        reduce a saved Overpass JSON response; no network at all
+  --raw=<file>        reduce a saved Overpass response; no network at all.
+                      Accepts either native Overpass JSON ({elements:[...]})
+                      or overpass-turbo's GeoJSON export ({type:"FeatureCollection"})
   --save-raw=<file>   also write the verbatim Overpass response here
   --out=<file>        output path (default: data/osm/<aoi>.json)
   --print-query       print the Overpass QL and exit
@@ -315,6 +317,62 @@ function classify(tags = {}) {
 
 const round = (n, dp) => Number(n.toFixed(dp));
 
+// ── input normalization ─────────────────────────────────────────────────
+// `--raw=` accepts two shapes: native Overpass JSON (`{elements:[...]}`,
+// geometry as `{lat,lon}` objects — what a live fetch or overpass-turbo's
+// "Export -> download as raw OSM data" produces) and GeoJSON
+// (`{type:"FeatureCollection", features:[...]}`, coordinates as `[lon,lat]`
+// pairs — what overpass-turbo's "Export -> GeoJSON" produces). The GeoJSON
+// route matters in practice: it's the one export format iOS Safari reliably
+// turns into a real downloadable/pasteable blob, which is the whole reason
+// this branch exists — see docs/OSM_HANDOFF.md.
+//
+// Only LineString/Polygon (and their Multi- forms) are handled, which is
+// everything a `way["k"="v"](bbox); out geom;` query can produce — a raw
+// node or relation has no business in this pipeline's output. Polygon rings
+// close on themselves (first point repeats as last), which is exactly the
+// `closed` signal `reduce()` already derives from the endpoints, so no
+// separate closed/open handling is needed here.
+function geojsonToElements(fc) {
+  const elements = [];
+  for (const feature of fc.features ?? []) {
+    const geom = feature.geometry;
+    if (!geom) continue;
+    const props = feature.properties ?? {};
+    const { "@id": idStr, ...tags } = props;
+    const idSource = idStr ?? feature.id ?? "";
+    const idMatch = /(\d+)/.exec(String(idSource));
+    if (!idMatch) continue;
+    const id = Number(idMatch[1]);
+
+    let rings;
+    if (geom.type === "LineString") rings = [geom.coordinates];
+    else if (geom.type === "Polygon") rings = [geom.coordinates[0]];
+    else if (geom.type === "MultiLineString") rings = geom.coordinates;
+    else if (geom.type === "MultiPolygon") rings = geom.coordinates.map((poly) => poly[0]);
+    else continue; // Point / GeometryCollection: not a way, not this pipeline's problem.
+
+    rings.forEach((ring, i) => {
+      elements.push({
+        type: "way",
+        // Multi- geometries would otherwise collide on one OSM id across
+        // multiple emitted ways; suffixed only when it actually happens.
+        id: rings.length > 1 ? Number(`${id}${i}`) : id,
+        tags,
+        geometry: ring.map(([lon, lat]) => ({ lat, lon })),
+      });
+    });
+  }
+  return elements;
+}
+
+function normalizeToElements(raw) {
+  if (raw && raw.type === "FeatureCollection") {
+    return { elements: geojsonToElements(raw), geojson_timestamp: raw.timestamp ?? null };
+  }
+  return raw;
+}
+
 // ── reduce ───────────────────────────────────────────────────────────────
 function reduce(raw, { projector, toleranceKm, wantedTypes }) {
   const features = [];
@@ -387,12 +445,14 @@ let raw;
 let source;
 
 if (args.raw) {
-  raw = JSON.parse(readFileSync(String(args.raw), "utf8"));
+  const parsed = JSON.parse(readFileSync(String(args.raw), "utf8"));
+  const isGeojson = parsed?.type === "FeatureCollection";
+  raw = normalizeToElements(parsed);
   source = {
     api: "Overpass API",
-    endpoint: `(offline) ${args.raw}`,
+    endpoint: `(offline, ${isGeojson ? "GeoJSON export" : "Overpass JSON"} from ${aoi.name} query, user-supplied)`,
     query,
-    fetched_at: raw.osm3s?.timestamp_osm_base ?? null,
+    fetched_at: isGeojson ? raw.geojson_timestamp : (parsed.osm3s?.timestamp_osm_base ?? null),
   };
 } else {
   if (process.env.HTTPS_PROXY && !process.env.NODE_USE_ENV_PROXY) {

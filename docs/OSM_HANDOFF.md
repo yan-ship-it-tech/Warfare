@@ -6,6 +6,18 @@ any of the prior conversation.
 
 Branch: `claude/osm-rail-tree-pipeline-fmtc6z` · commit `2a2b093`
 
+> **Update (Pass 12):** `data/osm/pokrovsk.json` is now committed — everything
+> below describing it as missing is history, not current state. It got in via
+> a route this doc didn't originally cover: the user was on an iPhone, the
+> raw-OSM-data export wouldn't save from Safari, so they used overpass-turbo's
+> *GeoJSON* export instead (a real downloadable/pasteable blob) and pasted it
+> into chat. `--raw=` now accepts that format directly — see
+> `docs/OSM_PIPELINE.md`'s "On a phone, use the GeoJSON export instead"
+> section and `docs/DECISIONS.md` Pass 12. One thing still open: the
+> `rail_line` layer in that file is a single 5 m segment, not a real rail
+> network — see `docs/BACKLOG.md`. `data/osm/kramatorsk.json` still doesn't
+> exist; the same phone/GeoJSON route below would get it.
+
 ---
 
 ## TL;DR

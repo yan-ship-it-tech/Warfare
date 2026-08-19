@@ -7,11 +7,19 @@ Script: `scripts/fetch-osm-data.mjs`. Output: `data/osm/<aoi>.json`.
 
 ---
 
-## Status: the fetch is blocked in agent sessions — run it from a machine with open egress
+## Status: Pokrovsk is in; the fetch is still blocked in agent sessions
+
+`data/osm/pokrovsk.json` is committed (Pass 12) — produced from a GeoJSON
+export pasted in from a phone, not from a fetch run inside this repo's
+sandbox (see below). `data/osm/kramatorsk.json` still needs the same
+treatment. One data quality note carried over: the `rail_line` layer in
+`pokrovsk.json` is a single 5 m segment, not the dense junction the AOI note
+describes — see `docs/BACKLOG.md`, Pass 11 section, for the follow-up
+needed before it's trustworthy.
 
 The reduce/projection half of the pipeline is written, exercised and
-deterministic. The **fetch half has never run to completion here**: this
-environment's egress proxy refuses the tunnel to Overpass.
+deterministic. The **fetch half has never run to completion from inside this
+sandbox**: this environment's egress proxy refuses the tunnel to Overpass.
 
 ```
 $ curl -sv https://overpass-api.de/api/status
@@ -51,6 +59,16 @@ node scripts/fetch-osm-data.mjs --raw=pokrovsk-overpass.json
 
 Both routes produce a byte-identical file for the same input — the fetch stage
 does nothing but retrieve.
+
+**On a phone, use the GeoJSON export instead.** overpass-turbo's raw-OSM-data
+export is an API response with no filename — iOS Safari mostly refuses to
+save it. *Export → GeoJSON* is a real downloadable/pasteable blob, and `--raw=`
+accepts it directly (auto-detected by `"type": "FeatureCollection"`, converted
+to the same internal shape before classify/simplify/project run) — no
+conversion step, no different output. This is how `data/osm/pokrovsk.json`
+was actually produced (Pass 12): exported as GeoJSON, pasted into chat, saved
+to a file, reduced offline. If pasting fails too, the *Export* panel's "copy
+to clipboard" under GeoJSON also works — same content either way.
 
 ---
 

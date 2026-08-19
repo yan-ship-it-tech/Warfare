@@ -37,7 +37,7 @@ making an architectural change, not optional history.
 |---|---|
 | `data/assets/*.json` | One file per asset — the whole roster. Add a new asset by adding a new file (or via the in-app Asset Editor, see below); no code change needed. |
 | `data/bands.json`, `domains.json`, `groups.json`, `connections.json`, `lessons.json`, `doctrine_markers.json` | Everything else the world model is built from. |
-| `data/osm/*.json` | Committed OpenStreetMap line extracts, one file per AOI (rail lines, tree rows, roads, rivers), produced by `scripts/fetch-osm-data.mjs`. ODbL — requires a visible "© OpenStreetMap contributors" credit wherever rendered. See `docs/OSM_PIPELINE.md`; the files are not fetched yet (egress-blocked). |
+| `data/osm/*.json` | Committed OpenStreetMap line extracts, one file per AOI (rail lines, tree rows, roads, rivers), produced by `scripts/fetch-osm-data.mjs`. ODbL — requires a visible "© OpenStreetMap contributors" credit wherever rendered. See `docs/OSM_PIPELINE.md`; `pokrovsk.json` is in (its `rail_line` layer is a known-thin single segment, see `docs/BACKLOG.md`), `kramatorsk.json` is not fetched yet (this sandbox's egress is still blocked; the fetch itself has to run elsewhere). |
 | `data/catalog/*.json` | Swap-target systems (per-asset "compare this slot against a different real system" dropdown). |
 | `src/data/loader.ts` | `loadWorld()` — assembles the `WorldModel` from the JSON above plus live overrides. Validates every asset via `src/data/validate.ts`, never throws on a bad file (degrades gracefully into a Data Health issue instead). |
 | `src/data/model.ts` | Loader-derived types sitting on top of the schema in `src/types.ts` (the actual `Asset` contract). |

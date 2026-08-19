@@ -1753,3 +1753,90 @@ and failed as described in §1; `--features=` filtering, `--tolerance=` bounds,
 unknown-AOI and unknown-feature-class errors all exercised. The fixture lives
 in the session scratchpad rather than the repo — there is no test harness here
 to run it from, and a committed fixture nothing executes is a file that rots.
+
+---
+
+# Pass 12 — `data/osm/pokrovsk.json` committed, from a phone
+
+Pass 11 built the pipeline and documented, correctly, that the fetch stage
+cannot run inside this sandbox's egress proxy. This pass closes that out —
+not by getting the sandbox online, but because the user came back on an
+iPhone asking for the easiest way to get the data themselves, and "easiest"
+kept narrowing until it worked.
+
+## 1. The route that actually worked: GeoJSON export, pasted into chat
+
+Overpass-turbo's *Export → download as raw OSM data* is what
+`docs/OSM_PIPELINE.md` pointed to, but it's an API response with no real
+filename — iOS Safari mostly won't save it, which is exactly what the user
+hit ("i somehow cannot manage to save the json from my iphone"). The fix
+wasn't a workaround in this repo, it was a different export format:
+*Export → GeoJSON* is a real blob download that iOS handles through the
+normal Save-to-Files flow, and failing that, its content pastes cleanly into
+chat as plain text — which is what happened. The user pasted a complete
+~2.6 MB `FeatureCollection` (1113 features) straight into the conversation.
+
+That export uses `[lon, lat]` coordinate pairs inside `Polygon`/`LineString`
+geometries, not the `{lat, lon}` objects Overpass's native JSON puts in
+`elements[].geometry`. `--raw=` only understood the latter. Rather than
+hand-convert the pasted data once, `scripts/fetch-osm-data.mjs` gained a
+small normalization step: `--raw=` now sniffs `"type": "FeatureCollection"`
+and runs a `geojsonToElements()` converter (Polygon outer ring / LineString
+coordinates → a synthetic `way` element with `{lat, lon}` geometry) before
+handing off to the same `classify` → `simplify` → `project` path native
+Overpass JSON already went through. Both input shapes now produce the same
+output for the same underlying data — this isn't a parallel code path, it's
+one extra normalization step ahead of the existing one.
+
+## 2. What came out of it
+
+`data/osm/pokrovsk.json` is committed: 1113 features, nothing skipped
+(`counts.skipped` all zero) — `tree_row: 1010` (900 forest/wood polygons plus
+110 windbreak lines — Pass 11's "multipolygon forests aren't fetched" worry
+turned out not to bite; the ways-only query still caught a dense forest
+pattern), `road: 99`, `river: 3`, `rail_line: 1`. 29,269 raw vertices
+simplified to 10,544 at the default 5 m tolerance (-64%).
+
+**Flagged, not fixed:** `rail_line` is one way, two points, 5 m long. For an
+AOI whose own note says "dense rail junction... rail yards," that is
+obviously not the real rail network — it's a fragment. Every other class
+looks properly populated (99 roads, 3 rivers, 900+ tree/forest polygons), so
+this isn't the bbox or the format conversion; it looks like the
+overpass-turbo view that produced the export either wasn't panned over the
+rail yard when Export ran, or the query it ran had dropped the
+`railway=rail` selector. The right fix is a follow-up export focused on
+rail, from the user, when they're back at it — not inventing rail geometry
+to fill the gap, which is the exact fabrication Pass 11 already refused to
+do for the whole AOI. Logged in `docs/BACKLOG.md` rather than silently
+shipped as if it were complete.
+
+## 3. What this pass did not touch
+
+No `src/` changes — this is still purely the data-acquisition half. Both
+open decisions from Pass 11's §7 (real geography vs. the band-compressed X
+axis; 3D meshes vs. 2.5D sprites) are exactly as open as they were; nothing
+about having real Pokrovsk data in hand resolves either. `data/osm/kramatorsk.json`
+still doesn't exist — same phone-export route would get it, not attempted
+this pass since the user only supplied Pokrovsk data.
+
+## Where the brief and prior passes disagreed
+
+Nothing new disagreed with the brief. The GeoJSON branch is an *addition* to
+the `--raw=` contract (a second accepted input shape), not a change to
+`docs/OSM_PIPELINE.md`'s stated output schema or existing behavior — same
+`data/osm/<aoi>.json` shape either way, verified byte-for-byte identical
+field-by-field against what native Overpass JSON would have produced for the
+same underlying elements.
+
+## Verification
+
+`npm run build` clean. Ran `node scripts/fetch-osm-data.mjs --aoi=pokrovsk
+--raw=<pasted GeoJSON>` end to end: all 1113 input features classified and
+reduced, zero skipped in every bucket (`no_geometry`, `unclassified`,
+`not_requested`, `degenerate`), output file inspected feature-by-feature for
+the `rail_line` entry (confirmed genuinely 2 points, not a truncation bug in
+the converter) and spot-checked several `tree_row`/`road` entries for
+plausible `xz` values relative to the AOI centre. Re-ran the reduce a second
+time on the same input; output byte-identical (`cmp` clean), confirming the
+new GeoJSON branch didn't break the pipeline's existing determinism
+guarantee.
