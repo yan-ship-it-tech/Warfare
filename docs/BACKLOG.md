@@ -6,6 +6,63 @@ gets listed here rather than silently dropped or silently worked around.
 
 ---
 
+## Blocked / open — Pass 11 (OSM rail & tree-line pipeline)
+
+### The Pokrovsk fetch — resolved (Pass 12); Kramatorsk still open
+`scripts/fetch-osm-data.mjs` is written and its reduce/projection half is
+exercised and deterministic, but no agent session can run the *fetch*: this
+environment's egress proxy answers 403 to CONNECT for `overpass-api.de`
+and every mirror tried (`kumi.systems`, `private.coffee`, `osm.ch`,
+`z.`/`lz4.overpass-api.de`, `api.openstreetmap.org`). Host-allowlist
+denial, so it will not resolve by retrying. Pass 12 got the *data* in
+anyway, from the user's own phone: overpass-turbo's GeoJSON export (the
+one format iOS Safari reliably turns into a real download/paste-able blob,
+unlike a raw JSON API response), pasted into chat, saved to a file, and fed
+through a new GeoJSON branch in `--raw=`. `data/osm/pokrovsk.json` is
+committed. `data/osm/kramatorsk.json` still needs the same treatment — see
+`docs/OSM_PIPELINE.md`.
+
+### Pokrovsk rail data — resolved (Pass 13); it's real, it's just `disused`
+Turned out not to be missing at all: querying `way["railway"="rail"]` alone
+returns one 5 m fragment because almost none of Pokrovsk's rail network is
+tagged the active value. A follow-up `way["railway"]` (any value) query
+returned 306 ways, 299 of them `railway=disused` — a large former
+Soviet-era freight yard, still mapped in full geometric detail, just not
+flagged as operating. `classify()` in `scripts/fetch-osm-data.mjs` now
+treats `disused`/`abandoned`/`construction`/`narrow_gauge` as `rail_line`
+alongside `rail` (excluding `platform` and the explicit `railway=no`, which
+are stations, not track); the two exports were merged (1 duplicate way
+deduped) and `data/osm/pokrovsk.json` rebuilt: 303 rail features, ~229 km of
+alignment (the bbox's "any node inside" rule pulls in a lot of full-length
+ways whose real extent is far larger than the 17 km AOI — expected Overpass
+behavior, not a bug). Every rail feature keeps its original `railway=*`
+value in `tags`, so a renderer that wants to distinguish "still operating"
+from "disused yard" can.
+
+### ODbL attribution is owed the moment anything renders
+OSM data requires a visible "© OpenStreetMap contributors" credit. The
+string ships inside every output file's `source` block, but nothing draws
+it yet. Whoever does the integration pass owes it a place on screen —
+`AboutPage` and/or a corner credit in the view that draws the lines.
+
+### Real geography vs. the band-compressed X axis — a product decision
+The scene's X axis is non-linear distance-from-the-zero-line, not metres
+(`src/three/worldMapping.ts`, `docs/DECISIONS.md` Pass 5/6). A 17 km AOI
+laid over it at the default bands crosses band boundaries and stretches
+non-uniformly, which visibly bends a straight rail line. Three ways out —
+metric inset inside one band, lateral-only (Z) use, or a separate
+real-geography view — are laid out in `docs/OSM_PIPELINE.md`. This needs
+picking *before* extrusion/instancing code is written, and it is a
+different question from the renderer diagnostic (3D meshes vs. 2.5D
+sprites) the integration prompt is already waiting on.
+
+### Multipolygon forests are not fetched
+The brief's queries select ways only, and the script follows that. Large
+forests mapped as OSM *relations* will be missing. Worth revisiting once
+there is real data to look at and the tree coverage can be judged.
+
+---
+
 ## Resolved in Pass 10
 
 ### Terrain destruction gradient

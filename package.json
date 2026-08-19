@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "build:standalone": "tsc -b && STANDALONE=1 vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "fetch:osm": "node scripts/fetch-osm-data.mjs"
   },
   "dependencies": {
     "@types/three": "^0.185.4",

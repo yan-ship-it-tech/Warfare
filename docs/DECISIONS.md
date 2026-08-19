@@ -1890,3 +1890,301 @@ and the honest finding is that three of four files (`models.ts`, `props.ts`,
 `terrain3d.ts`) don't deviate at all — reported that plainly rather than
 manufacturing findings to make the audit look more thorough than the
 codebase actually warranted.
+
+---
+
+# Pass 13 — OSM rail & tree-line pipeline (fetch + reduce; integration deferred)
+
+Brief: an out-of-band spec for pulling real OpenStreetMap line features — rail
+lines, windbreak tree rows, roads, rivers — for two Donetsk Oblast AOIs
+(Pokrovsk first, Kramatorsk later), reducing them to an ordered point list per
+feature, projecting to local X/Z, and committing the result as a static JSON
+asset. The brief explicitly scopes this pass to the fetch step only: the
+integration (extrusion / tree instancing / SVG paths) is "blocked on the
+diagnostic" — i.e. on knowing whether the renderer is real 3D or 2.5D sprites —
+and is to be prompted separately. Nothing in `src/` is touched by this pass.
+
+## 1. The fetch is blocked at the egress proxy, and the file is absent, not faked
+
+`https://overpass-api.de/api/interpreter` answers `403 Forbidden` to CONNECT
+through this environment's proxy, as do `overpass.kumi.systems`,
+`overpass.private.coffee`, `overpass.osm.ch`, `z.overpass-api.de`,
+`lz4.overpass-api.de` and `api.openstreetmap.org`. The proxy's status endpoint
+classifies it as `connect_rejected — gateway answered 403 to CONNECT (policy
+denial …)`, and `/root/.ccr/README.md` is explicit that policy denials are
+reported rather than routed around. Six hosts was enough to establish it is an
+allowlist rather than one mirror having a bad day; testing further would have
+been probing the policy, not diagnosing a fault.
+
+The deliverable named in the brief — `osm-terrain-data.json` committed to the
+repo — therefore does not exist at the end of this pass, and the alternative
+was never on the table: hand-writing plausible coordinates for a real town and
+committing them under `source.api: "Overpass API"` would produce a file
+indistinguishable from real OSM data while being invented. Same reasoning the
+repo already applies to `verification` being derived rather than asserted, and
+to "not publicly disclosed" being a valid cost value.
+
+What ships instead is the whole pipeline with a network-free path through it,
+so the missing step is a one-minute human action rather than a re-do:
+`--print-query` emits the exact Overpass QL for overpass-turbo.eu, and
+`--raw=<file>` runs the entire reduce/project/write stage against a saved
+response. `docs/OSM_PIPELINE.md` documents both routes.
+
+## 2. Two stages in one file, and only the first one needs the network
+
+`fetch` retrieves and saves; `reduce` classifies → simplifies → projects →
+writes. Keeping `reduce` pure and separately invocable pays off beyond this
+sandbox: re-projecting or re-simplifying committed data must not mean hitting a
+rate-limited volunteer service again.
+
+The fetch stage retries 2/4/8/16 s across three mirrors, but treats 400 and 403
+as answers rather than glitches and fails immediately on them — the same
+distinction the harness's own git-retry guidance draws.
+
+## 3. Projection: metric, and deliberately not "scene units"
+
+Equirectangular about the AOI centre, WGS84 metre-per-degree series evaluated
+once at the origin latitude, output in km with +X east and +Z south (north is
+−Z, so a top-down camera reads north-up). Over a 17 km box the linearisation
+error is far below the 5 m simplification tolerance.
+
+The brief says "project to local X/Z **scene** coordinates". This emits metric
+km instead, and that is the one substantive deviation in the pass. The scene's
+X axis is band-compressed distance from the zero line (Pass 5/6) — non-linear
+by design, so that a 0–5 km FPV envelope and a 500 km strike target fit one
+legible axis. Feeding real geography through it stretches 17 km of ground
+across band boundaries at different rates, which bends a straight rail line
+visibly. Emitting metric km makes the pipeline's output honest and leaves the
+three real resolutions (metric inset in one band / lateral-Z only / a separate
+real-geography view) open for the integration prompt to choose between. They
+all consume the same metric frame, so nothing is lost by not choosing here.
+Flagged in `docs/BACKLOG.md` as a product decision, not a code detail.
+
+## 4. Douglas–Peucker at 5 m, on the projected points
+
+OSM rail ways carry survey-grade vertex density that no view at this scale can
+resolve. The tolerance is applied to the metric points so it means metres in
+both axes rather than degrees meaning different things along lat and lon;
+endpoints are always kept, so a line never shortens. `--tolerance=0` disables
+it, and `length_km` is measured on the full vertex list before simplification —
+the length is a fact about the feature, not about how coarsely it is stored.
+
+## 5. `type` follows the brief; `closed` + `tags` carry what it flattens
+
+The brief folds `natural=tree_row`, `landuse=forest` and `natural=wood` into
+one `tree_row` type, so that is the type they carry. But a windbreak is a line
+to instance trees *along* and a wood is a polygon to *fill*, so every feature
+also keeps a `closed` flag and its raw tags. Kept the brief's schema, added
+what a renderer will otherwise have to guess — flagged rather than quietly
+re-designed.
+
+Also on schema: `counts.skipped` reports every element that did not become a
+feature by reason (`no_geometry`, `unclassified`, `not_requested`,
+`degenerate`), and output is sorted by `(type, osm_id)` with all numbers
+rounded, so a re-run is byte-identical and git shows a real data change or
+nothing at all. The "degrade visibly, never silently" philosophy from
+`validateAsset()` applied to a data script.
+
+## 6. ODbL — the one place fetching data does carry an obligation
+
+OSM is ODbL 1.0: rendering these features requires a visible "© OpenStreetMap
+contributors" credit. The attribution string is written into every output
+file's `source` block so it travels with the data rather than living only in a
+doc, but nothing renders it yet — that lands on the integration pass and is in
+the backlog.
+
+This is not a breach of CLAUDE.md's "authored geometry only, never fetched
+binary assets" rule. That rule exists because a fetched model or icon carries a
+license nobody in the session can actually read (Pass 4/5). Coordinates from a
+named source under a known, attributed, share-alike license are the case the
+rule was drawn around — the credit is the price, and it is not optional.
+
+## Where the brief and prior passes disagreed
+
+1. **Metric km, not scene units** (§3). The brief's step 3 asks for scene
+   coordinates; the scene's X axis is not geographic, so honest scene
+   coordinates for real geography do not currently exist. Biggest deviation in
+   the pass and the reason the integration prompt now has a second question to
+   answer alongside the renderer diagnostic.
+2. **`timeout:180` and one merged query, not four at `timeout:25`.** Four
+   classes over a 17 km box regularly exceeds 25 s on a busy mirror, and one
+   query is a third of the load on a volunteer-run service.
+3. **Output at `data/osm/<aoi>.json`, not a single `osm-terrain-data.json`.**
+   The brief names one file, then immediately describes running the same
+   script against a second AOI — one file per AOI is what that implies, and it
+   keeps Pokrovsk and Kramatorsk from overwriting each other.
+4. **The committed data file is missing** (§1). Not a judgment call — the fetch
+   is blocked — but it is the brief's actual deliverable, so it is named here
+   rather than buried in a doc.
+
+## Verification
+
+No `src/` changes, but `npm run build` and `npx tsc --noEmit` were run anyway
+and are clean. The reduce stage was exercised against a hand-built Overpass
+fixture covering every branch: a collinear rail way (3 → 2 vertices), a rail
+way with a ~1.1 m kink (simplified away at 5 m, retained at `--tolerance=0`), a
+closed `landuse=forest` ring (`closed: true`), a river with a `null` geometry
+entry (dropped, line stays contiguous), a `highway=secondary` way, an untagged
+building way (`unclassified`), a single-vertex way (`degenerate`) and a bare
+node (`no_geometry`) — all six expected features out, all three skip buckets
+non-zero. Projection checked by hand against the constants: 0.01° of longitude
+at 48.2828° N came back as 0.742 km east and 0.01° of latitude as 1.112 km,
+matching the WGS84 series to the millimetre. Re-running on the same input
+produced a byte-identical file (`cmp` clean). The live fetch path was run twice
+and failed as described in §1; `--features=` filtering, `--tolerance=` bounds,
+unknown-AOI and unknown-feature-class errors all exercised. The fixture lives
+in the session scratchpad rather than the repo — there is no test harness here
+to run it from, and a committed fixture nothing executes is a file that rots.
+
+---
+
+# Pass 14 — `data/osm/pokrovsk.json` committed, from a phone
+
+Pass 13 built the pipeline and documented, correctly, that the fetch stage
+cannot run inside this sandbox's egress proxy. This pass closes that out —
+not by getting the sandbox online, but because the user came back on an
+iPhone asking for the easiest way to get the data themselves, and "easiest"
+kept narrowing until it worked.
+
+## 1. The route that actually worked: GeoJSON export, pasted into chat
+
+Overpass-turbo's *Export → download as raw OSM data* is what
+`docs/OSM_PIPELINE.md` pointed to, but it's an API response with no real
+filename — iOS Safari mostly won't save it, which is exactly what the user
+hit ("i somehow cannot manage to save the json from my iphone"). The fix
+wasn't a workaround in this repo, it was a different export format:
+*Export → GeoJSON* is a real blob download that iOS handles through the
+normal Save-to-Files flow, and failing that, its content pastes cleanly into
+chat as plain text — which is what happened. The user pasted a complete
+~2.6 MB `FeatureCollection` (1113 features) straight into the conversation.
+
+That export uses `[lon, lat]` coordinate pairs inside `Polygon`/`LineString`
+geometries, not the `{lat, lon}` objects Overpass's native JSON puts in
+`elements[].geometry`. `--raw=` only understood the latter. Rather than
+hand-convert the pasted data once, `scripts/fetch-osm-data.mjs` gained a
+small normalization step: `--raw=` now sniffs `"type": "FeatureCollection"`
+and runs a `geojsonToElements()` converter (Polygon outer ring / LineString
+coordinates → a synthetic `way` element with `{lat, lon}` geometry) before
+handing off to the same `classify` → `simplify` → `project` path native
+Overpass JSON already went through. Both input shapes now produce the same
+output for the same underlying data — this isn't a parallel code path, it's
+one extra normalization step ahead of the existing one.
+
+## 2. What came out of it
+
+`data/osm/pokrovsk.json` is committed: 1113 features, nothing skipped
+(`counts.skipped` all zero) — `tree_row: 1010` (900 forest/wood polygons plus
+110 windbreak lines — Pass 13's "multipolygon forests aren't fetched" worry
+turned out not to bite; the ways-only query still caught a dense forest
+pattern), `road: 99`, `river: 3`, `rail_line: 1`. 29,269 raw vertices
+simplified to 10,544 at the default 5 m tolerance (-64%).
+
+**Flagged, not fixed:** `rail_line` is one way, two points, 5 m long. For an
+AOI whose own note says "dense rail junction... rail yards," that is
+obviously not the real rail network — it's a fragment. Every other class
+looks properly populated (99 roads, 3 rivers, 900+ tree/forest polygons), so
+this isn't the bbox or the format conversion; it looks like the
+overpass-turbo view that produced the export either wasn't panned over the
+rail yard when Export ran, or the query it ran had dropped the
+`railway=rail` selector. The right fix is a follow-up export focused on
+rail, from the user, when they're back at it — not inventing rail geometry
+to fill the gap, which is the exact fabrication Pass 13 already refused to
+do for the whole AOI. Logged in `docs/BACKLOG.md` rather than silently
+shipped as if it were complete.
+
+## 3. What this pass did not touch
+
+No `src/` changes — this is still purely the data-acquisition half. Both
+open decisions from Pass 13's §7 (real geography vs. the band-compressed X
+axis; 3D meshes vs. 2.5D sprites) are exactly as open as they were; nothing
+about having real Pokrovsk data in hand resolves either. `data/osm/kramatorsk.json`
+still doesn't exist — same phone-export route would get it, not attempted
+this pass since the user only supplied Pokrovsk data.
+
+## Where the brief and prior passes disagreed
+
+Nothing new disagreed with the brief. The GeoJSON branch is an *addition* to
+the `--raw=` contract (a second accepted input shape), not a change to
+`docs/OSM_PIPELINE.md`'s stated output schema or existing behavior — same
+`data/osm/<aoi>.json` shape either way, verified byte-for-byte identical
+field-by-field against what native Overpass JSON would have produced for the
+same underlying elements.
+
+## Verification
+
+`npm run build` clean. Ran `node scripts/fetch-osm-data.mjs --aoi=pokrovsk
+--raw=<pasted GeoJSON>` end to end: all 1113 input features classified and
+reduced, zero skipped in every bucket (`no_geometry`, `unclassified`,
+`not_requested`, `degenerate`), output file inspected feature-by-feature for
+the `rail_line` entry (confirmed genuinely 2 points, not a truncation bug in
+the converter) and spot-checked several `tree_row`/`road` entries for
+plausible `xz` values relative to the AOI centre. Re-ran the reduce a second
+time on the same input; output byte-identical (`cmp` clean), confirming the
+new GeoJSON branch didn't break the pipeline's existing determinism
+guarantee.
+
+---
+
+# Pass 15 — the "thin rail" gap from Pass 14 was a tag-value assumption, not missing data
+
+Pass 14 flagged Pokrovsk's `rail_line` layer (one 5 m fragment) as a real
+data gap and asked the user to re-export focused on rail. They did, from a
+link built for exactly that: `way["railway"]` (any value, no `="rail"`
+restriction) over the same bbox, run in overpass-turbo on their phone,
+exported as GeoJSON and pasted in — the same route Pass 14 established.
+
+## 1. It wasn't missing — it's `disused`
+
+The wider query returned 306 ways. 299 are `railway=disused`, 3 are
+`abandoned`, 1 `platform`, 1 `no`, and the original 1 `rail`. This is a real
+Soviet-era freight yard — sidings, spurs, crossovers, a `service=yard`
+throat with dozens of parallel tracks around the historic Pokrovsk
+junction — mapped in full geometric detail but tagged as no longer
+operating rather than as `railway=rail`. `classify()`'s brief-literal
+`railway="rail"` selector was doing exactly what it was told; the AOI just
+doesn't match that assumption. Widened `RAIL_TRACK_VALUES` to
+`{rail, disused, abandoned, construction, narrow_gauge}` — physical track
+geometry regardless of current operating status — and explicitly excluded
+`platform`/`no` (station infrastructure, not track; both showed up as
+separate `LineString` ways in the export and would have been wrongly
+folded in under a bare `tags.railway` truthiness check).
+
+## 2. Merge, not replace
+
+The two GeoJSON exports overlap by exactly one way (the original
+`osm_1085918173` fragment, present in both). Merged by feature id before
+reducing — 1113 + 306 → 1418 unique input features, 1415 after the 3
+platform/no exclusions — rather than discarding Pass 14's tree/road/river
+data and re-fetching everything. `data/osm/pokrovsk.json` now carries
+`rail_line: 303` (up from 1), everything else unchanged: `tree_row: 1010`,
+`road: 99`, `river: 3`.
+
+**Flagged:** total rail length sums to ~229 km, which sounds absurd for a
+17 km AOI. It isn't a bug — Overpass's bbox filter on ways includes the
+*full* geometry of any way with at least one node inside the box, and
+several of these disused main-line ways run for tens of kilometres beyond
+Pokrovsk in both directions (this is the same bbox-overshoot behavior noted
+for the tree/road data back in the original pipeline design, just more
+visible here because rail ways happen to be long). Nothing to fix — a
+renderer consuming this file already has to decide what to do with
+geometry that extends past the AOI's nominal 17 km box, same as any other
+layer.
+
+## Where the brief and prior passes disagreed
+
+Pass 14 treated the thin rail layer as data to *flag*, and it was right to —
+at that point there was no way to tell "genuinely sparse" from "wrong tag
+value" without more data. This pass had that data and could tell the
+difference. Nothing about Pass 14's `--raw=` GeoJSON support needed to
+change; `classify()` was the only thing that was actually wrong for this
+AOI, and it's a one-line widening, not a redesign.
+
+## Verification
+
+`npm run build` clean. Re-ran the merged reduce; `counts.skipped.unclassified`
+is exactly 3 (the `platform`/`no` features, confirmed by id against the raw
+export — not the 299 `disused` ways silently vanishing into the same
+bucket). Spot-checked rail feature count (303), summed `length_km` across
+all rail features (~229 km, explained above), and range-checked `xz` values
+for the rail layer against the tree/road layers already in the file to
+confirm the merge didn't disturb the existing projection.

@@ -37,6 +37,7 @@ making an architectural change, not optional history.
 |---|---|
 | `data/assets/*.json` | One file per asset — the whole roster. Add a new asset by adding a new file (or via the in-app Asset Editor, see below); no code change needed. |
 | `data/bands.json`, `domains.json`, `groups.json`, `connections.json`, `lessons.json`, `doctrine_markers.json` | Everything else the world model is built from. |
+| `data/osm/*.json` | Committed OpenStreetMap line extracts, one file per AOI (rail lines, tree rows, roads, rivers), produced by `scripts/fetch-osm-data.mjs`. ODbL — requires a visible "© OpenStreetMap contributors" credit wherever rendered. See `docs/OSM_PIPELINE.md`; `pokrovsk.json` is in (303 rail features, mostly `railway=disused` — a former freight yard, see `docs/DECISIONS.md` Pass 13), `kramatorsk.json` is not fetched yet (this sandbox's egress is still blocked; the fetch itself has to run elsewhere). |
 | `data/catalog/*.json` | Swap-target systems (per-asset "compare this slot against a different real system" dropdown). |
 | `src/data/loader.ts` | `loadWorld()` — assembles the `WorldModel` from the JSON above plus live overrides. Validates every asset via `src/data/validate.ts`, never throws on a bad file (degrades gracefully into a Data Health issue instead). |
 | `src/data/model.ts` | Loader-derived types sitting on top of the schema in `src/types.ts` (the actual `Asset` contract). |
@@ -50,10 +51,11 @@ making an architectural change, not optional history.
 | `worker/` | Cloudflare Worker + KV — the real shared-sync backend, written and dry-run verified but **not deployable from an agent session** (no Cloudflare credentials here — needs a human with an account). |
 | `docs/doctrine.md` | The sourced narrative spine. Every asset's `contrast_vs_traditional` and `employment_notes` should pull framing from here, not invent it fresh. |
 | `docs/CONTENT_PIPELINE.md` | **Read before adding or editing asset content.** Two-pass process: draft a category, then verify it in a *separate* sitting via `node scripts/audit-content.mjs --write`, which derives each asset's `verification` status from its `sources` array (never hand-authored). |
+| `docs/OSM_PIPELINE.md` | **Read before touching the OSM pipeline.** AOIs, queries, output schema, the ODbL obligation, and why real geography can't be laid over the band-compressed X axis unchanged. |
 | `docs/BACKLOG.md` | Everything flagged but not done — category gaps, deferred decisions, things explicitly decided against. Check here before assuming a gap was overlooked. |
 | `docs/DEPLOY_SYNC_WORKER.md` | Human walkthrough for deploying the Worker (one remaining manual step: `wrangler deploy` + two repo secrets). |
 | `docs/MODEL_STYLE_GUIDE.md` | **Read before adding or editing any 3D geometry** in `src/three/`. Proportions, poly budget, material/palette rules and silhouette conventions, measured off the hero tier (`models.ts`) and audited against `scenery.ts`/`props.ts`/`terrain3d.ts` — see Pass 12. |
-| `scripts/` | `audit-content.mjs` (verification), `import-catalog.py` + `fill-sources.py` (spreadsheet → asset JSON, the repeatable path for the next ad hoc content drop). |
+| `scripts/` | `audit-content.mjs` (verification), `fetch-osm-data.mjs` (Overpass → `data/osm/<aoi>.json`; two stages, and `--raw=` runs the second one with no network), `import-catalog.py` + `fill-sources.py` (spreadsheet → asset JSON, the repeatable path for the next ad hoc content drop). |
 
 ## Commands
 
@@ -63,6 +65,7 @@ npm run build        # tsc -b && vite build — run before every commit
 npm run typecheck    # tsc --noEmit only, faster iteration
 npm run preview      # serve the production build locally
 node scripts/audit-content.mjs [--write]   # content verification pass
+node scripts/fetch-osm-data.mjs [--aoi=pokrovsk|kramatorsk]   # OSM extract → data/osm/
 ```
 
 No test suite exists yet — validate changes with `npm run build` plus a
@@ -90,11 +93,14 @@ headless Playwright smoke pass (Chromium is pre-installed at
   display vs. actual placement — `distance_km_from_zero` against the
   *current* (possibly user-edited) bands is the source of truth; the stored
   `band_id` is informational only.
-- **Authored geometry only, never fetched binary assets.** This
+- **Authored geometry only, never fetched *binary* assets.** This
   environment's egress proxy blocks binary fetches, so any sourced 3D
   model or icon would be a license assumed rather than read. Every hero
   model, scenery piece, and icon in this repo is procedural/hand-authored
   for that reason — keep it that way rather than trying to source one.
+  Coordinates are the deliberate exception (`data/osm/`): a named source
+  under a license we can actually read, ODbL, whose price is a visible
+  "© OpenStreetMap contributors" credit wherever the data is drawn.
 - **A bad or incomplete asset file should degrade the tool, not break it.**
   `validateAsset()` is warning-based; almost nothing is a hard error. Match
   that philosophy in new validation code.
