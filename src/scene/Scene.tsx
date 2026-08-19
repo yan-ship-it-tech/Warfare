@@ -111,11 +111,17 @@ export function Scene({ world, replayNonce }: Props) {
   }, [proj, world.assets, rulerH]);
 
   // Bring a newly selected node into view without yanking the whole scene.
+  // positions are in un-zoomed scene units; the scroll container's actual
+  // content is scaled by sceneZoom (see the .scene-zoom-frame wrapper), so
+  // every comparison against real scrollLeft/clientWidth pixels needs the
+  // same factor applied.
   useEffect(() => {
     const el = scrollRef.current;
     if (!el || !view.selectedId) return;
-    const p = positions.get(view.selectedId);
-    if (!p) return;
+    const raw = positions.get(view.selectedId);
+    if (!raw) return;
+    const zoom = view.sceneZoom;
+    const p = { x: raw.x * zoom, y: raw.y * zoom };
     const margin = 220;
     // The detail panel overlays the right edge of the scene, so "visible" stops
     // where the panel starts — otherwise selecting a node can slide it under it.
@@ -135,7 +141,7 @@ export function Scene({ world, replayNonce }: Props) {
     if (nextLeft !== left || nextTop !== el.scrollTop) {
       el.scrollTo({ left: nextLeft, top: Math.max(0, nextTop), behavior: "smooth" });
     }
-  }, [view.selectedId, positions, rulerH]);
+  }, [view.selectedId, positions, rulerH, view.sceneZoom]);
 
   const onScroll = useCallback(() => {
     if (rafRef.current) return;
@@ -178,8 +184,19 @@ export function Scene({ world, replayNonce }: Props) {
         />
 
         <div
+          className="scene-zoom-frame"
+          style={{
+            width: proj.sceneWidthPx * view.sceneZoom,
+            height: proj.sceneHeightPx * view.sceneZoom,
+          }}
+        >
+        <div
           className="scene"
-          style={{ width: proj.sceneWidthPx, height: proj.sceneHeightPx }}
+          style={{
+            width: proj.sceneWidthPx,
+            height: proj.sceneHeightPx,
+            transform: `scale(${view.sceneZoom})`,
+          }}
         >
           <Lanes domains={world.domains} proj={proj} visibleSides={view.visibleSides} />
 
@@ -213,6 +230,22 @@ export function Scene({ world, replayNonce }: Props) {
             ))}
           </div>
         </div>
+        </div>
+      </div>
+
+      <div className="scene-zoom-controls" role="group" aria-label="Zoom">
+        <button type="button" onClick={() => view.setSceneZoom((z) => z - 0.15)} aria-label="Zoom out">
+          −
+        </button>
+        <span>{Math.round(view.sceneZoom * 100)}%</span>
+        <button type="button" onClick={() => view.setSceneZoom((z) => z + 0.15)} aria-label="Zoom in">
+          +
+        </button>
+        {view.sceneZoom !== 1 && (
+          <button type="button" className="scene-zoom-controls__reset" onClick={() => view.setSceneZoom(1)}>
+            Reset
+          </button>
+        )}
       </div>
 
       <nav className="domain-rail" style={{ top: rulerH }} aria-label="Domain layers">

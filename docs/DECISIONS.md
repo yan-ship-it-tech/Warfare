@@ -487,3 +487,94 @@ one click away as the teaching view with the ruler and domain lanes, which
 the real map's geography can't replace (bands compress distance
 nonlinearly on purpose — a real map can't do that and stay geographically
 honest at the same time).
+
+---
+
+# Pass 5 — reverting the literal map, going 2.5D-illustrated instead
+
+Direct user reaction to Pass 4, with reference images: the satellite map read
+top-down and flat rather than 3D; every asset visually bunched onto one line
+because real geographic distance (0 to 500+ km) can't be laid out on a screen
+the way the non-linear distance bands can; the photorealistic basemap looked
+like a battle-management system, not a teaching tool; equipment photos as
+32px map markers didn't scale with zoom and were the wrong place for them
+anyway; and the detail panel needed to be editable in place, with real
+picture/video upload.
+
+## The literal geo-map was the wrong paradigm, not a buggy implementation
+Diagnosed the "everything lines up in one line" complaint precisely before
+touching code: `geoPlacement.ts` scattered assets across real geographic
+distance (up to ~500 km either side of the anchor), then `MapView.tsx`
+called `fitBounds()` to frame them all — at that zoom, the ±1.5 km domain
+jitter meant to spread same-distance markers apart was a rounding error, so
+every node landed on what was visually one line along the bearing. The pitch
+being flat despite an explicit `easeTo({pitch: 58, ...})` had a similarly
+findable cause (MapLibre's `fitBounds()` resets pitch to 0 unless explicitly
+told not to, and it was racing the easeTo animation) — but fixing that bug
+wouldn't have fixed the deeper problem: real geography and the non-linear
+distance-band compression this tool's whole teaching model depends on are
+fundamentally in tension. You cannot put a real 0.6 km FPV envelope and a
+real 500 km deep-strike target on the same real map and have both be legible
+at once — that tension is exactly what `data/bands.json`'s non-linear screen
+allocation was built to solve in the very first pass, and a literal map
+throws that solution away. So: reverted, not patched. `src/map/` (MapView,
+geoPlacement) and the `maplibre-gl` dependency are removed entirely, along
+with the Map/Schematic view toggle — there is one view again.
+
+## The reskin: real distance-band math, illustrated ground plane, real 2.5D pop
+What shipped instead keeps everything Pass 1–4 already proved correct
+(`projection.ts`'s per-band screen allocation, the ruler, the connection
+overlay) and changes only how it's *drawn*:
+- **Terrain (`src/scene/terrain.ts`)**: generated contour-ring + directional
+  hillshade texture — a topographic-illustration style, closer to an
+  editorial explainer graphic than either the earlier tech-deck palette or a
+  photo. Still 100% procedural; the point is that it now reads as
+  *deliberately* stylized rather than either extreme.
+- **2.5D cross-section read, kept safely decorative**: `Lanes.tsx` gives each
+  domain lane's *background* a small per-lane stagger (`laneVisualSkewPx`,
+  new, decorative-only) plus a brightness/saturation falloff — the classic
+  side-scroller parallax trick. Critically this constant is read only inside
+  `Lanes.tsx`; `projection.ts`'s `xFor`/`zeroXAt` (what nodes and the ruler
+  actually use) never see it. This is the safe version of the thing that
+  broke distance-matches-position back in Pass 3 (`laneObliqueOffsetPx`,
+  still 0): the ground plane tilts, the coordinates that have to agree with
+  each other never move.
+- **Per-node altitude pop (`AssetNode.tsx`, `DOMAIN_ALTITUDE_PX`)**: air and
+  space nodes render their card translated up, with a tether line down to a
+  small ground-shadow at their real position — a literal answer to "show
+  UAVs and infantry at different height." The button's hit target moves with
+  the card (a small, intentional trade-off); nothing else about placement
+  changes.
+- **Equipment photos taken off the map entirely.** `AssetNode.tsx` no longer
+  renders `icon_image` at any size — every map marker is the generated icon
+  set, unconditionally. Photos are detail-panel-only now, which is also
+  where "scale with zoom" stops being a problem: there's no photo on the map
+  to fail to scale.
+- **Scene zoom (`viewState.sceneZoom`)**: a uniform `transform: scale()` on
+  the whole scene content (icons, terrain, everything together), with a
+  matching scroll-frame booking so scrolling stays correct at any zoom level
+  — this is the literal, delivered answer to "things should scale when I
+  zoom in," generalized to the whole scene rather than tied to map tiles
+  that no longer exist.
+
+## Detail panel: inline editing and media upload
+Extended the existing override mechanism (`src/state/overridesState.tsx` —
+the same one placement edits and catalog swaps already used) with two new
+pieces, kept deliberately separate from each other and from placement so
+resets stay independent (docs/BACKLOG.md #7's ask, now partly done):
+- `AssetOverride.text`: free-text edits to `short_role`, `employment_notes`,
+  `contrast_vs_traditional`, `characteristics` — every one of them gets an
+  inline "edit" control right in its own section, a plain `<textarea>`, and
+  an independent "reset to authored text."
+- `AssetOverride.customMedia`: user-uploaded pictures and video, added from
+  the new Media section. Pictures are read via `FileReader` into a
+  size-capped (3 MB) base64 data URL and persist exactly like every other
+  override. Video is different on purpose: `localStorage` cannot hold a real
+  video file, so it plays through this session via `URL.createObjectURL`
+  and carries a visible "not saved — lost on refresh" badge rather than
+  quietly disappearing without explanation. A real backend (BACKLOG #11)
+  is what actually fixes this, not a bigger localStorage budget.
+- The detail panel's sections also got a visual pass (each is now a bounded
+  card with a consistent header) directly answering "looks disorganized" —
+  the earlier layout was a flat run of paragraphs with uneven gaps wherever
+  an asset happened to be missing an optional field.

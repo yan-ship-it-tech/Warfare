@@ -29,12 +29,37 @@ import type { DistanceBand } from "../types";
 const BANDS_KEY = "warfare-twin:bands:v1";
 const ASSET_OVERRIDES_KEY = "warfare-twin:asset-overrides:v1";
 
+/** A user-supplied picture or clip attached to an asset from the detail
+ *  panel. Images are re-encoded to a size-capped data URL and persist like
+ *  every other override; video cannot — a real clip blows past what
+ *  localStorage can hold — so it plays for this session via an object URL
+ *  and is clearly marked as not saved. See docs/DECISIONS.md Pass 5. */
+export interface CustomMedia {
+  id: string;
+  kind: "image" | "video";
+  url: string;
+  name: string;
+  persisted: boolean;
+}
+
+/** Free-text fields an asset author can edit in place from the detail panel.
+ *  Kept separate from the structured fields above so "reset placement" and
+ *  "reset text" can stay independent resets (see docs/BACKLOG.md #7). */
+export interface AssetTextOverride {
+  short_role?: string;
+  employment_notes?: string;
+  contrast_vs_traditional?: string;
+  characteristics?: string[];
+}
+
 export interface AssetOverride {
   distance_km_from_zero?: number;
   operating_range_km?: { min_km: number; max_km: number } | null;
   /** Which catalog entry fills this asset's slot — see src/data/catalog.ts.
    *  null/undefined means "the asset's own authored system." */
   catalog_equipment_id?: string | null;
+  text?: AssetTextOverride;
+  customMedia?: CustomMedia[];
 }
 
 function readJSON<T>(key: string): T | null {
@@ -74,6 +99,12 @@ export interface OverridesState {
   setAssetOverride: (id: string, patch: AssetOverride) => void;
   resetAssetOverride: (id: string) => void;
   hasAssetOverride: (id: string) => boolean;
+
+  /** Merges into the existing text override rather than replacing it. */
+  setAssetText: (id: string, patch: AssetTextOverride) => void;
+  resetAssetText: (id: string) => void;
+  addCustomMedia: (id: string, media: CustomMedia) => void;
+  removeCustomMedia: (id: string, mediaId: string) => void;
 }
 
 const Ctx = createContext<OverridesState | null>(null);
@@ -152,6 +183,39 @@ export function OverridesProvider({
     });
   }, []);
 
+  const setAssetText = useCallback((id: string, patch: AssetTextOverride) => {
+    setAssetOverrides((prev) => ({
+      ...prev,
+      [id]: { ...prev[id], text: { ...prev[id]?.text, ...patch } },
+    }));
+  }, []);
+
+  const resetAssetText = useCallback((id: string) => {
+    setAssetOverrides((prev) => {
+      if (!prev[id]?.text) return prev;
+      const { text: _drop, ...rest } = prev[id];
+      return { ...prev, [id]: rest };
+    });
+  }, []);
+
+  const addCustomMedia = useCallback((id: string, media: CustomMedia) => {
+    setAssetOverrides((prev) => ({
+      ...prev,
+      [id]: { ...prev[id], customMedia: [...(prev[id]?.customMedia ?? []), media] },
+    }));
+  }, []);
+
+  const removeCustomMedia = useCallback((id: string, mediaId: string) => {
+    setAssetOverrides((prev) => {
+      const existing = prev[id]?.customMedia;
+      if (!existing) return prev;
+      return {
+        ...prev,
+        [id]: { ...prev[id], customMedia: existing.filter((m) => m.id !== mediaId) },
+      };
+    });
+  }, []);
+
   const value = useMemo<OverridesState>(
     () => ({
       bands,
@@ -164,8 +228,25 @@ export function OverridesProvider({
       setAssetOverride,
       resetAssetOverride,
       hasAssetOverride: (id: string) => id in assetOverrides,
+      setAssetText,
+      resetAssetText,
+      addCustomMedia,
+      removeCustomMedia,
     }),
-    [bands, setBand, addBand, removeBand, resetBands, assetOverrides, setAssetOverride, resetAssetOverride],
+    [
+      bands,
+      setBand,
+      addBand,
+      removeBand,
+      resetBands,
+      assetOverrides,
+      setAssetOverride,
+      resetAssetOverride,
+      setAssetText,
+      resetAssetText,
+      addCustomMedia,
+      removeCustomMedia,
+    ],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

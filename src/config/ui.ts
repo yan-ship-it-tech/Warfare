@@ -68,6 +68,13 @@ export const VIEW = {
    *  decorative layer via a CSS 3D transform, never on coordinates that the
    *  ruler and the detail panel both have to agree with. */
   laneObliqueOffsetPx: 0,
+  /** Purely decorative "each layer steps back" stagger for the terrain
+   *  background only (src/scene/Lanes.tsx) — never read by projection.ts, so
+   *  it can't repeat the laneObliqueOffsetPx bug above. Nodes and the ruler
+   *  stay at their true, correctness-guaranteed x; only the ground plane
+   *  drawn underneath them tilts, which is enough to sell a 2.5D cross-
+   *  section read without risking the distance-matches-position guarantee. */
+  laneVisualSkewPx: 22,
   /** Height reserved for the sticky ruler. Fixed rather than measured so the
    *  domain rail can align to it without a layout read on every scroll. */
   rulerHeightPx: 116,
@@ -78,6 +85,22 @@ export const VIEW = {
   minIconSeparationPx: 132,
   subRowOffsetPx: 76,
   maxSubRows: 3,
+};
+
+/** Purely visual "pop" per domain lane — how far a node's icon floats above
+ *  its own ground point, in px. Air/space read as overhead (with a tether
+ *  line down to a ground shadow); everything else sits at grade. This is
+ *  the 2.5D read: never touches the y placeNodes() computed, just how the
+ *  icon renders relative to that point. */
+export const DOMAIN_ALTITUDE_PX: Record<string, number> = {
+  space: 30,
+  air: 20,
+  cyber_ew: 10,
+  c2_comms: 0,
+  land: 0,
+  logistics: 0,
+  medical: 0,
+  sea: 0,
 };
 
 export const DOMAIN_ACCENT: Record<string, string> = {

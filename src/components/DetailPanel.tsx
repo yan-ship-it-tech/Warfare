@@ -8,7 +8,7 @@
 // For a pending stub it explains why the node exists, which parts of its
 // position were inferred rather than authored, and hands over a ready-made
 // JSON skeleton so building the real asset is a copy-paste away.
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { Asset } from "../types";
 import type { PendingStub, ResolvedConnection, WorldModel } from "../data/model";
 import { resolveBand } from "../data/model";
@@ -16,7 +16,7 @@ import { CONNECTION_STYLE, DOMAIN_ACCENT, SIDE_ACCENT, SIDE_LABELS } from "../co
 import { resolveIcon } from "../icons/registry";
 import { resolveVignette } from "../scene/vignettes";
 import { useViewState } from "../state/viewState";
-import { useOverrides } from "../state/overridesState";
+import { useOverrides, type CustomMedia } from "../state/overridesState";
 import { catalogSiblings, findCatalogEntry, resolveAssetDisplay } from "../data/catalog";
 
 interface Props {
@@ -127,6 +127,11 @@ function AssetDetail({
   const overrides = useOverrides();
   const swapId = overrides.assetOverrides[asset.id]?.catalog_equipment_id;
   const display = resolveAssetDisplay(asset, swapId);
+  const textOverride = overrides.assetOverrides[asset.id]?.text;
+  const effectiveRole = textOverride?.short_role ?? asset.short_role;
+  const effectiveEmployment = textOverride?.employment_notes ?? asset.employment_notes;
+  const effectiveContrast = textOverride?.contrast_vs_traditional ?? asset.contrast_vs_traditional;
+  const effectiveCharacteristics = textOverride?.characteristics ?? asset.characteristics ?? [];
 
   return (
     <div className="detail__body">
@@ -204,31 +209,52 @@ function AssetDetail({
 
       <PlacementRow asset={asset} band={band} />
 
-      <p className="detail__role">{asset.short_role}</p>
+      <EditableRole
+        value={effectiveRole}
+        isOverridden={textOverride?.short_role !== undefined}
+        onSave={(v) => overrides.setAssetText(asset.id, { short_role: v })}
+        onReset={() => {
+          const { short_role: _drop, ...rest } = textOverride ?? {};
+          overrides.setAssetOverride(asset.id, { text: rest });
+        }}
+      />
 
-      {asset.characteristics?.length > 0 && (
-        <section className="detail__section">
-          <h3>Key characteristics</h3>
-          <ul className="bullets">
-            {asset.characteristics.map((c, i) => (
-              <li key={i}>{c}</li>
-            ))}
-          </ul>
-        </section>
+      <EditableList
+        title="Key characteristics"
+        items={effectiveCharacteristics}
+        isOverridden={textOverride?.characteristics !== undefined}
+        onSave={(items) => overrides.setAssetText(asset.id, { characteristics: items })}
+        onReset={() => {
+          const { characteristics: _drop, ...rest } = textOverride ?? {};
+          overrides.setAssetOverride(asset.id, { text: rest });
+        }}
+      />
+
+      {(effectiveEmployment || textOverride?.employment_notes !== undefined) && (
+        <EditableSection
+          title="How it's employed"
+          value={effectiveEmployment ?? ""}
+          isOverridden={textOverride?.employment_notes !== undefined}
+          onSave={(v) => overrides.setAssetText(asset.id, { employment_notes: v })}
+          onReset={() => {
+            const { employment_notes: _drop, ...rest } = textOverride ?? {};
+            overrides.setAssetOverride(asset.id, { text: rest });
+          }}
+        />
       )}
 
-      {asset.employment_notes && (
-        <section className="detail__section">
-          <h3>How it's employed</h3>
-          <p>{asset.employment_notes}</p>
-        </section>
-      )}
-
-      {asset.contrast_vs_traditional && (
-        <section className="detail__section detail__section--contrast">
-          <h3>What changed vs. traditional warfare</h3>
-          <p>{asset.contrast_vs_traditional}</p>
-        </section>
+      {(effectiveContrast || textOverride?.contrast_vs_traditional !== undefined) && (
+        <EditableSection
+          title="What changed vs. traditional warfare"
+          value={effectiveContrast ?? ""}
+          warn
+          isOverridden={textOverride?.contrast_vs_traditional !== undefined}
+          onSave={(v) => overrides.setAssetText(asset.id, { contrast_vs_traditional: v })}
+          onReset={() => {
+            const { contrast_vs_traditional: _drop, ...rest } = textOverride ?? {};
+            overrides.setAssetOverride(asset.id, { text: rest });
+          }}
+        />
       )}
 
       {asset.notable_events && asset.notable_events.length > 0 && (
@@ -283,17 +309,7 @@ function AssetDetail({
       <EdgeList title="Depends on" edges={edges.out} world={world} direction="out" />
       <EdgeList title="Depended on by" edges={edges.in} world={world} direction="in" />
 
-      <section className="detail__section">
-        <h3>Imagery</h3>
-        <div className="gallery">
-          {(asset.gallery_images ?? []).length === 0 && (
-            <p className="detail__note">No gallery images listed for this asset yet.</p>
-          )}
-          {(asset.gallery_images ?? []).map((src) => (
-            <GalleryTile key={src} src={src} accent={accent} />
-          ))}
-        </div>
-      </section>
+      <MediaSection asset={asset} accent={accent} />
 
       <section className="detail__section">
         <h3>Sources</h3>
@@ -473,6 +489,341 @@ function PlacementRow({ asset, band }: { asset: Asset; band: ReturnType<typeof r
         )}
       </div>
     </div>
+  );
+}
+
+/** The lead sentence under the key facts — not wrapped in a `.detail__section`
+ *  card (it reads as the panel's opening line, not a labeled block), but
+ *  editable the same way everything else below it is. */
+function EditableRole({
+  value,
+  isOverridden,
+  onSave,
+  onReset,
+}: {
+  value: string;
+  isOverridden: boolean;
+  onSave: (v: string) => void;
+  onReset: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+
+  if (!editing) {
+    return (
+      <div className="detail__role-row">
+        <p className="detail__role">{value}</p>
+        <button
+          type="button"
+          className="detail__section-edit"
+          onClick={() => {
+            setDraft(value);
+            setEditing(true);
+          }}
+        >
+          ✎ edit
+        </button>
+        {isOverridden && <span className="tag tag--info">edited</span>}
+      </div>
+    );
+  }
+  return (
+    <div className="detail__role-row detail__role-row--editing">
+      <textarea className="detail__edit-area" value={draft} onChange={(e) => setDraft(e.target.value)} />
+      <div className="detail__edit-actions">
+        <button
+          type="button"
+          className="btn"
+          onClick={() => {
+            onSave(draft);
+            setEditing(false);
+          }}
+        >
+          Save
+        </button>
+        <button type="button" className="btn btn--ghost" onClick={() => setEditing(false)}>
+          Cancel
+        </button>
+        {isOverridden && (
+          <button
+            type="button"
+            className="btn btn--ghost"
+            onClick={() => {
+              onReset();
+              setEditing(false);
+            }}
+          >
+            Reset to authored text
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** One editable free-text section — role narrative, employment, contrast.
+ *  Every field here lives in `overrides.assetOverrides[id].text`, a plain
+ *  browser-local edit exactly like placement and system-swap (see
+ *  src/state/overridesState.tsx) — not written back to the asset's own JSON
+ *  file, which stays the shipped, reviewed content. */
+function EditableSection({
+  title,
+  value,
+  isOverridden,
+  warn,
+  onSave,
+  onReset,
+}: {
+  title: string;
+  value: string;
+  isOverridden: boolean;
+  warn?: boolean;
+  onSave: (v: string) => void;
+  onReset: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+
+  return (
+    <section className={`detail__section${warn ? " detail__section--contrast" : ""}`}>
+      <h3>
+        {title}
+        <span>
+          {isOverridden && !editing && <span className="tag tag--info">edited</span>}{" "}
+          <button
+            type="button"
+            className="detail__section-edit"
+            onClick={() => {
+              if (!editing) setDraft(value);
+              setEditing((e) => !e);
+            }}
+          >
+            {editing ? "cancel" : "✎ edit"}
+          </button>
+        </span>
+      </h3>
+      {editing ? (
+        <>
+          <textarea className="detail__edit-area" value={draft} onChange={(e) => setDraft(e.target.value)} />
+          <div className="detail__edit-actions">
+            <button
+              type="button"
+              className="btn"
+              onClick={() => {
+                onSave(draft);
+                setEditing(false);
+              }}
+            >
+              Save
+            </button>
+            {isOverridden && (
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={() => {
+                  onReset();
+                  setEditing(false);
+                }}
+              >
+                Reset to authored text
+              </button>
+            )}
+          </div>
+        </>
+      ) : (
+        <p>{value || <em className="detail__note">Not written yet — click edit to add one.</em>}</p>
+      )}
+    </section>
+  );
+}
+
+/** Same edit contract as EditableSection but for the bulleted characteristics
+ *  list — one line of the textarea per bullet, blank lines dropped on save. */
+function EditableList({
+  title,
+  items,
+  isOverridden,
+  onSave,
+  onReset,
+}: {
+  title: string;
+  items: string[];
+  isOverridden: boolean;
+  onSave: (items: string[]) => void;
+  onReset: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(items.join("\n"));
+
+  return (
+    <section className="detail__section">
+      <h3>
+        {title}
+        <span>
+          {isOverridden && !editing && <span className="tag tag--info">edited</span>}{" "}
+          <button
+            type="button"
+            className="detail__section-edit"
+            onClick={() => {
+              if (!editing) setDraft(items.join("\n"));
+              setEditing((e) => !e);
+            }}
+          >
+            {editing ? "cancel" : "✎ edit"}
+          </button>
+        </span>
+      </h3>
+      {editing ? (
+        <>
+          <textarea
+            className="detail__edit-area"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="One characteristic per line"
+          />
+          <div className="detail__edit-actions">
+            <button
+              type="button"
+              className="btn"
+              onClick={() => {
+                onSave(
+                  draft
+                    .split("\n")
+                    .map((l) => l.trim())
+                    .filter(Boolean),
+                );
+                setEditing(false);
+              }}
+            >
+              Save
+            </button>
+            {isOverridden && (
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={() => {
+                  onReset();
+                  setEditing(false);
+                }}
+              >
+                Reset to authored list
+              </button>
+            )}
+          </div>
+        </>
+      ) : items.length > 0 ? (
+        <ul className="bullets">
+          {items.map((c, i) => (
+            <li key={i}>{c}</li>
+          ))}
+        </ul>
+      ) : (
+        <p className="detail__note">Nothing listed yet — click edit to add some.</p>
+      )}
+    </section>
+  );
+}
+
+/** Pictures and video. gallery_images (authored, shipped in the asset's own
+ *  JSON) render first; anything uploaded from this browser follows. Images
+ *  persist (size-capped, re-encoded to a data URL); video plays for this
+ *  session only — see the CustomMedia doc comment in overridesState.tsx for
+ *  why, and docs/BACKLOG.md for the real-backend item that would fix it. */
+function MediaSection({ asset, accent }: { asset: Asset; accent: string }) {
+  const overrides = useOverrides();
+  const custom = overrides.assetOverrides[asset.id]?.customMedia ?? [];
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [warn, setWarn] = useState<string | null>(null);
+  const authoredCount = (asset.gallery_images ?? []).length;
+
+  const onFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setWarn(null);
+    for (const file of Array.from(files)) {
+      const isImage = file.type.startsWith("image/");
+      const isVideo = file.type.startsWith("video/");
+      if (!isImage && !isVideo) {
+        setWarn(`${file.name}: not a picture or video — skipped.`);
+        continue;
+      }
+      const id = `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+      if (isImage) {
+        if (file.size > 3_000_000) {
+          setWarn(`${file.name}: over 3 MB, too big to save in the browser — skipped.`);
+          continue;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+          const media: CustomMedia = {
+            id,
+            kind: "image",
+            url: String(reader.result),
+            name: file.name,
+            persisted: true,
+          };
+          overrides.addCustomMedia(asset.id, media);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        const media: CustomMedia = {
+          id,
+          kind: "video",
+          url: URL.createObjectURL(file),
+          name: file.name,
+          persisted: false,
+        };
+        overrides.addCustomMedia(asset.id, media);
+      }
+    }
+  };
+
+  return (
+    <section className="detail__section">
+      <h3>
+        Media
+        <button type="button" className="detail__section-edit" onClick={() => fileRef.current?.click()}>
+          + Upload picture / video
+        </button>
+      </h3>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*,video/*"
+        multiple
+        className="detail__file-input"
+        onChange={(e) => {
+          onFiles(e.target.files);
+          e.target.value = "";
+        }}
+      />
+      {warn && <p className="detail__note">{warn}</p>}
+      <div className="gallery">
+        {authoredCount === 0 && custom.length === 0 && (
+          <p className="detail__note">Nothing here yet — upload a picture or a short clip.</p>
+        )}
+        {(asset.gallery_images ?? []).map((src) => (
+          <GalleryTile key={src} src={src} accent={accent} />
+        ))}
+        {custom.map((m) => (
+          <div className={`gallery__tile${m.kind === "video" ? " gallery__tile--video" : ""}`} key={m.id}>
+            {m.kind === "video" ? (
+              <video src={m.url} controls playsInline preload="metadata" />
+            ) : (
+              <img src={m.url} alt={m.name} />
+            )}
+            <button
+              type="button"
+              className="gallery__tile-remove"
+              onClick={() => overrides.removeCustomMedia(asset.id, m.id)}
+              aria-label={`Remove ${m.name}`}
+            >
+              ✕
+            </button>
+            {!m.persisted && <span className="gallery__tile-badge">not saved — lost on refresh</span>}
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 

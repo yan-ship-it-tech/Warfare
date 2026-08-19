@@ -1,16 +1,15 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Procedural per-domain ground textures.
 //
-// Honest scope note: this environment cannot fetch real photographs or
-// satellite imagery (the egress policy blocks image hosts, and the web-fetch
-// tool available here returns page text, not binary assets) — see
-// docs/DECISIONS.md for the full explanation and the path to real photos if
-// one becomes available (either a permitted image host, or reference images
-// supplied directly and embedded as local files). Everything here is
-// generated, not sourced: SVG turbulence noise standing in for a material —
-// dirt/furrows for land, chop for sea, starfield for space, and so on — so
-// each domain lane reads as a distinct physical surface rather than a flat
-// tint. It's a real improvement over a flat gradient; it is not photography.
+// Deliberately not photorealistic (Pass 5 direction change — see
+// docs/DECISIONS.md): a real satellite basemap was tried and reads as a
+// battle-management system rather than a teaching tool, and fighting real
+// geography against the non-linear distance-band compression this app
+// depends on doesn't work. This is a topographic-illustration style instead
+// — closer to an editorial explainer graphic (hillshade + contour lines,
+// muted natural palette) than either a tech-pitch-deck gradient or a photo.
+// Everything here is generated (SVG turbulence + procedural contour rings),
+// which is the point: it should read as unambiguously stylized.
 // ─────────────────────────────────────────────────────────────────────────
 import type { Domain } from "../types";
 
@@ -21,19 +20,21 @@ interface TerrainSpec {
   /** Two-stop tint the noise is colorized into, dark → light. */
   colors: [string, string];
   /** Extra overlay pattern drawn on top of the noise. */
-  overlay: "furrows" | "waves" | "stars" | "circuit" | "hatch" | "grid" | "none";
+  overlay: "furrows" | "waves" | "stars" | "circuit" | "hatch" | "grid" | "contour" | "none";
   opacity: number;
 }
 
+// Muted, natural, topo-map palette — shifted away from the earlier
+// tech/circuit-board hues toward what an editorial terrain illustration uses.
 const SPECS: Record<Domain, TerrainSpec> = {
-  land: { freq: 0.9, octaves: 2, colors: ["#3a3226", "#5c4f38"], overlay: "furrows", opacity: 0.5 },
-  air: { freq: 0.012, octaves: 3, colors: ["#0d1b2e", "#2c4566"], overlay: "none", opacity: 0.55 },
-  sea: { freq: 0.35, octaves: 3, colors: ["#0d2b34", "#1f5a68"], overlay: "waves", opacity: 0.55 },
-  space: { freq: 0.9, octaves: 2, colors: ["#050514", "#241a3d"], overlay: "stars", opacity: 0.6 },
-  cyber_ew: { freq: 0.6, octaves: 2, colors: ["#170f24", "#3a2452"], overlay: "circuit", opacity: 0.5 },
-  logistics: { freq: 0.5, octaves: 2, colors: ["#26301f", "#3d4a2c"], overlay: "hatch", opacity: 0.45 },
-  medical: { freq: 0.4, octaves: 2, colors: ["#2a1418", "#3d2024"], overlay: "grid", opacity: 0.4 },
-  c2_comms: { freq: 0.5, octaves: 2, colors: ["#0e2622", "#1c4a41"], overlay: "circuit", opacity: 0.5 },
+  land: { freq: 0.7, octaves: 2, colors: ["#4a4632", "#6b6845"], overlay: "contour", opacity: 0.4 },
+  air: { freq: 0.01, octaves: 3, colors: ["#16283f", "#33547c"], overlay: "none", opacity: 0.45 },
+  sea: { freq: 0.3, octaves: 3, colors: ["#123842", "#256e7d"], overlay: "waves", opacity: 0.5 },
+  space: { freq: 0.9, octaves: 2, colors: ["#0a0a1e", "#241a3d"], overlay: "stars", opacity: 0.55 },
+  cyber_ew: { freq: 0.5, octaves: 2, colors: ["#241a30", "#453258"], overlay: "circuit", opacity: 0.4 },
+  logistics: { freq: 0.45, octaves: 2, colors: ["#333d27", "#4c5936"], overlay: "hatch", opacity: 0.38 },
+  medical: { freq: 0.35, octaves: 2, colors: ["#332022", "#48292c"], overlay: "grid", opacity: 0.35 },
+  c2_comms: { freq: 0.45, octaves: 2, colors: ["#173430", "#26534a"], overlay: "circuit", opacity: 0.4 },
 };
 
 function overlayMarkup(kind: TerrainSpec["overlay"], seed: number): string {
@@ -82,6 +83,24 @@ function overlayMarkup(kind: TerrainSpec["overlay"], seed: number): string {
         <pattern id="ov" width="40" height="40" patternUnits="userSpaceOnUse">
           <path d="M40 0H0V40" fill="none" stroke="#fff" stroke-opacity="0.06" stroke-width="1"/>
         </pattern>`;
+    case "contour": {
+      // Hand-drawn-feeling elevation contour rings — the topo-map cue that
+      // reads as "illustrated terrain" rather than either a flat tint or a
+      // photo. Irregular (not perfect circles) so it doesn't look vector-CAD.
+      let s = seed;
+      const rnd = () => ((s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+      let rings = "";
+      for (let r = 26; r < 300; r += 34) {
+        const jx = (rnd() - 0.5) * 18;
+        const jy = (rnd() - 0.5) * 18;
+        const rx = r * (0.9 + rnd() * 0.2);
+        const ry = r * (0.75 + rnd() * 0.2);
+        rings += `<ellipse cx="${120 + jx}" cy="${140 + jy}" rx="${rx.toFixed(
+          1,
+        )}" ry="${ry.toFixed(1)}" fill="none" stroke="#000" stroke-opacity="0.1" stroke-width="1"/>`;
+      }
+      return `<pattern id="ov" width="300" height="300" patternUnits="userSpaceOnUse">${rings}</pattern>`;
+    }
     case "none":
     default:
       return "";
@@ -104,10 +123,19 @@ function svgFor(domain: Domain, seed: number): string {
       <stop offset="0" stop-color="${c1}"/>
       <stop offset="1" stop-color="${c2}"/>
     </linearGradient>
+    <!-- Fixed upper-left light source — a cheap hillshade cue that reads
+         as "relief" rather than a flat fill, consistent across every lane
+         so the whole scene shares one implied light direction. -->
+    <linearGradient id="hs" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.12"/>
+      <stop offset="0.5" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0.14"/>
+    </linearGradient>
     ${overlay}
   </defs>
   <rect width="240" height="240" fill="url(#g)"/>
   <rect width="240" height="240" filter="url(#n)" fill="#fff" opacity="${spec.opacity}"/>
+  <rect width="240" height="240" fill="url(#hs)"/>
   ${spec.overlay !== "none" ? '<rect width="240" height="240" fill="url(#ov)"/>' : ""}
 </svg>`.trim();
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;

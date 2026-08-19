@@ -21,8 +21,12 @@ export function Lanes({ domains, proj, visibleSides }: Props) {
       {domains.map((domain, laneIndex) => {
         const accent = DOMAIN_ACCENT[domain.id] ?? "#7f8794";
         const top = proj.laneY(laneIndex) - laneH / 2;
-        const offsetX = proj.laneOffsetX(laneIndex);
         const zeroX = proj.zeroXAt(laneIndex);
+        // Decorative-only: the ground plane steps back a little further with
+        // each lane down the stack, and shrinks slightly, to read as a
+        // receding cross-section — nodes and the ruler never see this value.
+        const visualOffset = laneIndex * VIEW.laneVisualSkewPx;
+        const recede = Math.min(0.08, laneIndex * 0.012);
         return (
           <Fragment key={domain.id}>
             <div
@@ -30,9 +34,10 @@ export function Lanes({ domains, proj, visibleSides }: Props) {
               style={{
                 top,
                 height: laneH,
-                left: VIEW.scenePadPx.x + offsetX,
+                left: VIEW.scenePadPx.x + visualOffset,
                 width: proj.halfWidthPx * 2 + VIEW.zeroGutterPx,
                 ["--lane-accent" as string]: accent,
+                ["--recede" as string]: String(recede),
               }}
             >
               <div className="lane__face" />

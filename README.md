@@ -36,15 +36,13 @@ repo Settings → Pages → Source → "GitHub Actions".
 
 ## What's here
 
-- **Map view (default)**: MapLibre GL over real satellite imagery (Esri World
-  Imagery) and real elevation terrain (AWS Terrain Tiles), tilted to a 3D
-  oblique camera. Every asset's real `distance_km_from_zero` is projected onto
-  it from a real anchor point (`src/map/geoPlacement.ts`) — real terrain, real
-  coordinates, illustrative placement, same honesty rule as the rest of the
-  tool. 12 of 27 assets carry a real, licensed equipment photograph sourced
-  from Wikimedia Commons. Switch to "Schematic" in the toolbar for the
-  original distance-band cross-section.
-- Scrollable cross-section (Schematic view). Horizontal scroll moves toward and through the
+- Scrollable, illustrated cross-section — deliberately not a real map (tried
+  in an earlier pass, reverted; see docs/DECISIONS.md Pass 5). A generated
+  topographic-style ground plane (contour lines, directional shading, no
+  photography), each domain lane stepping back and dimming slightly for a
+  2.5D read, and air/space assets floating above their true position on a
+  visible tether. A zoom control scales the whole scene as one unit.
+  Horizontal scroll moves toward and through the
   zero line into the opposing side; vertical scroll moves between domain
   layers. A single persistent ruler labels distance independently per side —
   every node's screen position matches its true distance, in every lane.
@@ -53,8 +51,12 @@ repo Settings → Pages → Source → "GitHub Actions".
   hardcoded in a component.
 - Click any asset for the full detail panel: a guaranteed cost tile plus 3
   comparable key facts, role, characteristics, employment, what changed
-  versus traditional warfare, notable sourced moments, dependencies,
-  imagery and sources — with unsourced claims flagged as unverified.
+  versus traditional warfare, notable sourced moments, dependencies, media
+  and sources — with unsourced claims flagged as unverified.
+- Every free-text field in the detail panel is editable in place (inline
+  "edit", independent "reset to authored text"), and the Media section
+  accepts pictures and video uploaded from your device — pictures persist,
+  video plays for the current session (see the backlog for why).
 - **System swap**: an asset tagged with a `comparison_group` (14 of 27) can
   show any same-side, same-role system from `data/catalog/` instead — e.g.
   Russia's armor slot showing T-90M instead of the default T-72B3 — without
@@ -104,9 +106,6 @@ src/
     loader.ts             globs, validates, merges edges, builds pending stubs
     validate.ts           runtime schema checks
     model.ts              loader-derived types (does not extend the schema)
-  map/
-    geoPlacement.ts        real-geography projection (pure, no DOM)
-    MapView.tsx             MapLibre GL real-terrain view
   scene/
     projection.ts         battlefield → screen geometry (pure, no DOM)
     Scene.tsx             scroll container, lanes, rail

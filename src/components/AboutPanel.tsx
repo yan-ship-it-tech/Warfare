@@ -81,40 +81,52 @@ export function AboutPanel({ world }: { world: WorldModel }) {
           unverified rather than presented as fact. Data health lists every one of those flags.
         </p>
 
-        <h3>Map view — real satellite imagery and real terrain</h3>
+        <h3>Why this isn't a real map</h3>
         <p>
-          The Map view (default; switch with the "Map / Schematic" toggle in the toolbar) is
-          MapLibre GL over Esri World Imagery satellite tiles and AWS's open elevation data, tilted to
-          a real 3D camera — not generated art. Asset positions on it come from the same
-          <code>distance_km_from_zero</code> every asset already carries, projected from one real
-          anchor point near Orikhiv, Zaporizhzhia Oblast — a real place on real terrain, chosen because
-          it's typical of most of the front, not because anything is claimed to sit there specifically.
-          The real Donbas/Zaporizhzhia front is mostly flat, open steppe, not the dramatic mountains a
-          tilted 3D view might suggest — terrain is exaggerated (1.6×) to make that real, subtle relief
-          legible, never to invent elevation that isn't there. Same rule as everywhere else in this
-          tool: real coordinates, real imagery, illustrative placement — not a measured unit position.
+          A literal satellite-photo map was tried (Pass 4) and reverted (Pass 5) — real geography
+          fights the non-linear distance-band compression this tool depends on (0–5 km and 500+ km
+          cannot share one real-world scale and still be legible), and it read as a battle-management
+          system rather than a teaching tool. The battlefield here is deliberately illustrated instead:
+          a topographic-style ground texture (procedurally generated — contour lines, directional
+          shading, no photography), each domain lane stepping back and dimming slightly as it goes
+          down for a 2.5D cross-section read, and air/space assets floating above their true position
+          on a visible tether — all decorative, layered on top of coordinates that are otherwise exactly
+          what the ruler and the detail panel agree on. Zoom controls (bottom right) scale the whole
+          scene, icons and terrain together, as one unit. See docs/DECISIONS.md Pass 5 for the full
+          reasoning and what was tried first.
         </p>
 
         <h3>Equipment photography — sourced, not generated</h3>
         <p>
           12 of 27 assets — the most recognizable named systems on each side — carry a real, licensed
-          photograph (Wikimedia Commons, credited in that asset's Sources) as both their map icon and
-          detail-panel image, with a graceful fallback to the generated icon set if a photo URL ever
-          breaks. The rest still use the generated icon set: mostly abstract nodes (C2 networks,
-          logistics hubs) with no good equipment photo to speak of, plus two deliberately-generic
-          "representative infrastructure" placeholders left ungrounded on purpose rather than dressed
-          up with a specific real facility's photo. See docs/BACKLOG.md for the full picture on video
-          and destroyed-infrastructure imagery specifically, which are handled differently.
+          photograph (Wikimedia Commons, credited in that asset's Sources), shown only in the detail
+          panel's Media section — never as the map glyph, which stays icon-only at every zoom level on
+          purpose (a 32px marker is too small for a photo to read at). The rest still use the generated
+          icon set: mostly abstract nodes (C2 networks, logistics hubs) with no good equipment photo to
+          speak of, plus two deliberately-generic "representative infrastructure" placeholders left
+          ungrounded on purpose rather than dressed up with a specific real facility's photo.
+        </p>
+
+        <h3>Editing text and adding your own media</h3>
+        <p>
+          Every free-text field (role, employment notes, "what changed," key characteristics) has an
+          "edit" control right in its own section of the detail panel — changes save to this browser
+          immediately, with a one-click reset back to the shipped text. The Media section's "Upload"
+          button accepts pictures and short clips from your device: pictures are saved the same way (up
+          to 3 MB each); video is not — a real clip is far past what a browser can persist locally, so
+          it plays for the current session only and is clearly marked "not saved" rather than silently
+          vanishing on the next visit.
         </p>
 
         <h3>What's not built yet</h3>
         <ul>
-          <li>Video of each asset in typical use, and destroyed-infrastructure photography
-            specifically — different sourcing problem from equipment stills; see docs/BACKLOG.md.</li>
-          <li>The dependency-line overlay only renders in Schematic view, not yet on the map.</li>
-          <li>A backend — band, placement, and system-swap edits persist to this browser's local storage
-            only, not shared across devices or people.</li>
-          <li>Drag-to-reposition and full inline editing of asset text/images from the map itself.</li>
+          <li>Video that survives a page reload, and destroyed-infrastructure photography specifically
+            — different sourcing problem from equipment stills; see docs/BACKLOG.md.</li>
+          <li>The dependency-line overlay on the terrain background is fine at rest but doesn't yet
+            route parallel edges apart on a dense hub — hover still isolates them (see BACKLOG #8).</li>
+          <li>A backend — every edit in this panel (text, media, placement, system-swap) persists to
+            this browser's local storage only, not shared across devices or people.</li>
+          <li>Drag-to-reposition an asset directly from the map, rather than the numeric editor.</li>
           <li>Per-asset reactive vignettes beyond the four already wired up — everything else falls
             back to a neutral pulse.</li>
           <li>The remaining catalog systems as full map assets (currently swap-only options for an

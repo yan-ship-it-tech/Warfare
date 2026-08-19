@@ -1,10 +1,18 @@
 // A single placed node: either a real asset or a pending stub standing in for
 // an asset a connection points at but which has not been built yet.
+//
+// Deliberately icon-only, never a photo (Pass 5): real equipment photos live
+// in the detail panel gallery, where size and context make them useful — a
+// 32px map glyph is too small for a photo to read at, and it fights the
+// "clearly stylized, not a real map" read the rest of the scene aims for.
+// The `--altitude` per domain is a purely visual pop (translateY + a ground
+// tether/shadow), not a coordinate change — y is still whatever placeNodes()
+// computed; see docs/DECISIONS.md Pass 5.
 import { useEffect, useState } from "react";
 import type { PlacedNode } from "./projection";
 import { resolveIcon } from "../icons/registry";
 import { resolveVignette } from "./vignettes";
-import { DOMAIN_ACCENT, SIDE_ACCENT, SIDE_DIRECTION } from "../config/ui";
+import { DOMAIN_ACCENT, DOMAIN_ALTITUDE_PX, SIDE_ACCENT, SIDE_DIRECTION } from "../config/ui";
 import { resolveAssetDisplay } from "../data/catalog";
 import { useOverrides } from "../state/overridesState";
 
@@ -39,11 +47,10 @@ export function AssetNode({
   const label = isStub ? node.stub.label : (display?.name ?? node.asset.name);
   const km = isStub ? node.stub.distance_km_from_zero : node.asset.distance_km_from_zero;
   const category = isStub ? undefined : node.asset.category;
-  const iconPath = isStub ? "" : node.asset.icon_image;
 
   const group = isStub ? undefined : node.asset.group;
   const Icon = resolveIcon({ group, category, id: node.id, domain });
-  const [imageFailed, setImageFailed] = useState(false);
+  const altitude = DOMAIN_ALTITUDE_PX[domain] ?? 0;
   const [playing, setPlaying] = useState(false);
 
   const { vignette } = resolveVignette(
@@ -78,10 +85,16 @@ export function AssetNode({
       className={className}
       style={{
         left: x,
-        top: y,
+        // The card itself floats `altitude` px above its true ground point
+        // (y from placeNodes(), untouched) — a tether below reconnects it,
+        // so the *button's hit target* is the only thing that moves, and by
+        // a small, purely decorative amount. Label/tooltip position moves
+        // with it, which reads fine since they're part of the same "card".
+        top: y - altitude,
         ["--accent" as string]: accent,
         ["--side-base" as string]: SIDE_ACCENT[side].base,
         ["--dir" as string]: String(dir),
+        ["--altitude" as string]: `${altitude}px`,
       }}
       onClick={() => onSelect(node.id)}
       onMouseEnter={() => onHover(node.id)}
@@ -95,17 +108,9 @@ export function AssetNode({
           : `${label}, ${display?.category ?? node.asset.category}, ${km} km from the zero line${display?.isSwapped ? " (swapped from default)" : ""}`
       }
     >
+      {altitude > 0 && <span className="node__tether" aria-hidden="true" />}
       <span className="node__glyph">
-        {!isStub && iconPath && !imageFailed ? (
-          <img
-            src={iconPath}
-            alt=""
-            onError={() => setImageFailed(true)}
-            draggable={false}
-          />
-        ) : (
-          <Icon className="node__svg" />
-        )}
+        <Icon className="node__svg" />
         {playing && <span className={`vignette vignette--${vignette.kind}`} aria-hidden="true" />}
         {display?.isSwapped && <span className="node__swap-badge" title="Swapped from the default system">⇄</span>}
       </span>

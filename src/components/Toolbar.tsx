@@ -24,26 +24,6 @@ export function Toolbar({ world }: { world: WorldModel }) {
         </div>
       </div>
 
-      <div className="toolbar__group" role="group" aria-label="View mode">
-        <span className="toolbar__legend">View</span>
-        <button
-          type="button"
-          className={`chip${view.mode === "map" ? " is-on" : ""}`}
-          onClick={() => view.setMode("map")}
-          title="Real satellite imagery and elevation terrain, tilted to an oblique aerial view"
-        >
-          Map
-        </button>
-        <button
-          type="button"
-          className={`chip${view.mode === "schematic" ? " is-on" : ""}`}
-          onClick={() => view.setMode("schematic")}
-          title="Distance-band cross-section — the teaching view with the ruler and domain lanes"
-        >
-          Schematic
-        </button>
-      </div>
-
       <div className="toolbar__group" role="group" aria-label="Sides">
         <span className="toolbar__legend">Sides</span>
         {(["side_a", "side_b"] as Side[]).map((s) => (

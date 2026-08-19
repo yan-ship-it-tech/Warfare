@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DEFAULT_BANDS, loadWorld } from "./data/loader";
 import { Scene } from "./scene/Scene";
-import { MapView } from "./map/MapView";
 import { Toolbar } from "./components/Toolbar";
 import { DetailPanel } from "./components/DetailPanel";
 import { AboutPanel } from "./components/AboutPanel";
@@ -35,11 +34,7 @@ function AppInner() {
     <div className={`app${view.selectedId ? " has-detail" : ""}`}>
       <Toolbar world={world} />
       <main className="app__main">
-        {view.mode === "map" ? (
-          <MapView world={world} />
-        ) : (
-          <Scene world={world} replayNonce={replayNonce} />
-        )}
+        <Scene world={world} replayNonce={replayNonce} />
         <Legend world={world} />
       </main>
       <DetailPanel world={world} onReplay={replay} />

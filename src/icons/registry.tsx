@@ -8,10 +8,13 @@
 // rather than a built tool in front of procurement. Photos still earn their
 // place in the detail panel gallery, where size and context make them useful.
 //
-// The schema is untouched: every asset keeps its `icon_image` path. The loader
-// uses that image when the file exists, and falls back to the symbol below,
-// picked by `category` and then by `domain`. So dropping real art into
-// public/icons/ later upgrades the map with no code or data change.
+// Pass 5: the map now renders this icon set unconditionally, even for assets
+// that carry a real photo — a 32px glyph is too small for a photo to read at,
+// and mixing photos into map markers fought the "clearly stylized, not a
+// real map" read the rest of the scene aims for (see docs/DECISIONS.md).
+// `icon_image` stays in the schema for the detail panel and for future use,
+// but AssetNode.tsx no longer reads it for the map glyph — every node here
+// is picked by `group`, then `category`, then `domain`.
 // ─────────────────────────────────────────────────────────────────────────
 import type { JSX } from "react";
 import type { Domain } from "../types";

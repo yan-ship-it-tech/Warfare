@@ -15,11 +15,14 @@ import {
 import type { AssetGroup, ConnectionType, Side } from "../types";
 
 export type PanelId = "about" | "health" | "bands" | "categories" | null;
-export type ViewMode = "map" | "schematic";
 
 export interface ViewState {
-  mode: ViewMode;
-  setMode: (m: ViewMode) => void;
+  /** Uniform CSS-transform scale on the whole scene — the "zoom" control.
+   *  Distinct from the browser/OS zoom: this scales node icons, labels and
+   *  the terrain background together so they grow as a unit, independent of
+   *  any real map tiles (there are none — see docs/DECISIONS.md Pass 5). */
+  sceneZoom: number;
+  setSceneZoom: (z: number | ((prev: number) => number)) => void;
 
   selectedId: string | null;
   hoveredId: string | null;
@@ -66,8 +69,11 @@ const ALL_CONNECTION_TYPES: ConnectionType[] = [
 
 const Ctx = createContext<ViewState | null>(null);
 
+const ZOOM_MIN = 0.6;
+const ZOOM_MAX = 2;
+
 export function ViewStateProvider({ children }: { children: ReactNode }) {
-  const [mode, setMode] = useState<ViewMode>("map");
+  const [sceneZoom, setSceneZoomRaw] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [hoveredConnectionKey, setHoveredConnectionKey] = useState<string | null>(null);
@@ -116,10 +122,17 @@ export function ViewStateProvider({ children }: { children: ReactNode }) {
   const showAllGroups = useCallback(() => setHiddenGroups(new Set()), []);
   const hideAllGroups = useCallback((allGroupIds: AssetGroup[]) => setHiddenGroups(new Set(allGroupIds)), []);
 
+  const setSceneZoom = useCallback((z: number | ((prev: number) => number)) => {
+    setSceneZoomRaw((prev) => {
+      const next = typeof z === "function" ? z(prev) : z;
+      return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, next));
+    });
+  }, []);
+
   const value = useMemo<ViewState>(
     () => ({
-      mode,
-      setMode,
+      sceneZoom,
+      setSceneZoom,
       selectedId,
       hoveredId,
       hoveredConnectionKey,
@@ -144,7 +157,8 @@ export function ViewStateProvider({ children }: { children: ReactNode }) {
       setOpenPanel,
     }),
     [
-      mode,
+      sceneZoom,
+      setSceneZoom,
       selectedId,
       hoveredId,
       hoveredConnectionKey,
