@@ -24,7 +24,7 @@ Two renderers, both real, neither a mockup:
   disagree about where anything is.
 
 **Read `docs/DECISIONS.md` before assuming anything about *why* the code
-looks the way it does.** It's a full build log across 7 passes, written
+looks the way it does.** It's a full build log across 8 passes, written
 specifically so a fresh session doesn't have to rediscover reasoning that's
 already settled — rendering approach, licensing constraints, what got
 reverted and why, every place a later pass's literal instructions collided
@@ -40,6 +40,8 @@ making an architectural change, not optional history.
 | `data/catalog/*.json` | Swap-target systems (per-asset "compare this slot against a different real system" dropdown). |
 | `src/data/loader.ts` | `loadWorld()` — assembles the `WorldModel` from the JSON above plus live overrides. Validates every asset via `src/data/validate.ts`, never throws on a bad file (degrades gracefully into a Data Health issue instead). |
 | `src/data/model.ts` | Loader-derived types sitting on top of the schema in `src/types.ts` (the actual `Asset` contract). |
+| `src/data/placement.ts` | **Engagement domain vs. platform domain** — resolves how high off the deck to draw an asset. Read the file header before touching altitude/tether logic in either renderer. |
+| `src/scene/labelGrid.ts` | The one label-collision index both renderers share (uniform grid, cost scales with local crowding rather than roster size). |
 | `src/three/` | The WebGL scene: `Scene3D.tsx` (main component), `worldMapping.ts` (world-unit conversion + `DOMAIN_ALTITUDE`), `terrain3d.ts` (synthetic terrain), `models.ts` (`HERO_BUILDERS` — authored, not sourced, low-poly 3D models for a subset of assets), `scenery.ts` (decorative trench lines/obstacle belts/power plant/etc., not clickable), `props.ts` (instanced scatter — trees/craters). |
 | `src/state/overridesState.tsx` + `persistence.ts` | The live-edit layer: distance-band edits, per-asset placement/text/media overrides, and brand-new assets built in the Asset Editor all persist here — to `localStorage` by default, or a shared Cloudflare Worker if `VITE_SYNC_URL` is configured (see `docs/DEPLOY_SYNC_WORKER.md`). |
 | `src/components/` | `Toolbar`, `DetailPanel` (per-asset view + inline edit controls), `AssetEditorPanel` (build a whole new asset from scratch, live), `DataHealthPanel`, `BandsEditorPanel`, `LessonsPanel`, `AboutPanel`, `Legend`, `SyncControls`, `CategoryFilterMenu`. |
@@ -73,6 +75,14 @@ headless Playwright smoke pass (Chromium is pre-installed at
   `side_a` / `side_b`; the Ukraine/Russia labeling lives entirely in
   `src/config/ui.ts`. Don't hardcode "Ukraine"/"Russia" into `data/` or
   loader logic.
+- **`domain` is what an asset *fights in*, not where it *sits*.** Every SAM
+  battery is `domain: "air"` because a Patriot is an air-domain weapon — but
+  it stands on the ground. Anything asking "how high do I draw this?" must go
+  through `resolvePlatformDomain()` in `src/data/placement.ts` (explicit
+  `platform_domain`, else inferred from the category prefix), never `domain`
+  directly. Pass 7 fixed the tether bug for tanks and ships and missed 16
+  assets by keying on `domain`; Pass 8 split the two meanings. Both renderers
+  now go through the same resolver — keep it that way.
 - **`verification` is derived, never hand-written.** Same for `band_id`
   display vs. actual placement — `distance_km_from_zero` against the
   *current* (possibly user-edited) bands is the source of truth; the stored
