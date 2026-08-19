@@ -306,8 +306,21 @@ function simplify(points, toleranceKm) {
 // Tag precedence, most specific first. A way carrying both `railway=rail` and a
 // highway tag (level crossings do exist) reads as rail, which is the more
 // load-bearing feature for this tool.
+// Pokrovsk's OSM rail data turned out to be almost entirely `railway=disused`
+// — a Soviet-era freight yard mapped as no-longer-operating track, not as
+// active `rail`. That's still real trackage (alignment, sidings, yard
+// throat) and exactly what "dense rail junction" in this AOI's note refers
+// to, so it counts as `rail_line` here rather than being dropped on the
+// active/disused distinction. `abandoned`/`construction` are the same call:
+// physical rail geometry, whatever its current operating status. `platform`
+// and the explicit `railway=no` are deliberately excluded — a station
+// platform is not a track. Status survives in `tags.railway` on the output
+// feature, so a renderer that wants to distinguish operating from disused
+// track still can.
+const RAIL_TRACK_VALUES = new Set(["rail", "disused", "abandoned", "construction", "narrow_gauge"]);
+
 function classify(tags = {}) {
-  if (tags.railway === "rail") return "rail_line";
+  if (RAIL_TRACK_VALUES.has(tags.railway)) return "rail_line";
   if (tags.waterway === "river") return "river";
   if (tags.natural === "tree_row") return "tree_row";
   if (tags.landuse === "forest" || tags.natural === "wood") return "tree_row";

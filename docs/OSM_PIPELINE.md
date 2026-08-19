@@ -9,13 +9,13 @@ Script: `scripts/fetch-osm-data.mjs`. Output: `data/osm/<aoi>.json`.
 
 ## Status: Pokrovsk is in; the fetch is still blocked in agent sessions
 
-`data/osm/pokrovsk.json` is committed (Pass 12) — produced from a GeoJSON
-export pasted in from a phone, not from a fetch run inside this repo's
+`data/osm/pokrovsk.json` is committed (Pass 12/13) — produced from GeoJSON
+exports pasted in from a phone, not from a fetch run inside this repo's
 sandbox (see below). `data/osm/kramatorsk.json` still needs the same
-treatment. One data quality note carried over: the `rail_line` layer in
-`pokrovsk.json` is a single 5 m segment, not the dense junction the AOI note
-describes — see `docs/BACKLOG.md`, Pass 11 section, for the follow-up
-needed before it's trustworthy.
+treatment. One resolved data-quality note: Pokrovsk's rail network is almost
+entirely tagged `railway=disused` rather than `rail` (a former Soviet-era
+freight yard, still real trackage) — `classify()` now recognizes that and
+the file carries 303 rail features. See `docs/DECISIONS.md` Pass 13.
 
 The reduce/projection half of the pipeline is written, exercised and
 deterministic. The **fetch half has never run to completion from inside this

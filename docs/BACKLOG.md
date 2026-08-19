@@ -22,17 +22,22 @@ through a new GeoJSON branch in `--raw=`. `data/osm/pokrovsk.json` is
 committed. `data/osm/kramatorsk.json` still needs the same treatment — see
 `docs/OSM_PIPELINE.md`.
 
-### Pokrovsk rail data is thin — one 5 m segment, not a junction
-The GeoJSON export that produced `data/osm/pokrovsk.json` carries exactly
-one `railway=rail` way (`osm_1085918173`, two points, 5 m long) — nowhere
-near what "dense rail junction... rail yards" implies for this AOI. Every
-other class (99 roads, 3 rivers, 1010 tree/forest features) looks properly
-populated, so this isn't a bbox or format problem — it looks like the
-overpass-turbo session that produced the export either wasn't zoomed/panned
-to include the rail yard when Export ran, or the query used dropped the
-`railway=rail` selector. Needs a follow-up export focused on rail before
-`rail_line` in this file can be trusted for anything beyond "the pipeline
-plumbing works."
+### Pokrovsk rail data — resolved (Pass 13); it's real, it's just `disused`
+Turned out not to be missing at all: querying `way["railway"="rail"]` alone
+returns one 5 m fragment because almost none of Pokrovsk's rail network is
+tagged the active value. A follow-up `way["railway"]` (any value) query
+returned 306 ways, 299 of them `railway=disused` — a large former
+Soviet-era freight yard, still mapped in full geometric detail, just not
+flagged as operating. `classify()` in `scripts/fetch-osm-data.mjs` now
+treats `disused`/`abandoned`/`construction`/`narrow_gauge` as `rail_line`
+alongside `rail` (excluding `platform` and the explicit `railway=no`, which
+are stations, not track); the two exports were merged (1 duplicate way
+deduped) and `data/osm/pokrovsk.json` rebuilt: 303 rail features, ~229 km of
+alignment (the bbox's "any node inside" rule pulls in a lot of full-length
+ways whose real extent is far larger than the 17 km AOI — expected Overpass
+behavior, not a bug). Every rail feature keeps its original `railway=*`
+value in `tags`, so a renderer that wants to distinguish "still operating"
+from "disused yard" can.
 
 ### ODbL attribution is owed the moment anything renders
 OSM data requires a visible "© OpenStreetMap contributors" credit. The

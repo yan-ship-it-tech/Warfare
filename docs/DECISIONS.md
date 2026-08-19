@@ -1840,3 +1840,69 @@ plausible `xz` values relative to the AOI centre. Re-ran the reduce a second
 time on the same input; output byte-identical (`cmp` clean), confirming the
 new GeoJSON branch didn't break the pipeline's existing determinism
 guarantee.
+
+---
+
+# Pass 13 — the "thin rail" gap from Pass 12 was a tag-value assumption, not missing data
+
+Pass 12 flagged Pokrovsk's `rail_line` layer (one 5 m fragment) as a real
+data gap and asked the user to re-export focused on rail. They did, from a
+link built for exactly that: `way["railway"]` (any value, no `="rail"`
+restriction) over the same bbox, run in overpass-turbo on their phone,
+exported as GeoJSON and pasted in — the same route Pass 12 established.
+
+## 1. It wasn't missing — it's `disused`
+
+The wider query returned 306 ways. 299 are `railway=disused`, 3 are
+`abandoned`, 1 `platform`, 1 `no`, and the original 1 `rail`. This is a real
+Soviet-era freight yard — sidings, spurs, crossovers, a `service=yard`
+throat with dozens of parallel tracks around the historic Pokrovsk
+junction — mapped in full geometric detail but tagged as no longer
+operating rather than as `railway=rail`. `classify()`'s brief-literal
+`railway="rail"` selector was doing exactly what it was told; the AOI just
+doesn't match that assumption. Widened `RAIL_TRACK_VALUES` to
+`{rail, disused, abandoned, construction, narrow_gauge}` — physical track
+geometry regardless of current operating status — and explicitly excluded
+`platform`/`no` (station infrastructure, not track; both showed up as
+separate `LineString` ways in the export and would have been wrongly
+folded in under a bare `tags.railway` truthiness check).
+
+## 2. Merge, not replace
+
+The two GeoJSON exports overlap by exactly one way (the original
+`osm_1085918173` fragment, present in both). Merged by feature id before
+reducing — 1113 + 306 → 1418 unique input features, 1415 after the 3
+platform/no exclusions — rather than discarding Pass 12's tree/road/river
+data and re-fetching everything. `data/osm/pokrovsk.json` now carries
+`rail_line: 303` (up from 1), everything else unchanged: `tree_row: 1010`,
+`road: 99`, `river: 3`.
+
+**Flagged:** total rail length sums to ~229 km, which sounds absurd for a
+17 km AOI. It isn't a bug — Overpass's bbox filter on ways includes the
+*full* geometry of any way with at least one node inside the box, and
+several of these disused main-line ways run for tens of kilometres beyond
+Pokrovsk in both directions (this is the same bbox-overshoot behavior noted
+for the tree/road data back in the original pipeline design, just more
+visible here because rail ways happen to be long). Nothing to fix — a
+renderer consuming this file already has to decide what to do with
+geometry that extends past the AOI's nominal 17 km box, same as any other
+layer.
+
+## Where the brief and prior passes disagreed
+
+Pass 12 treated the thin rail layer as data to *flag*, and it was right to —
+at that point there was no way to tell "genuinely sparse" from "wrong tag
+value" without more data. This pass had that data and could tell the
+difference. Nothing about Pass 12's `--raw=` GeoJSON support needed to
+change; `classify()` was the only thing that was actually wrong for this
+AOI, and it's a one-line widening, not a redesign.
+
+## Verification
+
+`npm run build` clean. Re-ran the merged reduce; `counts.skipped.unclassified`
+is exactly 3 (the `platform`/`no` features, confirmed by id against the raw
+export — not the 299 `disused` ways silently vanishing into the same
+bucket). Spot-checked rail feature count (303), summed `length_km` across
+all rail features (~229 km, explained above), and range-checked `xz` values
+for the rail layer against the tree/road layers already in the file to
+confirm the merge didn't disturb the existing projection.
