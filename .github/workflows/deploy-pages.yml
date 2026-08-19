@@ -28,14 +28,17 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      # Tried enablement: true to have this bootstrap the Pages site itself
+      # on first run — GitHub's own security model blocks that: the default
+      # GITHUB_TOKEN (whatever permissions the workflow grants it) cannot
+      # *create* a Pages site, confirmed via "Resource not accessible by
+      # integration" even with pages: write above. Enabling Pages for the
+      # first time genuinely requires either a human in Settings → Pages, or
+      # a personal access token with repo-admin scope — there is no
+      # workflow-only path around that. So: one manual step, once —
+      # Settings → Pages → Source → "GitHub Actions" — and every push
+      # deploys automatically after that.
       - uses: actions/configure-pages@v5
-        with:
-          # First run had no Pages site to configure yet (repo Settings →
-          # Pages had never been touched) and failed with "Get Pages site
-          # failed... verify Pages is enabled". This creates the Pages site
-          # via the API on first run instead of requiring that one manual
-          # click — safe to leave on for every run after too.
-          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
