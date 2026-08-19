@@ -10,6 +10,12 @@ const standalone = process.env.STANDALONE === "1";
 export default defineConfig({
   plugins: [react()],
   server: { port: 5173, host: true },
+  // GitHub Pages serves this as a project site at /Warfare/, not the domain
+  // root — without `base` set, every built asset URL comes out as "/assets/
+  // ...", which 404s on Pages and leaves the page blank. The standalone
+  // build (Claude Artifact) inlines everything into one file, so base there
+  // stays "/" — it never issues a separate asset request in the first place.
+  base: standalone ? "/" : "/Warfare/",
   build: {
     outDir: "dist",
     sourcemap: !standalone,
