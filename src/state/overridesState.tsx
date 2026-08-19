@@ -25,7 +25,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { DistanceBand } from "../types";
+import type { Asset, DistanceBand } from "../types";
 import {
   activeAdapter,
   downloadStore,
@@ -101,6 +101,15 @@ export interface OverridesState {
   resetAssetText: (id: string) => void;
   addCustomMedia: (id: string, media: CustomMedia) => void;
   removeCustomMedia: (id: string, mediaId: string) => void;
+
+  /** Brand-new assets built from scratch in the Asset Editor page (distinct
+   *  from `assetOverrides`, which only patches a shipped asset) — see
+   *  src/components/AssetEditorPanel.tsx. Persisted through the same
+   *  storage adapter as everything else in this file, so a locally-added
+   *  asset is exactly as durable/shared as a distance-band edit. */
+  customAssets: Record<string, Asset>;
+  saveCustomAsset: (asset: Asset) => void;
+  removeCustomAsset: (id: string) => void;
 }
 
 const Ctx = createContext<OverridesState | null>(null);
@@ -114,6 +123,7 @@ export function OverridesProvider({
 }) {
   const [bands, setBands] = useState<DistanceBand[] | null>(null);
   const [assetOverrides, setAssetOverrides] = useState<Record<string, AssetOverride>>({});
+  const [customAssets, setCustomAssets] = useState<Record<string, Asset>>({});
   const [syncState, setSyncState] = useState<"idle" | "loading" | "saving" | "error">("loading");
   // Nothing is written back until the initial load has landed, or an empty
   // first render would immediately overwrite a populated remote store.
@@ -127,6 +137,7 @@ export function OverridesProvider({
         if (cancelled || !data) return;
         setBands(data.bands ?? null);
         setAssetOverrides(data.assetOverrides ?? {});
+        setCustomAssets(data.customAssets ?? {});
       })
       .catch(() => setSyncState("error"))
       .finally(() => {
@@ -145,21 +156,35 @@ export function OverridesProvider({
     setSyncState("saving");
     const t = window.setTimeout(() => {
       void activeAdapter
-        .save({ version: 1, updated_at: new Date().toISOString(), bands, assetOverrides })
+        .save({ version: 1, updated_at: new Date().toISOString(), bands, assetOverrides, customAssets })
         .then(() => setSyncState("idle"))
         .catch(() => setSyncState("error"));
     }, 400);
     return () => window.clearTimeout(t);
-  }, [bands, assetOverrides]);
+  }, [bands, assetOverrides, customAssets]);
 
   const exportEdits = useCallback(() => {
-    downloadStore({ version: 1, updated_at: new Date().toISOString(), bands, assetOverrides });
-  }, [bands, assetOverrides]);
+    downloadStore({ version: 1, updated_at: new Date().toISOString(), bands, assetOverrides, customAssets });
+  }, [bands, assetOverrides, customAssets]);
 
   const importEdits = useCallback(async (file: File) => {
     const parsed: StoreShape = parseStore(await file.text());
     setBands(parsed.bands);
     setAssetOverrides(parsed.assetOverrides);
+    setCustomAssets(parsed.customAssets ?? {});
+  }, []);
+
+  const saveCustomAsset = useCallback((asset: Asset) => {
+    setCustomAssets((prev) => ({ ...prev, [asset.id]: asset }));
+  }, []);
+
+  const removeCustomAsset = useCallback((id: string) => {
+    setCustomAssets((prev) => {
+      if (!(id in prev)) return prev;
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
   }, []);
 
   const ensureCustom = useCallback(
@@ -269,6 +294,9 @@ export function OverridesProvider({
       resetAssetText,
       addCustomMedia,
       removeCustomMedia,
+      customAssets,
+      saveCustomAsset,
+      removeCustomAsset,
     }),
     [
       bands,
@@ -286,6 +314,9 @@ export function OverridesProvider({
       resetAssetText,
       addCustomMedia,
       removeCustomMedia,
+      customAssets,
+      saveCustomAsset,
+      removeCustomAsset,
     ],
   );
 

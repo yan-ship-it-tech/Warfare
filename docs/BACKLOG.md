@@ -6,6 +6,65 @@ gets listed here rather than silently dropped or silently worked around.
 
 ---
 
+## Resolved in Pass 7
+
+### Grounding bug — land/sea assets floating on a tether
+`marker.position.y = 7.5` (plus the tether line down to the ground) was
+applied to every asset regardless of domain — correct for air/space, wrong
+for a tank. Fixed by gating the elevated treatment on `DOMAIN_ALTITUDE[domain]
+> 2` in `src/three/Scene3D.tsx`, which also preserves the `cyber_ew` /
+`c2_comms` "mast-height emitter" tether from Pass 6 rather than narrowing it
+to literally `air`/`space` as asked — see `docs/DECISIONS.md` Pass 7 for why.
+
+### Pan sensitivity
+OrbitControls tuned (`rotateSpeed`/`panSpeed`/`zoomSpeed`) and camera-target
+panning clamped to the terrain strip's bounds, so a small drag produces small
+movement and panning can't fly the camera off the generated terrain.
+
+### Mobile overlap — bottom info panel over the canvas
+The bottom-left stats panel and the 3D view's separate renderer-disclaimer
+box were two independently-floating elements with no collapse state; on a
+phone-width viewport they reliably collided. Merged into one `Legend`
+component that collapses to a small `ⓘ` toggle by default under 680px.
+
+### Sync worker — code written, not deployed
+`worker/` (Cloudflare Worker + KV), dry-run verified. Still needs a human
+with a Cloudflare account to actually deploy — see updated item 21 below,
+which this doesn't close, just substantially de-risks.
+
+### Terrain scenery
+`src/three/scenery.ts` — trench lines, a concertina-wire/tank-obstacle belt,
+a power plant, a fuel depot, a command post, and generic fighting positions,
+matching the authored-geometry convention from Pass 6's hero-model tier
+rather than sourced assets. Decorative only, not clickable.
+
+### Content: 60 new assets from `equipment_catalog.xlsx`
+Substantially closes old item 5 below (most of that list — T-90M, BMP-3,
+2S19 Msta-S, TOS-1A, Bohdana, IRIS-T and more — are now full map assets, not
+swap-only options). See `docs/DECISIONS.md` Pass 7 for the two self-caught
+generation bugs and the verification numbers.
+
+### Asset editor page
+`src/components/AssetEditorPanel.tsx` — a new "Asset editor" page (toolbar
+button, next to Data health) for building a brand-new asset from scratch —
+category, side, placement, every schema field a shipped asset has — without
+a code change or a spreadsheet round-trip. Saves into the same overrides
+store as every other edit (`overridesState.tsx` → `persistence.ts`), so it's
+exactly as durable/shared as a distance-band edit, and `loadWorld()` merges
+it in and runs it through the same `validateAsset()` every shipped asset
+gets, so it shows up in Data health identically. Two honest scope lines,
+both stated in the page itself rather than faked: no separate icon upload
+(the map icon was already chosen from Group/Category/Domain for every asset,
+custom or not — Pass 5 decision, `src/icons/registry.tsx`), and no custom 3D
+hero model (procedural TypeScript geometry compiled at build time, not
+something a live page can inject — same scope line item 22 already draws
+for 16 of the 27 originally-shipped assets). A "Copy JSON" button bridges
+back to the existing file-based pipeline: paste the output into a real
+`data/assets/*.json` file to make it auditable by
+`scripts/audit-content.mjs`, which cannot see a browser-only asset directly.
+
+---
+
 ## Resolved in Pass 6
 
 ### 16. Genuine 3D rendering
@@ -103,15 +162,15 @@ teaching tool. `src/map/` and the `maplibre-gl` dependency are gone; see
 
 ### 21. Stand up a sync endpoint (the real remaining half of #11)
 The adapter, the REST client, export/import and the storage badge all ship.
-What is missing is a URL. It cannot be invented here: this is a static site
-on GitHub Pages, so any hosted-JSON-store credential would ship inside the
-public client bundle and be readable by anyone — a write-capable key
-published that way invites the shared state being wiped.
-
-**Recommendation:** a Cloudflare Worker over a KV namespace, ~20 lines, free
-at this scale, fronting `VITE_SYNC_URL`. The contract the adapter expects is
-two calls (`GET`/`PUT` one JSON document) and is documented at the bottom of
-`src/state/persistence.ts`. Needs an account, so it is yours to create.
+**Pass 7 wrote the actual Worker** (`worker/src/index.ts` — GET/PUT over KV,
+CORS, an optional bearer-token gate, a body-size cap) and the deploy config
+(`worker/wrangler.toml`), with a full walkthrough in
+`docs/DEPLOY_SYNC_WORKER.md`. `npx tsc --noEmit` and `npx wrangler deploy
+--dry-run` both pass. What's still missing is a URL: this session cannot
+create a Cloudflare account or run the real `wrangler deploy` /
+`wrangler secret put` against one, and the CI workflow already reads
+`VITE_SYNC_URL` / `VITE_SYNC_TOKEN` from repo secrets, so once you deploy and
+set those two secrets, the next push picks it up with no other change.
 Until then the badge in the toolbar honestly reads "This browser only", and
 Export/Import moves a working set between devices with no key involved.
 
@@ -168,13 +227,16 @@ carry `estimated` costs and are flagged as such — cost verification is the
 narrower, harder half.
 
 ### 5. Build out the remaining catalog entries as full map assets
-Your two catalogs carry ~53 systems; 14 are currently placed on the map with
-full narrative (role/employment/contrast) and are also swap targets for
-their `comparison_group`. The other ~39 (T-90M, BMP-3, 2S19 Msta-S, TOS-1A,
-Su-35S, Su-34, Ka-52, the Kilo-class submarine, Bradley, Bohdana, IRIS-T,
-F-16, Javelin, NLAW, the Ada-class corvette, and more) exist only as swap
-*options* for an existing slot's dropdown — they don't have their own
-placement or doctrine-level writeup yet. Next natural expansion pass.
+Mostly closed by Pass 7's 60-asset import — T-90M, BMP-3, 2S19 Msta-S,
+TOS-1A, Bohdana, IRIS-T and the rest of the original ~39 swap-only options
+are now full map assets with their own placement and narrative. What's left
+is systems neither catalog spreadsheet has covered at all: fixed-wing/rotary
+air power (Su-35S, Su-34, Ka-52, F-16), a submarine and a surface combatant
+(Kilo-class, Ada-class corvette — partial overlap with the Russia
+naval/Black Sea Fleet category gap below), Bradley, and man-portable ATGMs
+(Javelin, NLAW — overlap with the infantry/small-arms category gap below).
+No source document for any of these yet, so no guessed placements — same
+"not started" honesty as the category-gap list.
 
 ### 15. Domain rail can drift slightly out of sync at non-1 scene zoom
 The floating domain-index rail on the left reads its click targets from raw
@@ -226,3 +288,63 @@ require changing anything else in the data flow, but is a real scoped piece
 of work, not a config toggle. This is the one blocker that keeps recurring
 across passes (items 2's video-persistence problem is really this item
 wearing a different hat) — worth prioritizing if another pass is coming.
+
+---
+
+## Category gaps — not started, no source yet
+
+Per your explicit instruction: listed plainly rather than filled with
+guesses, matching the Category Tracker sheet's own honesty convention. Every
+one of these is a real category in `data/groups.json`'s conceptual space (or
+an obvious candidate for a new one) with **zero assets and no source
+document behind it yet** — not deprioritized, not decided against, just not
+started.
+
+- **Space** — no space-domain assets exist despite `domain: "space"` being a
+  real value in the schema (see `side_a-space-isr-satellite-commercial`,
+  which is ISR, not a dedicated space-domain platform). Recon/comms
+  satellites beyond the one commercial-ISR node, GPS-denial context, ASAT —
+  nothing sourced.
+- **C2 / comms** — two assets exist (Starlink terminal, the Ukrainian
+  Integrated Air Defense C2 Network node, plus Russia's Strelets terminal),
+  but the category is thin relative to how much of `docs/doctrine.md` §6
+  (force structure, distributed kill chains) actually depends on C2/comms
+  specifically.
+- **Medical / casevac** — one composite node per side (`*-medical-casevac-chain`,
+  both `unverified` — see item 23), no named systems (specific casevac
+  vehicles, evac drone variants) at all.
+- **Engineering / fortification (asset-level)** — distinct from Pass 7's
+  terrain *scenery* (item 5 above, decorative, not clickable). This is the
+  gap in the asset roster itself: no engineering vehicles (mine-clearing
+  vehicles beyond Uran-6, bridging equipment, dozers) as their own
+  data-carrying, clickable assets.
+- **Infantry positions / small arms** — `infantry` is a real group in
+  `data/groups.json` but **zero assets use it** — genuinely empty, not just
+  thin. Fighting positions as data (distinct from Pass 7's decorative
+  scenery version, which is deliberately not clickable), man-portable ATGMs
+  (Javelin, NLAW — see item 5 above), small arms: none of it exists yet.
+- **EW as its own asset category** — correction while writing this: `ew` is
+  already a real, structurally distinct group in `data/groups.json` (not
+  folded into anything else), so this gap isn't structural. It's breadth:
+  `docs/doctrine.md` §4 treats EW as a load-bearing layer everything else
+  depends on, and only two assets carry the `ew` group
+  (`side_a-ew-jammer-bukovel`, `side_b-ew-jammer-zhitel`) against that much
+  narrative weight — passive RF triangulation, the "unofficial EW fields"
+  finding, hard-kill interceptor layers — none of it represented as its
+  own asset yet.
+- **Russia naval / Black Sea Fleet** — one composite node
+  (`side_b-naval-fleet-black-sea`, `verified`, 2 sources) stands in for the
+  entire Russian naval presence, next to two named Ukrainian USVs (Magura,
+  MANTAS, Sonobot) plus Pass 7's new Ukrainian naval assets. No named
+  Russian vessels (the Kilo-class submarine and Ada-class corvette from item
+  5 above would start this) at all.
+
+### Hero-tier desired but not yet built (7 assets)
+The equipment_catalog.xlsx sheet flagged 7 of the 60 Pass 7 imports as
+"Hero tier" in its own tracking column: Bayraktar TB2, UJ-26 Beaver (Bober),
+FP-1/FP-2, T-90M, S-400, Shahed-136/Geran-2, Kurier. None got a
+`HERO_BUILDERS` entry this pass — they shipped as marker+label assets like
+everything else in the batch, consistent with item 22's existing scope line
+(hero tier is a deliberate subset, not automatic for every new asset). Not
+silently dropped: recorded here as the natural next 7 candidates when
+extending the hero-model tier, ahead of the item-22 list from Pass 6.

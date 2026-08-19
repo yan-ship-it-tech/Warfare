@@ -25,7 +25,7 @@
 // time to an endpoint you control. The contract is at the bottom of this
 // file and is deliberately small enough to satisfy with a ~20-line worker.
 // ─────────────────────────────────────────────────────────────────────────
-import type { DistanceBand } from "../types";
+import type { Asset, DistanceBand } from "../types";
 import type { AssetOverride } from "./overridesState";
 
 export interface StoreShape {
@@ -33,6 +33,12 @@ export interface StoreShape {
   updated_at: string;
   bands: DistanceBand[] | null;
   assetOverrides: Record<string, AssetOverride>;
+  /** Brand-new assets added live from the Asset Editor page (Pass 7, item 7)
+   *  — distinct from `assetOverrides`, which only patches a *shipped* asset.
+   *  Optional so a StoreShape saved before this field existed still parses:
+   *  every reader below defaults a missing value to `{}` rather than
+   *  treating it as an error. */
+  customAssets?: Record<string, Asset>;
 }
 
 export interface StorageAdapter {
@@ -46,6 +52,7 @@ export interface StorageAdapter {
 
 const BANDS_KEY = "warfare-twin:bands:v1";
 const ASSET_OVERRIDES_KEY = "warfare-twin:asset-overrides:v1";
+const CUSTOM_ASSETS_KEY = "warfare-twin:custom-assets:v1";
 
 function readJSON<T>(key: string): T | null {
   try {
@@ -64,13 +71,15 @@ export const localAdapter: StorageAdapter = {
   async load() {
     const bands = readJSON<DistanceBand[]>(BANDS_KEY);
     const assetOverrides = readJSON<Record<string, AssetOverride>>(ASSET_OVERRIDES_KEY) ?? {};
-    return { version: 1, updated_at: new Date().toISOString(), bands, assetOverrides };
+    const customAssets = readJSON<Record<string, Asset>>(CUSTOM_ASSETS_KEY) ?? {};
+    return { version: 1, updated_at: new Date().toISOString(), bands, assetOverrides, customAssets };
   },
   async save(data) {
     try {
       if (data.bands) window.localStorage.setItem(BANDS_KEY, JSON.stringify(data.bands));
       else window.localStorage.removeItem(BANDS_KEY);
       window.localStorage.setItem(ASSET_OVERRIDES_KEY, JSON.stringify(data.assetOverrides));
+      window.localStorage.setItem(CUSTOM_ASSETS_KEY, JSON.stringify(data.customAssets ?? {}));
     } catch {
       // Private browsing / quota. Edits still work this session; they just
       // won't survive a reload. Not an app-level error.
@@ -157,5 +166,9 @@ export function parseStore(text: string): StoreShape {
     updated_at: typeof raw.updated_at === "string" ? raw.updated_at : new Date().toISOString(),
     bands: Array.isArray(raw.bands) ? (raw.bands as DistanceBand[]) : null,
     assetOverrides: raw.assetOverrides as Record<string, AssetOverride>,
+    customAssets:
+      raw.customAssets && typeof raw.customAssets === "object"
+        ? (raw.customAssets as Record<string, Asset>)
+        : {},
   };
 }

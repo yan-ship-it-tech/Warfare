@@ -7,6 +7,7 @@ import { AboutPanel } from "./components/AboutPanel";
 import { DataHealthPanel } from "./components/DataHealthPanel";
 import { BandsEditorPanel } from "./components/BandsEditorPanel";
 import { LessonsPanel } from "./components/LessonsPanel";
+import { AssetEditorPanel } from "./components/AssetEditorPanel";
 import { Legend } from "./components/Legend";
 import { ViewStateProvider, useViewState } from "./state/viewState";
 import { OverridesProvider, useOverrides } from "./state/overridesState";
@@ -21,8 +22,8 @@ function AppInner() {
   const view = useViewState();
   const overrides = useOverrides();
   const world = useMemo(
-    () => loadWorld(overrides.bands, overrides.assetOverrides),
-    [overrides.bands, overrides.assetOverrides],
+    () => loadWorld(overrides.bands, overrides.assetOverrides, overrides.customAssets),
+    [overrides.bands, overrides.assetOverrides, overrides.customAssets],
   );
   const [replayNonce, setReplayNonce] = useState(0);
   const replay = useCallback(() => setReplayNonce((n) => n + 1), []);
@@ -55,6 +56,7 @@ function AppInner() {
       <DataHealthPanel world={world} />
       <BandsEditorPanel />
       <LessonsPanel world={world} />
+      <AssetEditorPanel world={world} />
     </div>
   );
 }

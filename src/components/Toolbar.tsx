@@ -144,6 +144,17 @@ export function Toolbar({ world }: { world: WorldModel }) {
       <div className="toolbar__group">
         <button
           type="button"
+          className={`chip chip--panel${view.openPanel === "editor" ? " is-on" : ""}`}
+          onClick={() => view.setOpenPanel(view.openPanel === "editor" ? null : "editor")}
+          title="Add a brand-new asset from scratch, or edit/remove one you already added — no code change or spreadsheet needed"
+        >
+          Asset editor
+          {Object.keys(overrides.customAssets).length > 0 && (
+            <em className="chip__count">{Object.keys(overrides.customAssets).length}</em>
+          )}
+        </button>
+        <button
+          type="button"
           className={`chip chip--panel${view.openPanel === "health" ? " is-on" : ""}${errors ? " has-error" : ""}`}
           onClick={() => view.setOpenPanel(view.openPanel === "health" ? null : "health")}
         >

@@ -15,7 +15,7 @@ import {
 } from "react";
 import type { AssetGroup, ConnectionType, Side } from "../types";
 
-export type PanelId = "about" | "health" | "bands" | "categories" | "lessons" | null;
+export type PanelId = "about" | "health" | "bands" | "categories" | "lessons" | "editor" | null;
 
 /** Pass 6 keeps BOTH renderers rather than replacing one with the other.
  *  Pass 5 removed a view outright and the immediate feedback was "I can't see

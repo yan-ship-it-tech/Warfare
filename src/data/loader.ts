@@ -163,10 +163,16 @@ function inferStub(
  * @param assetOverrides Per-asset local edits (distance / operating range)
  *   from the in-app placement editor, keyed by asset id. Applied before
  *   validation so a bad edit surfaces in Data health like any other issue.
+ * @param customAssets Brand-new assets built from scratch in the Asset
+ *   Editor page (src/components/AssetEditorPanel.tsx) — distinct from
+ *   `assetOverrides`, which only patches a shipped asset. Run through the
+ *   same `validateAsset` as every file in data/assets/, so a locally-added
+ *   asset shows up in Data health exactly like a shipped one.
  */
 export function loadWorld(
   bandsOverride?: DistanceBand[] | null,
   assetOverrides?: Record<string, AssetOverride> | null,
+  customAssets?: Record<string, Asset> | null,
 ): WorldModel {
   const issues: DataIssue[] = [];
   const bands = bandsOverride && bandsOverride.length > 0 ? bandsOverride : (bandsJson as DistanceBand[]);
@@ -219,6 +225,37 @@ export function loadWorld(
     assetsById.set(asset.id, asset);
     assets.push(asset);
   }
+  // ── custom assets — added live from the Asset Editor page, not a file ──
+  for (const custom of Object.values(customAssets ?? {})) {
+    const id = (custom as unknown as Record<string, unknown>).id as string | undefined;
+    if (id && assetsById.has(id)) {
+      issues.push({
+        severity: "error",
+        source: "Asset Editor",
+        subject: id,
+        message: `A shipped asset already uses id "${id}" — this locally-added asset was skipped rather than shadowing it. Edit it and pick a different id.`,
+      });
+      continue;
+    }
+    const { asset, issues: assetIssues } = validateAsset(
+      custom,
+      `${id ?? "?"}.json`,
+      bands,
+      domains,
+      groups,
+    );
+    issues.push(...assetIssues);
+    if (!asset) continue;
+    issues.push({
+      severity: "info",
+      source: "Asset Editor",
+      subject: asset.id,
+      message: "Added in this browser via the Asset Editor page. Not a data file — it lives in this browser's storage (or the shared sync store, if configured) alongside every other override, and won't survive a data reset the way a committed asset file does.",
+    });
+    assetsById.set(asset.id, asset);
+    assets.push(asset);
+  }
+
   assets.sort((a, b) => a.distance_km_from_zero - b.distance_km_from_zero || a.id.localeCompare(b.id));
 
   // ── connections: merge per-asset + flat file, keeping both honest ──────

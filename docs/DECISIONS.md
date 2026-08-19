@@ -780,3 +780,254 @@ create, not mine to invent.
 3. **"Even a simple hosted JSON store"** is not safely reachable from a static
    public-repo deployment without publishing a write key. Built the seam, the
    REST adapter, export/import, and a recommendation — not a committed secret.
+
+# Pass 7 — usability bugs first, sync worker, terrain scenery, 72-asset content drop, live asset editor
+
+Eight-item brief, explicitly prioritized: three usability bugs (grounding, pan
+sensitivity, mobile overlap) before the other five, "because a broken pan
+gesture or a floating tank undermines a demo faster than missing categories
+do." Worked in that order. Two places this collided with something learned
+building earlier passes are called out inline rather than worked around
+quietly — the grounding-bug fix's threshold choice, and the sync worker's
+one remaining manual step — plus a full list at the end, as asked.
+
+## 1. Three usability bugs
+
+### Grounding bug — land/sea assets floating on a tether
+
+Root cause, found in `src/three/Scene3D.tsx`: `marker.position.y = 7.5` (and
+the tether line down to the ground) was applied to **every** asset,
+unconditionally. Correct for something that is genuinely airborne; wrong for
+a tank, which sat on the ground and then had its marker lifted 7.5 units
+above its own footprint with a tether drawn down to a point directly below
+it — visually indistinguishable from a floating vehicle.
+
+Fix: gate the elevated treatment on `DOMAIN_ALTITUDE[domain] > 2`
+(`ELEVATED_ALTITUDE_THRESHOLD`), not on `domain === "air" || domain ===
+"space"` as the brief's own wording suggested. **This is a deliberate
+deviation, flagged as asked.** `DOMAIN_ALTITUDE` (`worldMapping.ts`) also
+carries `cyber_ew: 11` and `c2_comms: 4` — Pass 6's "EW/C2 sit on a mast, not
+the ground" design intent, present since the 3D view shipped. A literal
+air/space-only check would have re-grounded those two domains as a side
+effect of fixing tanks, deleting a piece of Pass 6's reasoning that the
+grounding bug never actually touched. Threshold-on-altitude achieves exactly
+what was asked (land/sea/logistics/medical assets stop floating) without
+that collateral loss. Verified with headless before/after screenshots: a
+tank sits flush on the terrain with no tether; Patriot and a UAV keep theirs.
+
+### Pan sensitivity
+
+`OrbitControls.rotateSpeed/panSpeed/zoomSpeed` were at library defaults,
+tuned for a much smaller scene — a small drag produced a large, unpredictable
+jump. Retuned (`rotateSpeed: 0.55`, `panSpeed: 0.4`, `zoomSpeed: 0.7`) and the
+camera **target** is now clamped to the terrain strip's bounds every frame
+(`panBoundXRef`, computed from the strip's actual half-width plus margin, and
+a fixed Z bound around `STRIP_HALF_Z`) — so panning can no longer fly the
+camera target off the generated terrain into empty space, which was the
+other half of "pan feels broken" even after the speed fix alone.
+
+### Mobile overlap — the bottom info panel over the canvas
+
+This was two independently-floating bottom-corner boxes with no collapse
+state: `Legend`'s stats panel, and a separate `.scene3d__hint` div Scene3D
+drew itself with the 3D-specific renderer disclaimer. Neither knew about the
+other, and at phone width they reliably overlapped and clipped each other's
+text — the bug was structural (two unrelated floating elements), not a
+z-index or sizing tweak away from fixed. Fixed by merging: `Scene3D.tsx` no
+longer renders its own hint box at all; its text moved into `Legend.tsx`,
+which now defaults to a collapsed `ⓘ` toggle under 680px
+(`window.matchMedia`) and has its own explicit close button. One box, one
+place, on every viewport.
+
+## 2. Sync worker — real code, one step outside this session's reach
+
+Pass 6 left this as backlog item 21: the adapter and REST client existed,
+but no endpoint. This pass wrote the endpoint for real — `worker/src/index.ts`
+(Cloudflare Worker: GET/PUT one JSON document against a KV namespace, CORS,
+an optional bearer-token gate via `SYNC_WRITE_TOKEN`, a 2 MB body cap) and
+`worker/wrangler.toml`, matching the contract already documented at the
+bottom of `src/state/persistence.ts` — the Worker was written to match that
+contract, not the other way around. `npx tsc --noEmit` and `npx wrangler
+deploy --dry-run` both pass clean. The CI workflow
+(`.github/workflows/deploy-pages.yml`) already passes `VITE_SYNC_URL` /
+`VITE_SYNC_TOKEN` through from repo secrets to the build step.
+
+**What this pass could not do, and why, restated because it recurs every
+pass that touches this:** actually run `wrangler deploy` against a real
+Cloudflare account, or `wrangler secret put` a real token. This session has
+no Cloudflare credentials and cannot create an account on your behalf — the
+same constraint Pass 6 already hit for backend hosting generally. The gap
+left is now genuinely just "one human, one `wrangler deploy`, two repo
+secrets" (walkthrough: `docs/DEPLOY_SYNC_WORKER.md`) rather than "design and
+write a worker" — a materially smaller remaining step than it was at the
+start of this pass, but still not zero. Until it's deployed, the toolbar
+badge correctly keeps reading "This browser only."
+
+## 3. Terrain scenery — dressing the strip as a place, not empty ground with icons
+
+`src/three/scenery.ts`: trench lines, a concertina-wire/tank-obstacle belt
+(`InstancedMesh`, matching the Pass 6 performance convention for repeated
+geometry), a power plant, a fuel depot, a command post, and generic fighting
+positions — six hand-placed landmark specs plus procedural belts. All
+authored geometry, same rule as the Pass 6 hero-model tier and for the same
+reason: this environment cannot fetch binary assets, so a sourced model would
+be a licence assumed rather than read. Decorative only — none of these are
+clickable data assets, and none of them compete with the real, data-driven
+markers for hit-testing. `SCENERY_BUDGET` follows the existing device-aware
+low/high split from Pass 6's performance pass rather than adding a second,
+unrelated budget system. Verified visually: power plant, fuel depot, command
+post, trench lines and the obstacle belt all render in headless screenshots
+across the strip.
+
+## 4. Content: 72 catalog rows → 60 new assets, and two more self-caught integrity bugs
+
+Ran `equipment_catalog.xlsx` through the *existing* two-pass pipeline exactly
+as instructed — draft, then a separate verification pass, then
+`audit-content.mjs --write` — rather than trusting the sheet's own
+verification tags. That instruction paid for itself twice before the batch
+ever reached the audit script:
+
+- **Cost-parser bug.** The first-draft regex extracting `cost.unit_cost_usd`
+  from prose was unanchored and matched any bare number nearby, not one
+  actually preceded by `$`. Challenger 2 came out as literally `$5` instead
+  of the correct ~$6.5M average; T-80BVM came out as `$80`, pulled from "T-80"
+  in unrelated text that had no dollar sign anywhere in it. Fixed by
+  requiring a literal `$` anchor and averaging ranges properly; one asset
+  (NASAMS) still needed a manual correction afterward because the regex,
+  even fixed, grabbed the interceptor-round price instead of the
+  battery-system price the row was actually describing.
+- **Key-facts label/value mismatch.** The first design picked a fixed label
+  template per category and filled it by keyword search with a positional
+  fallback. Labels processed early could steal a bit of text via that
+  fallback before a later label's own keyword search reached it, producing
+  pairs like "Signature" labelling a sentence about running time, or "Crew"
+  labelling armor-composition text meant for "Protection." Rebuilt as
+  `infer_label(bit)`: the label is derived from each value's own content, so
+  label and value agree by construction, with a generic "Spec" fallback
+  when nothing matches — rather than trying to patch the ordering bug.
+
+Both were caught and fixed before the batch shipped, by re-reading generated
+output against the source rows rather than trusting the generation script's
+own output — the same standard the brief asked be applied to the sheet's
+verification tags, turned on this pass's own tooling instead. One naming
+collision was also caught the same way: a web search for the Russian "Varan"
+UGV returned an unrelated UK-built product of the same name; re-reading the
+catalog's own characteristics text (tracked chassis, Kornet ATGM) and finding
+Varan and Kurier share a real Militarnyi.com source article settled it.
+
+Sources were then researched for real — 57 of 60 assets got 1–2 real
+citations each (`scripts/fill-sources.py`); 3 systems (`side_a-naval-sonobot-5`,
+`side_a-ground-robots-nprk-mul`, `side_a-ground-robots-krab-m1`) are cited
+only in a PDF report with no public URL and were left honestly unsourced
+rather than padded with a weak substitute. `contrast_vs_traditional` was
+written for all 60 grounded in `docs/doctrine.md` mechanisms (the
+minutes-scale kill chain, control of the lower sky, cost-asymmetry
+inversions, distributed kill chains) per `CONTENT_PIPELINE.md`'s own
+convention, rather than invented per-asset.
+
+`node scripts/audit-content.mjs --write` against all 87 assets (27 shipped +
+60 new): **64 verified, 13 sourced_low_confidence, 10 unverified** — the 10
+being the 7 pre-existing composite nodes from Pass 6 plus exactly the 3
+PDF-only systems named above. `npx tsc --noEmit`, `npm run build`, and the
+in-app Data Health panel all came back clean (0 errors; only the 3 expected
+unsourced-asset warnings). The "adding from a source URL" workflow the
+README documents stays intact and was exercised, not just preserved:
+`import-catalog.py` → `fill-sources.py` → `audit-content.mjs --write` is
+the repeatable path for the next ad hoc drop, and every step ran against
+real files with real output this pass, not just a plan for one.
+
+12 deduplication decisions were made against the 27 already-shipped assets
+(rows the sheet listed that this map already had, under a different label);
+one fuzzy match was initially wrong (the Varan case above, same root cause
+as the naming collision, caught the same way) and corrected by hand rather
+than shipped silently. `git diff --stat` confirms no pre-existing curated
+asset file was touched by this batch.
+
+## 5. Asset editor — a live page, not a bigger JSON skeleton
+
+New "Asset editor" page (`src/components/AssetEditorPanel.tsx`, toolbar
+button next to Data health): build a brand-new asset from scratch — category,
+side, placement, every schema field a shipped asset has — without a code
+change or a spreadsheet round-trip, and see it on the map immediately.
+Distinct from the per-field "edit" controls already in `DetailPanel.tsx`,
+which only ever patch a *shipped* asset's text, placement or media; this
+creates an entirely new `Asset` record.
+
+**How it's live without a backend.** It writes into the exact same
+overrides store as everything else (`overridesState.tsx` → the storage
+adapter in `persistence.ts`): a new `customAssets: Record<string, Asset>`
+field alongside `bands` and `assetOverrides` in `StoreShape`, persisted to
+this browser's `localStorage` (or the shared sync store, once §2's Worker is
+deployed) on the same debounced save. `loadWorld()` takes a third parameter
+and merges `customAssets` in after the shipped `data/assets/*.json` files,
+running each one through the identical `validateAsset()` every shipped asset
+gets — so a locally-added asset shows up in the Data Health panel exactly
+like a shipped one, including a duplicate-id check against the real roster,
+and not as some separate, unvalidated shadow list.
+
+**Two honest scope lines, stated in the page itself rather than faked:**
+
+- **No separate icon upload.** Not a missing feature — `icon_image` was
+  already not read for the map glyph by anything, for *any* asset, since
+  Pass 5 (`src/icons/registry.tsx`'s own header comment says so). Every
+  marker's icon is chosen from `group` → `category` → `domain`, in that
+  order, which the form already requires. Building an icon-upload control
+  that the map would then ignore would have been the dishonest option here.
+- **No custom 3D hero model.** `HERO_BUILDERS` (`src/three/models.ts`) is
+  procedural TypeScript geometry compiled into the bundle at build time —
+  there is no live-page mechanism that could inject a new builder function
+  into a running static site. A custom asset gets the same marker + label
+  every non-hero shipped asset gets, which is 16 of the 27 originally-shipped
+  assets already (`docs/BACKLOG.md` #22) — a pre-existing scope line this
+  feature inherits rather than one it introduces.
+
+A "Copy JSON" action bridges back to the file-based pipeline deliberately:
+`scripts/audit-content.mjs` only reads real files under `data/assets/`, so
+it cannot see a browser-only custom asset at all. Copying the built `Asset`
+object into a real `data/assets/<id>.json` file is how a locally-added asset
+graduates to a real, sourced, auditable one — the same "paste this into a
+file" bridge `DetailPanel.tsx`'s pending-stub view already offers, extended
+to a full guided form instead of a hand-filled skeleton. Verified end to
+end with headless Playwright: created a UAV asset (auto-generated id,
+group-driven icon, elevated tether correctly applied for its space-tier
+domain), created a ground-robot asset (correctly grounded, no tether — the
+§1 fix applies identically to a live-added asset), edited it, confirmed the
+edit persisted to `localStorage` and rendered on the map and in Data Health,
+and confirmed "Copy JSON" produces valid, re-parseable `Asset` JSON.
+
+## 6. Backlog honesty — category gaps recorded, not guessed
+
+`docs/BACKLOG.md` gets a new "Category gaps — not started, no source yet"
+section: Space, C2/comms, medical/casevac, engineering/fortification
+(distinct from §3's decorative terrain props — this is the asset-level
+gap), infantry positions/small arms, EW as its own asset category, and
+Russia naval/Black Sea Fleet, matching the Category Tracker sheet's own
+"not started" convention rather than filled with placeholder guesses. One
+self-correction happened while writing that list: the first draft claimed
+EW had no dedicated category structurally, which turned out to be false —
+`ew` is already a real, separate group in `data/groups.json`, just thin (2
+assets). Caught before shipping and rewritten to state the real gap (breadth,
+not structure); the infantry bullet was checked the same way and confirmed
+accurate (`infantry` is a real group with genuinely zero assets using it).
+Also recorded: the 7 systems the catalog's own tracking column flagged
+"Hero tier" that didn't get a `HERO_BUILDERS` entry this pass (Bayraktar TB2,
+UJ-26 Beaver/Bober, FP-1/FP-2, T-90M, S-400, Shahed-136/Geran-2, Kurier) —
+next-candidates for item 22, not a silently dropped ask.
+
+## Where the brief and prior passes disagreed
+
+1. **Grounding-bug fix scope.** Asked for effectively `domain === "air" ||
+   domain === "space"`; shipped `DOMAIN_ALTITUDE[domain] > 2` instead, to
+   avoid quietly deleting Pass 6's EW/C2 "mast height" tether as a side
+   effect of a fix aimed at tanks. See §1.
+2. **"Build the Cloudflare Worker"** is done as far as code and a dry run go;
+   the actual `wrangler deploy` / `wrangler secret put` against a real
+   account needs a human with Cloudflare credentials this session doesn't
+   have — the same class of constraint Pass 6 already flagged for backend
+   hosting generally, re-confirmed rather than newly discovered. See §2.
+3. **"Don't take the sheet's verification tags on faith"** was aimed at the
+   spreadsheet, and held there — but the same standard, applied to this
+   pass's own generation scripts, is what caught the cost-parser and
+   key-facts bugs in §4 before they shipped. Worth naming as a general
+   lesson: the instruction generalizes to "verify what a script produced,"
+   not just "verify what a spreadsheet claimed."
