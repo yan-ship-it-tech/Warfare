@@ -12,7 +12,7 @@ import type {
   DomainLayer,
   Side,
 } from "../types";
-import { resolvePlatformDomain } from "./placement";
+import { resolvePlatformDomain, resolveAltitudeM, type ResolvedAltitude } from "./placement";
 
 export type IssueSeverity = "error" | "warning" | "info";
 
@@ -171,6 +171,18 @@ export function nodePlatformDomain(n: SceneNode): Domain {
     ? resolvePlatformDomain(n.asset)
     : resolvePlatformDomain({ domain: n.stub.domain });
 }
+/** How high the node sits, in metres, and on what basis — Pass 24. A stub has
+ *  no altitude band of its own, so it falls back on its domain the same way
+ *  nodePlatformDomain() does. */
+export function nodeAltitude(
+  n: SceneNode,
+  fallbackFor: (domain: Domain) => number,
+): ResolvedAltitude {
+  return n.kind === "asset"
+    ? resolveAltitudeM(n.asset, fallbackFor)
+    : resolveAltitudeM({ domain: n.stub.domain }, fallbackFor);
+}
+
 export function nodeDistance(n: SceneNode): number {
   return n.kind === "asset"
     ? n.asset.distance_km_from_zero

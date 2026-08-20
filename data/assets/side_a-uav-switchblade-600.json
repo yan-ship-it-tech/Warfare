@@ -74,5 +74,11 @@
     "notes": [
       "Rests only on tertiary reference works; wants a primary or trade source."
     ]
+  },
+  "altitude_band_m": {
+    "min_m": 200,
+    "max_m": 1200,
+    "basis": "estimated",
+    "note": "Class-typical vehicle-launched loitering-munition band. No published operating altitude for this airframe was confirmed."
   }
 }

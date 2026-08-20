@@ -3768,3 +3768,272 @@ instancing work.
   clarifying sentence — it was already correctly bilateral and each asset's role was
   already inferable, so no asset swap was made there.
 
+
+---
+
+# Pass 24 — the spatial contract
+
+Two commits, deliberately separate. Part A is a small UI change that makes Pass 23's
+convergence audit visible; Part B is the architectural pass. They share nothing but a
+pass number.
+
+## Part A — the contested flag, rendered
+
+Pass 23 wrote `corpus_support`, `contested` and `caution` into `data/lessons.json` and,
+per its own scope limit, touched no `src/`. The result was that an UNSUPPORTED lesson
+rendered at exactly the same visual confidence as a CONVERGENT-3 one — the opposite of
+what the audit existed to establish.
+
+**`corpus_support` stayed prose; the badge parses it.** The obvious move was to add a
+`corpus_support_tier` enum alongside the prose. It was rejected because the audit's own
+finding is that a single lesson can hold claims at two different confidences: lesson 11's
+cost asymmetry is CONVERGENT-2 while the "60–70% of equipment losses" statistic it used
+to lead with is CONTRADICTED. An enum forces a choice between those and throws the other
+away. `supportTiers()` in `LessonsPage.tsx` reads the tier tokens back out of the prose in
+order, badges the first, and badges any *weaker* tier that follows as "part X". A stronger
+tier appearing later is supporting detail, not a caveat, and is not badged.
+
+**The badge and the caution both sit in the collapsed row.** A reader scanning fifteen
+lessons is exactly who a confidence tier is meant to warn, and a caveat behind an expander
+is a caveat most readers never see. The full `corpus_support` prose stays in the expanded
+body — the badge is a lossy summary of it and is never the only thing on offer.
+
+Before/after screenshots for the CONVERGENT-3, SINGLE-SOURCE, UNSUPPORTED and contested
+cases: `docs/screenshots/pass24/partA-*.png`.
+
+## Part B — one scene, two registers, a locked axis
+
+### The contradiction being removed
+
+Until this pass the 3D scene mapped km → world X through `Projection.xFor()`: the 2D
+schematic view's per-band pixel allocation (400 px for 0–5 km, 420 px for 500–4,300 km).
+That is a legitimate schematic device and a fatal one for a scene with real terrain in it,
+because it makes one picture claim two scales at once — the OSM extract drawn at roughly
+1:1 inside one band, and 3,800 km of depth folded into the width of the band beside it.
+
+Every symptom Pass 24 was sent to fix descends from that one contradiction: assets on
+absurd stalks, model scale that could not be made correct because there was no scale to be
+correct *against*, air altitude that meant nothing, a hard-edged terrain plate with no
+principled place to end, and arbitrary asset facing.
+
+### The rule
+
+**`src/three/depthAxis.ts` is the contract. One world unit is one metre.**
+
+That constant is not arbitrary. `src/three/models.ts` has always authored hero geometry at
+roughly metre scale — a main battle tank hull is 7.0 units long, a road wheel 0.72 across,
+a rifle 1.5 — it just never had an axis that agreed with it. Declaring the unit to be a
+metre makes the most numerous and most carefully proportioned geometry in the repo correct
+*by construction* rather than by a fudge factor, and makes an altitude in metres and an OSM
+extract in km directly usable.
+
+```
+km ≤ 40   →  u = km · 1000                                    (true scale)
+km > 40   →  u = 40·1000 + 1000·L·ln(1 + (km − 40)/L)          (compressed)
+```
+
+- **`TRUE_SCALE_DEPTH_KM = 40`.** `docs/doctrine.md` §2 gives the sourced structure this
+  has to respect: 0–5 km is the FPV/short-range envelope and "the dominant killing zone";
+  0–10 km close reconnaissance; **~0–30 km the drone-dense corridor either side of the
+  line** — §2's explicit figure and the band this whole tool is really about; 10–70 km the
+  medium/long-range strike and deep-reconnaissance layer, which starts *inside* that
+  corridor and runs well past it. 40 km sits just past the sourced 30 km corridor, so the
+  entire drone-dense belt plus a margin renders at true scale while the strike layer
+  crosses the boundary rather than being cut by it. 70 km would have spent 140 km of
+  true-scale depth on ground the roster barely populates; 30 km would have put the boundary
+  exactly on a sourced number and invited the reading that something changes *at* 30 km,
+  which nothing does.
+- **`FAR_REGISTER_UNITS = 30,000`.** 30 km of screen depth for 4,260 km of real depth,
+  against 40 km for the first 40. The near register takes 57% of the axis for 0.9% of the
+  distance. That is not subtle and is not supposed to be.
+- **`FAR_SOFTNESS_KM` is solved, not chosen** — bisection at module load for the value that
+  makes the far register span exactly `FAR_REGISTER_UNITS` given the near register's slope.
+  It comes out at 4.356414 km. Solving it rather than baking it means the three editable
+  constants above can never silently disagree with the curve.
+
+**Why a logarithm** and not a power law or another set of band widths: it is monotonic and
+strictly increasing, so ordering can never be violated whatever the roster does; it is
+analytically invertible, which drag-to-reposition needs and the old per-band mapping could
+only answer by binary search; and it can be slope-matched at the boundary. A power law can
+match the value but not the derivative without a second free parameter, and a
+piecewise-linear ramp cannot match the derivative at all — that discontinuity is exactly
+the class of artifact Pass 17 root-caused in the old distance graticule. Measured at the
+seam: slope 1000.0000 at 39.999 km, 999.7705 at 40.001 km.
+
+Resulting compression: **1× through 40 km, 3.3× at 50, 26× at 150, 107× at 500, 979× at
+4,300.** The ruler prints those factors per band.
+
+### The fidelity gradient
+
+Detail fades using **the compression itself** as the input, not a distance ramp invented
+alongside it — so "the picture stops asserting detail exactly where the geography stops
+being true" is a statement about the code rather than about the intent.
+
+- `terrainHeight()` drops its fine octave between 12 and 55 km-equivalent and its mid
+  octave between 40 and 320; past that only broad landform silhouette survives. This is
+  also a correctness requirement, not only an aesthetic one: the terrain mesh's X sampling
+  is graded (`|t|^1.7`, ~26 m spacing at the line, ~450 m at the deepest rear, which is
+  ~440 *km* of real ground per segment out there), so a high-frequency octave in the far
+  register would alias and anything standing on `terrainHeight()` would float.
+- Scatter props live inside the true-scale register (34 km) and thin on the same curve at
+  its edge, rather than stopping at a line.
+- `atmosphericHaze()` is `(c − 1)/(25 + c − 1)` in the compression `c`: identically zero
+  through the whole true-scale register, ~0.5 at 150 km, ~0.81 at 500, ~0.98 at the deepest
+  rear.
+
+**Haze is applied after lighting, not to the albedo.** The first attempt lerped the vertex
+colour toward the horizon and it did not work: the ground is lit, so a hazed vertex colour
+is still multiplied by the sun and lands either side of the sky it is meant to dissolve
+into. The plate's far edge stayed visible as a lighter trapezoid, and the near-specular
+water was worse. Haze is atmosphere in front of a surface, so `hazedStandardMaterial()`
+injects `mix(gl_FragColor.rgb, uHorizon, vHaze)` right after `<opaque_fragment>`.
+
+### The horizon
+
+Three lateral extents instead of one, because a correct depth axis still read as a floating
+tile: **`STRIP_HALF_Z` 6 km** is the represented sector and the only place assets live;
+**`SCENERY_HALF_Z` 12 km** is how far the dressing runs, so a trench line does not stop
+dead at the sector boundary and announce it; **`TERRAIN_HALF_Z` 32 km** is how far the
+ground runs, with the lateral haze complete at 30 km so the plate's real edge is fully
+dissolved before it is reached.
+
+The sky is an inverted unit sphere **centred on the camera**, scaled per frame, with
+`depthTest: false` and `renderOrder: -1000`. Camera-centred is the correct model, not a
+convenience: for a flat ground plane the true horizon is at eye level at every altitude, so
+a gradient meeting `HORIZON_COLOR` at local y = 0 is right and a world-centred one drifts
+wrong the moment the camera climbs. Painting it first and unconditionally is what frees the
+whole depth range for real geometry.
+
+### The axis lock
+
+`controls.minAzimuthAngle` / `maxAzimuthAngle` at **±25°** about azimuth 0. OrbitControls
+enforces this itself, every update, including mid-gesture — so it is a real constraint and
+not a correction a fast drag could outrun. **Verified** by forcing the camera to azimuth
+180° from outside the app and reading back +25.0°.
+
+Free 360° orbit is removed because with two registers and a fidelity gradient the depth
+axis has a *direction*, and a camera that can swing behind the scene can put the compressed
+rear in the foreground, which states the opposite of what the compression means.
+
+Pass 16's camera-azimuth header behaviour was **verified, not assumed, and one real bug in
+it was found and fixed**. Under the lock the probe can only ever report "not flipped", and
+it stays live rather than being hardcoded. But its probe points were absolute (±40 km on
+the axis), and a point behind the camera projects with its sign flipped — so zooming into
+the near register reversed the header, which is visible in the first Pass 24 screenshots
+("← RUSSIA REAR" at a 2.6 km framing). The probe now samples ±400 m either side of the
+current camera target, which asks the same question and can never sample behind the near
+plane.
+
+Because orientation is now guaranteed, **default facing is derivable**: `models.ts` authors
+every hero model nose-toward +X, so side_a (negative X) already faces the zero line at
+rotation 0 and side_b needs a half turn. Before this pass no rotation was applied at all,
+so every Russian model faced its own rear. Verified across all 30 hero models: `rotY` is 0
+for every x < 0 and π for every x > 0. Per-asset overrides are Pass 25's.
+
+### Air-layer altitude
+
+Solvable only now, because "how high" had no answer while the axis it would be drawn
+against was two scales at once. `Asset.altitude_band_m` carries `{min_m, max_m, basis,
+note}` and `resolveAltitudeM()` in `src/data/placement.ts` — beside `resolvePlatformDomain`,
+deliberately, so no renderer can disagree — draws the band's **geometric** mean. Geometric,
+not arithmetic: these bands are wide and skewed low, and a Shahed's published 60–4,000 m
+envelope has an arithmetic mean of 2,030 m, which the sourcing does not support. The
+geometric mean lands at ~490 m.
+
+`basis` is the honesty field and is never inferred from the numbers: `sourced` (a published
+figure for this airframe), `estimated` (a class-typical band, said so), `symbolic` (real
+and unrenderable — an orbital asset, with the true figure in `note`), `unknown` (no
+defensible band; the renderer falls back and Data Health says so). 21 airborne assets: 3
+sourced, 11 estimated, 6 unknown, 1 symbolic. All 17 non-sourced ones surface as Data
+Health entries.
+
+Far-register altitude is scaled by the local compression, clamped at 8× and 6,000 m — a
+legible symbolic altitude, kept comparable to a Bayraktar's genuinely true 6.7 km rather
+than making the abstracted assets the tallest thing in frame.
+
+### Depth range — a rejected fix, recorded
+
+The first attempt at the 1 m-to-140 km range problem was `logarithmicDepthBuffer: true`.
+It was **measured and rejected**: at close range it dropped the terrain out of the scene
+entirely while the scenery still drew — a precision problem traded for a correctness one.
+Turning it off without changing anything else gave the expected z-fighting instead.
+
+The shipped answer is a **dynamic near/far derived from the orbit radius** —
+`near = clamp(orbit·0.02, 0.5, 400)`, `far = clamp(orbit·80, 20,000, 260,000)` — plus the
+camera-attached sky above. The far/near ratio never exceeds ~40,000 and is under 3,000 at
+the framings that matter, against 420,000 for a fixed pair.
+
+### A real bug this pass exposed
+
+`buildFightingPositions()` allocated its two InstancedMesh buffers for `maxCount` — the
+**per-side** budget — and then wrote both sides into them, setting `.count` to the number
+actually written. Three then drew instances past the end of `instanceMatrix`, whose
+out-of-range reads are zero; a zero matrix is degenerate, and the result was enormous black
+triangles fanning across the scene.
+
+This has been latent since Pass 19. It was invisible before Pass 24 for an instructive
+reason: at 14/side into a 14 buffer the overflow was 14 sub-pixel pits, and at the old
+world scale a degenerate triangle at the origin was a speck. At 52/side across 24 km of
+frontage it was most of the frame. Found by bisecting the scene graph against screenshots —
+hiding one group at a time and looking — not by reading the code, which is the method
+CLAUDE.md's own rendering-verification rule exists to force.
+
+### Where this pass and the repo's own rules disagreed
+
+- **CLAUDE.md records the invariant "the 3D view reads the same underlying projection so
+  the two views can never disagree about where anything is." That coupling is deliberately
+  broken here**, and the file is updated to say so. What the invariant was actually
+  protecting survives intact: both views draw every asset from `distance_km_from_zero` and
+  label it in true km, and neither can move an asset without moving that field. What now
+  differs is only how each *allocates screen depth* to a km — and it has to, because a
+  schematic cross-section gives each band a legible slice while a scene with real terrain
+  in it cannot claim two scales at once. A consequence worth having: editing a band no
+  longer moves anything in the 3D scene. A band annotates the axis; it does not define it.
+- **`MODEL_STYLE_GUIDE.md` §1 says "world units are not to-scale" and cites `models.ts`'s
+  own "a to-scale tank on this compressed axis would be sub-pixel."** Inside the near
+  register that is now false, and it is false in the direction the guide wanted: the hero
+  tier's authored proportions turned out to be metre-scale already, so declaring the unit
+  a metre made them correct without touching a single model.
+- **Four landmarks carry a disclosed footprint scale** (power plant ×5, fuel depot ×4, port
+  ×5, ruined infrastructure ×3). These four builders were authored as compact icons — an
+  8-unit cooling tower, a five-tank farm inside a 5.6-unit berm — and at 1 unit = 1 m they
+  read as garden sheds beside a 12 km frontage. Everything house-sized carries no scale,
+  and nothing an asset is sited *relative to* is scaled: `tacticalSiting.ts` reads the
+  landmark's own km/z, which this does not touch.
+- **The brief's ballistic-missile altitude row has no subject in this roster.** The one
+  deep-strike rocket asset is a launcher, which resolves to a `land` platform and needs no
+  altitude. Recorded rather than answered with an invented entry.
+
+### Performance, measured before and after
+
+Same headless Chromium (SwiftShader — software rasterisation, so wall-clock frame time here
+is not a hardware prediction), same 1440×860 viewport, default framing, after a camera
+nudge and settle.
+
+| | pre-Pass-24 (a2acf1f) | Pass 24 |
+|---|---|---|
+| draw calls | 767 | **588** |
+| triangles | 147,680 | 416,518 |
+| geometries | 713 | 587 |
+| layout ms | 0.21 | 0.23 |
+| render ms (JS) | 16.27 | 12.59 |
+| frame ms (software) | 453.6 | 656.9 |
+
+Draw calls — the metric Pass 19 optimised and the one that actually costs on a GPU — are
+down 23%. Triangles are up because the scene now covers roughly a hundred times more real
+ground at true scale; the trench belt was measured at 200k triangles on its own and cut to
+66k by lengthening the bay to a still-realistic 15 m and shoring every other one.
+
+### Verification
+
+Every visual claim in this entry has a screenshot in `docs/screenshots/pass24/`:
+`partB-fulldepth`, `partB-transition`, `partB-near`, `partB-airlayer`, `partB-yaw-neg`,
+`partB-yaw-pos`, `partB-hero-side_a`, `partB-hero-side_b`, `partB-osm-truescale`,
+`partB-mobile-iphone`.
+
+The compression numerics were cross-checked **independently**: the constants were
+re-implemented in a separate Node process (not imported from the app), six assets spanning
+3 km to 4,300 km were read out of the live scene, and both their world X and their screen
+position were recomputed by hand — the latter with a from-scratch look-at basis and
+perspective divide rather than three.js's projection. Worst absolute discrepancy across all
+twelve comparisons: **4.0 × 10⁻¹³**. The table is in `PASS24_HANDOFF.md`.

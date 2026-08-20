@@ -91,5 +91,11 @@
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]
+  },
+  "altitude_band_m": {
+    "min_m": 800,
+    "max_m": 2000,
+    "basis": "estimated",
+    "note": "Class-typical fixed-wing tactical reconnaissance band. No published operating altitude for this airframe was confirmed."
   }
 }

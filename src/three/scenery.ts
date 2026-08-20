@@ -16,15 +16,31 @@
 // would be trusted under a licence nobody here could read. Primitives,
 // same as the hero tier.
 //
+// Pass 24: metric. Every individual structure here was already authored at
+// roughly metre scale (MODEL_STYLE_GUIDE §1) and is now simply correct — a
+// house is 2.6-3.8 m wide because that is what a house is. What WAS authored
+// against the old compressed axis, and is fixed here, is every *extent*: the
+// radius a village's houses are scattered over, the footprint of a forest
+// patch, the Z span of the trench line, and the world-X the whole table of
+// landmarks sits at (now `worldXFor(side, km)` against depthAxis.ts, with no
+// `Projection` argument, so a band edit no longer moves the scenery).
+//
+// Four landmarks — the large industrial facilities — carry an explicit
+// footprint scale in buildScenery below. That is a disclosed deviation from
+// "everything is 1:1", not an oversight: a cooling tower authored 8 units
+// tall is 8 m tall, and a representative power-generation node that reads as
+// a garden shed is a worse error than a disclosed 5x. Structures that are
+// genuinely house-sized carry no scale at all.
+//
 // Pass 10 adds the mixed-biome landmark kinds (villages at three condition
 // tiers, an urban cluster, a port, a ruined-infrastructure set-piece, a
 // hand-placed wreck) plus the coastal water plane from terrain3d.ts — see
 // that file's header for why the shoreline position is a fixed world-X
-// rather than something derived from the live `Projection` passed in here.
+// rather than something derived from a live `Projection` (Pass 24 removed
+// the `Projection` argument from this file entirely).
 // ─────────────────────────────────────────────────────────────────────────
 import * as THREE from "three";
 import type { Side } from "../types";
-import type { Projection } from "../scene/projection";
 import {
   terrainHeight,
   buildWater,
@@ -34,7 +50,7 @@ import {
   RIVER_HALF_WIDTH,
   RIVER_WATER_LEVEL_Y,
 } from "./terrain3d";
-import { worldXFor, STRIP_HALF_Z } from "./worldMapping";
+import { worldXFor, SCENERY_HALF_Z } from "./worldMapping";
 
 // ── material palette (Pass 19 — governance) ───────────────────────────────
 // Pass 12 flagged 19 ungoverned one-off materials here with no shared,
@@ -237,7 +253,10 @@ function buildVillage(condition: Condition, seed: number, count: number): THREE.
   for (let i = 0; i < count; i++) {
     const house = buildHouse(condition, r);
     const angle = (i / count) * Math.PI * 2 + r() * 0.6;
-    const radius = 3 + r() * 5.5;
+    // Metres (Pass 24): a 60-170 m scatter, i.e. a hamlet's footprint. The
+    // houses themselves stay house-sized — only the spread was authored
+    // against the old compressed axis.
+    const radius = 60 + r() * 110;
     house.position.set(Math.cos(angle) * radius, 0, Math.sin(angle) * radius * 0.7);
     house.rotation.y += r() * Math.PI * 2;
     g.add(house);
@@ -254,11 +273,14 @@ function buildUrbanCluster(seed: number): THREE.Group {
   const r = rngLocal(seed);
   const mats = [URBAN_WALL_A, URBAN_WALL_B];
   for (let i = 0; i < 9; i++) {
-    const w = 2 + r() * 2.2;
-    const d = 2 + r() * 2.2;
-    const h = 4 + r() * 11;
+    // Metres (Pass 24). 12-24 m footprints, 9-42 m tall, scattered over a
+    // 300 x 220 m block — a small town's silhouette at real size, which is
+    // what "viewed from the distance this always renders at" now means.
+    const w = 12 + r() * 12;
+    const d = 12 + r() * 12;
+    const h = 9 + r() * 33;
     const b = box(w, h, d, mats[i % 2]);
-    b.position.set((r() - 0.5) * 18, h / 2, (r() - 0.5) * 13);
+    b.position.set((r() - 0.5) * 300, h / 2, (r() - 0.5) * 220);
     b.rotation.y = r() * 0.3;
     g.add(b);
   }
@@ -297,7 +319,11 @@ function buildTreeCluster(r: () => number, count: number, spreadX: number, sprea
 /** A forest patch — artillery cover: dense canopy a battery can hide a tube
  *  and its resupply track under without digging a full firing pit. */
 function buildForestPatch(seed: number): THREE.Group {
-  return buildTreeCluster(rngLocal(seed), 22, 11, 9);
+  // 380 x 300 m of sparse wood (Pass 24 — metres). Tree COUNT deliberately
+  // unchanged: each tree here is two un-instanced meshes, and this file is
+  // already the scene's draw-call hot spot, so the patch gets its real
+  // footprint by spreading the trees it has, not by adding more.
+  return buildTreeCluster(rngLocal(seed), 22, 380, 300);
 }
 
 /** An elevated treeline — a raised earthen ridge (a real fold in the ground,
@@ -307,12 +333,14 @@ function buildForestPatch(seed: number): THREE.Group {
 function buildElevatedTreeline(seed: number): THREE.Group {
   const g = new THREE.Group();
   const r = rngLocal(seed);
-  const ridge = box(9, 1.1, 3, EARTH_MOUND);
-  ridge.position.y = 0.55;
+  // A 300 m fold in the ground standing 14 m proud of it — a real ridge,
+  // not the 9-unit hummock this was before Pass 24.
+  const ridge = box(300, 14, 90, EARTH_MOUND);
+  ridge.position.y = 7;
   ridge.rotation.y = (r() - 0.5) * 0.6;
   g.add(ridge);
-  const trees = buildTreeCluster(r, 12, 9, 2.4);
-  trees.position.y = 1.05;
+  const trees = buildTreeCluster(r, 12, 280, 70);
+  trees.position.y = 13.5;
   g.add(trees);
   return g;
 }
@@ -436,14 +464,14 @@ for (const m of SCENERY_MATERIALS) m.userData.shared = true;
  *  and thinned/damaged treelines already existed on this map (props.ts,
  *  and this file's trench/obstacle/fighting-position belt) — smoke was the
  *  one actually missing, not a retune. */
-function buildSmokePlume(seed: number): THREE.Group {
+function buildSmokePlume(seed: number, scale = 1): THREE.Group {
   const g = new THREE.Group();
   const r = rngLocal(seed);
-  let y = 0.3;
+  let y = 0.3 * scale;
   for (let i = 0; i < 4; i++) {
-    const s = 0.5 + i * 0.35 + r() * 0.2;
+    const s = (0.5 + i * 0.35 + r() * 0.2) * scale;
     const puff = new THREE.Mesh(new THREE.SphereGeometry(s, 6, 5), SMOKE_MAT);
-    puff.position.set((r() - 0.5) * 0.8 * i, y, (r() - 0.5) * 0.8 * i);
+    puff.position.set((r() - 0.5) * 0.8 * i * scale, y, (r() - 0.5) * 0.8 * i * scale);
     g.add(puff);
     y += s * 1.1;
   }
@@ -461,15 +489,18 @@ function buildSmokePlume(seed: number): THREE.Group {
 function buildDestroyedBridge(z: number): THREE.Group {
   const g = new THREE.Group();
   const cx = riverCenterAt(z);
-  const deckY = RIVER_WATER_LEVEL_Y + 2.4;
-  const span = RIVER_HALF_WIDTH * 2 + 5; // reaches a little past each bank
+  // Metres (Pass 24). The channel is 1.2 km bank to bank now, so the deck
+  // clears the water by 16 m and the structure is sized to span it — this is
+  // the same geometry, restated at the scale the river actually has.
+  const deckY = RIVER_WATER_LEVEL_Y + 16;
+  const span = RIVER_HALF_WIDTH * 2 + 260; // reaches a little past each bank
   const r = rngLocal(0x8271 ^ Math.round(z * 97));
 
   for (const dir of [-1, 1] as const) {
     const bankX = cx + dir * span * 0.5;
     const gapX = cx + dir * RIVER_HALF_WIDTH * 0.5;
     const len = Math.abs(bankX - gapX);
-    const deck = box(len, 0.5, 4.2, BRIDGE_DECK);
+    const deck = box(len, 2.4, 14, BRIDGE_DECK);
     deck.position.set((bankX + gapX) / 2, deckY, z);
     deck.rotation.z = -dir * 0.15;
     g.add(deck);
@@ -477,25 +508,25 @@ function buildDestroyedBridge(z: number): THREE.Group {
     for (let p = 0; p < 3; p++) {
       const px = bankX - dir * (((p + 0.5) / 3) * len);
       const groundY = terrainHeight(px, z);
-      const pier = cyl(0.4, 0.55, Math.max(0.6, deckY - groundY), 6, CONCRETE_DARK);
+      const pier = cyl(2.6, 3.4, Math.max(4, deckY - groundY), 6, CONCRETE_DARK);
       pier.position.set(px, (deckY + groundY) / 2, z);
       g.add(pier);
     }
   }
 
-  const fallen = box(span * 0.3, 0.45, 4, BRIDGE_DECK_BROKEN);
-  fallen.position.set(cx, RIVER_WATER_LEVEL_Y + 0.2, z + 1.1);
+  const fallen = box(span * 0.3, 2.2, 13, BRIDGE_DECK_BROKEN);
+  fallen.position.set(cx, RIVER_WATER_LEVEL_Y + 1.4, z + 7);
   fallen.rotation.set(0.5, 0.22, 0.3);
   g.add(fallen);
 
   for (let i = 0; i < 5; i++) {
-    const bar = cyl(0.04, 0.04, 1.4 + r() * 0.8, 4, REBAR);
-    bar.position.set(cx + (i - 2) * 0.5, RIVER_WATER_LEVEL_Y + 0.6, z - 1.4 + i * 0.3);
+    const bar = cyl(0.28, 0.28, 9 + r() * 5, 4, REBAR);
+    bar.position.set(cx + (i - 2) * 3.4, RIVER_WATER_LEVEL_Y + 4, z - 9 + i * 2);
     bar.rotation.set(0.9 + r() * 0.2, 0, 0.3);
     g.add(bar);
   }
 
-  g.add(buildSmokePlume(0x9a01 ^ Math.round(z * 31)));
+  g.add(buildSmokePlume(0x9a01 ^ Math.round(z * 31), 14));
   return g;
 }
 
@@ -509,20 +540,24 @@ function buildPontoonCrossing(z: number): THREE.Group {
   const g = new THREE.Group();
   const cx = riverCenterAt(z);
   const halfW = RIVER_HALF_WIDTH * 0.82;
-  const segCount = 7;
+  // 22 sections across ~980 m of water (Pass 24 — metres). A ribbon-bridge
+  // bay is roughly 6-7 m long, so the count follows from the span rather
+  // than being the 7 that suited a 12-unit channel.
+  const segCount = 22;
+  const segLen = (halfW * 2) / segCount;
   for (let i = 0; i < segCount; i++) {
     const t = i / (segCount - 1);
     const x = cx - halfW + t * halfW * 2;
-    const seg = box(0.9, 0.22, 1.1, PONTOON_MAT);
-    seg.position.set(x, RIVER_WATER_LEVEL_Y + 0.14, z + Math.sin(t * Math.PI) * 0.3);
+    const seg = box(segLen * 0.92, 1.4, 9, PONTOON_MAT);
+    seg.position.set(x, RIVER_WATER_LEVEL_Y + 0.9, z + Math.sin(t * Math.PI) * 22);
     seg.rotation.y = (t - 0.5) * 0.1;
     g.add(seg);
   }
   // A thin box, not a Line — every other piece of geometry in this file is a
   // Mesh, and disposeScenery() below only walks Mesh/InstancedMesh. A Line
   // here would leak its geometry on every terrain rebuild.
-  const rope = box(halfW * 2, 0.04, 0.04, WOOD);
-  rope.position.set(cx, RIVER_WATER_LEVEL_Y + 0.5, z);
+  const rope = box(halfW * 2, 0.3, 0.3, WOOD);
+  rope.position.set(cx, RIVER_WATER_LEVEL_Y + 3.2, z);
   g.add(rope);
   return g;
 }
@@ -567,66 +602,73 @@ export interface LandmarkSpec {
 }
 
 /**
- * Fixed, hand-placed landmarks — a handful, not a scatter. Distance stops
+ * Fixed, hand-placed landmarks — a handful, not a scatter. `z` is METRES
+ * across the strip as of Pass 24 (the whole table was rescaled by one factor,
+ * so every relative placement the earlier passes chose is preserved); `km` is
+ * and always was a real distance from the zero line, now resolved through
+ * depthAxis.ts rather than the 2D view's band allocation. Distance stops
  * follow item 1's destruction gradient (ruined near the line, damaged
  * through the mid bands, intact/urban past 50 km) and item 3's ask for a
  * mixed biome — villages, an urban cluster, rolling steppe left as bare
  * terrain, forest belts handled in props.ts. km values are real distances
  * from the zero line; the world-X they land at goes through the same
- * `Projection` the ruler and every real asset use (`worldXFor` below), so a
- * live band edit moves these exactly as it moves everything else — unlike
- * the destruction-gradient *tint* in terrain3d.ts, which is a fixed
- * world-X and does not track band edits (see that file's header).
+ * two-register depth axis the ruler and every real asset use (`worldXFor`
+ * below, now `depthAxis.ts` rather than the 2D view's band allocation). As
+ * of Pass 24 a band edit moves nothing in this scene — bands annotate the
+ * axis, they no longer define it — so the Pass 10 caveat about this table
+ * tracking band edits while terrain3d.ts's tint did not is retired: neither
+ * tracks them, and both now agree.
  */
 export const LANDMARKS: LandmarkSpec[] = [
-  { kind: "power_plant", side: "side_a", km: 95, z: 22, rotationY: 0.4 },
-  { kind: "power_plant", side: "side_b", km: 110, z: -18, rotationY: -0.3 },
-  { kind: "fuel_depot", side: "side_a", km: 42, z: -26, rotationY: 0.2 },
-  { kind: "fuel_depot", side: "side_b", km: 55, z: 30, rotationY: -0.5 },
-  { kind: "command_post", side: "side_a", km: 12, z: 40, rotationY: 0.6 },
-  { kind: "command_post", side: "side_b", km: 14, z: -36, rotationY: -0.2 },
+  { kind: "power_plant", side: "side_a", km: 95, z: 1056, rotationY: 0.4 },
+  { kind: "power_plant", side: "side_b", km: 110, z: -864, rotationY: -0.3 },
+  { kind: "fuel_depot", side: "side_a", km: 42, z: -1248, rotationY: 0.2 },
+  { kind: "fuel_depot", side: "side_b", km: 55, z: 1440, rotationY: -0.5 },
+  { kind: "command_post", side: "side_a", km: 12, z: 1920, rotationY: 0.6 },
+  { kind: "command_post", side: "side_b", km: 14, z: -1728, rotationY: -0.2 },
 
   // 0-5 km: total destruction — ruined villages right at the line.
-  { kind: "village_ruined", side: "side_a", km: 3, z: -44, rotationY: 0.5 },
-  { kind: "village_ruined", side: "side_b", km: 3.5, z: 40, rotationY: -0.4 },
+  { kind: "village_ruined", side: "side_a", km: 3, z: -2112, rotationY: 0.5 },
+  { kind: "village_ruined", side: "side_b", km: 3.5, z: 1920, rotationY: -0.4 },
 
   // 5-20 km: damaged forest + mixed-condition structures.
-  { kind: "village_damaged", side: "side_a", km: 11, z: 32, rotationY: 0.9 },
-  { kind: "village_damaged", side: "side_b", km: 9, z: -30, rotationY: -0.7 },
+  { kind: "village_damaged", side: "side_a", km: 11, z: 1536, rotationY: 0.9 },
+  { kind: "village_damaged", side: "side_b", km: 9, z: -1440, rotationY: -0.7 },
 
   // 20-50 km: lighter but visible damage — still calling these "damaged",
   // one tier gentler in practice since buildHouse's own randomness already
   // gives a lighter touch than the 5-20 km pair above.
-  { kind: "village_intact", side: "side_a", km: 28, z: -48, rotationY: 0.2 },
-  { kind: "village_intact", side: "side_b", km: 33, z: 46, rotationY: -0.6 },
+  { kind: "village_intact", side: "side_a", km: 28, z: -2304, rotationY: 0.2 },
+  { kind: "village_intact", side: "side_b", km: 33, z: 2208, rotationY: -0.6 },
 
   // 50 km+: mostly intact — a second intact village plus one urban cluster
   // per side, and one occasional destroyed piece of key infrastructure so
   // the "mostly" in "mostly intact" stays honest.
-  { kind: "village_intact", side: "side_a", km: 140, z: 20, rotationY: 0.7 },
-  { kind: "village_intact", side: "side_b", km: 180, z: -22, rotationY: -0.3 },
-  { kind: "urban_cluster", side: "side_a", km: 130, z: -40, rotationY: 0.15 },
-  { kind: "urban_cluster", side: "side_b", km: 170, z: 34, rotationY: -0.25 },
-  { kind: "ruined_infrastructure", side: "side_a", km: 230, z: 6, rotationY: 0.3 },
-  { kind: "ruined_infrastructure", side: "side_b", km: 150, z: 8, rotationY: -0.15 },
+  { kind: "village_intact", side: "side_a", km: 140, z: 960, rotationY: 0.7 },
+  { kind: "village_intact", side: "side_b", km: 180, z: -1056, rotationY: -0.3 },
+  { kind: "urban_cluster", side: "side_a", km: 130, z: -1920, rotationY: 0.15 },
+  { kind: "urban_cluster", side: "side_b", km: 170, z: 1632, rotationY: -0.25 },
+  { kind: "ruined_infrastructure", side: "side_a", km: 230, z: 288, rotationY: 0.3 },
+  { kind: "ruined_infrastructure", side: "side_b", km: 150, z: 384, rotationY: -0.15 },
 
   // The coast: a port right at the shoreline (see buildWater in
   // terrain3d.ts) — this is the "place to build out the Russia-naval
   // category" item 2 asked for.
-  { kind: "port_harbor", side: "side_b", km: 262, z: -4, rotationY: -0.1 },
+  { kind: "port_harbor", side: "side_b", km: 262, z: -192, rotationY: -0.1 },
 
   // A couple of hand-placed burning wrecks with an ember glow, on top of
   // props.ts's instanced wreck field.
-  { kind: "wreck_marker", side: "side_a", km: 2, z: 8, rotationY: 0.4 },
-  { kind: "wreck_marker", side: "side_b", km: 2.2, z: -10, rotationY: -0.6 },
-  { kind: "wreck_marker", side: "side_a", km: 4, z: -26, rotationY: 1.1 },
+  { kind: "wreck_marker", side: "side_a", km: 2, z: 384, rotationY: 0.4 },
+  { kind: "wreck_marker", side: "side_b", km: 2.2, z: -480, rotationY: -0.6 },
+  { kind: "wreck_marker", side: "side_a", km: 4, z: -1248, rotationY: 1.1 },
 ];
 
 /** A terrain feature Pass 18 can site an asset "into" — exported (unlike
  *  `LANDMARKS` above) specifically so that pass can read `TERRAIN_FEATURES`
  *  and place an asset at/near a real `(side, km, z)` this ground actually
  *  supports, rather than continuing to pick coordinates blind. `radius` is
- *  the rough usable extent, world units, for "does this asset sit inside the
+ *  the rough usable extent in METRES (Pass 24 — same single rescale as the
+ *  landmark table above) for "does this asset sit inside the
  *  feature" — not a hard boundary, a siting hint. `use` states the intent in
  *  words so Pass 18 doesn't have to infer it from the geometry or the kind
  *  name alone. */
@@ -643,23 +685,23 @@ export interface TerrainFeature {
 export const TERRAIN_FEATURES: TerrainFeature[] = [
   // Forest patches — artillery cover, per item 6. Sited in the 5-20 km band
   // where a tube would actually be dug in, not the open 0-5 km scar.
-  { id: "forest-a-1", kind: "forest_patch", side: "side_a", km: 8, z: 24, radius: 6, use: "artillery firing position under canopy" },
-  { id: "forest-a-2", kind: "forest_patch", side: "side_a", km: 16, z: -34, radius: 6, use: "artillery firing position under canopy" },
-  { id: "forest-b-1", kind: "forest_patch", side: "side_b", km: 10, z: -22, radius: 6, use: "artillery firing position under canopy" },
-  { id: "forest-b-2", kind: "forest_patch", side: "side_b", km: 15, z: 38, radius: 6, use: "artillery firing position under canopy" },
+  { id: "forest-a-1", kind: "forest_patch", side: "side_a", km: 8, z: 1152, radius: 288, use: "artillery firing position under canopy" },
+  { id: "forest-a-2", kind: "forest_patch", side: "side_a", km: 16, z: -1632, radius: 288, use: "artillery firing position under canopy" },
+  { id: "forest-b-1", kind: "forest_patch", side: "side_b", km: 10, z: -1056, radius: 288, use: "artillery firing position under canopy" },
+  { id: "forest-b-2", kind: "forest_patch", side: "side_b", km: 15, z: 1824, radius: 288, use: "artillery firing position under canopy" },
 
   // Elevated treelines — drone team observation/launch positions. Closer to
   // the line than the forest patches: a drone team needs line of sight to
   // the contact area, not deep cover.
-  { id: "ridge-a-1", kind: "elevated_treeline", side: "side_a", km: 4, z: 12, radius: 5, use: "drone launch/observation position" },
-  { id: "ridge-a-2", kind: "elevated_treeline", side: "side_a", km: 6, z: -18, radius: 5, use: "drone launch/observation position" },
-  { id: "ridge-b-1", kind: "elevated_treeline", side: "side_b", km: 5, z: 6, radius: 5, use: "drone launch/observation position" },
-  { id: "ridge-b-2", kind: "elevated_treeline", side: "side_b", km: 4.5, z: -30, radius: 5, use: "drone launch/observation position" },
+  { id: "ridge-a-1", kind: "elevated_treeline", side: "side_a", km: 4, z: 576, radius: 240, use: "drone launch/observation position" },
+  { id: "ridge-a-2", kind: "elevated_treeline", side: "side_a", km: 6, z: -864, radius: 240, use: "drone launch/observation position" },
+  { id: "ridge-b-1", kind: "elevated_treeline", side: "side_b", km: 5, z: 288, radius: 240, use: "drone launch/observation position" },
+  { id: "ridge-b-2", kind: "elevated_treeline", side: "side_b", km: 4.5, z: -1440, radius: 240, use: "drone launch/observation position" },
 
   // Built-up blocks — infantry-holdable ground, closer to the line than the
   // existing deep-rear "urban_cluster" villages/towns.
-  { id: "block-a-1", kind: "built_up_block", side: "side_a", km: 7, z: -10, radius: 9, use: "infantry-held built-up block" },
-  { id: "block-b-1", kind: "built_up_block", side: "side_b", km: 6, z: 16, radius: 9, use: "infantry-held built-up block" },
+  { id: "block-a-1", kind: "built_up_block", side: "side_a", km: 7, z: -480, radius: 432, use: "infantry-held built-up block" },
+  { id: "block-b-1", kind: "built_up_block", side: "side_b", km: 6, z: 768, radius: 432, use: "infantry-held built-up block" },
 ];
 
 // ── near-line belt (instanced: trench segments, wire, fighting positions) ─
@@ -677,12 +719,27 @@ const dummy = new THREE.Object3D();
 /** A zigzag trench line — not one long straight cut (real trenches traverse
  *  to limit blast/enfilade along their own length), rendered as a chain of
  *  short angled segments hugging the terrain near the line. */
+/** Length of one trench bay, metres — a real traverse, and now literally so.
+ *  The zigzag exists because real trenches traverse to limit blast and
+ *  enfilade along their own length.
+ *
+ *  15 m rather than 9 for a measured reason: at 9 m a continuous line across
+ *  24 km of frontage on both sides is ~8,400 bays, and at 24 triangles a bay
+ *  (box + shoring post) that single feature was 200k triangles — a third of
+ *  the whole scene's budget, for geometry that is sub-pixel from any framing
+ *  wider than a few hundred metres. 15 m is still inside the real range for a
+ *  traverse and costs 40% of it; the shoring posts, which read as texture
+ *  rather than as structure, now go on every other bay for the same reason.
+ *  Measured before and after — see docs/DECISIONS.md Pass 24. */
+const TRENCH_SEG_LEN = 15;
+const TRENCH_PITCH = TRENCH_SEG_LEN * 0.85;
 /** Max trench segments either side ever produces — `STRIP_HALF_Z` is fixed,
- *  so this is a real ceiling, not a guess: `2*(STRIP_HALF_Z-6)/(3.2*0.85)`
- *  rounded up with margin. Sized once so the two InstancedMeshes below
- *  (shared across both sides — one draw call each, not one per side) never
- *  need to grow. */
-const TRENCH_SEGMENTS_MAX = 100;
+ *  so this is a real ceiling, not a guess. Both sides share one pair of
+ *  InstancedMeshes (one draw call each, not one per side), so a 12 km
+ *  frontage of continuous trench costs exactly two draws however many bays
+ *  it takes. */
+const TRENCH_SEGMENTS_MAX =
+  Math.ceil((2 * (SCENERY_HALF_Z * 2 - 400)) / TRENCH_PITCH) + 8;
 
 /** Pass 19: was a Group of individually-authored trench/post Mesh pairs —
  *  up to ~90 draw calls on its own at the high scenery budget (2 meshes ×
@@ -694,33 +751,33 @@ const TRENCH_SEGMENTS_MAX = 100;
  *  need their own InstancedMesh each; both sides share one pair of meshes
  *  rather than one pair per side, since nothing about a trench segment's
  *  geometry depends on which side it's on. */
-function buildTrenchLines(proj: Projection): THREE.Group {
+function buildTrenchLines(): THREE.Group {
   const g = new THREE.Group();
-  const trenchGeo = new THREE.BoxGeometry(1.6, 0.9, 3.2);
-  const postGeo = new THREE.BoxGeometry(0.12, 1.1, 0.12);
+  const trenchGeo = new THREE.BoxGeometry(4.5, 2.4, TRENCH_SEG_LEN);
+  const postGeo = new THREE.BoxGeometry(0.28, 2.6, 0.28);
   const trenchMesh = new THREE.InstancedMesh(trenchGeo, DIRT_WALL, TRENCH_SEGMENTS_MAX);
   const postMesh = new THREE.InstancedMesh(postGeo, WOOD, TRENCH_SEGMENTS_MAX);
-  const segLen = 3.2;
   let placed = 0;
+  let posts = 0;
 
   for (const side of ["side_a", "side_b"] as Side[]) {
     const r = rng(side === "side_a" ? 0x7a11 : 0xbeef);
-    let z = -STRIP_HALF_Z + 6;
-    const x0 = worldXFor(side, 0.4, proj);
-    const x1 = worldXFor(side, 2.2, proj);
+    let z = -SCENERY_HALF_Z + 200;
+    const x0 = worldXFor(side, 0.4);
+    const x1 = worldXFor(side, 2.2);
 
-    while (z < STRIP_HALF_Z - 6) {
+    while (z < SCENERY_HALF_Z - 200) {
       const jog = (r() - 0.5) * (x1 - x0) * 0.6;
       const x = x0 + (x1 - x0) * 0.5 + jog;
       if (isInWater(x, z) || placed >= TRENCH_SEGMENTS_MAX) {
         // The river cuts a real gap in the line here rather than a trench
         // dug straight through open water — the march continues past it.
-        z += segLen * 0.85;
+        z += TRENCH_PITCH;
         continue;
       }
       const rotY = (r() - 0.5) * 0.5;
 
-      dummy.position.set(x, terrainHeight(x, z) + 0.1, z);
+      dummy.position.set(x, terrainHeight(x, z) + 0.3, z);
       dummy.rotation.set(0, rotY, 0);
       dummy.scale.setScalar(1);
       dummy.updateMatrix();
@@ -729,18 +786,20 @@ function buildTrenchLines(proj: Projection): THREE.Group {
       // Timber shoring posts along the trench wall — real dugouts are
       // shored with whatever's on hand, and it's the detail that reads as
       // "somebody dug in here" rather than "a rectangle was placed here".
-      dummy.position.set(x + 0.75, terrainHeight(x, z) + 0.55, z);
-      dummy.rotation.set(0, rotY, 0);
-      dummy.updateMatrix();
-      postMesh.setMatrixAt(placed, dummy.matrix);
+      if (placed % 2 === 0) {
+        dummy.position.set(x + 2.1, terrainHeight(x, z) + 1.4, z);
+        dummy.rotation.set(0, rotY, 0);
+        dummy.updateMatrix();
+        postMesh.setMatrixAt(posts++, dummy.matrix);
+      }
 
       placed++;
-      z += segLen * 0.85;
+      z += TRENCH_PITCH;
     }
   }
 
   trenchMesh.count = placed;
-  postMesh.count = placed;
+  postMesh.count = posts;
   trenchMesh.instanceMatrix.needsUpdate = true;
   postMesh.instanceMatrix.needsUpdate = true;
   trenchMesh.name = "scenery:trenches";
@@ -751,18 +810,21 @@ function buildTrenchLines(proj: Projection): THREE.Group {
 
 /** Concertina wire + dragon's-teeth belt — the instanced obstacle line just
  *  forward of a trench line. */
-function buildObstacleBelt(proj: Projection, side: Side, count: number): THREE.InstancedMesh {
-  const geo = new THREE.ConeGeometry(0.35, 0.6, 4);
+function buildObstacleBelt(side: Side, count: number): THREE.InstancedMesh {
+  // A dragon's tooth is about a metre of concrete. It always was 0.35/0.6 —
+  // the difference is that those are now metres and the belt they form runs
+  // the strip's real 12 km frontage rather than 124 units of it.
+  const geo = new THREE.ConeGeometry(0.55, 1.1, 4);
   const mesh = new THREE.InstancedMesh(geo, CONCRETE_DARK, count);
   const r = rng(side === "side_a" ? 0x0bad : 0xf00d);
-  const xCenter = worldXFor(side, 0.15, proj);
+  const xCenter = worldXFor(side, 0.15);
 
   let placed = 0;
   for (let i = 0; i < count; i++) {
-    const z = -STRIP_HALF_Z + (i / count) * STRIP_HALF_Z * 2;
-    const x = xCenter + (r() - 0.5) * 2.2;
+    const z = -SCENERY_HALF_Z + (i / count) * SCENERY_HALF_Z * 2;
+    const x = xCenter + (r() - 0.5) * 90;
     if (isInWater(x, z)) continue; // no dragon's teeth in the river
-    dummy.position.set(x, terrainHeight(x, z) + 0.3, z);
+    dummy.position.set(x, terrainHeight(x, z) + 0.5, z);
     dummy.rotation.set(0, r() * Math.PI, 0);
     dummy.scale.setScalar(0.8 + r() * 0.5);
     dummy.updateMatrix();
@@ -787,27 +849,43 @@ function buildObstacleBelt(proj: Projection, side: Side, count: number): THREE.I
  *  calls total. `maxCount` is `SCENERY_BUDGET`'s own ceiling (14/side, the
  *  largest tier), passed in rather than hardcoded so the two stay in sync
  *  if that budget ever changes. */
-function buildFightingPositions(proj: Projection, maxCount: number): THREE.Group {
+function buildFightingPositions(maxCount: number): THREE.Group {
   const g = new THREE.Group();
-  const pitGeo = new THREE.CylinderGeometry(1.1, 1.3, 0.5, 6);
+  // A two-man pit is a couple of metres across and a sandbag is half a metre
+  // long. Both were already drawn at those numbers; Pass 24 is what makes
+  // them true.
+  const pitGeo = new THREE.CylinderGeometry(1.6, 1.9, 0.8, 6);
   const bagGeo = new THREE.BoxGeometry(0.55, 0.28, 0.32);
-  const pitMesh = new THREE.InstancedMesh(pitGeo, DIRT_WALL, maxCount);
-  const bagMesh = new THREE.InstancedMesh(bagGeo, SANDBAG, maxCount * 5);
+  // maxCount is PER SIDE and the loop below runs both sides, so the buffers
+  // must be allocated for two. They were not, and had not been since Pass 19:
+  // `count` was then set to the number actually written, which could exceed
+  // the buffer, so three drew instances past the end of instanceMatrix — a
+  // Float32Array whose out-of-range writes are silently dropped and whose
+  // out-of-range reads are zero. A zero matrix is degenerate, and the result
+  // was enormous black triangles fanning across the scene.
+  //
+  // Invisible until Pass 24 for a reason worth recording: at the old budget
+  // (14/side into a 14 buffer) the overflow was 14 sub-pixel pits, and at the
+  // old scale a degenerate triangle at the world origin was a speck. At
+  // 52/side across 24 km of frontage it is most of the frame. Found by
+  // bisecting the scene graph against screenshots, not by reading the code.
+  const pitMesh = new THREE.InstancedMesh(pitGeo, DIRT_WALL, maxCount * 2);
+  const bagMesh = new THREE.InstancedMesh(bagGeo, SANDBAG, maxCount * 10);
   let placedPits = 0;
   let placedBags = 0;
 
   for (const side of ["side_a", "side_b"] as Side[]) {
     const r = rng(side === "side_a" ? 0x5150 : 0x1234);
-    const xNear = worldXFor(side, 1, proj);
-    const xFar = worldXFor(side, 7, proj);
+    const xNear = worldXFor(side, 1);
+    const xFar = worldXFor(side, 7);
 
     for (let i = 0; i < maxCount; i++) {
       const x = xNear + (xFar - xNear) * r();
-      const z = (r() * 2 - 1) * STRIP_HALF_Z;
+      const z = (r() * 2 - 1) * SCENERY_HALF_Z;
       if (isInWater(x, z)) continue; // no dug-in pit sits in the river
       const y = terrainHeight(x, z);
 
-      dummy.position.set(x, y - 0.1, z);
+      dummy.position.set(x, y - 0.2, z);
       dummy.rotation.set(0, 0, 0);
       dummy.scale.setScalar(1);
       dummy.updateMatrix();
@@ -815,7 +893,7 @@ function buildFightingPositions(proj: Projection, maxCount: number): THREE.Group
 
       for (let b = 0; b < 5; b++) {
         const a = (b / 5) * Math.PI * 1.4 - Math.PI * 0.7;
-        dummy.position.set(x + Math.cos(a) * 1.15, y + 0.15, z + Math.sin(a) * 1.15);
+        dummy.position.set(x + Math.cos(a) * 1.7, y + 0.3, z + Math.sin(a) * 1.7);
         dummy.rotation.set(0, a, 0);
         dummy.updateMatrix();
         bagMesh.setMatrixAt(placedBags++, dummy.matrix);
@@ -838,22 +916,45 @@ export interface SceneryBudget {
   obstaclesPerSide: number;
 }
 
+/** Raised with the metric rescale for the same reason props.ts's budget was:
+ *  90 dragon's teeth spread over 12 km of real frontage is one every 133 m,
+ *  which is not a belt. Both are instanced, so the cost of the increase is
+ *  buffer size, not draw calls. */
 export const SCENERY_BUDGET: Record<"high" | "low", SceneryBudget> = {
-  high: { fightingPositionsPerSide: 14, obstaclesPerSide: 90 },
-  low: { fightingPositionsPerSide: 6, obstaclesPerSide: 40 },
+  high: { fightingPositionsPerSide: 52, obstaclesPerSide: 1000 },
+  low: { fightingPositionsPerSide: 20, obstaclesPerSide: 360 },
 };
 
 /** Builds the whole scenery group: landmarks + near-line belt + the coastal
  *  water plane, both sides. Called alongside buildTerrain()/buildProps() and
  *  disposed the same way. `halfWidthX` sizes the water plane's far edge to
  *  match whatever terrain extent was actually generated. */
-export function buildScenery(proj: Projection, budget: SceneryBudget, halfWidthX: number): THREE.Group {
+/**
+ * Footprint scale for the large industrial landmarks, applied to the whole
+ * group. A DISCLOSED deviation from the pass's 1:1 rule, not an oversight:
+ * these four builders were authored as compact icons (an 8-unit cooling
+ * tower, a 5-tank farm inside a 5.6-unit berm), and at 1 unit = 1 m they read
+ * as garden sheds beside a 12 km frontage. Everything house-sized carries no
+ * scale, and nothing that a real asset is placed *relative to* is scaled —
+ * tacticalSiting.ts's `defended` search uses the landmark's own km/z, which
+ * this does not touch. See docs/DECISIONS.md Pass 24.
+ */
+const LANDMARK_FOOTPRINT_SCALE: Partial<Record<LandmarkSpec["kind"], number>> = {
+  power_plant: 5,
+  fuel_depot: 4,
+  port_harbor: 5,
+  ruined_infrastructure: 3,
+};
+
+export function buildScenery(budget: SceneryBudget, halfWidthX: number): THREE.Group {
   const g = new THREE.Group();
   g.name = "scenery";
 
   for (const spec of LANDMARKS) {
     const model = LANDMARK_BUILDERS[spec.kind]();
-    const x = worldXFor(spec.side, spec.km, proj);
+    const scale = LANDMARK_FOOTPRINT_SCALE[spec.kind];
+    if (scale) model.scale.setScalar(scale);
+    const x = worldXFor(spec.side, spec.km);
     model.position.set(x, terrainHeight(x, spec.z), spec.z);
     model.rotation.y = spec.rotationY;
     model.name = `scenery:landmark:${spec.kind}:${spec.side}`;
@@ -864,7 +965,7 @@ export function buildScenery(proj: Projection, budget: SceneryBudget, halfWidthX
   // TERRAIN_FEATURES describes, not just data with nothing standing on it.
   for (const feature of TERRAIN_FEATURES) {
     const model = TACTICAL_FEATURE_BUILDERS[feature.kind]();
-    const x = worldXFor(feature.side, feature.km, proj);
+    const x = worldXFor(feature.side, feature.km);
     model.position.set(x, terrainHeight(x, feature.z), feature.z);
     model.name = `scenery:feature:${feature.id}`;
     g.add(model);
@@ -873,23 +974,23 @@ export function buildScenery(proj: Projection, budget: SceneryBudget, halfWidthX
   // Pass 19: buildTrenchLines()/buildFightingPositions() now instance across
   // BOTH sides internally (2 draw calls total each, not 2-per-side) — only
   // buildObstacleBelt still takes an explicit side, unchanged from Pass 7.
-  g.add(buildTrenchLines(proj));
-  g.add(buildFightingPositions(proj, budget.fightingPositionsPerSide));
+  g.add(buildTrenchLines());
+  g.add(buildFightingPositions(budget.fightingPositionsPerSide));
   for (const side of ["side_a", "side_b"] as Side[]) {
-    g.add(buildObstacleBelt(proj, side, budget.obstaclesPerSide));
+    g.add(buildObstacleBelt(side, budget.obstaclesPerSide));
   }
 
   const water = buildWater(halfWidthX);
   if (water) g.add(water);
 
   g.add(buildRiverWater());
-  // Bridge dead centre of the strip (z=0); pontoon offset 14 units along Z
-  // so the two crossings never overlap (bridge span ≈ RIVER_HALF_WIDTH*2+5
-  // ≈ 17, well clear of a 14-unit offset).
+  // Bridge dead centre of the strip (z=0); pontoon offset along Z.
   const bridge = buildDestroyedBridge(0);
   bridge.name = "scenery:river-bridge";
   g.add(bridge);
-  const pontoon = buildPontoonCrossing(14);
+  // 1.4 km along the strip from the bridge (was 14 units) — far enough that
+  // the two crossings never overlap and read as two separate routes.
+  const pontoon = buildPontoonCrossing(1_400);
   pontoon.name = "scenery:pontoon-crossing";
   g.add(pontoon);
 

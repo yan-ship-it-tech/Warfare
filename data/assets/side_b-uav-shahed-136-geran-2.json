@@ -87,5 +87,11 @@
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]
+  },
+  "altitude_band_m": {
+    "min_m": 60,
+    "max_m": 4000,
+    "basis": "sourced",
+    "note": "Published envelope is 60-4,000 m and the type is characterised by a low-altitude profile, so the geometric mean the renderer uses (~490 m) sits near the floor deliberately. Later Geran variants are reported to fly higher."
   }
 }
