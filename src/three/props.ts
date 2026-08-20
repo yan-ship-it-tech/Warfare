@@ -4,38 +4,19 @@
 //
 // Every prop type is a single InstancedMesh: one geometry, one material, one
 // draw call for hundreds of objects. This is where instancing genuinely
-// earns its place, and it is why the prop budget can be raised without the
-// frame cost tracking it linearly.
+// earns its place (the hero models are ~11 unique objects and would gain
+// nothing from it), and it is why the prop budget can be raised later without
+// the frame cost tracking it linearly.
 //
-// Pass 10: trees and wrecks vary per-instance colour by `damageIntensity(x)`
-// so the same mesh reads as a shattered bare belt near the line and a healthy
-// green one further out.
-//
-// Pass 24: metres, and a scatter *extent* rather than a scatter over the whole
-// axis. Props are ground detail; ground detail is a near-register claim. Past
-// PROP_EXTENT_KM the fidelity gradient says the geography is schematic, so
-// dusting individual trees out there would be asserting exactly the kind of
-// detail the compression has already destroyed — and each of those trees
-// would be covering hundreds of km of real ground. The scatter therefore
-// lives inside the true-scale register and thins on `groundFidelity()` at its
-// outer edge instead of stopping on a visible line.
+// Pass 10: trees and wrecks now use `damageIntensity(x)` from terrain3d.ts to
+// vary per-instance colour (InstancedMesh.setColorAt — one extra buffer, not
+// an extra draw call) so the same treeline mesh reads as a shattered, bare
+// belt near the line and a healthy green one further out, instead of a single
+// flat colour everywhere.
 // ─────────────────────────────────────────────────────────────────────────
 import * as THREE from "three";
-import { STRIP_HALF_Z, SCENERY_HALF_Z, hashId, worldXFor } from "./worldMapping";
-import {
-  terrainHeight,
-  damageIntensity,
-  isInWater,
-  groundFidelity,
-  BELT_X_FREQ,
-  BELT_Z_FREQ,
-} from "./terrain3d";
-
-/** How deep the scatter reaches, in km. Just inside the true-scale boundary:
- *  every prop here is drawn at its real size, so it may only stand on ground
- *  that is drawn at real size too. */
-const PROP_EXTENT_KM = 34;
-const PROP_EXTENT = worldXFor("side_b", PROP_EXTENT_KM);
+import { STRIP_HALF_Z, hashId } from "./worldMapping";
+import { terrainHeight, damageIntensity, isInWater, BELT_X_FREQ } from "./terrain3d";
 
 /** Deterministic RNG so the scatter is identical on every load. */
 function rng(seed: number) {
@@ -54,12 +35,11 @@ const TREE_HEALTHY = new THREE.Color("#4d5a34"); // deep rear: green canopy tint
 /**
  * Shattered treeline — the single most recognisable signature of ground that
  * has been fought over for years, and cheap to convey: bare tapered trunks,
- * no canopy, densest where the shelling has been heaviest.
- *
- * Now metric: a trunk is 2.2–5.6 m tall and 0.22 m at the base, which is a
- * tree. Before Pass 24 the same numbers described something ~150 m tall.
+ * no canopy, densest where the shelling has been heaviest. Colour now shifts
+ * from bare/scorched near the line to a green canopy tint further out, via
+ * the same damage gradient the terrain and wreck scatter read.
  */
-function buildTrees(count: number): THREE.InstancedMesh {
+function buildTrees(halfWidthX: number, count: number): THREE.InstancedMesh {
   const geo = new THREE.CylinderGeometry(0.05, 0.22, 1, 5);
   geo.translate(0, 0.5, 0);
   const mat = new THREE.MeshStandardMaterial({ color: "#4a4237", flatShading: true, roughness: 1, vertexColors: true });
@@ -70,24 +50,18 @@ function buildTrees(count: number): THREE.InstancedMesh {
   let guard = 0;
   while (placed < count && guard < count * 40) {
     guard++;
-    const x = (r() * 2 - 1) * PROP_EXTENT;
-    const z = (r() * 2 - 1) * SCENERY_HALF_Z;
+    const x = (r() * 2 - 1) * halfWidthX;
+    const z = (r() * 2 - 1) * STRIP_HALF_Z;
 
     // Treelines in this landscape follow field boundaries, not open ground —
-    // banding keeps them in belts instead of dusting them everywhere. The
-    // frequency ratio is Pass 17's, derived from data/osm/pokrovsk.json's real
-    // windbreak-row orientation; Pass 24 only restated both terms per metre.
-    const belt = Math.abs(Math.sin(z * BELT_Z_FREQ + x * BELT_X_FREQ));
+    // banding on z keeps them in belts instead of dusting them everywhere.
+    // BELT_X_FREQ (terrain3d.ts) is derived from data/osm/pokrovsk.json's
+    // real windbreak-row orientation, not picked by eye — see that file's
+    // header and docs/DECISIONS.md Pass 17 for the worked derivation.
+    const belt = Math.abs(Math.sin(z * 0.09 + x * BELT_X_FREQ));
     if (belt < 0.72 && r() > 0.12) continue;
     // Thinned out right at the line, where nothing is left standing.
-    if (Math.abs(x) < 1_600 && r() > 0.25) continue;
-    // And thinned toward the rear on the same curve the terrain detail fades
-    // on, so the belt dissolves into the compressed register instead of
-    // stopping at a line.
-    if (r() > groundFidelity(x) * 0.85 + 0.15) continue;
-    // Thinned laterally on the same curve, so the belt does not stop dead at
-    // the sector's edge and announce it.
-    if (Math.abs(z) > STRIP_HALF_Z && r() * (SCENERY_HALF_Z - STRIP_HALF_Z) < Math.abs(z) - STRIP_HALF_Z) continue;
+    if (Math.abs(x) < 16 && r() > 0.25) continue;
     // Nothing grows in the river or the coastal basin.
     if (isInWater(x, z)) continue;
 
@@ -114,8 +88,7 @@ function buildTrees(count: number): THREE.InstancedMesh {
 /**
  * Shell craters, concentrated on the zero line. The density falloff either
  * side is doing real explanatory work — it is the visual answer to "why is
- * everything pushed back from the line." The Gaussian's width is 3.4 km now
- * because that is what the old 34 "units" was always meant to represent.
+ * everything pushed back from the line."
  */
 function buildCraters(count: number): THREE.InstancedMesh {
   const geo = new THREE.CylinderGeometry(1, 0.55, 0.36, 9);
@@ -129,8 +102,8 @@ function buildCraters(count: number): THREE.InstancedMesh {
     guard++;
     // Gaussian-ish clustering on x via summed uniforms.
     const g = (r() + r() + r() - 1.5) / 1.5;
-    const x = g * 3_400;
-    const z = (r() * 2 - 1) * SCENERY_HALF_Z;
+    const x = g * 34;
+    const z = (r() * 2 - 1) * STRIP_HALF_Z;
     if (isInWater(x, z)) continue; // no shell craters mid-river
     const s = 0.7 + r() * 1.9;
     dummy.position.set(x, terrainHeight(x, z) - 0.16, z);
@@ -146,9 +119,8 @@ function buildCraters(count: number): THREE.InstancedMesh {
   return mesh;
 }
 
-/** Low scrub/debris, cheapest possible ground texture break-up. Kept inside
- *  the near register for the same reason as the trees. */
-function buildScrub(count: number): THREE.InstancedMesh {
+/** Low scrub/debris, everywhere, cheapest possible ground texture break-up. */
+function buildScrub(halfWidthX: number, count: number): THREE.InstancedMesh {
   const geo = new THREE.TetrahedronGeometry(0.5, 0);
   const mat = new THREE.MeshStandardMaterial({ color: "#5b5a3e", flatShading: true, roughness: 1 });
   const mesh = new THREE.InstancedMesh(geo, mat, count);
@@ -158,11 +130,9 @@ function buildScrub(count: number): THREE.InstancedMesh {
   let guard = 0;
   while (placed < count && guard < count * 40) {
     guard++;
-    const x = (r() * 2 - 1) * PROP_EXTENT;
-    const z = (r() * 2 - 1) * SCENERY_HALF_Z;
+    const x = (r() * 2 - 1) * halfWidthX;
+    const z = (r() * 2 - 1) * STRIP_HALF_Z;
     if (isInWater(x, z)) continue;
-    if (r() > groundFidelity(x) * 0.85 + 0.15) continue;
-    if (Math.abs(z) > STRIP_HALF_Z && r() * (SCENERY_HALF_Z - STRIP_HALF_Z) < Math.abs(z) - STRIP_HALF_Z) continue;
     const s = 0.4 + r() * 1.1;
     dummy.position.set(x, terrainHeight(x, z) + 0.1, z);
     dummy.rotation.set(r() * Math.PI, r() * Math.PI, r() * Math.PI);
@@ -178,10 +148,15 @@ function buildScrub(count: number): THREE.InstancedMesh {
 }
 
 /**
- * Burnt-out vehicle husks — the "burning wrecks" the destruction gradient
- * calls for, clustered inside roughly the first 2 km either side of the line.
- * Instanced like craters; the per-object flame accent lives on scenery.ts's
- * hand-placed markers, since one InstancedMesh shares one material.
+ * Burnt-out vehicle husks — the "burning wrecks" the 0-5/5-20 km destruction
+ * gradient calls for. Instanced like craters (concentrated the same way,
+ * same Gaussian-ish clustering) rather than hand-placed unique groups: there
+ * is no per-instance emissive/flame accent here on purpose, because an
+ * InstancedMesh shares one material across every instance and a flickering
+ * flame would need one anyway — scenery.ts's hand-placed landmarks are where
+ * that per-object detail belongs (see buildWreckMarker there). This mesh is
+ * what makes wrecks read as a *field* of them near the line, not a couple of
+ * isolated set-pieces.
  */
 function buildWreckHusks(count: number): THREE.InstancedMesh {
   const geo = new THREE.BoxGeometry(1.3, 0.6, 2.4);
@@ -193,9 +168,11 @@ function buildWreckHusks(count: number): THREE.InstancedMesh {
   let guard = 0;
   while (placed < count && guard < count * 40) {
     guard++;
+    // Tighter clustering than craters — wrecks are rarer and belong closer
+    // to the line, inside roughly the 0-10 km destruction band.
     const g = (r() + r() + r() - 1.5) / 1.5;
-    const x = g * 2_000;
-    const z = (r() * 2 - 1) * SCENERY_HALF_Z;
+    const x = g * 20;
+    const z = (r() * 2 - 1) * STRIP_HALF_Z;
     if (isInWater(x, z)) continue; // a burnt hull can sit on a riverbank, not in the channel
     const s = 0.7 + r() * 0.6;
     dummy.position.set(x, terrainHeight(x, z) + 0.28, z);
@@ -218,21 +195,18 @@ export interface PropBudget {
   wrecks: number;
 }
 
-/** Raised alongside the metric rescale: the same counts that read as a
- *  populated strip over the old compressed extent read as empty ground over
- *  68 km × 12 km of real terrain. Still one draw call per type, and still
- *  tuned down on low-power devices — see Scene3D's quality detection. */
+/** Tuned down on low-power devices — see Scene3D's quality detection. */
 export const PROP_BUDGET: Record<"high" | "low", PropBudget> = {
-  high: { trees: 4200, craters: 1000, scrub: 3000, wrecks: 180 },
-  low: { trees: 1400, craters: 380, scrub: 900, wrecks: 70 },
+  high: { trees: 900, craters: 340, scrub: 700, wrecks: 46 },
+  low: { trees: 300, craters: 130, scrub: 220, wrecks: 18 },
 };
 
-export function buildProps(budget: PropBudget): THREE.Group {
+export function buildProps(halfWidthX: number, budget: PropBudget): THREE.Group {
   const g = new THREE.Group();
   g.name = "props";
-  g.add(buildTrees(budget.trees));
+  g.add(buildTrees(halfWidthX, budget.trees));
   g.add(buildCraters(budget.craters));
-  g.add(buildScrub(budget.scrub));
+  g.add(buildScrub(halfWidthX, budget.scrub));
   g.add(buildWreckHusks(budget.wrecks));
   return g;
 }

@@ -2259,82 +2259,6 @@ code { font-family: var(--mono); font-size: 0.92em; }
 }
 .lessons__asset:hover { border-color: var(--side); background: color-mix(in srgb, var(--side) 22%, transparent); }
 
-/* Pass 24 — the convergence audit, made visible. The badge sits in the
-   collapsed row and the caution sits directly under it, because both are for
-   the reader who is scanning rather than the reader who has already decided
-   to expand. Colour is the same three-step vocabulary the rest of the tool
-   uses for confidence (--ok / --warn / --err), not a new one. */
-.support {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-  font-family: var(--mono);
-  font-size: 9.5px;
-  letter-spacing: 0.07em;
-  padding: 2px 7px;
-  border-radius: 999px;
-  border: 1px solid currentColor;
-  white-space: nowrap;
-}
-.support i { font-style: normal; font-family: var(--font); letter-spacing: 0; color: var(--text-3); }
-.support--c3 { color: var(--ok); background: color-mix(in srgb, var(--ok) 13%, transparent); }
-.support--c2 { color: color-mix(in srgb, var(--ok) 72%, var(--warn)); background: color-mix(in srgb, var(--ok) 8%, transparent); }
-.support--single { color: var(--warn); background: color-mix(in srgb, var(--warn) 12%, transparent); }
-.support--bad { color: var(--err); background: color-mix(in srgb, var(--err) 13%, transparent); }
-.support--part { opacity: 0.85; }
-.support--contested {
-  color: var(--warn);
-  background: transparent;
-  border-style: dashed;
-}
-
-.lessons__key {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  font-size: 11.5px;
-  color: var(--text-3);
-  line-height: 1.6;
-  border-top: 1px solid var(--line);
-  padding-top: 12px;
-}
-
-.lessons__support { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 3px; }
-
-.lessons__caution {
-  margin: 0 14px 12px 38px;
-  padding: 9px 11px;
-  border-left: 2px solid var(--warn);
-  border-radius: 0 6px 6px 0;
-  background: color-mix(in srgb, var(--warn) 9%, transparent);
-  font-size: 11.5px;
-  line-height: 1.6;
-  color: var(--text-2);
-}
-.lessons__caution b {
-  display: block;
-  font-family: var(--mono);
-  font-size: 9.5px;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--warn);
-  margin-bottom: 4px;
-}
-
-.lessons__corpus > p {
-  margin: 0;
-  font-size: 11.5px;
-  line-height: 1.6;
-  color: var(--text-3);
-  border-left: 1px solid var(--line-2);
-  padding-left: 10px;
-}
-
-@media (max-width: 620px) {
-  .lessons__caution { margin-left: 14px; }
-}
-
 .verify-notes { margin: 0 0 10px; padding-left: 15px; display: flex; flex-direction: column; gap: 4px; }
 .verify-notes li { font-size: 11px; line-height: 1.5; color: var(--text-3); }
 
@@ -2451,57 +2375,30 @@ code { font-family: var(--mono); font-size: 0.92em; }
    below is positioned per frame from the projected screen-X of its band's
    real edges, so equal km spans occupy visibly unequal screen width. A
    linear ruler over this axis would be actively misleading. */
-/* ── depth ruler (Pass 16, redesigned Pass 24) ──────────────────────────
-   Two rows now, not one overlapping stack. The old layout put the band
-   segments at bottom:8px and a caption at bottom:30px inside a 50px box, and
-   at any narrow width the caption printed over the segments and the whole
-   thing ran off the bottom of the viewport — the "cut off and unreadable on
-   mobile" report. It is a grid instead: caption row on top, band row beneath,
-   the box sized to hold both, and the band row given an explicit height so
-   the segments can never migrate under the caption.
-
-   What it MEASURES also changed. The segments still sit at the real projected
-   screen-X of their band edges, so a compressed band is visibly narrower —
-   but each now states the axis's local compression factor rather than a
-   km-per-100px figure, and the true-scale bands are marked as such, because
-   "this part is 1:1" is the load-bearing claim of the Pass 24 design. */
 .ruler3d {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  height: 56px;
+  height: 50px;
   z-index: 4;
   pointer-events: none;
   transition: opacity 220ms ease, right 160ms ease;
   /* Fade the axis out under the ruler so band text never has to compete with
      terrain detail for legibility. */
-  background: linear-gradient(to top, rgba(8, 11, 17, 0.9) 55%, rgba(8, 11, 17, 0.55) 78%, transparent);
+  background: linear-gradient(to top, rgba(8, 11, 17, 0.82), transparent);
 }
 /* Stop short of the detail panel, same as .legend does — the ruler running
    underneath it read as the panel clipping the map. */
 .app.has-detail .ruler3d { right: min(440px, 42vw); }
-/* Pitch to near top-down or zoom into a few hundred metres of ground and the
-   axis's far ends leave the frame; a ruler then would claim a scale it cannot
-   show, so it fades instead. */
+/* Rotate the camera until the axis points at it and every band edge lands on
+   the same pixel; a ruler then would be worse than none. */
 .ruler3d[data-readable="false"] { opacity: 0; }
-
-/* The zero line's own tick, so the ruler has a fixed reference the two band
-   rows are measured out from. Centred on the element, not on the axis — the
-   axis's screen position moves with the camera and this is chrome. */
-.ruler3d__zero {
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  width: 1px;
-  height: 26px;
-  background: linear-gradient(to top, rgba(240, 242, 248, 0.34), transparent);
-}
 
 .ruler3d__band {
   position: absolute;
-  bottom: 6px;
-  height: 20px;
+  bottom: 8px;
+  height: 18px;
   box-sizing: border-box;
   border-left: 1px solid color-mix(in srgb, var(--side) 75%, transparent);
   border-bottom: 1px solid color-mix(in srgb, var(--side) 34%, transparent);
@@ -2517,13 +2414,6 @@ code { font-family: var(--mono); font-size: 0.92em; }
   text-transform: uppercase;
   color: var(--text-3);
 }
-/* The true-scale register is the claim, so it gets a visible weight the
-   compressed bands don't: a brighter baseline and a faint fill. */
-.ruler3d__band.is-true-scale {
-  border-bottom-color: color-mix(in srgb, var(--side) 70%, transparent);
-  background: color-mix(in srgb, var(--side) 9%, transparent);
-  color: var(--text-2);
-}
 .ruler3d__band[data-on="0"] { display: none; }
 /* A band only a few pixels wide keeps its edge tick and drops its text,
    rather than printing it over its neighbour. */
@@ -2531,38 +2421,18 @@ code { font-family: var(--mono); font-size: 0.92em; }
 .ruler3d__band[data-roomy="0"] .ruler3d__scale { display: none; }
 .ruler3d__label { overflow: hidden; text-overflow: ellipsis; }
 .ruler3d__scale { font-family: var(--mono); color: var(--text-2); flex: none; }
-.ruler3d__band.is-true-scale .ruler3d__scale { color: var(--ok); }
 
-/* Its own row above the bands — never overlapping them, at any width. */
+/* Above the band row, not beside it — at the narrow end of the axis the
+   bands crowd the left edge and the caption was printing over them. */
 .ruler3d__caption {
   position: absolute;
   left: 12px;
-  right: 12px;
   bottom: 30px;
-  font-size: 9.5px;
-  line-height: 1.5;
-  letter-spacing: 0.04em;
-  color: var(--text-3);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.ruler3d__caption b {
-  color: var(--text-2);
+  font-size: 9px;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-/* Narrow screens: the caption's second clause is the first thing to go, the
-   band row keeps its full height, and the whole box grows rather than
-   letting either row slide off the bottom of the viewport. */
-@media (max-width: 620px) {
-  .ruler3d { height: 52px; }
-  .ruler3d__caption { bottom: 28px; font-size: 8.5px; left: 8px; right: 8px; }
-  .ruler3d__caption span { display: none; }
-  .ruler3d__band { font-size: 8px; height: 18px; bottom: 5px; gap: 4px; padding: 0 3px 2px; }
-  .ruler3d__zero { height: 23px; }
-  .app.has-detail .ruler3d { right: 0; }
+  color: var(--text-3);
+  opacity: 0.75;
 }
 
 /* Drag confirmation (item 4). A drop used to open the detail panel; this
@@ -2637,16 +2507,9 @@ code { font-family: var(--mono); font-size: 0.92em; }
 .perfhud__grid dd { margin: 0; text-align: right; color: var(--text); }
 
 /* On a phone the HUD is a diagnostic sitting on top of a small map, so it
-   gives ground: smaller type, and out of the header legend's way.
-
-   Pass 24 removed this block's two `.ruler3d` overrides. Pass 16 solved the
-   caption-printing-over-the-bands collision by deleting the caption at this
-   width and squeezing the ruler to 34px — which is the "cut off and
-   unreadable on mobile" report, since it took the ruler's only explanation
-   with it and left the band row jammed against the bottom edge. The ruler's
-   own mobile block above solves the collision properly, by giving the caption
-   and the band row separate rows and truncating the caption's second clause
-   rather than the whole sentence. */
+   gives ground: smaller type, and out of the header legend's way. The ruler
+   caption goes entirely — the band labels themselves still carry the fact,
+   and at this width the sentence printed straight over them. */
 @media (max-width: 620px) {
   .perfhud {
     top: 8px;
@@ -2657,6 +2520,8 @@ code { font-family: var(--mono); font-size: 0.92em; }
     opacity: 0.92;
   }
   .perfhud__fps { font-size: 12px; }
+  .ruler3d__caption { display: none; }
+  .ruler3d { height: 34px; }
 }
 
 /* Screen-reader-only text. */

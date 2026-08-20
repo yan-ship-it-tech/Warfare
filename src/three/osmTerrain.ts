@@ -16,26 +16,12 @@
 // terrain actually builds, same reasoning that makes Scene3D itself
 // React.lazy. loadOsmData() memoizes the promise so a re-render never
 // re-fetches it.
-// ── Pass 24 ──────────────────────────────────────────────────────────────
-// The "inset" is no longer an inset. It was one because the axis around it
-// was band-compressed and this patch had to opt out of that compression to
-// stay true to itself — a local patch at its own scale, sitting inside one
-// band. depthAxis.ts made the near register true-scale, so the patch's scale
-// and the scene's scale are now the SAME scale: `unitsPerKm()` returns the
-// axis's own UNITS_PER_KM, not a locally-derived exception to it. The anchor
-// stays where it was (side_a, 17 km) because that is where a town like this
-// plausibly sits, not because the geometry needed a home band.
-//
-// The one new constraint: the AOI is +/-10 km and the represented strip is
-// +/-6 km, so the patch is clipped to the strip laterally. Drawing 10 km of
-// real geometry across a 6 km frontage would be the same category of lie the
-// whole pass exists to remove.
 // ─────────────────────────────────────────────────────────────────────────
 import * as THREE from "three";
 import type { Side } from "../types";
+import type { Projection } from "../scene/projection";
 import { terrainHeight } from "./terrain3d";
-import { worldXFor, STRIP_HALF_Z } from "./worldMapping";
-import { UNITS_PER_KM } from "./depthAxis";
+import { worldXFor } from "./worldMapping";
 
 // ── anchor + scale ─────────────────────────────────────────────────────
 /** Where the inset sits: side_a's near-front band (op_near, 5-30 km) — real
@@ -56,22 +42,29 @@ export const ANCHOR_KM = 17;
  *  inside — docs/OSM_PIPELINE.md) — clipping below is what keeps those from
  *  being drawn in full. */
 const PATCH_HALF_KM = 10;
-/** Lateral clip, km — the represented strip's own half-width, less a small
- *  margin so the cut falls inside the terrain plate rather than on its edge. */
-const PATCH_HALF_Z_KM = (STRIP_HALF_Z / UNITS_PER_KM) * 0.95;
 
-/** World units per real km inside the patch. As of Pass 24 this is simply
- *  the axis's own scale: the anchor sits at 17 km, well inside the true-scale
- *  register, so "the patch's own scale" and "the scene's scale" are the same
- *  number and the function exists only so callers keep reading one source for
- *  it. tacticalSiting.ts sites the OSM-railhead ammo point through this, and
- *  must keep doing so rather than re-deriving a second answer. */
-export function unitsPerKm(): number {
-  return UNITS_PER_KM;
+/** World-units per real km, at the anchor. Derived from the LIVE projection
+ *  rather than baked in like terrain3d.ts's destruction-gradient thresholds
+ *  — nothing anchors an asset's position to this inset, so unlike
+ *  terrainHeight() there is no purity contract to protect, and deriving it
+ *  live means a user's own band edits keep the inset self-consistent with
+ *  the rest of the map instead of drifting out of its band. A 1 km probe
+ *  either side of the anchor, not the whole band's average — bands are
+ *  piecewise-linear in km→world-X (verified against the shipped projection,
+ *  docs/DECISIONS.md Pass 17), so any small delta inside one band gives the
+ *  same answer; 1 km keeps the probe local to the anchor on principle. */
+// Exported (Pass 18): tacticalSiting.ts sites one asset — the OSM-railhead
+// ammo point — at a real point inside this same inset, and has to use the
+// exact same anchor/scale, not an independently re-derived approximation
+// that could drift from where the rail geometry itself actually draws.
+export function unitsPerKmAt(proj: Projection): number {
+  const a = worldXFor(ANCHOR_SIDE, ANCHOR_KM - 0.5, proj);
+  const b = worldXFor(ANCHOR_SIDE, ANCHOR_KM + 0.5, proj);
+  return Math.abs(b - a);
 }
 
-export function anchorXAt(): number {
-  return worldXFor(ANCHOR_SIDE, ANCHOR_KM);
+export function anchorXAt(proj: Projection): number {
+  return worldXFor(ANCHOR_SIDE, ANCHOR_KM, proj);
 }
 
 // ── OSM data shape (subset actually used) ─────────────────────────────────
@@ -105,8 +98,7 @@ export function loadOsmData(): Promise<OsmFile> {
 function clipPolyline(pts: [number, number][]): [number, number][][] {
   const out: [number, number][][] = [];
   let run: [number, number][] = [];
-  const inside = (p: [number, number]) =>
-    Math.abs(p[0]) <= PATCH_HALF_KM && Math.abs(p[1]) <= PATCH_HALF_Z_KM;
+  const inside = (p: [number, number]) => Math.abs(p[0]) <= PATCH_HALF_KM && Math.abs(p[1]) <= PATCH_HALF_KM;
   for (const p of pts) {
     if (inside(p)) run.push(p);
     else if (run.length) {
@@ -229,18 +221,16 @@ const ROAD_COLOR = new THREE.Color("#7a7260"); // packed dirt/gravel track
 const RIVER_COLOR = new THREE.Color("#2f5561");
 const TREE_TRUNK_COLOR = new THREE.Color("#4a4237");
 
-/** Sample pitch for instanced trees, METRES. A real windbreak plants at
- *  4-8 m; 18 draws the row rather than the individual trees, which is the
- *  honest read of what the source data actually says — it gives a row's
- *  path, never individual tree positions (docs/OSM_PIPELINE.md). Tightening
- *  it to true planting distance would multiply the instance count fourfold
- *  to assert positions the data does not contain. */
-const TREE_PITCH = 18;
+/** Sample pitch for instanced trees, world units — matches props.ts's own
+ *  tree density order of magnitude rather than trying to preserve literal
+ *  OSM tree spacing (the source data gives a row's path, never individual
+ *  tree positions — see docs/OSM_PIPELINE.md). */
+const TREE_PITCH = 1.1;
 /** Trees per km² for a closed wood/parcel ring, scattered by rejection
- *  sampling rather than a grid. Raised with the metric rescale: the cap used
- *  to be the binding constraint at any real parcel size. */
-const WOOD_TREES_PER_KM2 = 900;
-const WOOD_TREES_MAX = 60;
+ *  sampling rather than a grid — see the file's closed-ring handling below
+ *  for why a grid doesn't work at this data's actual parcel size. */
+const WOOD_TREES_PER_KM2 = 700;
+const WOOD_TREES_MAX = 6;
 
 interface OsmBuildResult {
   group: THREE.Group;
@@ -251,15 +241,15 @@ interface OsmBuildResult {
  * Builds the whole inset: rail + road ribbons, a small in-patch river
  * ribbon, and one combined InstancedMesh for every tree (open windbreak rows
  * sampled along their clipped path, closed wood/parcel rings rejection-
- * sampled by area). Pure given `osm` — safe to call every time the
+ * sampled by area). Pure given (osm, proj) — safe to call every time the
  * terrain-building effect re-runs; the caller owns memoizing the data load.
  */
-export function buildOsmInset(osm: OsmFile): OsmBuildResult {
+export function buildOsmInset(osm: OsmFile, proj: Projection): OsmBuildResult {
   const group = new THREE.Group();
   group.name = "osm-inset";
 
-  const scale = unitsPerKm();
-  const anchorX = anchorXAt();
+  const scale = unitsPerKmAt(proj);
+  const anchorX = anchorXAt(proj);
   // See the file header: "east" maps to increasing world-X (toward the
   // front/toward side_b) regardless of which side the inset anchors on —
   // real terrain east of Pokrovsk is the direction Russian forces have
@@ -267,12 +257,9 @@ export function buildOsmInset(osm: OsmFile): OsmBuildResult {
   // rather than arbitrary.
   const toWorld = (p: [number, number]) => ({ x: anchorX + p[0] * scale, z: p[1] * scale });
 
-  // Metres (Pass 24): a double-track rail corridor with its ballast is
-  // ~6 m across, a rural road ~7, a minor river ~26. Before this pass the
-  // same numbers were 0.4/0.7/1.6 of an undefined unit.
-  const rail = new RibbonBuilder(6, RAIL_COLOR, 0.35);
-  const road = new RibbonBuilder(7, ROAD_COLOR, 0.2);
-  const river = new RibbonBuilder(26, RIVER_COLOR, -1.2);
+  const rail = new RibbonBuilder(0.4, RAIL_COLOR, 0.06);
+  const road = new RibbonBuilder(0.7, ROAD_COLOR, 0.03);
+  const river = new RibbonBuilder(1.6, RIVER_COLOR, -0.4);
 
   const treePositions: { x: number; y: number; z: number; scale: number; rotY: number }[] = [];
 
@@ -288,7 +275,7 @@ export function buildOsmInset(osm: OsmFile): OsmBuildResult {
     // tree_row: closed = a wood/parcel to fill, open = a windbreak to follow.
     if (f.closed) {
       const bbox = ringBBox(f.xz);
-      if (bbox.x0 > PATCH_HALF_KM || bbox.x1 < -PATCH_HALF_KM || bbox.z0 > PATCH_HALF_Z_KM || bbox.z1 < -PATCH_HALF_Z_KM) {
+      if (bbox.x0 > PATCH_HALF_KM || bbox.x1 < -PATCH_HALF_KM || bbox.z0 > PATCH_HALF_KM || bbox.z1 < -PATCH_HALF_KM) {
         continue; // no overlap with the patch at all
       }
       const areaKm2 = ringArea(f.xz);
@@ -300,14 +287,14 @@ export function buildOsmInset(osm: OsmFile): OsmBuildResult {
         guard++;
         const x = bbox.x0 + r() * (bbox.x1 - bbox.x0);
         const z = bbox.z0 + r() * (bbox.z1 - bbox.z0);
-        if (Math.abs(x) > PATCH_HALF_KM || Math.abs(z) > PATCH_HALF_Z_KM) continue;
+        if (Math.abs(x) > PATCH_HALF_KM || Math.abs(z) > PATCH_HALF_KM) continue;
         if (!pointInRing(x, z, f.xz)) continue;
         const w = toWorld([x, z]);
         treePositions.push({
           x: w.x,
           y: terrainHeight(w.x, w.z),
           z: w.z,
-          scale: 2.4 + r() * 2.6,
+          scale: 1.6 + r() * 1.8,
           rotY: r() * Math.PI * 2,
         });
         placed++;
@@ -326,7 +313,7 @@ export function buildOsmInset(osm: OsmFile): OsmBuildResult {
             const x = a.x + (b.x - a.x) * u;
             const z = a.z + (b.z - a.z) * u;
             const r = rng(hashFeature(f) ^ (i * 7919) ^ Math.round(t * 100));
-            treePositions.push({ x, y: terrainHeight(x, z), z, scale: 3 + r() * 3.4, rotY: r() * Math.PI * 2 });
+            treePositions.push({ x, y: terrainHeight(x, z), z, scale: 2 + r() * 2.6, rotY: r() * Math.PI * 2 });
           }
           acc = t - segLen;
         }
@@ -341,7 +328,7 @@ export function buildOsmInset(osm: OsmFile): OsmBuildResult {
   if (riverMesh) group.add(riverMesh);
 
   if (treePositions.length > 0) {
-    const geo = new THREE.CylinderGeometry(0.07, 0.26, 1, 5);
+    const geo = new THREE.CylinderGeometry(0.05, 0.2, 1, 5);
     geo.translate(0, 0.5, 0);
     const mat = new THREE.MeshStandardMaterial({ color: TREE_TRUNK_COLOR, flatShading: true, roughness: 1 });
     const mesh = new THREE.InstancedMesh(geo, mat, treePositions.length);

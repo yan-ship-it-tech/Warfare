@@ -92,39 +92,6 @@ export interface Asset {
   platform_domain?: Domain;
   echelon: Echelon;
   group: AssetGroup;                     // references a groups.json entry — the show/hide taxonomy
-  /**
-   * Air-layer altitude, in METRES above ground — Pass 24.
-   *
-   * Only solvable once the near register had a real scale (see
-   * src/three/depthAxis.ts): before this pass "how high" had no answer
-   * because the axis it would be drawn against was two scales at once.
-   *
-   * Absent means "this platform sits on the ground or in the water" for the
-   * overwhelming majority of the roster, and the renderer falls back to
-   * DOMAIN_ALTITUDE keyed on the PLATFORM domain. Present, it is drawn at
-   * the band's geometric mean — geometric, not arithmetic, because these
-   * bands are wide and skewed low (a Shahed's 60–4,000 m envelope is flown
-   * near its floor far more often than its ceiling).
-   *
-   * `basis` is the honesty field, and the reason this is an object rather
-   * than two numbers. It is never inferred from the numbers themselves:
-   *   sourced    a published figure for THIS system, from a named source
-   *   estimated  a class-typical band, correct for the type and not a
-   *              measurement of this airframe — say so, don't launder it
-   *   symbolic   a real altitude exists and cannot be drawn on this axis
-   *              (an orbital asset); `note` carries the true figure and the
-   *              renderer draws a stated symbol instead
-   *   unknown    no confident basis found. min_m/max_m are null and the
-   *              renderer falls back — the same "'not publicly disclosed' is
-   *              a valid value" rule the cost field already follows
-   */
-  altitude_band_m?: {
-    min_m: number | null;
-    max_m: number | null;
-    basis: "sourced" | "estimated" | "symbolic" | "unknown";
-    note: string;
-  } | null;
-
   /** Optional link into data/catalog/*.json — when set, the detail panel offers
    *  swapping which real system fills this slot (e.g. this side's armor slot
    *  showing T-72B3 vs. T-90M vs. T-80BVM). References CatalogEntry.comparison_group. */

@@ -12,16 +12,11 @@ entirely data-driven from JSON in `data/`, deployed to GitHub Pages via
 
 Two renderers, both real, neither a mockup:
 - **3D terrain view** (default) — `src/three/`, a genuine WebGL scene:
-  Three.js draws terrain/models/haze on a perspective camera; real DOM
+  Three.js draws terrain/models/fog on a perspective camera; real DOM
   `<button>` elements stay the labels and hit-targets, positioned by
   projecting world coordinates to screen space every frame. Terrain is
   synthetic (deterministic value noise), never real geography — see
   "Why this isn't a real map" in `src/pages/AboutPage.tsx`.
-  **Its spatial rule lives in `src/three/depthAxis.ts` and nowhere else**
-  (Pass 24): one world unit is one metre, 0–40 km either side of the zero
-  line is drawn at true scale, and everything past that compresses
-  logarithmically with the terrain's own fidelity degrading on the same
-  curve. Read that file's header before touching anything positional.
 - **Schematic 2D cross-section view** — `src/scene/`, one toolbar click
   away. Owns the distance ruler, the band editor's live feedback, and the
   dependency-line overlay; the 3D view reads the same underlying
@@ -52,10 +47,9 @@ reading order for any session is `CLAUDE.md` → `DECISIONS.md` →
 | `data/catalog/*.json` | Swap-target systems (per-asset "compare this slot against a different real system" dropdown). |
 | `src/data/loader.ts` | `loadWorld()` — assembles the `WorldModel` from the JSON above plus live overrides. Validates every asset via `src/data/validate.ts`, never throws on a bad file (degrades gracefully into a Data Health issue instead). |
 | `src/data/model.ts` | Loader-derived types sitting on top of the schema in `src/types.ts` (the actual `Asset` contract). |
-| `src/data/placement.ts` | **Engagement domain vs. platform domain** — resolves how high off the deck to draw an asset, and (Pass 24) `resolveAltitudeM()`, the metres-above-ground answer both renderers must share. Read the file header before touching altitude/tether logic in either renderer. |
+| `src/data/placement.ts` | **Engagement domain vs. platform domain** — resolves how high off the deck to draw an asset. Read the file header before touching altitude/tether logic in either renderer. |
 | `src/scene/labelGrid.ts` | The one label-collision index both renderers share (uniform grid, cost scales with local crowding rather than roster size). `clear()` lets the 3D loop reuse one index per frame instead of allocating a new one. |
 | `src/three/perfMonitor.ts` + `src/components/PerfOverlay.tsx` | Pass 16's frame-time / draw-call readout — the performance budget made visible. Allocation-free sampling in the render loop; the overlay polls it 4×/second and never re-renders per frame. On in `npm run dev`; in production it's the nav drawer's "Performance HUD" switch or `?perf=1` (query param, not hash — the hash is the router's). **Record the numbers before and after any rendering change.** |
-| `src/three/depthAxis.ts` | **Pass 24 — the spatial contract, and the first file to read in `src/three/`.** 1 unit = 1 m; `TRUE_SCALE_DEPTH_KM` (40) of true scale either side of the zero line; a slope-matched logarithm past it out to `MAX_DEPTH_KM` (4,300); `compressionAt()`, which the fidelity gradient, the far-register model scale and the atmospheric haze are all derived from. Pure — no `Projection`, no dependence on the live band set. |
 | `src/three/` | The WebGL scene: `Scene3D.tsx` (main component — also owns drag-to-reposition and the tap/drag discriminator, hung off each DOM pin's `onPointerDown`, see Pass 11 and Pass 16), `worldMapping.ts` (world-unit conversion + `DOMAIN_ALTITUDE` + `worldXToKm`, the inverse a drag needs to turn a drop point back into a distance), `terrain3d.ts` (synthetic terrain, plus the coastal basin and — Pass 17 — the river the front crosses; `isInWater()` is the one check every scatter/placement loop needs before instancing into either), `models.ts` (`HERO_BUILDERS`, 30 entries as of Pass 19 — authored, not sourced, low-poly 3D models for a subset of assets, incl. Pass 19's 5 Russian UGVs, human figures, and Pass 18's fortification hero geometry; materials import from `palette.ts`), `palette.ts` (Pass 19 — the shared vehicle/hero material list, relocated out of `models.ts` so every builder file can reach for the same materials; `HERO_MATERIALS` export), `scenery.ts` (decorative trench lines/obstacle belts/power plant/etc., not clickable — Pass 17 adds the destroyed bridge + pontoon crossing and `TERRAIN_FEATURES`/`LANDMARKS`, both exported so Pass 18's siting code can read real feature/landmark coordinates instead of guessing; Pass 19 instances the trench/fighting-position belt and exports `SCENERY_MATERIALS` as its own governed material list), `props.ts` (instanced scatter — trees/craters), `osmTerrain.ts` (Pass 17 — the OSM metric inset: dynamically-imported `data/osm/pokrovsk.json`, clipped and drawn at its own true scale inside one band; `unitsPerKmAt`/`anchorXAt`/`ANCHOR_SIDE`/`ANCHOR_KM` exported so `tacticalSiting.ts` can site one asset on the exact same anchor rather than a second, independent guess; read this file's header before touching the anchor/scale derivation), `tacticalSiting.ts` (Pass 18 — a post-process on `worldMapping.ts`'s `lateralLayout()`, not a change to it: blends terrain-affine categories' already-collision-safe lateral position toward real `TERRAIN_FEATURES`/`LANDMARKS`; read this file's header before changing which categories get which affinity). |
 | `src/state/overridesState.tsx` + `persistence.ts` | The live-edit layer: distance-band edits, per-asset placement/text/media overrides, and brand-new assets built in the Asset Editor all persist here — to `localStorage` by default, or a shared Cloudflare Worker if `VITE_SYNC_URL` is configured (see `docs/DEPLOY_SYNC_WORKER.md`). |
 | `src/components/` | `AppHeader` (hamburger + brand) + `NavDrawer` (every toggle/filter, plus nav links to the routed pages below — Pass 9 replaced the old stacked-button `Toolbar` with this), `PageShell` (chrome for a routed page), `DetailPanel` (per-asset view + inline edit controls + Duplicate + — Pass 18 — `RosterSwapPicker`, a same-category swap that reuses Duplicate's own clone-into-`customAssets` mechanism), `AssetEditorPanel` (build a whole new asset from scratch, live; also opens directly into edit mode for a custom asset via `ViewState.editorTarget`), `BandsEditorPanel`, `Legend`, `SyncControls`, `CategoryFilterMenu`, `ScenarioFocusBanner` (Pass 11 — the visible entry/exit for `ViewState.focusRequest`'s scenario-focus mode). |
@@ -100,19 +94,6 @@ headless Playwright smoke pass (Chromium is pre-installed at
   `side_a` / `side_b`; the Ukraine/Russia labeling lives entirely in
   `src/config/ui.ts`. Don't hardcode "Ukraine"/"Russia" into `data/` or
   loader logic.
-- **The 3D axis is `depthAxis.ts`; the 2D axis is `projection.ts`. They no
-  longer share a km→screen function, on purpose (Pass 24).** What they still
-  share — and what the old "the two views read the same projection" invariant
-  was actually protecting — is the number: both draw every asset from
-  `distance_km_from_zero` and label it in true km, and neither can move an
-  asset without moving that field. A schematic cross-section gives each band a
-  legible slice; a scene with real terrain in it cannot claim two scales at
-  once. One consequence, and it is an improvement: **editing a band no longer
-  moves anything in the 3D scene.** A band annotates the axis; it does not
-  define it.
-- **Lengths in `src/three/` are metres.** A tank hull is 7, a trench bay 15, a
-  river 1,200 across, the strip 12,000 wide. If a number in there does not
-  read as a plausible real-world measurement, that is a bug, not a style.
 - **`domain` is what an asset *fights in*, not where it *sits*.** Every SAM
   battery is `domain: "air"` because a Patriot is an air-domain weapon — but
   it stands on the ground. Anything asking "how high do I draw this?" must go
@@ -141,12 +122,6 @@ headless Playwright smoke pass (Chromium is pre-installed at
   also skips its whole layout pass when nothing moved, so anything that
   invalidates label positions without moving the camera (selection, hover,
   focus, a pin node mounting, a drag) must bump `layoutDirtyRef`.
-- **Instance-buffer capacity is a real bug class here, not a theoretical one.**
-  Pass 24 found `buildFightingPositions()` allocating for one side and writing
-  both, latent since Pass 19 and invisible until the world got big enough for
-  the degenerate triangles to fill the screen. When adding an `InstancedMesh`,
-  check that its capacity covers every loop that writes into it — three draws
-  `.count` instances regardless, and out-of-range reads are zero matrices.
 - **`npm run build` passing is not evidence that a rendering change works.**
   Pass 16 shipped green builds twice with every label parked at the screen's
   top-left corner, and then with labels that never appeared until the camera

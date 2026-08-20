@@ -109,11 +109,5 @@
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]
-  },
-  "altitude_band_m": {
-    "min_m": 30,
-    "max_m": 200,
-    "basis": "estimated",
-    "note": "FPV / small quadcopter band. The swarm's reach comes from being trucked to the launch point, not from altitude - it flies at FPV heights over the last few km."
   }
 }
