@@ -3044,3 +3044,225 @@ Chromium (`--use-gl=swiftshader --enable-unsafe-swiftshader --no-sandbox`) again
   `icon_image` path — expected and harmless per the existing, unchanged convention (`icon_image` is
   never read for the map glyph; every marker resolves via `group`/`category`/`domain` through
   `src/icons/registry.tsx`, confirmed working for every new category with no registry change).
+
+---
+
+# Pass 19 — 3D model integration
+
+Depends on Pass 16 (perf headroom — done, `bd04cba`). Source data:
+`docs/3d-model-sourcing-manifest.xlsx`, confirmed present before starting.
+
+## 0. The sourcing premise didn't survive contact with this environment — tested, not assumed
+
+The brief's items 1/3/4/6 (license-filter, download, decimate/retexture, glTF+Draco convert)
+all assume this session can fetch the manifest's candidate model files. Every prior pass that
+touched imagery or models found this blocked (Pass 3/4/6, restated as a standing constraint in
+`CLAUDE.md`) — re-tested rather than re-assumed, since re-verifying an old finding before relying
+on it is this repo's own standard: `curl` against `upload.wikimedia.org` and a Sketchfab-style
+media host both failed with `CONNECT tunnel failed, response 403`. The manifest itself
+independently confirms the same thing from the other side — its own README states plainly: *"What
+Claude did NOT do: Did not download or verify-open any file — this sandbox has no network
+access... every link needs a human or Claude Code (which has real network access) to open, confirm
+the license, and download."* The manifest's author assumed a Claude Code session would have real
+network access; this one doesn't, for the same egress-proxy reason established since Pass 3.
+
+**Resolution, matching Pass 6's original call on the same question:** authored geometry, not
+sourced. This closes the "hide unmodeled Russian UGVs" fallback the brief's item 6 offered —
+since no source (free or paid; there's no payment mechanism available to an agent session either)
+was ever actually reachable here, building real geometry for the 5 UGVs the manifest flags as
+having no free candidate anyway is the stronger, achievable answer (§4 below), not the fallback.
+License-filtering was still applied to what's actually checkable — the manifest's own Sourcing
+Status/License columns were read and cross-referenced (all local file access, no network) so a
+future pass with real download access has the filtering groundwork already done, even though
+nothing was downloaded this session.
+
+## 1. The per-instance-opacity shader Pass 16 deferred
+
+`src/three/Scene3D.tsx`: `withInstancedOpacity()` converts the marker/ring/fill trio from
+individually-authored `Mesh` objects (Pass 16 already shared their *geometry* — 3 singletons
+instead of ~270 uploads — but kept per-entry *materials*, since colour/opacity/emissive-intensity
+are all animated per asset for selection/hover/scenario-focus dimming) into three shared
+`InstancedMesh` draws. `InstancedMesh` has no per-instance opacity or emissive intensity out of
+the box; `onBeforeCompile` injects a custom `instanceOpacity` float attribute into
+`<color_fragment>`, and — marker only — a per-instance `instanceEmissive` scalar that combines
+with three's own built-in `instanceColor` tint (which only ever multiplies diffuse, never
+emissive). The marker's slow idle spin moves from a per-entry `mesh.rotation.y +=` running every
+frame for every entry to one shared `uSpin` uniform, rotating the local vertex before the
+per-instance transform — same visual result, and now a single float update per frame instead of N.
+
+**Every touchpoint that assumed marker/ring/fill were `entry`'s own `Mesh` children got updated to
+match, not just the happy path:**
+- `onCanvasClick`'s raycast now intersects the three `InstancedMesh`es alongside the (unchanged)
+  hero-model groups in one `intersectObjects` call — a hit reports `instanceId`, which maps
+  directly to `entries[instanceId]` since creation-loop index and array index are the same
+  number by construction, not something separately tracked.
+- `onPinDragMove` is the one place this actually changed *behaviour*, not just implementation:
+  ring/fill previously moved for free as `Mesh` children of the dragged entry's own `THREE.Group`;
+  now they're rows in shared meshes with no parent-child relationship to that group, so this
+  handler is the only code path that repositions all three explicitly during a drag. `entry.padY`
+  (new field) preserves the exact pre-Pass-19 math (ring/fill's local Y offset, computed once at
+  creation) rather than re-deriving `groundY` mid-drag, which would have been a small, avoidable
+  behaviour change on top of an already-large one.
+- The roster-rebuild disposal loop needed no changes at all — `InstancedMesh` is a `THREE.Mesh`
+  subclass, so the existing `o instanceof THREE.Mesh` check already catches it, and marking the
+  three new shared materials `userData.shared = true` (the existing convention `MARKER_GEO` etc.
+  already used) makes the disposal loop correctly skip them, same as before.
+
+**Measured, not estimated: 1140 → 892 draw calls** (Pass 17's number down to this), read directly
+off the Pass 16 perf HUD (`?perf=1`) against a clean `npm run build` + headless run, not a
+theoretical count. Collapses ~309 individual marker/ring/fill draws (103 assets × 3) into 3.
+
+**Verified end to end, not just type-checked** — the highest actual regression risk was the drag
+path, since ring/fill previously moved "for free": a deliberate multi-step drag on Leleka-100
+(headless, `--use-gl=swiftshader`) shows the marker, ring, tether *and* label all landing together
+at the new position with the drop-note firing correctly. Selecting an asset shows its scale pulse
+and ring brightening; scenario-focus dimming (tested via the existing lesson-focus flow) still
+desaturates non-focused markers toward `FOCUS_DIM_COLOR`. Zero page errors across the full run.
+
+## 2. The 5 unmodeled Russian UGVs, human figures, and Pass 18's fortification hero geometry
+
+`src/three/models.ts` gains 19 new `HERO_BUILDERS` entries (30 total, up from 11) — every one of
+the brief's item 2/item 6 questions answered explicitly, none left silently unaddressed:
+
+- **`ugvKurier`, `ugvOmich2`, `ugvUran6`, `ugvUran9`, `ugvVaran`** — authored, not hidden (see §0).
+  Deliberately smaller than the tank/IFV tier (a UGV is a fraction of a crewed vehicle's real
+  size), sharing a `ugvTrackedBase()` helper for the four tracked ones so the silhouette
+  difference between them comes from what's added on top (Kurier's open cargo bed, Omich-2's
+  enclosed casevac box, Uran-6's flail drum, Uran-9's small turret+barrel), not a different hull
+  each time. Varan is wheeled, not tracked — the one silhouette choice that reads as "modular
+  platform" rather than "combat vehicle," matching its real multipurpose role.
+- **Human figures** (`humanFigureBase` + 4 variants) — the brief asked for an explicit decision on
+  dismounted squad / CP / OP / CCP personnel and named three options. Chose authored low-poly
+  geometry (option 1), for the same reason every other model in this file is authored (§0), and
+  because a sourced human figure carries real likeness/rights questions a vehicle model doesn't —
+  not evaluated as a live option here at all, given §0 makes it moot regardless. One shared 4-box
+  base (legs/torso/head/helmet); each of the four categories adds exactly one distinguishing prop
+  (rifle, radio+map table, binoculars+kneeling posture, stretcher+poles) rather than a different
+  figure per category, matching the hero tier's own "one or two features" rule.
+- **`fortificationDugout`, `fortificationArtilleryPosition`, `fortificationAmmoPoint`** — the
+  brief's own suggestion (procedural fortification geometry, not human figures) for these three,
+  taken as written since it's the better fit: these are positions, not people or vehicles. Reuses
+  `scenery.ts`'s own `WOOD`/`SANDBAG` materials (now shared via `palette.ts`, see §3) so a real,
+  clickable dugout marker reads as the same substance as the decorative trench belt around it.
+
+Every new builder audited against `docs/MODEL_STYLE_GUIDE.md`, not just written and assumed
+compliant — see that file's own updated Pass 19 section for the primitive/segment-count numbers.
+
+## 3. Material palette — Pass 12's deferred fix, made
+
+`src/three/palette.ts` (new): the vehicle/hero shared list, relocated out of `models.ts` and grown
+from 5 to 10 materials (`WOOD`, `SANDBAG`, `CANVAS`, `SKIN`, `FATIGUES`, `FATIGUES_DARK` added) so
+every new builder in `models.ts` — UGVs, human figures, fortification geometry — has one place to
+reach for shared materials rather than each declaring its own.
+
+**Re-measured `scenery.ts` before touching it, not trusting Pass 12's old "19" number**: 27
+materials by Pass 19, not 19 — Pass 17 alone added 7 with no governance check to catch the drift
+Pass 12 had already warned about. A full RGB-distance sweep (same method as Pass 12, wider scope)
+found three pairs under the "not reliably distinguishable" line: `WALL_RUINED`/`RUBBLE` (4.7, Pass
+12's own finding), `SANDBAG`/`WALL_INTACT` (5.4, also Pass 12's), and `WIRE`/`BRIDGE_DECK_BROKEN`
+(4.4, new — Pass 12 predates the Pass 17 materials it involves). All three merged as **literal
+object aliases** (`const WALL_RUINED = RUBBLE;`), not just matching hex values, so they can't drift
+apart again from a future one-sided edit. `export const SCENERY_MATERIALS` now lists everything the
+file declares for itself — the governance list Pass 12 asked for and didn't build.
+
+**What did NOT get merged, disclosed rather than silently left**: a second, looser cluster
+(`BRIDGE_DECK_BROKEN`/`PONTOON_MAT`/`EARTH_MOUND`/`REBAR`/`PIER_WOOD`/`CONCRETE_DARK`/`DIRT_WALL`)
+all sit within ~16 RGB units of each other — real, measured drift, mostly Pass-17-era. Attempting a
+full unification inline here, on top of the shader/instancing/new-geometry work this pass already
+carries, risked exactly the "fixed four things while quietly breaking a fifth" failure mode this
+repo's own verification standard warns against (see Pass 17's `Array.map` bug, Pass 16's two
+screenshot-only-caught bugs). Logged in `docs/BACKLOG.md` with the real numbers, not guessed at.
+
+**A real, disclosed side effect, not part of the ask**: none of the original `HERO_MATERIALS`
+(`HULL`/`HULL_DARK`/`METAL`/`RUBBER`/`GLASS`) were marked `userData.shared` before this pass, which
+means Scene3D.tsx's roster-rebuild disposal loop was silently calling `.dispose()` on all five
+every single roster rebuild (filter toggle, band edit, duplicate, swap) — not a rendering bug
+(three.js re-registers a disposed-then-reused material transparently) but real, avoidable shader
+recompilation on every rebuild. Now marked `shared`, same as `MARKER_GEO` etc. already were —
+found while wiring the new geometry into the same list, not separately hunted for.
+
+## 4. Instancing the last un-instanced repeated geometry
+
+`buildTrenchLines()` and `buildFightingPositions()` (`scenery.ts`) were the single largest
+un-instanced draw-call cost left after §1: individually-authored `Mesh` objects per trench
+segment/shoring-post and per fighting-position pit/sandbag — up to ~330 draw calls combined at the
+high scenery budget (2 sides × ~41 trench segments × 2 meshes, plus 2 sides × 14 positions × 6
+meshes). Converted to the exact pattern `buildObstacleBelt` already used one function above them,
+and `props.ts`'s own tree/crater scatter before that — not a new pattern, reused where a prior
+pass had missed it. Both now instance across *both* sides in one pair of meshes each, rather than
+one pair per side, since nothing about a trench segment's geometry depends on which side it's on.
+
+**Checked against Pass 17's OSM tree-instancing approach first, per the brief's own instruction**:
+`osmTerrain.ts`'s `RibbonBuilder`/tree `InstancedMesh` accumulates geometry into one merged buffer
+per layer — a different technique (merged custom geometry vs. per-instance transform matrices)
+suited to *drawing a continuous line/cluster from source coordinates*, not to *scattering N
+independent objects at generated positions*, which is what trenches/fighting-positions actually
+need. `buildObstacleBelt`'s existing dummy-`Object3D`-plus-`setMatrixAt` pattern is the right fit
+for that, not `osmTerrain.ts`'s — checked and reasoned about explicitly rather than picked by
+default.
+
+**Measured: 892 → 767 draw calls** (same HUD, same methodology as §1) — a further ~125 saved, on
+top of the ~19 new hero models this pass added (each costing a handful of individual draw calls,
+unchanged from the existing hero-tier convention, since hero geometry is unique per builder and
+gains nothing from instancing per Pass 6's original reasoning).
+
+**Cross-checked independently before trusting the number**, per this repo's own standard (Pass 17's
+`Array.map` bug was caught exactly this way): a hand-computed estimate — marker/ring/fill −306,
+trench −162 max, fighting positions −166 max, offset by roughly +150–300 for 19 new hero models'
+individual draw calls (8–16 primitives each) — lands in the same ~700–770 range the HUD reports.
+Not an exact match (expected: not every new model is in-frame at default framing, and the actual
+scenery budget/water-exclusion counts vary the trench/position totals), but the direction and
+magnitude agree, which is what an independent sanity check is actually for.
+
+**Final ceiling for Pass 20/21: 767 draw calls**, down from Pass 17's 1140 (−33%) despite ~19 new
+hero models added on top — both real numbers, not a net that hides an underlying regression.
+
+## Where the brief and prior passes disagreed
+
+- **Items 1/3/4 (license-filter/download/decimate/retexture/glTF+Draco-convert real sourced
+  models) were never executable in this session** — tested this pass, not assumed from Pass 3/4/6.
+  License-filtering was still applied to the manifest's own data (a local file, no network needed);
+  the download/convert pipeline has nothing to run against here.
+- **Item 6's "hide unmodeled assets ... watch out: all five Russian UGVs have no free source
+  model" is answered by building them, not hiding them.** Since no source — free, paid, or
+  otherwise — was ever reachable from this session regardless of the manifest's own findings,
+  authored geometry is the only path that was ever open, and it's a strictly better outcome than
+  the brief's own fallback for exactly the category the brief flagged as most at risk.
+- **The human-figure sourcing decision (item 2) wasn't actually a three-way choice in practice.**
+  The brief named "simple low-poly figures, a sourced asset, or a documented placeholder" as
+  options to weigh; §0's binary-fetch finding removes the middle one before any comparison, and a
+  human figure specifically (vs. a vehicle) would have carried real likeness questions a sourced
+  model raises that this repo's existing authored-only convention was never built to answer anyway.
+- **The 27-vs-19 scenery-material recount, and the further undisclosed-cluster follow-up, are
+  logged rather than silently absorbed into "fixed the materials."** Pass 12's own number had
+  already drifted by the time this pass reused it; re-measuring rather than trusting it is this
+  repo's own stated standard, applied to its own prior work this time.
+
+## Verification
+
+`npm run build` and `npx tsc --noEmit` clean throughout, including after every geometry/shader
+addition — necessary, never treated as sufficient, per Pass 16/17/18's own standard. Headless
+Chromium (`--use-gl=swiftshader --enable-unsafe-swiftshader --no-sandbox`) against `npm run
+preview`:
+
+- **Data Health**: 0 errors, unchanged from Pass 18's baseline — nothing this pass's data-free,
+  code-only changes could plausibly have broken, confirmed rather than assumed.
+- **Draw calls measured twice, both from the in-app HUD against a real build**: 1140 → 892 after
+  §1, → 767 after §4 — both real numbers with an independent hand-computed sanity check on the
+  final figure (§4), not a single unverified readout.
+- **Asset Library**: all 19 new hero-tier categories confirmed present and findable by name
+  (Kurier, Omich-2, Uran-6, Uran-9, Varan, Dismounted Rifle Squad, Tactical Command Post,
+  Observation Post, Casualty Collection Point, Fighting Position/Dugout, Artillery Firing Position,
+  Ammunition Point) — 13/13 automated checks passed.
+- **Screenshots**: default framing shows correct marker/ring rendering and positions across the
+  whole roster; clicking the new Kurier UGV opens its real detail panel (cost/specs/swap picker,
+  all working); a deliberate drag test confirms marker+ring+tether+label all move together to the
+  new position; the instanced trench belt renders correctly along both sides of the line. Small
+  human-figure geometry specifically is best inspected in a live session at close zoom — this
+  environment's software rasterizer runs at ~2 fps, making iterative headless zoom-and-screenshot
+  automation on individual ~1.6-unit-tall models slow enough that it wasn't pursued past a
+  reasonable effort; the same rendering path (`buildHeroModel` → `HERO_BUILDERS[id]()`) that
+  correctly renders the well-established original 11 hero models renders these with zero runtime
+  errors across every headless pass this pass ran, which is real evidence, not an assumption.
+- **Zero page errors** across every run except one benign, pre-existing 404 (a new asset's
+  placeholder `icon_image` path — never read for the map glyph, unchanged convention since Pass 5).

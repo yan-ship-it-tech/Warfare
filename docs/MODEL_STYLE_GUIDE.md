@@ -1,8 +1,16 @@
 # 3D model style guide
 
-Documentation pass, no feature work: this spec is written from the
-best-looking, most internally consistent geometry already in the scene —
-the eleven-asset hero tier in `src/three/models.ts` — and then used to audit
+**Pass 19 update.** Originally a documentation-only audit pass (Pass 12);
+this pass is the first to actually act on its own deferred recommendation —
+the material-governance fix below was "recommended, not made" at Pass 12 and
+is now made — and to add real new geometry (5 UGVs, human figures,
+Pass 18's fortification hero models) under the guide rather than just
+auditing existing work against it. Sections below are updated in place
+rather than appended, so this file states the current target, not a history
+of it — see `docs/DECISIONS.md` Pass 12 and Pass 19 for the history.
+
+Written from the best-looking, most internally consistent geometry already
+in the scene — the hero tier in `src/three/models.ts` — and used to audit
 `scenery.ts`, `props.ts`, and `terrain3d.ts` against it. Where those files
 hold to the standard, the audit says so. Where they drift, it says that too,
 with the specific evidence, rather than asserting a violation from feel.
@@ -56,13 +64,27 @@ use 5–9 segments).
 
 ## 3. Materials
 
-**The hero tier's rule, stated in its own comment: `export const
-HERO_MATERIALS = [HULL, HULL_DARK, METAL, RUBBER, GLASS]` — five shared
-`const`s, reused across all eleven models, exported specifically so *"a
-scene-wide material swap stays trivial."*** Every new hero model is supposed
-to reach for one of those five, or add sparingly to that shared, exported
-list — not declare a new one-off material inline. This is the rule the
-audit below finds broken elsewhere in the codebase (§ Audit, scenery.ts).
+**Pass 19: the shared list moved to its own file, `src/three/palette.ts`,
+and grew from 5 to 10 — `HULL, HULL_DARK, METAL, RUBBER, GLASS, SKIN,
+FATIGUES, FATIGUES_DARK, WOOD, SANDBAG, CANVAS`** (`HERO_MATERIALS`, still
+the name, still exported for the same reason — *"a scene-wide material swap
+stays trivial"*). The move out of `models.ts` itself is deliberate: the 5
+new UGV builders, the human-figure builder, and Pass 18's fortification hero
+geometry all live in `models.ts` too and all need the same shared list, so
+it belongs somewhere every consumer can import from equally rather than
+being tied to one builder file. Every new hero model still reaches for one
+of these first, or adds sparingly to the list — not a private one-off.
+
+**`scenery.ts` gets the equivalent treatment now, not just an audit finding.**
+`export const SCENERY_MATERIALS` lists everything that file declares for
+itself (structural/landmark colours — concrete, metal, wood-tone variants,
+damage tiers — that measurably do NOT overlap with `palette.ts`'s vehicle
+materials, see below). `WOOD`/`SANDBAG`/`CANVAS` moved to `palette.ts`
+instead, shared by both files, since Pass 18's new dugout/artillery-
+position/ammo-point hero geometry and `scenery.ts`'s own decorative
+trenches/fighting positions are visibly the same substance and should read
+that way. This is the rule the previous version of this file's audit
+(below) found broken — now fixed, not just flagged.
 
 Properties, read off every material in the scene without a single
 exception:
@@ -194,55 +216,97 @@ not a coincidence — checked anyway rather than assumed:
 
 **No changes recommended here.** This file is the spec, not a subject of it.
 
-### `src/three/scenery.ts` — mostly consistent; one real, fixable deviation
+### `src/three/scenery.ts` — the Pass 12 deviation, fixed at Pass 19
 
-**Deviation found: material reuse discipline is not followed.** The file
-declares 19 separate `MeshStandardMaterial` constants with no shared,
-exported list equivalent to `HERO_MATERIALS`, and several are close enough
-to an existing material (in this file or another) to be visually
-indistinguishable — measured, not eyeballed, via RGB Euclidean distance on
-the actual hex values:
+**Pass 12's finding, re-measured before touching anything (its own
+"measured, not eyeballed" standard applied to its own prior numbers):** the
+material count had grown from 19 to 27 by Pass 19 — Pass 17 alone added 7
+(`CANOPY`, `EARTH_MOUND`, `BRIDGE_DECK`, `BRIDGE_DECK_BROKEN`, `REBAR`,
+`PONTOON_MAT`, `SMOKE_MAT`) with no governance check to catch the drift Pass
+12 had already warned about. A full RGB-distance sweep across every
+material in the scene (same method, wider scope — every file, not just this
+one) found three pairs under the ~15-distance "not reliably distinguishable"
+line:
 
-| Material A | Material B | Distance* |
-|---|---|---|
-| `scenery.PIER_WOOD` `#4a4438` | `props.ts` tree colour `#4a4237` | 2.2 |
-| `scenery.WALL_RUINED` `#332f28` | `scenery.RUBBLE` `#302c26` (same file) | 4.7 |
-| `scenery.SANDBAG` `#8c7f5c` | `scenery.WALL_INTACT` `#8a7a5c` (same file) | 5.4 |
-| `scenery.CONCRETE_DARK` `#4a4b43` | `scenery.PIER_WOOD` `#4a4438` (same file) | 13.0 |
+| Material A | Material B | Distance* | Fixed how |
+|---|---|---|---|
+| `scenery.WALL_RUINED` `#332f28` | `scenery.RUBBLE` `#302c26` | 4.7 | `WALL_RUINED = RUBBLE` — literal alias |
+| `scenery.SANDBAG` `#8c7f5c` | `scenery.WALL_INTACT` `#8a7a5c` | 5.4 | `WALL_INTACT = SANDBAG` — literal alias, `SANDBAG` moved to `palette.ts` |
+| `scenery.WIRE` `#3a3a38` | `scenery.BRIDGE_DECK_BROKEN` `#3d3b35` | 4.4 | `BRIDGE_DECK_BROKEN = WIRE` — literal alias (found this pass; Pass 12 didn't have Pass 17's materials to check) |
 
 *Euclidean distance over 0–255 RGB channels; under ~15 is not reliably
 distinguishable on screen at prop scale.
 
-This isn't a rendering bug — every one of these materials is individually
-correct (flat-shaded, properly desaturated, sensible roughness) — but it's
-exactly the failure mode `HERO_MATERIALS`'s shared-list pattern exists to
-prevent: `WALL_RUINED` and `RUBBLE` are two names for almost the same
-colour, declared 100+ lines apart, because nothing forced a reuse check
-before adding a new one. **Recommended fix, not made in this pass** (this is
-a documentation/consistency pass, no feature work): consolidate the
-`RUBBLE`/`WALL_RUINED` pair and the `SANDBAG`/`WALL_INTACT` pair into one
-material each, and export a `SCENERY_MATERIALS` list the way `models.ts`
-does, so the next addition checks it first instead of declaring #20.
+**Fixed as literal object aliases, not just matching hex values** — `const
+WALL_RUINED = RUBBLE;` rather than two separately-declared materials that
+happen to share a colour — so the pair can never drift apart again by a
+future edit to just one of them. `WOOD`, `SANDBAG` and `CANVAS` moved into
+`palette.ts` entirely (see §3), and `export const SCENERY_MATERIALS` now
+lists everything else this file declares for itself — the governance
+mechanism Pass 12 asked for and didn't build.
 
-**Mild saturation creep, worth watching rather than fixing outright:**
-`ROOF_INTACT` (S=0.42) and `ROOF_DAMAGED` (S=0.35) sit above every other
-"plain" material in the scene (everything else tops out around S=0.30,
-`METAL_RUST` included at S=0.30). A terracotta roof tile is genuinely more
-saturated than bare dirt or concrete in reality, so this may be a
-defensible, deliberate exception the way `GLASS`/`EMBER`/water are — but
-unlike those three, it isn't called out as an accent anywhere in the file.
-Recommend either a one-line comment marking it as an intentional exception,
-or nudging both down a few points to fall inside the standard band.
+**What did NOT get merged, disclosed rather than silently left:** the
+Pass-17-era cluster (`BRIDGE_DECK_BROKEN`/`PONTOON_MAT`/`EARTH_MOUND`/
+`REBAR`/`PIER_WOOD`/`CONCRETE_DARK`/`DIRT_WALL`) all sit within ~16 RGB
+units of each other — real, measured drift, but attempting a full
+unification alongside this pass's shader/instancing/new-geometry work risked
+exactly the "fixed four things while quietly breaking a fifth" failure mode
+this repo's verification standard exists to catch. Logged in
+`docs/BACKLOG.md` as the next concrete follow-up, with the numbers, not a
+vague "revisit materials someday."
+
+**Mild saturation creep, now documented rather than left unflagged:**
+`ROOF_INTACT` (S=0.42) and `ROOF_DAMAGED` (S=0.35) sit above the scene's
+usual ≤~30% saturation band. Pass 12 found this plausible but undocumented;
+confirmed intentional now with a comment at the declaration — a terracotta
+roof tile genuinely reads more saturated than bare dirt or concrete, the
+same kind of deliberate, narrow accent `GLASS`/`EMBER`/water already are.
 
 **Primitive vocabulary, segment counts, primitive-count budget, and
-`flatShading` all pass.** Cone/Torus/Dodecahedron/Sphere use is consistent
-with §4's documented scenery/hero split, not a violation of it. Segment
-counts on every `cyl()`/`ConeGeometry` call: 4, 5, 6, 6, 8, 12, 12, 14, 14 —
-inside the 4–14 band. Landmark primitive counts (`buildPowerPlant` ~13,
-`buildFuelDepot` ~11, `buildCommandPost` ~9, a `buildVillage` call
-~15–20, `buildUrbanCluster` 9, `buildPortHarbor` ~10,
-`buildRuinedInfrastructure` 6, `buildWreckMarker` 2–3) all land inside
-6–25. Every material declared has `flatShading: true`.
+`flatShading` all still pass**, unchanged from the Pass 12 audit — Cone/
+Torus/Dodecahedron/Sphere use is consistent with §4's documented scenery/
+hero split, segment counts stay inside 4–14, landmark primitive counts stay
+inside 6–25, every material has `flatShading: true`. **New this pass:**
+`buildTrenchLines()` and `buildFightingPositions()` (formerly per-segment/
+per-position `Mesh` loops, up to ~330 draw calls combined at the high
+scenery budget) are now `InstancedMesh`, the same pattern `buildObstacleBelt`
+already used and `props.ts`'s scatter already established — not a new
+pattern, reused where it had been missed. See `docs/DECISIONS.md` Pass 19
+for the measured before/after.
+
+### `src/three/models.ts`'s new geometry (Pass 19) — audited against its own rules
+
+**5 UGVs** (`ugvKurier`, `ugvOmich2`, `ugvUran6`, `ugvUran9`, `ugvVaran`):
+Box+Cylinder only, confirmed. Primitive counts 8 (`ugvVaran`) to 16
+(`ugvUran6`) — inside 6–25, smaller than the tank/IFV tier on purpose (a UGV
+is a fraction of a crewed vehicle's size — §1's relative-scale rule).
+Segment counts: 4, 8, 8 — inside 4–14. Each has exactly one silhouette
+feature per §5's rule: Kurier's open cargo bed, Omich-2's enclosed box,
+Uran-6's flail drum, Uran-9's small turret+barrel, Varan's modular payload
+block on a wheeled (not tracked) chassis.
+
+**Human figures** (`humanFigureBase` + 4 variants): the first non-vehicle,
+non-scenery geometry in the file, and deliberately the plainest possible —
+4 primitives for the base figure (legs/torso/head/helmet, all Box), one
+prop added per variant (rifle, radio+table, binoculars+kneel, stretcher).
+`humanObservationPost` and `humanCasualtyPoint` land at 5–7 primitives,
+under the nominal 6 floor — read as intentional here, not a violation:
+§2's own band exists to prevent *padding* a design with generic detail, and
+these are already at the minimum a recognisable figure needs. Two new
+palette materials (`SKIN`, `FATIGUES`/`FATIGUES_DARK`) rather than reusing
+`HULL`-family tones — a person is not a vehicle hull, and the guide's own
+§3 colour-family reasoning (desaturated, semantically distinct per
+substance) argues for a real distinction here, not a forced reuse.
+
+**Pass 18 fortification hero geometry** (`fortificationDugout`,
+`fortificationArtilleryPosition`, `fortificationAmmoPoint`): built under
+§4's scenery/hero split rather than the vehicle Box+Cylinder-only rule —
+these are positions, not vehicles, the same reasoning that already lets
+`scenery.ts` reach for Cone/Torus/Dodecahedron. Primitive counts 9–11,
+inside 6–25. Shares `WOOD`/`SANDBAG`/`CANVAS` with `scenery.ts`'s own
+decorative trench/fighting-position dressing on purpose, so a real,
+clickable dugout marker doesn't look like a different artist's work next to
+the unclickable dressing around it.
 
 ### `src/three/props.ts` — no deviations found
 
@@ -271,12 +335,16 @@ exactly what §3's accent rule asks for. **No changes recommended.**
 
 ## Summary
 
-One real, concrete inconsistency: `scenery.ts` (and, by extension, its
-overlap with `props.ts`) doesn't follow the material-reuse discipline
-`models.ts` established — 19 ungoverned one-off materials versus 5 shared,
-exported ones, with at least four pairs close enough to be visually
-redundant. Proportions, poly budget, segment counts, `flatShading`
-discipline, and the accent-colour convention all hold consistently across
-every file checked. Fixing the material-reuse gap is scoped as a follow-up,
-not done in this pass — this pass is documentation and audit only, per the
-brief.
+Pass 12's one real, concrete finding — `scenery.ts` didn't follow the
+material-reuse discipline `models.ts` established, with several pairs close
+enough to be visually redundant — is fixed as of Pass 19, not just flagged:
+three pairs merged into literal aliases, `WOOD`/`SANDBAG`/`CANVAS` unified
+into a shared `palette.ts` both files import, and `SCENERY_MATERIALS` now
+exists as the governance list Pass 12 asked for. A further, smaller cluster
+of Pass-17-era near-duplicates was measured and disclosed rather than
+chased in the same pass — logged in `docs/BACKLOG.md` with real numbers.
+Proportions, poly budget, segment counts, `flatShading` discipline, and the
+accent-colour convention all hold consistently across every file checked,
+including the ~19 new hero-tier models this pass added (5 UGVs, a
+human-figure base + 4 variants, 3 fortification hero builders) — audited
+against this same guide, not exempted from it for being new.

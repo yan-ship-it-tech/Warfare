@@ -36,23 +36,60 @@ import {
 } from "./terrain3d";
 import { worldXFor, STRIP_HALF_Z } from "./worldMapping";
 
+// ── material palette (Pass 19 — governance) ───────────────────────────────
+// Pass 12 flagged 19 ungoverned one-off materials here with no shared,
+// exported list equivalent to models.ts's HERO_MATERIALS, and measured two
+// pairs close enough to be visually redundant (RUBBLE/WALL_RUINED,
+// SANDBAG/WALL_INTACT) — "recommended fix, not made in this pass." This is
+// that fix, done the same measured way: re-running Pass 12's own RGB-
+// distance method against every material in the scene (not just this file)
+// found the count had grown to 27 by Pass 19 (Pass 17 alone added 7: CANOPY,
+// EARTH_MOUND, BRIDGE_DECK, BRIDGE_DECK_BROKEN, REBAR, PONTOON_MAT,
+// SMOKE_MAT) and a third pair (WIRE/BRIDGE_DECK_BROKEN, distance 4.4 — even
+// tighter than Pass 12's own two) that had drifted in since. All three
+// pairs are merged below — same object, not just a matching hex, so a
+// future edit to one can't silently un-sync the other. WOOD/SANDBAG/CANVAS
+// now live in palette.ts, shared with models.ts's new UGV/human-figure/
+// fortification-hero geometry (Pass 19 item 2) — see that file's header.
+//
+// What did NOT get merged, on purpose: everything below the ~15-distance
+// "not reliably distinguishable" line is a real, disclosed follow-up, not a
+// silent gap — the Pass 17-era cluster (BRIDGE_DECK_BROKEN, PONTOON_MAT,
+// EARTH_MOUND, REBAR, PIER_WOOD, CONCRETE_DARK) all sit within ~16 RGB units
+// of each other and of DIRT_WALL, which is real drift worth a dedicated
+// look, but attempting it inline here — while also shipping the shader,
+// instancing and new-asset geometry this pass already carries — risked
+// exactly the kind of "fixed four things while quietly breaking a fifth"
+// mistake this repo's own verification standard warns against. Logged in
+// docs/MODEL_STYLE_GUIDE.md and docs/BACKLOG.md rather than guessed at.
+import { WOOD, SANDBAG, CANVAS } from "./palette";
 const CONCRETE = new THREE.MeshStandardMaterial({ color: "#6b6d63", flatShading: true, roughness: 0.92 });
 const CONCRETE_DARK = new THREE.MeshStandardMaterial({ color: "#4a4b43", flatShading: true, roughness: 0.95 });
 const METAL_RUST = new THREE.MeshStandardMaterial({ color: "#6b4a3a", flatShading: true, roughness: 0.8, metalness: 0.2 });
 const METAL_TANK = new THREE.MeshStandardMaterial({ color: "#8a8f92", flatShading: true, roughness: 0.5, metalness: 0.4 });
-const WOOD = new THREE.MeshStandardMaterial({ color: "#5c4a34", flatShading: true, roughness: 1 });
-const SANDBAG = new THREE.MeshStandardMaterial({ color: "#8c7f5c", flatShading: true, roughness: 1 });
 const DIRT_WALL = new THREE.MeshStandardMaterial({ color: "#3e3826", flatShading: true, roughness: 1 });
-const CANVAS = new THREE.MeshStandardMaterial({ color: "#4f5a41", flatShading: true, roughness: 0.9 });
+// WIRE and BRIDGE_DECK_BROKEN measured 4.4 RGB units apart (Pass 19) — one
+// material, two names, since "wire" reads as a thin fitting and "broken
+// bridge deck" as a slab; same colour underneath, same as RUBBLE below.
 const WIRE = new THREE.MeshStandardMaterial({ color: "#3a3a38", flatShading: true, roughness: 0.6, metalness: 0.5 });
+const BRIDGE_DECK_BROKEN = WIRE;
 
 // ── Pass 10 materials: villages, urban cluster, port, wreck ──────────────
-const WALL_INTACT = new THREE.MeshStandardMaterial({ color: "#8a7a5c", flatShading: true, roughness: 0.9 });
+// WALL_INTACT merged into SANDBAG (Pass 12 measured 5.4 RGB units apart —
+// well under the ~15 "not reliably distinguishable" line) and WALL_RUINED
+// into RUBBLE (4.7 apart) — both literal aliases now, not just matching
+// hex values, so the two can never drift apart again by accident.
+const WALL_INTACT = SANDBAG;
 const WALL_DAMAGED = new THREE.MeshStandardMaterial({ color: "#5f5748", flatShading: true, roughness: 0.95 });
-const WALL_RUINED = new THREE.MeshStandardMaterial({ color: "#332f28", flatShading: true, roughness: 1 });
+const RUBBLE = new THREE.MeshStandardMaterial({ color: "#302c26", flatShading: true, roughness: 1 });
+const WALL_RUINED = RUBBLE;
+// ROOF_INTACT/ROOF_DAMAGED sit above the scene's usual ≤~30% saturation
+// band (S=0.42/0.35) — flagged by Pass 12 as plausible but undocumented.
+// Confirmed intentional here: a terracotta roof tile genuinely reads more
+// saturated than bare dirt or concrete, the same kind of deliberate,
+// narrow accent GLASS/EMBER/water already are elsewhere in the scene.
 const ROOF_INTACT = new THREE.MeshStandardMaterial({ color: "#7a3b32", flatShading: true, roughness: 0.85 });
 const ROOF_DAMAGED = new THREE.MeshStandardMaterial({ color: "#4a2a24", flatShading: true, roughness: 0.9 });
-const RUBBLE = new THREE.MeshStandardMaterial({ color: "#302c26", flatShading: true, roughness: 1 });
 const URBAN_WALL_A = new THREE.MeshStandardMaterial({ color: "#5a5f66", flatShading: true, roughness: 0.8 });
 const URBAN_WALL_B = new THREE.MeshStandardMaterial({ color: "#6b6558", flatShading: true, roughness: 0.8 });
 const PIER_WOOD = new THREE.MeshStandardMaterial({ color: "#4a4438", flatShading: true, roughness: 1 });
@@ -364,7 +401,8 @@ function rngLocal(seed: number) {
 // of its own to author; it sits wherever the river actually is at the Z it's
 // placed at.
 const BRIDGE_DECK = new THREE.MeshStandardMaterial({ color: "#5a5850", flatShading: true, roughness: 0.85 });
-const BRIDGE_DECK_BROKEN = new THREE.MeshStandardMaterial({ color: "#3d3b35", flatShading: true, roughness: 0.9 });
+// BRIDGE_DECK_BROKEN is declared near the top of this file now (aliased to
+// WIRE — Pass 19 merge, see that comment) rather than here.
 const REBAR = new THREE.MeshStandardMaterial({ color: "#4a453e", flatShading: true, roughness: 0.6, metalness: 0.5 });
 const PONTOON_MAT = new THREE.MeshStandardMaterial({ color: "#3c4a3a", flatShading: true, roughness: 0.85 });
 const SMOKE_MAT = new THREE.MeshStandardMaterial({
@@ -375,6 +413,20 @@ const SMOKE_MAT = new THREE.MeshStandardMaterial({
   roughness: 1,
   depthWrite: false,
 });
+
+/** The governance list Pass 12 asked for and Pass 19 ships: every material
+ *  this file declares for itself (WOOD/SANDBAG/CANVAS are governed via
+ *  palette.ts's own HERO_MATERIALS instead — no need to double-list them).
+ *  The next scenery addition reaching for a new colour should check this
+ *  list — and docs/MODEL_STYLE_GUIDE.md's real RGB-distance numbers —
+ *  before declaring #28. */
+export const SCENERY_MATERIALS = [
+  CONCRETE, CONCRETE_DARK, METAL_RUST, METAL_TANK, DIRT_WALL, WIRE,
+  WALL_DAMAGED, RUBBLE, ROOF_INTACT, ROOF_DAMAGED, URBAN_WALL_A, URBAN_WALL_B,
+  PIER_WOOD, WRECK_HULL, EMBER, CANOPY, EARTH_MOUND, BRIDGE_DECK, REBAR,
+  PONTOON_MAT, SMOKE_MAT,
+];
+for (const m of SCENERY_MATERIALS) m.userData.shared = true;
 
 /** A rising smoke plume: a handful of overlapping soft spheres, larger and
  *  more transparent higher up. Cheap and legible at any zoom without a real
@@ -625,39 +677,75 @@ const dummy = new THREE.Object3D();
 /** A zigzag trench line — not one long straight cut (real trenches traverse
  *  to limit blast/enfilade along their own length), rendered as a chain of
  *  short angled segments hugging the terrain near the line. */
-function buildTrenchLine(proj: Projection, side: Side): THREE.Group {
+/** Max trench segments either side ever produces — `STRIP_HALF_Z` is fixed,
+ *  so this is a real ceiling, not a guess: `2*(STRIP_HALF_Z-6)/(3.2*0.85)`
+ *  rounded up with margin. Sized once so the two InstancedMeshes below
+ *  (shared across both sides — one draw call each, not one per side) never
+ *  need to grow. */
+const TRENCH_SEGMENTS_MAX = 100;
+
+/** Pass 19: was a Group of individually-authored trench/post Mesh pairs —
+ *  up to ~90 draw calls on its own at the high scenery budget (2 meshes ×
+ *  ~45 segments), the single biggest un-instanced draw-call cost left in
+ *  the scene after the marker/ring/fill conversion. Same InstancedMesh +
+ *  scratch-Object3D pattern buildObstacleBelt already established just
+ *  below (and props.ts's own tree/crater scatter before that) — not a new
+ *  pattern, reused. Trenches and posts are geometrically distinct so they
+ *  need their own InstancedMesh each; both sides share one pair of meshes
+ *  rather than one pair per side, since nothing about a trench segment's
+ *  geometry depends on which side it's on. */
+function buildTrenchLines(proj: Projection): THREE.Group {
   const g = new THREE.Group();
-  const trenchMat = DIRT_WALL;
+  const trenchGeo = new THREE.BoxGeometry(1.6, 0.9, 3.2);
+  const postGeo = new THREE.BoxGeometry(0.12, 1.1, 0.12);
+  const trenchMesh = new THREE.InstancedMesh(trenchGeo, DIRT_WALL, TRENCH_SEGMENTS_MAX);
+  const postMesh = new THREE.InstancedMesh(postGeo, WOOD, TRENCH_SEGMENTS_MAX);
   const segLen = 3.2;
-  const r = rng(side === "side_a" ? 0x7a11 : 0xbeef);
-  let z = -STRIP_HALF_Z + 6;
-  const x0 = worldXFor(side, 0.4, proj);
-  const x1 = worldXFor(side, 2.2, proj);
+  let placed = 0;
 
-  while (z < STRIP_HALF_Z - 6) {
-    const jog = (r() - 0.5) * (x1 - x0) * 0.6;
-    const x = x0 + (x1 - x0) * 0.5 + jog;
-    if (isInWater(x, z)) {
-      // The river cuts a real gap in the line here rather than a trench
-      // dug straight through open water — the march continues past it.
+  for (const side of ["side_a", "side_b"] as Side[]) {
+    const r = rng(side === "side_a" ? 0x7a11 : 0xbeef);
+    let z = -STRIP_HALF_Z + 6;
+    const x0 = worldXFor(side, 0.4, proj);
+    const x1 = worldXFor(side, 2.2, proj);
+
+    while (z < STRIP_HALF_Z - 6) {
+      const jog = (r() - 0.5) * (x1 - x0) * 0.6;
+      const x = x0 + (x1 - x0) * 0.5 + jog;
+      if (isInWater(x, z) || placed >= TRENCH_SEGMENTS_MAX) {
+        // The river cuts a real gap in the line here rather than a trench
+        // dug straight through open water — the march continues past it.
+        z += segLen * 0.85;
+        continue;
+      }
+      const rotY = (r() - 0.5) * 0.5;
+
+      dummy.position.set(x, terrainHeight(x, z) + 0.1, z);
+      dummy.rotation.set(0, rotY, 0);
+      dummy.scale.setScalar(1);
+      dummy.updateMatrix();
+      trenchMesh.setMatrixAt(placed, dummy.matrix);
+
+      // Timber shoring posts along the trench wall — real dugouts are
+      // shored with whatever's on hand, and it's the detail that reads as
+      // "somebody dug in here" rather than "a rectangle was placed here".
+      dummy.position.set(x + 0.75, terrainHeight(x, z) + 0.55, z);
+      dummy.rotation.set(0, rotY, 0);
+      dummy.updateMatrix();
+      postMesh.setMatrixAt(placed, dummy.matrix);
+
+      placed++;
       z += segLen * 0.85;
-      continue;
     }
-    const trench = box(1.6, 0.9, segLen, trenchMat);
-    trench.position.set(x, terrainHeight(x, z) + 0.1, z);
-    trench.rotation.y = (r() - 0.5) * 0.5;
-    g.add(trench);
-
-    // Timber shoring posts along the trench wall — real dugouts are shored
-    // with whatever's on hand, and it's the detail that reads as "somebody
-    // dug in here" rather than "a rectangle was placed here".
-    const post = box(0.12, 1.1, 0.12, WOOD);
-    post.position.set(x + 0.75, terrainHeight(x, z) + 0.55, z);
-    post.rotation.y = trench.rotation.y;
-    g.add(post);
-
-    z += segLen * 0.85;
   }
+
+  trenchMesh.count = placed;
+  postMesh.count = placed;
+  trenchMesh.instanceMatrix.needsUpdate = true;
+  postMesh.instanceMatrix.needsUpdate = true;
+  trenchMesh.name = "scenery:trenches";
+  postMesh.name = "scenery:trench-posts";
+  g.add(trenchMesh, postMesh);
   return g;
 }
 
@@ -691,27 +779,57 @@ function buildObstacleBelt(proj: Projection, side: Side, count: number): THREE.I
  *  first couple of km either side, denser than the deep rear and sparse
  *  right at the churned scar where nothing stays standing (same logic
  *  props.ts already uses for treelines). */
-function buildFightingPositions(proj: Projection, side: Side, count: number): THREE.Group {
+/** Pass 19: was a Group of individually-authored pit+5-sandbag Mesh sets —
+ *  up to 6 draw calls per position (1 pit + 5 bags), ×14 positions ×2 sides
+ *  at the high scenery budget = up to 168 draw calls on its own. Same
+ *  InstancedMesh conversion as buildTrenchLines above: one shared pit mesh,
+ *  one shared sandbag mesh, both sides and every position in two draw
+ *  calls total. `maxCount` is `SCENERY_BUDGET`'s own ceiling (14/side, the
+ *  largest tier), passed in rather than hardcoded so the two stay in sync
+ *  if that budget ever changes. */
+function buildFightingPositions(proj: Projection, maxCount: number): THREE.Group {
   const g = new THREE.Group();
-  const r = rng(side === "side_a" ? 0x5150 : 0x1234);
-  const xNear = worldXFor(side, 1, proj);
-  const xFar = worldXFor(side, 7, proj);
+  const pitGeo = new THREE.CylinderGeometry(1.1, 1.3, 0.5, 6);
+  const bagGeo = new THREE.BoxGeometry(0.55, 0.28, 0.32);
+  const pitMesh = new THREE.InstancedMesh(pitGeo, DIRT_WALL, maxCount);
+  const bagMesh = new THREE.InstancedMesh(bagGeo, SANDBAG, maxCount * 5);
+  let placedPits = 0;
+  let placedBags = 0;
 
-  for (let i = 0; i < count; i++) {
-    const x = xNear + (xFar - xNear) * r();
-    const z = (r() * 2 - 1) * STRIP_HALF_Z;
-    if (isInWater(x, z)) continue; // no dug-in pit sits in the river
-    const pit = cyl(1.1, 1.3, 0.5, 6, DIRT_WALL);
-    pit.position.set(x, terrainHeight(x, z) - 0.1, z);
-    g.add(pit);
-    for (let b = 0; b < 5; b++) {
-      const bag = box(0.55, 0.28, 0.32, SANDBAG);
-      const a = (b / 5) * Math.PI * 1.4 - Math.PI * 0.7;
-      bag.position.set(x + Math.cos(a) * 1.15, terrainHeight(x, z) + 0.15, z + Math.sin(a) * 1.15);
-      bag.rotation.y = a;
-      g.add(bag);
+  for (const side of ["side_a", "side_b"] as Side[]) {
+    const r = rng(side === "side_a" ? 0x5150 : 0x1234);
+    const xNear = worldXFor(side, 1, proj);
+    const xFar = worldXFor(side, 7, proj);
+
+    for (let i = 0; i < maxCount; i++) {
+      const x = xNear + (xFar - xNear) * r();
+      const z = (r() * 2 - 1) * STRIP_HALF_Z;
+      if (isInWater(x, z)) continue; // no dug-in pit sits in the river
+      const y = terrainHeight(x, z);
+
+      dummy.position.set(x, y - 0.1, z);
+      dummy.rotation.set(0, 0, 0);
+      dummy.scale.setScalar(1);
+      dummy.updateMatrix();
+      pitMesh.setMatrixAt(placedPits++, dummy.matrix);
+
+      for (let b = 0; b < 5; b++) {
+        const a = (b / 5) * Math.PI * 1.4 - Math.PI * 0.7;
+        dummy.position.set(x + Math.cos(a) * 1.15, y + 0.15, z + Math.sin(a) * 1.15);
+        dummy.rotation.set(0, a, 0);
+        dummy.updateMatrix();
+        bagMesh.setMatrixAt(placedBags++, dummy.matrix);
+      }
     }
   }
+
+  pitMesh.count = placedPits;
+  bagMesh.count = placedBags;
+  pitMesh.instanceMatrix.needsUpdate = true;
+  bagMesh.instanceMatrix.needsUpdate = true;
+  pitMesh.name = "scenery:fighting-position-pits";
+  bagMesh.name = "scenery:fighting-position-sandbags";
+  g.add(pitMesh, bagMesh);
   return g;
 }
 
@@ -752,10 +870,13 @@ export function buildScenery(proj: Projection, budget: SceneryBudget, halfWidthX
     g.add(model);
   }
 
+  // Pass 19: buildTrenchLines()/buildFightingPositions() now instance across
+  // BOTH sides internally (2 draw calls total each, not 2-per-side) — only
+  // buildObstacleBelt still takes an explicit side, unchanged from Pass 7.
+  g.add(buildTrenchLines(proj));
+  g.add(buildFightingPositions(proj, budget.fightingPositionsPerSide));
   for (const side of ["side_a", "side_b"] as Side[]) {
-    g.add(buildTrenchLine(proj, side));
     g.add(buildObstacleBelt(proj, side, budget.obstaclesPerSide));
-    g.add(buildFightingPositions(proj, side, budget.fightingPositionsPerSide));
   }
 
   const water = buildWater(halfWidthX);

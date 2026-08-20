@@ -62,15 +62,22 @@ there is real data to look at and the tree coverage can be judged.
 
 ## Open after Pass 17 (world and terrain)
 
-### Draw calls: 845/865 (Pass 16) → 1140 — the new ceiling for Pass 19
+### Draw calls: 845/865 (Pass 16) → 1140 (Pass 17) → 767 (Pass 19) — resolved
 Not from the OSM inset (disciplined by design: 4 draw calls total for the
 whole rail/road/river/tree layer). From the destroyed bridge, pontoon
 crossing, and ten new `TERRAIN_FEATURES` — each a handful of individually-
 authored meshes, the same hand-placed-landmark convention `LANDMARKS`
 already used for every village and power plant, just ~40 more of them.
-Recorded rather than fixed here, matching Pass 16's own precedent of
-deferring instancing to Pass 19 alongside the shader/material-palette work
-it needs. See `docs/DECISIONS.md` Pass 17 for the full before/after.
+**Pass 19 brought the ceiling down to 767** — the marker/ring/fill
+instancing shader (1140→892) plus instancing `buildTrenchLines()`/
+`buildFightingPositions()` (892→767) — despite adding ~19 new hero models
+(5 UGVs, human figures, Pass 18's fortification geometry) on top. The
+individually-authored bridge/pontoon/TERRAIN_FEATURES meshes from this
+entry were left as-is (not instanced — they're unique landmarks, not
+repeated geometry, so instancing wouldn't apply per Pass 6's own reasoning);
+the actual win came from the repeated geometry Pass 16 already flagged.
+See `docs/DECISIONS.md` Pass 19 for the full before/after and the
+independent cross-check.
 
 ### Kramatorsk still needs fetching
 `data/osm/kramatorsk.json` doesn't exist yet (same egress block as always —
@@ -128,6 +135,42 @@ mechanical from here (the swap/duplicate mechanisms already support it) but wasn
 in this pass to avoid implying false precision about troop density.
 
 ---
+
+## Resolved in Pass 19 (3D model integration)
+
+### Per-instance-opacity shader, marker/ring/fill instancing, material palette governance
+Full detail in `docs/DECISIONS.md` Pass 19. Summary: the shader Pass 16 deferred is built
+(`src/three/Scene3D.tsx`'s `withInstancedOpacity()`); marker/ring/fill are 3 `InstancedMesh`es
+instead of ~309 individual draws; `scenery.ts`'s trench/fighting-position geometry is instanced
+too. Draw calls: 1140 → 767. `src/three/palette.ts` (new) is the shared vehicle/hero material
+list Pass 12 asked models.ts to keep growing rather than duplicating; `scenery.ts`'s own 3
+measurably-redundant material pairs are merged into literal aliases and `SCENERY_MATERIALS`
+ships as the governance list. All 5 Russian UGVs, human figures for the 4 Pass-18 personnel
+categories, and Pass 18's 3 fortification categories got real authored geometry — 19 new
+`HERO_BUILDERS` entries.
+
+## Open after Pass 19
+
+### A second, looser material near-duplicate cluster — measured, not fixed
+`BRIDGE_DECK_BROKEN`/`PONTOON_MAT`/`EARTH_MOUND`/`REBAR`/`PIER_WOOD`/`CONCRETE_DARK`/`DIRT_WALL`
+(`scenery.ts`) all sit within ~16 RGB units of each other — real, measured drift, mostly
+Pass-17-era, found via the same RGB-distance sweep that caught the 3 pairs Pass 19 did fix.
+Not attempted in the same pass as the shader/instancing/new-geometry work — the risk of "fixed
+four things while quietly breaking a fifth" outweighed finishing the whole cluster in one sitting.
+A future pass should re-run the same distance check (`docs/MODEL_STYLE_GUIDE.md` has the method)
+before deciding which of these seven, if any, should merge — some of the closeness may be
+narratively appropriate (bridge rubble and riverbank mud plausibly *are* similar tones) rather
+than genuine redundancy the way the 3 already-merged pairs were.
+
+### Draw-call ceiling for whoever touches `src/three/` next: 767
+Real, HUD-measured, independently cross-checked (see `docs/DECISIONS.md` Pass 19). Any future
+pass adding meshes to the 3D scene should measure against this the same way Pass 16 established
+the discipline in the first place — not "feels about the same."
+
+### 6 of the original 7 catalog-flagged hero-tier candidates still unbuilt
+Bayraktar TB2, UJ-26 Beaver (Bober), FP-1/FP-2, T-90M, S-400, Shahed-136/Geran-2 — see the
+"Hero-tier desired but not yet built" entry below (Kurier, the 7th, got a builder in Pass 19,
+though for an unrelated reason — it was one of the 5 unsourced Russian UGVs).
 
 ## Resolved in Pass 10
 
@@ -255,18 +298,19 @@ see item 21 below, which is now the actual remaining work.
 
 ## Open after Pass 16 (performance and interaction)
 
-### Draw calls are the next ceiling — deferred to Pass 19 on purpose
+### Draw calls next ceiling — resolved, Pass 19
 Pass 16 established the budget: **845 draw calls / 68,992 triangles / 513
 geometries** at the default framing (~468 draw calls zoomed in, frustum
-culling). Roughly 273 of those are the per-asset marker + side ring + fill
+culling). Roughly 273 of those were the per-asset marker + side ring + fill
 trio. Instancing collapses that to ~3 — but `InstancedMesh` has no
 per-instance opacity without a custom shader, and scenario-focus dimming
-animates exactly that per asset, so it is not a drop-in. `PLANNING.md` gives
-instancing to **Pass 19** ("instancing is mandatory") alongside the shared
-material palette it depends on; doing it in Pass 16 would have meant
-reworking Pass 8's side-ring behaviour on the way past. Pass 16 took the
-free half — the three marker/ring/fill geometries are now shared singletons
-instead of 273 near-duplicate uploads.
+animates exactly that per asset, so it wasn't a drop-in. Pass 16 took the
+free half (3 shared geometries instead of 273 near-duplicate uploads);
+**Pass 19 built the shader** (`withInstancedOpacity()`, `Scene3D.tsx`) and
+converted the trio to real `InstancedMesh`es, bringing the ceiling (by then
+grown to 1140 via Pass 17) down to 892, then to 767 after also instancing
+`scenery.ts`'s trench/fighting-position geometry. See `docs/DECISIONS.md`
+Pass 19.
 
 ### Still no test suite
 Pass 16 leans harder on this than any pass so far: `npm run build` passed
@@ -539,15 +583,19 @@ started.
   category itself is real now, not a placeholder. Kept here, struck rather
   than deleted, so the "this used to be empty" context isn't lost.
 
-### Hero-tier desired but not yet built (7 assets)
+### Hero-tier desired but not yet built (6 of the original 7 — Kurier done, Pass 19)
 The equipment_catalog.xlsx sheet flagged 7 of the 60 Pass 7 imports as
 "Hero tier" in its own tracking column: Bayraktar TB2, UJ-26 Beaver (Bober),
 FP-1/FP-2, T-90M, S-400, Shahed-136/Geran-2, Kurier. None got a
-`HERO_BUILDERS` entry this pass — they shipped as marker+label assets like
+`HERO_BUILDERS` entry at the time — they shipped as marker+label assets like
 everything else in the batch, consistent with item 22's existing scope line
-(hero tier is a deliberate subset, not automatic for every new asset). Not
-silently dropped: recorded here as the natural next 7 candidates when
-extending the hero-model tier, ahead of the item-22 list from Pass 6.
+(hero tier is a deliberate subset, not automatic for every new asset).
+**Kurier got one in Pass 19** (`ugvKurier`, `src/three/models.ts`), as one of
+the 5 Russian UGVs the 3d-model-sourcing-manifest flagged as unsourceable —
+built for that reason, not chosen off this list, but it closes this entry
+for Kurier specifically. The other 6 (Bayraktar TB2, UJ-26 Beaver, FP-1/FP-2,
+T-90M, S-400, Shahed-136/Geran-2) remain the natural next candidates when
+extending the hero-model tier further, ahead of the item-22 list from Pass 6.
 
 ### Dangling gallery image (found Pass 8, not fixed)
 `data/assets/side_a-uav-reconnaissance-tactical.json` (Leleka-100) lists

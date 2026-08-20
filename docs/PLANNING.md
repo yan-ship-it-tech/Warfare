@@ -32,7 +32,7 @@ cheap to bring back into line once the 3D view settles. Do not spend pass budget
 | Visual style direction | Evolve toward **consistent stylized realism** — detailed silhouettes, shared material palette. Not photoreal, not primitive boxes. `MODEL_STYLE_GUIDE.md` gets revised, not discarded. |
 | Renderer | Real 3D geometry (`src/three/`). Confirmed — no 2.5D sprite path. |
 | ODbL attribution | Required and non-optional once OSM data renders. "© OpenStreetMap contributors" visible in the 3D view and/or About page. |
-| Marker/ring/fill instancing | **Deferred to Pass 19**, deliberately. `InstancedMesh` has no per-instance opacity without a custom shader, and scenario-focus dimming needs exactly that. Pass 16 took the free half (3 shared geometries instead of 273 near-duplicate uploads) and logged the rest in `BACKLOG.md`. Don't re-litigate — build the shader in Pass 19 alongside the material-palette work it depends on. |
+| Marker/ring/fill instancing | **Done, Pass 19** (`withInstancedOpacity()`, `Scene3D.tsx`). The custom shader scenario-focus dimming needed now exists — draw calls 1140→892 from this alone. Don't re-litigate the approach; it's shipped and verified. |
 | Drop no longer selects | Pass 16 reversed a Pass 11 decision here (drop selects → drop just drops; tap still selects). Logged in `DECISIONS.md`'s "Where the brief and prior passes disagree" section. If any later pass's UX assumes drop-selects, it's wrong — check against current behavior, not the old brief. |
 
 ---
@@ -118,43 +118,34 @@ cheap to bring back into line once the 3D view settles. Do not spend pass budget
 
 ---
 
-## Pass 19 — 3D model integration
+## ✅ Pass 19 — 3D model integration — DONE
 
-**Model: Sonnet 5, High effort.**
+**Landed this pass.** Full detail in `DECISIONS.md`; summary for context on later passes:
 
-Depends on: Pass 16 (perf headroom — done). Source data: `docs/3d-model-sourcing-manifest.xlsx`
-(72 assets — 47 sourced free, 8 need license verification, 17 have no free source).
-
-1. **License filter first.** Reject game-ripped models outright (real legal exposure for a
-   public briefing tool). Log CC-BY attribution obligations. Check NoAI tags.
-2. **Build the per-instance-opacity shader Pass 16 deferred.** `InstancedMesh` has no
-   per-instance opacity out of the box; scenario-focus dimming needs it. This is what turns
-   the marker/ring/fill trio (~273 of the 845 draw calls) into ~3. Do this alongside the
-   material-palette work below — they're the same shader-authoring effort.
-3. **Normalization pipeline, applied to every model:**
-   - decimate to a shared triangle budget (suggest ~2–8k for hero units, <500 for
-     background/instanced units — measure against the Pass 16 baseline: 845 draw calls,
-     11.07ms style+layout pre-fix)
-   - retexture/recolor to a shared palette so 40 artists' work reads as one family
-   - convert to glTF/GLB with Draco compression
-   - generate LODs; swap to silhouette/billboard when zoomed out
-4. **Revise `MODEL_STYLE_GUIDE.md`** to define the new target (detailed silhouette,
-   shared materials) rather than the current box+cylinder rule. Pass 12's audit method
-   — measure, don't eyeball — should be reused.
-5. **Instancing is mandatory** for anything else repeated (trees, dragon's teeth, infantry,
-   duplicated FPV teams), on top of the marker/ring/fill work above.
-6. **Hide unmodeled assets whose category is otherwise represented**, still reachable via
-   the swap mechanism from Pass 18.
-   - **Watch out:** all five Russian UGVs have no free source model. Hiding them all
-     leaves that category unrepresented on the Russian side. At least one needs a paid
-     purchase or a custom low-poly model.
-7. **Still-missing fortification geometry:** trenches, dragon's teeth, sandbag positions.
-   These are procedural (spline + instancing), not sourced — highest realism-per-effort
-   item on the whole list, and they define what a Ukrainian front line looks like.
-
-**Verify with real numbers, per Pass 16's standard:** measure draw calls before/after the
-instancing work lands, the same way Pass 16 measured style+layout time. A claim of "845 →
-X draw calls" needs the same rigor as "11.07ms → 1.67ms" did.
+- **The sourcing premise (items 1/3/4) was never executable here** — tested, not assumed: binary
+  fetches from the manifest's own hosts (Wikimedia uploads, Sketchfab-style media) return a 403 on
+  the CONNECT tunnel, and the manifest's own README independently confirms "this sandbox has no
+  network access." License-filtering was still applied to the manifest's own local data.
+- **The per-instance-opacity shader Pass 16 deferred is built** (`withInstancedOpacity()`,
+  `Scene3D.tsx`): marker/ring/fill collapse from ~309 individual draws to 3 `InstancedMesh`es via a
+  custom `onBeforeCompile` shader patch. Draw calls: **1140 → 892**.
+- **`buildTrenchLines()`/`buildFightingPositions()` instanced** (`scenery.ts`), the last un-instanced
+  repeated geometry, same pattern `buildObstacleBelt`/`props.ts` already used. Draw calls: **892 →
+  767**. Final ceiling for Pass 20/21: **767**, down from Pass 17's 1140 despite ~19 new hero models
+  added on top — both numbers real, HUD-measured, cross-checked by hand.
+- **All five Russian UGVs got authored geometry, not hidden** — the sourcing premise being moot made
+  the brief's own "hide + swap" fallback unnecessary; building them was the stronger, achievable
+  answer. Human figures (dismounted squad/CP/OP/CCP, 4 variants off one shared base) and Pass 18's
+  three fortification categories (dugout/artillery-position/ammo-point) also got real geometry — 19
+  new `HERO_BUILDERS` entries total, none of the brief's item-2 questions left silently unaddressed.
+- **Material palette governance** (`src/three/palette.ts`, new): Pass 12's deferred recommendation,
+  made — three measured near-duplicate pairs merged into literal aliases, `SCENERY_MATERIALS`
+  exported as the governance list Pass 12 asked for. Re-measured before trusting Pass 12's old "19"
+  number: it had drifted to 27 by Pass 19. A further, looser cluster was measured, disclosed, and
+  left for a dedicated follow-up rather than risked inline — see `BACKLOG.md`.
+- **`docs/MODEL_STYLE_GUIDE.md` revised**, not just audited — the new geometry categories (UGVs,
+  human figures, fortification hero models) are checked against it, and the scenery-material audit
+  section documents the actual fix rather than a still-open recommendation.
 
 ---
 
@@ -218,9 +209,11 @@ chain collapsed from hours to minutes" includes a Leleka, HIMARS, a howitzer (al
   measure against this, the same way Pass 16 did — not just "feels smoother."
 - **Cloudflare Worker still undeployed** (code exists since Pass 7, needs a human with an
   account). Blocks shared editing. Decide whether it matters for this push or stays parked.
-- **`scenery.ts` material cleanup** — 19 ungoverned one-off materials flagged in Pass 12,
-  left as a recommendation. Fold into Pass 19's material-palette work rather than doing
-  it separately.
+- **`scenery.ts` material cleanup — done, Pass 19.** The 3 measurably-redundant pairs Pass 12
+  flagged (plus one more that had drifted in since, from Pass 17) are merged into literal
+  aliases; `SCENERY_MATERIALS`/`palette.ts` are the governance lists Pass 12 asked for. A
+  second, looser near-duplicate cluster was measured and disclosed rather than chased in the
+  same pass — real follow-up, logged with numbers in `BACKLOG.md`, not a vague "someday."
 
 ---
 
@@ -229,16 +222,16 @@ chain collapsed from hours to minutes" includes a Leleka, HIMARS, a howitzer (al
 ```
 16. Perf + interaction        ← DONE (bd04cba)             (Opus 4.8, High)
 17. World + terrain           ← DONE (8d0afe0)              (Sonnet 5, High)
-18. Tactical placement        ← DONE (this pass)            (Sonnet 5, High)
-19. Model integration         ← needs 16 for headroom       (Sonnet 5, High)
+18. Tactical placement        ← DONE (4aed067)              (Sonnet 5, High)
+19. Model integration         ← DONE (this pass)            (Sonnet 5, High)
 20. Detail page + imagery     ← imagery already sourced      (Sonnet 5, Medium)
 21. Scenario rework           ← content only, after 16       (Sonnet 5, Medium)
 ```
 
-19 is next. Its draw-call ceiling to instance against is now **1140** (Pass 17's number — Pass 18
-added zero net new draw calls of its own; the new human-layer assets and siting logic reuse the
-existing marker/ring/fill trio and existing terrain-feature geometry rather than adding meshes).
-20 has no remaining research dependency — the ledger is done.
+20 is next. Its draw-call ceiling to measure against is now **767** (Pass 19's number). No
+scenario-focus-dimming risk to re-check against instancing this time — Pass 19's shader already
+handles per-instance opacity for the marker/ring/fill trio, so Pass 21's own note about that stays
+resolved. 20 has no remaining research dependency — the ledger is done.
 
-**Paste-in order:** Pass 19 next. **After each pass:** screenshot-verify per Pass 16's
+**Paste-in order:** Pass 20 next. **After each pass:** screenshot-verify per Pass 16's
 standard before moving on — a green build is not evidence.
