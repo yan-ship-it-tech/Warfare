@@ -336,6 +336,107 @@ any currently-built asset.
 
 ---
 
+## Resolved in Pass 23 (approved Key Lessons set committed)
+
+### The 10-lesson set is replaced by the audited 15-lesson set
+`data/lessons.json` now implements `LESSON_AUDIT.md` §6 in full. Detail in
+`PASS23_HANDOFF.md`. Summary: 7 of the old 10 carried (4 rewritten), 1 recast
+(`drone-attrition-share` → `cost-asymmetry`), 3 merged away, 7 new. Two new data fields
+carry distinctions the audit found were being silently lost — see the two open entries
+below, both of which are about the *rendering* of those fields, not the data.
+
+### All six connection-type mismatches resolved — with no invented edges
+`LESSON_AUDIT.md` §2.1 found six lessons declaring a `connection_types` value that no edge
+between their own assets actually carried. All six are fixed, and notably **none of them
+needed a new edge invented**: four resolved by changing which assets the lesson names
+(bringing in the asset that already carries the edge), two by dropping a declaration that
+was conceptually wrong for the lesson rather than merely unbacked. Re-verified
+independently against the files; 0 lessons now declare an unbacked type.
+
+### `connections.json` drift closed (12 edges)
+Not asked for by the Pass 23 brief — done because the file was being edited anyway and its
+own `_comment` mandates sync. Pass 18's positional/human assets carried 12 connections on
+their asset files that were never mirrored into `connections.json`, which `loadWorld()`
+flagged as info-level drift on every load. Regenerated as the exact union. Data Health
+issues 57 → 45, drift mentions 24 → 0, errors unchanged at 0.
+
+### The unhedged 60–70% drone-attribution figure removed from asset copy — 4 assets, not 1
+The Pass 23 brief named `side_a-air-defense-cuas-gepard`. Three more assets carried the
+same unhedged claim and were found by grep rather than by the brief:
+`side_b-armor-t-62m-refurbished-reserve-stock`, `side_a-armor-m113-apc`,
+`side_b-air-defense-short-pantsir`. All four now state the direction as widely-reported
+and the precision as unaudited, and point at the `visibility-bias` lesson. Same shape as
+Pass 21's "one named bug plus four more of the same" finding.
+
+## Open after Pass 23
+
+### `corpus_support`, `contested` and `caution` are carried in data but nothing renders them
+Pass 23 added three fields to `data/lessons.json`: `corpus_support` (a short note on how
+many of the three lessons-learned references independently carry the finding —
+`CONVERGENT-3` down to `UNSUPPORTED`), and `contested`/`caution` on the four lessons the
+corpus itself warns against over-reading (`lower-sky-control`, `counter-uas-integration`,
+`cost-asymmetry`, `visibility-bias`). **Nothing reads any of them.**
+`src/pages/LessonsPage.tsx` renders `doctrine_ref`, `source_tag`, `connection_types` and
+`asset_ids` only, and `src/data/model.ts`'s `Lesson` interface does not declare the three
+new fields — deliberately, since the Pass 23 brief put `src/` out of scope. The build
+passes regardless (the loader's `as Lesson[]` cast tolerates extra properties), but a TS
+consumer cannot reach them until the interface is extended. Closing this is a small,
+well-bounded piece of work: three lines in the interface, then a visual treatment on the
+lessons page — a confidence chip next to the existing `doctrine_ref` tag, and a visually
+distinct caution block for `contested` entries. Deliberately not attempted in Pass 23; the
+brief asked for the flag to be written and for UI to be left alone.
+
+### The `visibility-bias` lesson names itself as a caution on the whole set — the page has no way to show that
+`visibility-bias` (order 15) is not a claim about the battlefield; it is a lesson about how
+to read the other fourteen, and it names `cost-asymmetry` as its worked example. Rendered
+as the last item in a flat numbered list, it reads as the least important rather than the
+most cross-cutting. Whatever treatment `contested` eventually gets should account for this
+one being a different kind of entry, not just a flagged one.
+
+### Roster gaps the approved lesson set needs — all of Pass 25's input
+`LESSON_AUDIT.md` §7.1, restated here so the backlog is the single place to look. Two of
+these were already logged above under Pass 21 (wired-FPV drone, strategic-rear logistics
+hub) and are not duplicated. **Building any of these is Pass 25's job, explicitly not
+Pass 23's.** Priority is the audit's own.
+
+- **Interceptor drone (hard-kill counter-UAS)** — *High.* No interceptor-drone asset exists
+  in the 103-asset roster. Western §4 records NATO's 2026 exercise cycle as "explicitly
+  structured around live interoperability testing of interceptor-drone and C2 fusion
+  systems"; `docs/doctrine.md` §4 names "hard-kill (interceptor drones, directed energy)"
+  as a layer. Needed by `counter-uas-integration`. (Partially anticipated by the older "EW
+  as its own asset category" breadth entry further down this file, which mentions
+  "hard-kill interceptor layers" in passing — this is the specific, actionable version.)
+- **Decoy / EM-signature-management set** — *High.* Western §3.2 names decoy antennas,
+  simulated vehicle parks and staged signs of habitation as doctrine; Western §4 calls
+  decoys, low-signature comms and mesh relays "a persistent, source-corroborated capability
+  gap at the unit level." Nothing on the map represents deception as an asset. Needed by
+  `detectability-not-distance` and `ew-invisible-battlefield` — and unusually well
+  warranted, since the corpus names it as an unmet need rather than an observed capability.
+- **Counter-UAS battle-management / detect-track-defeat node** — *High.* Only
+  `side_a-c2-integrated-air-defense-network` (60 km) approximates one, it is air-defence
+  rather than C-UAS-specific, and **side_b has no `c2-battle-management` asset at all.**
+  The `counter-uas-integration` lesson currently names that asymmetry in its own text as a
+  roster gap rather than papering over it.
+- **Learning / adaptation institution** — *Medium.* A drone school, Brave1-style
+  acceleration cluster, or unit training centre. `side_b-training-center-op-deep` is
+  already a referenced-but-unbuilt pending stub in `connections.json`. Needed by
+  `adaptation-cycle-is-the-capability`, whose text currently says outright that no asset
+  represents the institution behind the deep-strike lineage it shows.
+- **Dispersed sustainment task force** — *Medium.* Western §3.3's own unit of analysis:
+  "smaller, dispersed logistics task forces that trade some efficiency for survivability."
+  The map models hubs only — points, not dispersed formations. Needed by
+  `logistics-is-counter-uas`.
+- **Mixed-standard ammunition point** — *Low, and possibly not an asset at all.* Western
+  §3.5's fuze/propellant/shell-body divergence. `side_a-logistics-ammo-point-railhead`
+  could carry this in its content fields; try that first and only escalate to a new asset
+  if the field treatment reads thin. Needed by `ammunition-standardisation`.
+- **Guided-munition entity (Excalibur / GMLRS as a distinguishable item)** — *Low.* The
+  corpus's sharpest EW datapoint is about a *round*, not a launcher, and this roster models
+  launchers. `data/catalog/`'s swap layer may be the right home rather than a map asset.
+  Needed by `ew-invisible-battlefield`.
+
+---
+
 ## Open after Pass 20 (detail page, imagery, symbology)
 
 ### MIL-STD-2525 symbology is detail-panel only — the map still uses the old hand-drawn icon set
