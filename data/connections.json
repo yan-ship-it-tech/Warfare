@@ -92,6 +92,12 @@
       "description": "Uses satellite links as a resilient backbone when terrestrial networks are degraded."
     },
     {
+      "source_id": "side_a-uav-switchblade-300",
+      "target_id": "side_a-uav-reconnaissance-tactical",
+      "type": "data_c2",
+      "description": "Receives target cueing from a tactical reconnaissance drone before launch — the same recon-to-strike pairing HIMARS and M777 rely on, at squad range instead of battery range."
+    },
+    {
       "source_id": "side_a-ew-jammer-bukovel",
       "target_id": "side_a-c2-integrated-air-defense-network",
       "type": "data_c2",

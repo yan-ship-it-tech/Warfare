@@ -296,6 +296,46 @@ see item 21 below, which is now the actual remaining work.
 
 ---
 
+## Resolved in Pass 21 (scenario rework)
+
+### Every lesson audited against its own assets' text; five content bugs fixed
+Full detail in `docs/DECISIONS.md` Pass 21. The brief's one named bug (`kill-chain-
+compression`'s Russian Lancet) plus four more of the same shape, found by checking each
+lesson's assets against their own `short_role`/`employment_notes` rather than just the
+lesson's title: `pattern-of-life-detection`, `fiber-optic-immunity`, `distributed-kill-
+chains`, `deep-rear-is-reachable`. Two lessons that genuinely needed both sides
+(`ew-invisible-battlefield`, `drone-attrition-share`) got explicit per-side narration.
+Two Pass 18 positional assets (`side_a-c2-position-command-post`, the two `*-medical-
+point-forward` assets) swapped in for older, worse-fitting assets. One new connection
+added (Switchblade 300 → Leleka-100), mirrored in `connections.json`. Scenario-focus
+dimming re-verified against Pass 19's instanced markers — reads correctly.
+
+## Open after Pass 21
+
+### No wired-FPV strike drone asset — `fiber-optic-immunity` uses ground robots instead
+`docs/doctrine.md` §5's source for this lesson (`[FPV Tactics Guide]`) is specifically a
+Ukrainian catalogue of **Russian FPV** tactics, including a "wired FPV — fiber-optic
+control link, immune to RF jamming" pattern. No asset on the map is an aircraft-type FPV
+strike drone with a documented fiber-optic control option — `side_b-uav-strike-lancet`
+(the asset previously used here) is RF-only per its own characteristics (40–50 km radio
+control radius). Pass 21 substituted the two ground robots that *do* document a real
+fiber-optic option (`side_a-ground-robots-nrtk-ironclad`, `side_b-ground-robots-kurier`),
+with the lesson text honest that these aren't aircraft. Building (or sourcing content for)
+a genuine wired-FPV strike-drone asset would close this properly.
+
+### No strategic-rear-band (200+ km) logistics asset — `deep-rear-is-reachable` uses the deepest one that exists (80 km)
+Only two logistics-hub assets exist on the whole map: `side_a-logistics-hub-op-deep` (80
+km, `op_deep` band) and `side_b-logistics-hub-op-near` (18 km, `op_near` band — inside the
+drone-dense corridor, not remotely a "sanctuary"). `connections.json`'s own
+`_note_unresolved_ids` already documents that `side_a-logistics-hub-strategic-rear` is a
+referenced-but-never-built pending stub. Pass 21 used the 80 km hub for
+`deep-rear-is-reachable` as the closest available illustration and said so honestly in
+the lesson text, but a real strategic-rear-band logistics asset (200+ km, matching the
+band the two power-plant strategic targets already sit in) would be a stronger fit than
+any currently-built asset.
+
+---
+
 ## Open after Pass 20 (detail page, imagery, symbology)
 
 ### MIL-STD-2525 symbology is detail-panel only — the map still uses the old hand-drawn icon set

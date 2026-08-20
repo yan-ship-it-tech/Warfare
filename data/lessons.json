@@ -1,19 +1,19 @@
 {
-  "_comment": "Key lessons, seeded from docs/doctrine.md rather than written fresh. Each lesson points at real assets already on the map so it can be demonstrated rather than just asserted — clicking one frames those assets in the 3D view. `doctrine_ref` names the section of doctrine.md the claim comes from; `source_tag` uses the sourcing key at the bottom of that file. Adding a lesson is adding an entry here — no code change.",
+  "_comment": "Key lessons, seeded from docs/doctrine.md rather than written fresh. Each lesson points at real assets already on the map so it can be demonstrated rather than just asserted — clicking one frames those assets in the 3D view. `doctrine_ref` names the section of doctrine.md the claim comes from; `source_tag` uses the sourcing key at the bottom of that file. Adding a lesson is adding an entry here — no code change. Pass 21 audited every entry against its own asset list (docs/DECISIONS.md Pass 21) — several had drifted since Pass 6 first wrote them, either because the asset didn't actually demonstrate the claim or because Pass 18 later added an asset that fits better than what was here originally.",
   "lessons": [
     {
       "id": "kill-chain-compression",
       "order": 1,
       "title": "The kill chain collapsed from hours to minutes",
       "summary": "Find, decide and strike used to take hours through a chain of people. It is now routinely single-digit minutes.",
-      "detail": "Traditional call-for-fire moved through observers, staff checks, airspace deconfliction and commander approval — hours. Here a reconnaissance drone finds a target, artillery responds in under a minute once a firing solution exists, and an FPV finishes anything needing precision. The honest caveat, from a former Ukrainian FPV operator: strikes still sometimes take 30+ minutes, and the time is lost to deconfliction overhead rather than to jamming — so treat 'minutes' as the achievable case, not the uniform one.",
+      "detail": "Traditional call-for-fire moved through observers, staff checks, airspace deconfliction and commander approval — hours. Here a reconnaissance drone finds a target, artillery responds in under a minute once a firing solution exists, and a man-portable loitering munition finishes anything needing precision that artillery would overkill. All three links are shown as a single, connected chain — Leleka-100 feeds target cueing to both guns and to Switchblade 300 — rather than three separate systems that merely happen to sit near each other. The honest caveat, from a former Ukrainian FPV operator: strikes still sometimes take 30+ minutes, and the time is lost to deconfliction overhead rather than to jamming — so treat 'minutes' as the achievable case, not the uniform one.",
       "doctrine_ref": "§1 The core shift",
       "source_tag": "[web: Dignitas, Modern Diplomacy, MWI]",
       "asset_ids": [
         "side_a-uav-reconnaissance-tactical",
         "side_a-artillery-himars-m142",
         "side_a-artillery-m777",
-        "side_b-uav-strike-lancet"
+        "side_a-uav-switchblade-300"
       ],
       "connection_types": ["data_c2", "fires_support"]
     },
@@ -21,13 +21,14 @@
       "id": "drone-attrition-share",
       "order": 2,
       "title": "Drones cause 60–70% of equipment losses",
-      "summary": "Not artillery, not direct fire. The cheapest system on the battlefield is destroying the most expensive ones.",
-      "detail": "60–70% of equipment losses on both sides are now attributed to drones. Put next to unit cost, that is the procurement argument in one line: a loitering munition costing tens of thousands routinely removes armour costing millions. Compare the cost tiles on a strike UAV and a main battle tank directly — both are on the map, and the ratio is the lesson.",
+      "summary": "Not artillery, not direct fire. The cheapest system on the battlefield is destroying the most expensive ones on both sides.",
+      "detail": "60–70% of equipment losses on both sides are now attributed to drones. Put next to unit cost, that is the procurement argument in one line, shown here as two mirrored pairs rather than one: Russia's Lancet (~$35K) against Ukraine's Leopard 2 (~$9–10M), and Ukraine's Switchblade 300 (~$38K) against Russia's T-72 (~$2.0–2.5M). Neither pairing claims a specific engagement happened — it's a cost-tile comparison, not a battle report — but both directions of the asymmetry are on the map, not just one.",
       "doctrine_ref": "§1 The core shift",
       "source_tag": "[web: Small Wars Journal]",
       "asset_ids": [
         "side_b-uav-strike-lancet",
         "side_a-armor-leopard2",
+        "side_a-uav-switchblade-300",
         "side_b-armor-t72"
       ],
       "connection_types": []
@@ -37,7 +38,7 @@
       "order": 3,
       "title": "Control of the lower sky sets how close you can stand",
       "summary": "Disposition depth is decided by local drone superiority, not by doctrine or preference.",
-      "detail": "The single sharpest finding in the reference material. The side holding control of the lower sky can deploy 1–1.5 km from the line and use direct-fire tank positions. The side without it is pushed back to roughly 7 km and restricted to indirect fire. Everything else about depth on this map — where the artillery sits, where the command posts sit, where casualties are collected — follows from which side that is on a given day.",
+      "detail": "The single sharpest finding in the reference material. The side holding control of the lower sky can deploy 1–1.5 km from the line and use direct-fire tank positions. The side without it is pushed back to roughly 7 km and restricted to indirect fire. Everything else about depth on this map — where the artillery sits, where the command posts sit, where casualties are collected — follows from which side that is on a given day. Shown here: the reconnaissance drones that are the actual object of the contest, the air-defense/counter-UAS systems each side uses to deny the other the lower sky (Gepard, Pantsir), and a tank from each side to read the depth consequence directly.",
       "doctrine_ref": "§2 Distance / echelon structure",
       "source_tag": "[Combat Exp. RU]",
       "asset_ids": [
@@ -55,14 +56,13 @@
       "order": 4,
       "title": "Detection is a multi-day pattern, not an event",
       "summary": "Nobody finds a drone team with one sighting. They follow the drone home and watch for days.",
-      "detail": "The method both sides use is the same: don't engage the returning drone, follow it. Watch the landing point, note the resupply vehicle, look for a repeating daily flight path. A battalion sector's drone positions get substantially mapped in 2–7 days this way. The defensive consequence is what matters here — camouflage discipline and route variation are what stop a unit being mapped the same way, and antenna losses are disproportionately costly because spares aren't stocked forward.",
+      "detail": "The method both sides use is the same: don't engage the returning drone, follow it. Watch the landing point, note the resupply vehicle, look for a repeating daily flight path. A battalion sector's drone positions get substantially mapped in 2–7 days this way. The defensive consequence is what matters here — camouflage discipline and route variation are what stop a unit being mapped the same way, and antenna losses are disproportionately costly because spares aren't stocked forward. Both sides' reconnaissance drones are the thing being watched; the commercial ISR satellite is the other half of the same picture, feeding the same multi-day pattern-of-life process from overhead.",
       "doctrine_ref": "§3 Detection as pattern-of-life",
       "source_tag": "[Combat Exp. RU, Appendix 9]",
       "asset_ids": [
         "side_a-uav-reconnaissance-tactical",
         "side_b-uav-reconnaissance-tactical",
-        "side_a-space-isr-satellite-commercial",
-        "side_b-ew-jammer-zhitel"
+        "side_a-space-isr-satellite-commercial"
       ],
       "connection_types": ["data_c2"]
     },
@@ -71,7 +71,7 @@
       "order": 5,
       "title": "EW is the invisible battlefield everything else depends on",
       "summary": "Sensors, drones and comms only work if the electromagnetic fight is being won.",
-      "detail": "Passive RF triangulation (5–20 m accuracy), active radar, soft-kill jamming and hard-kill interceptors stack into a layered fight that decides whether anything else on this map functions. The counter-intuitive part is organisational rather than technical: procurement is often decentralised, units buy their own jammers, and the resulting uncoordinated 'unofficial EW fields' degrade friendly drone performance as much as enemy drones.",
+      "detail": "Passive RF triangulation (5–20 m accuracy), active radar, soft-kill jamming and hard-kill interceptors stack into a layered fight that decides whether anything else on this map functions. This is genuinely an EW duel, not a one-sided capability: Ukraine's Bukovel-AD and Russia's R-330Zh Zhitel are each trying to deny the other's drones and locate the other's emitters, and the Starlink terminal and Strelets terminal shown alongside them are exactly the kind of dependent equipment a jammer is built to degrade — which is why they're paired here rather than shown alone. The counter-intuitive part is organisational rather than technical: procurement is often decentralised, units buy their own jammers, and the resulting uncoordinated 'unofficial EW fields' degrade friendly drone performance as much as enemy drones.",
       "doctrine_ref": "§4 EW",
       "source_tag": "[DW, Combat Exp. RU]",
       "asset_ids": [
@@ -87,11 +87,12 @@
       "order": 6,
       "title": "Fibre-optic control links took jamming off the table",
       "summary": "A spool of glass defeats the entire soft-kill EW layer, at the cost of manoeuvre.",
-      "detail": "A wired FPV trails a fibre-optic control link and is simply immune to RF jamming — the dominant countermeasure stops applying. The trade is real (reduced manoeuvrability, a finite spool), but it is why the strike envelope on the ruler carries two separate sourced markers: a radio-FPV envelope and a wider fibre-optic one. It is also the clearest example on this map of a cheap change to one system invalidating an expensive investment in another.",
+      "detail": "A system trailing a fibre-optic control link is simply immune to RF jamming — the dominant countermeasure stops applying. The trade is real (reduced manoeuvrability, a finite spool), but it is why the strike envelope on the ruler carries two separate sourced markers: a radio-FPV envelope and a wider fibre-optic one. Doctrine.md's own sourcing for this is a Ukrainian catalogue of Russian FPV tactics, but no dedicated wired-FPV strike drone has a build on this map yet (a known content gap, logged in docs/BACKLOG.md) — so the mechanism is shown instead through the two ground robots that document a real fiber-optic control option on both sides, Ukraine's NRTK Ironclad and Russia's Kurier, sitting alongside the two jammers (Bukovel, Zhitel) whose RF layer a fiber link routes straight around. It is also the clearest example on this map of a cheap change to one system invalidating an expensive investment in another.",
       "doctrine_ref": "§5 FPV tactical pattern taxonomy",
       "source_tag": "[FPV Tactics Guide]",
       "asset_ids": [
-        "side_b-uav-strike-lancet",
+        "side_a-ground-robots-nrtk-ironclad",
+        "side_b-ground-robots-kurier",
         "side_a-ew-jammer-bukovel",
         "side_b-ew-jammer-zhitel"
       ],
@@ -102,13 +103,13 @@
       "order": 7,
       "title": "Kill chains pushed down to squad level",
       "summary": "Infantry increasingly find, decide and strike with their own drones instead of requesting fires from above.",
-      "detail": "The authority to complete a kill chain has moved down rather than concentrating at higher HQ. A squad with organic drones is no longer only a consumer of supporting fires — it is a full sensor-to-shooter loop on its own. That reshapes the C2 graph on this map: the dependency edges that used to run up and back down an echelon now increasingly close locally.",
+      "detail": "The authority to complete a kill chain has moved down rather than concentrating at higher HQ. A squad with organic drones is no longer only a consumer of supporting fires — it is a full sensor-to-shooter loop on its own. That reshapes the C2 graph on this map: the dependency edges that used to run up and back down an echelon now increasingly close locally, at a maneuver-unit command post rather than a deep-rear network hub — which is why the tactical command post, not the air-defense sensor-fusion network node an earlier pass showed here, is the C2 asset paired with the recon drone and strike drone below.",
       "doctrine_ref": "§1 The core shift",
       "source_tag": "[web: Small Wars Journal — Distributed Combat Power]",
       "asset_ids": [
         "side_a-uav-reconnaissance-tactical",
         "side_b-uav-strike-lancet",
-        "side_a-c2-integrated-air-defense-network",
+        "side_a-c2-position-command-post",
         "side_b-c2-comms-strelets"
       ],
       "connection_types": ["data_c2", "fires_support"]
@@ -118,14 +119,14 @@
       "order": 8,
       "title": "The deep rear stopped being a sanctuary",
       "summary": "Cheap one-way systems reach targets thousands of kilometres behind the line.",
-      "detail": "Depth used to buy safety: past a few hundred kilometres, an asset was effectively out of reach of anything but strategic systems. Ukraine's Operation Spiderweb reached airfields roughly 4,300 km from the front using smuggled short-range drones launched locally. The consequence for this map is that the deepest band is no longer a rear area in the traditional sense — power generation, logistics hubs and airfields are all now inside somebody's reach.",
+      "detail": "Depth used to buy safety: past a few hundred kilometres, an asset was effectively out of reach of anything but strategic systems. Ukraine's Operation Spiderweb reached airfields roughly 4,300 km from the front using smuggled short-range drones launched locally. The consequence for this map is that the deepest band is no longer a rear area in the traditional sense — power generation, logistics hubs and airfields are all now inside somebody's reach. The logistics hub shown here (80 km) is the deepest one currently on the map; no strategic-rear-band (200+ km) logistics asset has been built yet, so treat its inclusion as the closest available illustration of the point rather than a claim that 80 km is itself the deep rear.",
       "doctrine_ref": "§2 Distance / echelon structure",
       "source_tag": "[web]",
       "asset_ids": [
         "side_a-uav-strike-deep-crossborder",
         "side_b-strategic-target-power-plant",
         "side_a-strategic-target-power-plant",
-        "side_b-logistics-hub-op-near"
+        "side_a-logistics-hub-op-deep"
       ],
       "connection_types": []
     },
@@ -134,7 +135,7 @@
       "order": 9,
       "title": "Consumption rates, not inventories, decide sustainment",
       "summary": "A single FPV company can burn through ~7,200 munitions a month. Heavy multirotors survive 5–10 missions.",
-      "detail": "Illustrative unit economics (a Lithuanian projection grounded in Ukrainian usage rates, not Ukrainian actuals): one FPV company at intensive tempo consumes roughly 7,200 kamikaze drones per month, and a heavy 'Baba Yaga'-type multirotor typically survives only 5–10 missions before loss. Planning against an inventory number rather than a monthly burn rate is how a drone programme runs dry in its second month.",
+      "detail": "Illustrative unit economics (a Lithuanian projection grounded in Ukrainian usage rates, not Ukrainian actuals): one FPV company at intensive tempo consumes roughly 7,200 kamikaze drones per month, and a heavy 'Baba Yaga'-type multirotor typically survives only 5–10 missions before loss. Planning against an inventory number rather than a monthly burn rate is how a drone programme runs dry in its second month. The connected pair shown here — Russia's Lancet drawing airframes and batteries from its own near-rear logistics point — is the one complete, data-backed resupply chain on the map for this; Ukraine's own forward distribution hub is included alongside it as the equivalent chokepoint on the other side, since the burn-rate figure itself is sourced to Ukrainian usage even though no individual Ukrainian strike-drone-to-hub connection is modeled yet.",
       "doctrine_ref": "§6 Force structure pattern",
       "source_tag": "[DW, Tables 2 & 4]",
       "asset_ids": [
@@ -149,14 +150,14 @@
       "order": 10,
       "title": "A ~30 km drone-dense corridor either side of the line",
       "summary": "Persistent drone coverage genuinely dominates a band about 30 km deep on both sides of a ~1,200 km front.",
-      "detail": "This is the band where movement in daylight is a decision rather than a routine, and it is why so much of the disposition on this map clusters just outside it. Russian offensive staging sits up to 30 km back with movement to the line split into guided segments over 3–4 days under radio silence and paper orders; FPV launch teams sit 8–10 km back with their control and relay equipment a further ~10 km behind that.",
+      "detail": "This is the band where movement in daylight is a decision rather than a routine, and it is why so much of the disposition on this map clusters just outside it. Russian offensive staging sits up to 30 km back with movement to the line split into guided segments over 3–4 days under radio silence and paper orders; FPV launch teams sit 8–10 km back with their control and relay equipment a further ~10 km behind that. The two casualty collection points shown here are the sharpest illustration of what living inside that corridor costs: each one's own reporting describes persistent drone coverage erasing the assumption of a safe evacuation route for roughly the first 10–15 km, which is why they're built small and hidden rather than large and well-equipped.",
       "doctrine_ref": "§2 Distance / echelon structure",
       "source_tag": "[web, Combat Exp. RU]",
       "asset_ids": [
         "side_b-logistics-hub-op-near",
         "side_a-logistics-hub-op-deep",
-        "side_a-medical-casevac-chain",
-        "side_b-medical-casevac-chain"
+        "side_a-medical-point-forward",
+        "side_b-medical-point-forward"
       ],
       "connection_types": ["supply", "casevac"]
     }

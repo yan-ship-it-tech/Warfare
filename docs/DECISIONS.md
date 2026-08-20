@@ -3606,3 +3606,165 @@ being implicit in a fallback chain — see the inline comment in `sidc.ts`.
 - One pre-existing, already-understood benign console 404 (the same `icon_image`
   placeholder-path 404 logged in Pass 19's own entry above); no new console or page
   errors from the merge or the gap-closing edits.
+
+---
+
+# Pass 21 — Scenario rework (Key Lessons)
+
+Content pass, not a mechanism pass — scenario focus mode itself has worked since Pass 11.
+Per `docs/PLANNING.md`'s Pass 21 brief: audit every lesson in `data/lessons.json`, make
+sure each names a lesson and shows only the assets that demonstrate it, make an
+opposing-side asset's role explicit in the narration wherever a lesson genuinely needs
+both sides, and check whether any of Pass 18's 14 new positional assets fit better than
+what a lesson currently shows.
+
+## 0. Branch reconciliation, done before any content work
+
+`CLAUDE.md` explicitly warns this pass to check for the divergence Pass 20 hit: the
+working branch (`claude/pass-numbering-performance-ngrgn2`) was based on Pass 19
+(`e3dc40a`) plus one diagnostic-only commit (`f267bfa`, "Reconciliation diagnostic: Pass
+20 was never merged") — correct when it was written, but the deploy branch
+(`claude/warfare-digital-twin-scaffold-19u7kt`) has since merged Pass 20 (`634b1ae`) and
+closed its 14-asset positional gap (`b4b50c3`). `git merge-base --is-ancestor` against all
+five named commits (`bd04cba`, `8d0afe0`, `4aed067`, `e3dc40a`, `b4b50c3`) confirmed
+`b4b50c3` was **not** an ancestor before starting. Merged the deploy branch in
+(`e36d7ae`) — a clean merge, no conflicts, since the diagnostic commit only added a new
+file — verified with a fresh `npm run build` before writing any Pass 21 content. Without
+this, Pass 21 would have audited scenarios against a tree still missing `Asset.image`,
+SIDC symbology, and the two Pass-20-merge asset field additions, and the next pass would
+have hit the exact same "was this actually merged?" question Pass 20 did.
+
+## 1. The audit — every lesson checked against its own asset list, not just the one named bug
+
+The brief named one confirmed bug (`kill-chain-compression` including a Russian Lancet
+that doesn't serve a lesson about a single Ukrainian recon→artillery→strike chain).
+Auditing the rest of `data/lessons.json` against what each asset's own `short_role` /
+`employment_notes` / `connections` actually say — not just against the lesson's title —
+found **four more mismatches of the same shape**, none previously flagged:
+
+- **`pattern-of-life-detection`** included `side_b-ew-jammer-zhitel`. Zhitel's own text is
+  explicit that it's a *denial* system ("truck-mounted jamming station... denying
+  navigation and satellite comms"), not a detection tool — it does the opposite of what
+  this lesson is about. Removed; the two reconnaissance UAVs plus the commercial ISR
+  satellite already demonstrate the multi-day pattern-of-life claim on their own.
+- **`fiber-optic-immunity`** also used `side_b-uav-strike-lancet`. Lancet's own
+  characteristics list a 40–50 km **radio** control radius — it is not fiber-optic, so it
+  cannot demonstrate a lesson specifically about immunity to RF jamming via a wired link.
+  No dedicated wired-FPV strike drone exists on this map (a real content gap — see
+  `docs/BACKLOG.md`), so this pass substituted the two ground robots whose own
+  characteristics *do* document a real fiber-optic control option: `side_a-ground-robots-
+  nrtk-ironclad` ("fiber-optic control option is immune to RF jamming," verbatim in its
+  own strength line) and `side_b-ground-robots-kurier` ("controllable via radio,
+  fiber-optic, or satellite link"). The lesson's detail text now says plainly that these
+  are ground robots standing in for a still-missing wired-FPV asset, rather than silently
+  implying they're aircraft.
+- **`distributed-kill-chains`** used `side_a-c2-integrated-air-defense-network`. That
+  asset's own text describes a deep-rear, centralized sensor-fusion **hub** for air
+  defense specifically ("sits well back from the line as a network hub... no single
+  sensor or shooter loss breaks the whole air picture") — structurally close to the
+  opposite of "kill chains pushed down to squad level, closing locally." Replaced with
+  `side_a-c2-position-command-post`, a Pass 18 asset whose own `short_role` was already
+  written to draw exactly this distinction ("the maneuver-unit command post that actually
+  directs the squads, guns and drone teams around it — **distinct from the deep-rear
+  sensor-fusion network node already on this map**"). This is the clearest instance of
+  brief item 4: a Pass 18 positional asset that didn't exist when this lesson was written
+  and fits its stated theme better than the asset the lesson has used since Pass 6.
+- **`deep-rear-is-reachable`** used `side_b-logistics-hub-op-near` — 18 km out, `op_near`
+  band. A lesson arguing the deep rear "stopped being a sanctuary" cannot use an asset
+  that was never plausibly a sanctuary in the first place; 18 km is already inside the
+  ~30 km drone-dense corridor `drone-dense-corridor` describes. Swapped for
+  `side_a-logistics-hub-op-deep` (80 km) — the deepest logistics asset that actually
+  exists. Flagged honestly in the lesson text and in `docs/BACKLOG.md` that no
+  strategic-rear-band (200+ km) logistics asset has been built yet, so 80 km is the
+  closest available illustration, not a claim that 80 km is itself the deep rear.
+
+`kill-chain-compression` itself: replaced `side_b-uav-strike-lancet` with
+`side_a-uav-switchblade-300`. Beyond just removing the wrong-side asset, this pass added
+a real `data_c2` connection from Switchblade 300 to `side_a-uav-reconnaissance-tactical`
+(mirrored into `connections.json`, following Pass 2's "dependent declares the edge"
+convention) — Switchblade 300 previously had **zero** connections, so without this the
+replacement asset would still have sat visually alone in focus mode the same way Lancet
+did, just on the correct side. Verified by screenshot (below) that all four assets in
+this lesson now sit in a single connected chain.
+
+## 2. Assets that were fine, but read as an unexplained extra marker
+
+Per brief item 2, two lessons genuinely need both sides and were content-correct already,
+but didn't say so out loud:
+
+- **`ew-invisible-battlefield`** (an EW duel by nature) — added a sentence naming that
+  Bukovel-AD and Zhitel are each other's likely target, and that the two comms terminals
+  shown alongside them are exactly the kind of dependent equipment a jammer degrades.
+- **`drone-attrition-share`** — previously paired one Russian drone against *both* a
+  Ukrainian tank and a Russian tank, which doesn't show the "both sides" claim the summary
+  makes (there's no drone shown destroying the Russian tank). Added
+  `side_a-uav-switchblade-300` so the lesson now shows two mirrored, explicit cost pairs —
+  Lancet ($35K) vs. Leopard 2 ($9–10M), Switchblade 300 ($38K) vs. T-72 ($2.0–2.5M) —
+  and the detail text spells out both directions instead of one.
+- **`attrition-economics`** — kept its existing three assets (no Ukrainian strike-drone-
+  to-logistics-hub connection exists to build a matching pair the way `kill-chain-
+  compression` now has), but the detail text now says explicitly why a Ukrainian
+  logistics hub sits next to a Russian drone+hub pair: the burn-rate figure itself is
+  sourced to Ukrainian usage even though the one fully connected supply chain on the map
+  for this lesson happens to be Russia's.
+
+## 3. Pass 18 positional assets swapped in where they fit better (brief item 4)
+
+Beyond the `c2-position-command-post` swap above: `drone-dense-corridor` was using the two
+older, `unverified` composite `*-medical-casevac-chain` nodes. `side_a/b-medical-point-
+forward` — Pass 18 assets, both `verified` (2 independent sources each) — turned out to be
+a direct textual match: their own `contrast_vs_traditional` cites persistent drone coverage
+eroding safe evacuation specifically over "the first 10–15 km," which is almost exactly
+this lesson's own ~30 km corridor claim. Swapped in; the lesson's detail text now quotes
+that 10–15 km figure directly instead of leaving the two markers unexplained.
+
+## 4. Scenario-focus dimming on Pass 19 instanced markers — checked, not assumed
+
+Pass 19 landed since this lesson content was last touched (Pass 6), and `PLANNING.md`
+flagged that the custom shader driving per-instance opacity was untested against actual
+lesson content. Verified directly rather than inferred from the shader existing: headless
+Chromium (`npm run preview` + Playwright, per the Pass 16 standard — a green build is not
+evidence), navigated to `/#/lessons`, expanded and clicked "Show all N on the battlefield"
+for four reworked lessons in turn. Every run reported exactly 4 `.pin3d.is-focused` and
+101 `.pin3d.is-dimmed` (103 total assets minus the 4 named in each lesson minus... the
+count checks out against `asset_ids.length`), and the screenshots show the named assets
+rendered at full brightness with connected dependency lines, everything else desaturated
+to the flat grey `FOCUS_DIM_COLOR` — reads correctly, no regression from the Pass 19
+instancing work.
+
+## 5. What's certain vs. uncertain
+
+**Certain:**
+- All five real content bugs found (one named in the brief, four found by this pass's own
+  audit) are fixed: no lesson shows an asset that contradicts or fails to demonstrate its
+  own stated claim, checked against each asset's own `short_role`/`employment_notes` text,
+  not just against the lesson's title.
+- The branch-divergence check the brief asked for was run and a real gap was found and
+  fixed (Pass 20 was missing) before any content work started — same category of mistake
+  Pass 20 hit, not repeated.
+- Scenario-focus dimming on Pass 19's instanced markers was verified against real
+  `getBoundingClientRect`-adjacent DOM state (`.is-focused`/`.is-dimmed` class counts) and
+  four real screenshots, not assumed from the shader's existence. It reads correctly.
+- `npm run build` and `node scripts/audit-content.mjs` both pass clean against the final
+  tree; the one new connection (Switchblade 300 → Leleka-100) is mirrored in both the
+  per-asset file and `connections.json`, matching the existing convention.
+
+**Uncertain / worth a second look:**
+- The `fiber-optic-immunity` fix is the least clean of the five: the lesson's own doctrine
+  source (`[FPV Tactics Guide]`) is specifically about Russian **FPV** tactics, and the
+  best available match on the map is two **ground robots**, not an aircraft. The detail
+  text says so honestly, but this is a real content gap (no wired-FPV strike drone asset
+  exists), not a fully resolved fit — logged in `docs/BACKLOG.md`.
+- `deep-rear-is-reachable`'s replacement logistics hub (80 km) is the deepest one that
+  exists, but is still short of the strategic-rear band (200+ km) the lesson's own claim
+  is really about. Same honest-gap treatment, same backlog entry.
+- `attrition-economics` was left with an unconnected cross-side pairing rather than
+  restructured, on the judgment that inventing a new Ukrainian strike-drone-to-hub
+  connection to force symmetry would be less honest than explaining the asymmetry that's
+  actually in the data. A future pass adding that connection (the way this pass added
+  Switchblade 300 → Leleka-100) would let this lesson show two complete chains instead of
+  one complete chain plus one explained-but-unconnected comparison asset.
+- Every other lesson (`lower-sky-control`) was reviewed and left unchanged beyond a
+  clarifying sentence — it was already correctly bilateral and each asset's role was
+  already inferable, so no asset swap was made there.
+

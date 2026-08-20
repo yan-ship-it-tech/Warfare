@@ -61,7 +61,13 @@
   ],
   "employment_notes": "Represents the U.S. donation of loitering munitions specifically to push precision-strike capability down to the smallest tactical units",
   "contrast_vs_traditional": "A man-portable loitering munition puts precision-strike capability traditionally reserved for artillery or air support directly in an infantry squad's hands — the doctrine.md finding that kill chains are now distributed down to squad level rather than concentrated at higher HQ, made literal as a piece of individual-unit equipment.",
-  "connections": [],
+  "connections": [
+    {
+      "target_id": "side_a-uav-reconnaissance-tactical",
+      "type": "data_c2",
+      "description": "Receives target cueing from a tactical reconnaissance drone before launch — the same recon-to-strike pairing HIMARS and M777 rely on, at squad range instead of battery range."
+    }
+  ],
   "sources": [
     {
       "label": "Wikipedia — Switchblade (missile)",

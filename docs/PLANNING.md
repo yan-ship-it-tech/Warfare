@@ -200,23 +200,41 @@ the ledger rather than re-searching.
 
 ---
 
-## Pass 21 — Scenario rework (Key Lessons)
+## ✅ Pass 21 — Scenario rework (Key Lessons) — DONE
 
-**Model: Sonnet 5, Medium effort.**
+**Landed this pass.** Full detail in `docs/DECISIONS.md`; summary for later passes:
 
-Scenarios currently pull in assets that don't serve the lesson. Example given: "The kill
-chain collapsed from hours to minutes" includes a Leleka, HIMARS, a howitzer (all Ukrainian)
-*and* a Russian Lancet — the Lancet doesn't illustrate that lesson and muddies it.
-
-1. Audit all scenarios; each should name a lesson and show only the assets that
-   demonstrate it.
-2. Where a scenario genuinely needs both sides (e.g. counter-battery, EW duel), make the
-   opposing asset's role explicit in the narration rather than leaving it as an unexplained
-   extra marker.
-3. Scenario focus mode itself works (fixed in Pass 11) — this is a *content* pass, not a
-   mechanism pass. Note scenario-focus dimming is what's driving the instancing work in
-   Pass 19 — if that hasn't landed yet, dimming behavior on instanced markers may look
-   different than before; check it still reads correctly.
+- Branch reconciliation checked first, per the brief: the working branch was missing Pass
+  20 (`b4b50c3` was not an ancestor) — the same divergence category Pass 20 itself hit.
+  Merged the deploy branch in before any content work, verified with a build.
+- The brief's one named bug (`kill-chain-compression`'s Russian Lancet) fixed, plus **four
+  more of the same shape found by auditing every lesson's assets against their own
+  `short_role`/`employment_notes` text**, not just the lesson title:
+  `pattern-of-life-detection` (a jamming/denial asset shown for a detection lesson),
+  `fiber-optic-immunity` (an RF-only drone shown for an RF-jamming-immunity lesson),
+  `distributed-kill-chains` (a deep-rear centralized air-defense hub shown for a
+  squad-level-decentralization lesson), `deep-rear-is-reachable` (an 18 km near-front
+  logistics hub shown for a "deep rear isn't safe" lesson).
+- Two lessons that genuinely needed both sides but didn't say so (`ew-invisible-
+  battlefield`, `drone-attrition-share`) got explicit narration naming each side's role,
+  per brief item 2.
+- Two of Pass 18's positional assets swapped in where they fit better than what a lesson
+  had used since Pass 6 (brief item 4): `side_a-c2-position-command-post` (whose own text
+  was written to draw exactly the distinction `distributed-kill-chains` needed) and the two
+  `*-medical-point-forward` assets (verified, and textually a near-exact match for
+  `drone-dense-corridor`'s claim) replacing the older unverified `*-medical-casevac-chain`
+  composite nodes.
+- Scenario-focus dimming on Pass 19's instanced markers **checked, not assumed** — Pass 19
+  had landed by the time this pass ran, so the brief's conditional applied: verified via
+  headless Chromium against real `.is-focused`/`.is-dimmed` DOM state and four screenshots.
+  Reads correctly.
+- One new connection added (Switchblade 300 → Leleka-100, `data_c2`), mirrored into
+  `connections.json`, so the reworked `kill-chain-compression` lesson is a genuinely
+  connected chain rather than three unconnected markers with the right labels.
+- Two honest, not-fully-closed gaps carried to `docs/BACKLOG.md`: no wired-FPV strike drone
+  asset exists (the `fiber-optic-immunity` fix uses two ground robots instead), and no
+  strategic-rear-band logistics asset exists (`deep-rear-is-reachable` uses the deepest one
+  that does, 80 km, short of the 200+ km the lesson's claim is really about).
 
 ---
 
@@ -249,7 +267,7 @@ chain collapsed from hours to minutes" includes a Leleka, HIMARS, a howitzer (al
 18. Tactical placement        ← DONE (4aed067)              (Sonnet 5, High)
 19. Model integration         ← DONE (e3dc40a)              (Sonnet 5, High)
 20. Detail page + imagery     ← DONE, ran out of order — merged after 17-19  (Sonnet 5, Medium)
-21. Scenario rework           ← content only, after 16       (Sonnet 5, Medium)
+21. Scenario rework           ← DONE                          (Sonnet 5, Medium)
 ```
 
 20 ran out of the suggested order (its own branch diverged before 17/18/19 landed — no
