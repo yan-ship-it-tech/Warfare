@@ -95,6 +95,21 @@ export interface Lesson {
   source_tag: string;
   asset_ids: string[];
   connection_types: string[];
+  /**
+   * Pass 23's convergence audit, made visible in Pass 24. `corpus_support` is
+   * prose, not an enum, because a real audit result is rarely one tier: a
+   * lesson's principle can be CONVERGENT-2 while the figure quoted inside it
+   * is SINGLE-SOURCE. `supportTiers()` in src/pages/LessonsPage.tsx reads the
+   * tier tokens back out of the prose for the badge; the prose itself is what
+   * the reader is ultimately shown, never a lossy summary of it.
+   *
+   * `contested` marks a lesson whose reading needs a caveat attached at all
+   * times — when it is true, `caution` carries that caveat and the page
+   * renders it next to the lesson rather than behind the expander.
+   */
+  corpus_support?: string;
+  contested?: boolean;
+  caution?: string;
 }
 
 export interface GroupDef {
