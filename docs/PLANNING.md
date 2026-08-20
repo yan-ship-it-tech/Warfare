@@ -268,7 +268,33 @@ the ledger rather than re-searching.
 19. Model integration         ← DONE (e3dc40a)              (Sonnet 5, High)
 20. Detail page + imagery     ← DONE, ran out of order — merged after 17-19  (Sonnet 5, Medium)
 21. Scenario rework           ← DONE                          (Sonnet 5, Medium)
+22. Key Lessons audit         ← DONE (diagnostic only)         (Opus/Sonnet 5, High)
+23. Commit approved lesson set ← DONE                          (Opus 5, High)
+24. (reserved — see note)
+25. Model kit / roster gaps   ← NEXT                           (renumbered from an earlier draft)
 ```
+
+**Passes 22–23 — the Key Lessons thread.** These were not in the original 16–21 plan; they
+were added after Pass 21 because the Key Lessons content had never been checked against the
+finished research. Pass 22 was diagnostic only (`LESSON_AUDIT.md` — audited all 10 lessons
+against the three lessons-learned references, now committed at `docs/references/`, and
+proposed a 15-lesson replacement set). Pass 23 committed the approved set plus the
+data-integrity fixes the audit found; see `PASS23_HANDOFF.md`.
+
+Two things a later pass should know about that thread:
+- **Pass 22 ran once against a wrong Ukrainian document** (a source catalog, not a
+  synthesis), was corrected in place after the real document was supplied, and every changed
+  finding is marked `[CORRECTED]` in `LESSON_AUDIT.md` §0. Read §0 before citing any score
+  from that report.
+- **Pass 23 wrote three lesson fields nothing renders** (`corpus_support`, `contested`,
+  `caution`) because its brief put `src/` out of scope. The data distinction is real and
+  committed; the UI for it is open work, logged in `BACKLOG.md` under "Open after Pass 23."
+
+**Pass 25 is the model-kit / roster-gap pass** (renumbered from an earlier draft's numbering).
+Its input is `LESSON_AUDIT.md` §7.1, restated in `BACKLOG.md` under "Roster gaps the approved
+lesson set needs" — seven asset gaps the committed lesson set now depends on, with the audit's
+own priorities attached. Pass 24 is reserved rather than assigned; if nothing claims it, Pass
+25 can move up rather than leaving a hole.
 
 20 ran out of the suggested order (its own branch diverged before 17/18/19 landed — no
 remaining research dependency, the imagery ledger was already done). Reconciled and
@@ -279,5 +305,5 @@ casualty point, ammo point, artillery firing position — ×2 sides) that didn't
 when Pass 20's branch was cut and so needed the same image-fallback/SIDC treatment
 applied after the merge, not during Pass 20 itself.
 
-**Paste-in order:** Pass 21 next. **After each pass:** screenshot-verify per Pass 16's
-standard before moving on — a green build is not evidence.
+**Paste-in order:** Pass 25 (model kit / roster gaps) next. **After each pass:**
+screenshot-verify per Pass 16's standard before moving on — a green build is not evidence.
