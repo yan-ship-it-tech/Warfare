@@ -5,9 +5,22 @@
   "domain": "land",
   "echelon": "tactical",
   "group": "ground_robots",
-  "distance_km_from_zero": 2,
+  "distance_km_from_zero": 2.5,
   "operating_range_km": null,
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "Ironclad's role is putting a 12.7mm weapon into the highest-risk seconds of a breach or close assault in place of a person — that only works at the same close-reconnaissance depth (doctrine.md's 1-5km band) the infantry it's supporting occupy. Its own 5km direct-control range comfortably covers a 2km siting, and the fiber-optic option (out to 20km) exists precisely because closer positions are also the most jamming-exposed ones. (Nudged 2→2.5 km from this category's shared round-number value so it doesn't literally coincide with side_a-ground-robots-krab-m1, side_a-ground-robots-nprk-moroz on the map's distance axis — a small, deterministic spread within the same band, not a new plausibility claim beyond what's already argued above.)",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Euromaidan Press — Ironclad wheeled combat robot",
+        "url": "https://euromaidanpress.com/2024/01/13/ironclad-ukrainian-wheeled-combat-robot-destroys-russian-positions/"
+      }
+    ]
+  },
   "category": "ground-robot-combat",
   "representative_system": "NRTK Ironclad — Ground robot (fire support)",
   "icon_image": "/icons/nrtk-ironclad.png",
@@ -60,7 +73,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

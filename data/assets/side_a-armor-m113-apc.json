@@ -5,9 +5,22 @@
   "domain": "land",
   "echelon": "tactical",
   "group": "armor",
-  "distance_km_from_zero": 6,
+  "distance_km_from_zero": 5.6,
   "operating_range_km": null,
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "M113 is an unarmed-beyond-self-defense battlefield taxi (a single 12.7mm MG) used to move infantry and casualties rather than fight from, so it doesn't need the close ambush positioning of a tank. 6 km places it in the near-operational band, behind the close-reconnaissance zone (1–5 km) doctrine.md documents and consistent with a simple, attritable carrier whose value — per its own contrast_vs_traditional note — is replaceability under the war's drone-driven attrition rate rather than survivability at the line. (Nudged 6→5.6 km from this category's shared round-number value so it doesn't literally coincide with side_a-armor-vab-apc on the map's distance axis — a small, deterministic spread within the same band, not a new plausibility claim beyond what's already argued above.)",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Militarnyi — M113: NATO's 'workhorse' in the Defense Forces of Ukraine",
+        "url": "https://militarnyi.com/en/articles/m113-nato-s-workhorse-in-defense-forces-of-ukraine/"
+      }
+    ]
+  },
   "category": "armor-apc",
   "representative_system": "M113 APC — Tracked armored personnel carrier",
   "icon_image": "/icons/m113-apc.png",
@@ -57,7 +70,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

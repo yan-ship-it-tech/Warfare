@@ -5,9 +5,26 @@
   "domain": "air",
   "echelon": "tactical",
   "group": "uav",
-  "distance_km_from_zero": 18,
+  "distance_km_from_zero": 17.6,
   "operating_range_km": null,
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "18 km is Gerbera's launch depth, not the 300–600 km range its own characteristics report for the decoy configuration — that range describes how far the airframe can fly toward a Ukrainian target, not how far back the launch crew sits. It shares its exact placement with Shahed-136/Geran-2 (also 18 km), matching this asset's own employment_notes that it is 'deliberately flown in mixed swarms alongside Shahed/Geran-2' — the two are launched from the same forward corridor precisely so defenders can't distinguish them before impact. 18 km sits inside doctrine.md §2's drone-dense corridor (~30 km either side of the front), plausible for a mobile launch/staging position closer to the border or contact line than Russia's deep interior. (Nudged 18→17.6 km from this category's shared round-number value so it doesn't literally coincide with side_b-uav-shahed-136-geran-2 on the map's distance axis — a small, deterministic spread within the same band, not a new plausibility claim beyond what's already argued above.)",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — Gerbera (drone)",
+        "url": "https://en.wikipedia.org/wiki/Gerbera_(drone)"
+      },
+      {
+        "label": "Militarnyi — Russians significantly modernized Shahed and Gerbera drones",
+        "url": "https://militarnyi.com/en/news/ukrainian-defense-intelligence-russians-significantly-modernized-shahed-and-gerbera-drones/"
+      }
+    ]
+  },
   "category": "uav-strike",
   "representative_system": "Gerbera — Low-cost decoy / multifunctional drone",
   "icon_image": "/icons/gerbera.png",
@@ -60,7 +77,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]

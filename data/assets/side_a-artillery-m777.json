@@ -12,6 +12,19 @@
     "max_km": 22
   },
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "M777's own characteristics already state the doctrinal logic directly: positioned roughly 10–20 km from the line to stay within its ~24–40 km range (up to 40 km with M982 Excalibur) while reducing counter-battery exposure, and 12 km sits at the near end of that stated band. As a towed piece it displaces far slower than a self-propelled gun, so 12 km trades a slightly smaller margin under max range for staying close enough to keep call-for-fire response times short, echoing the forward depths doctrine.md §2 documents for Ukrainian command posts (2–5 km forward). 12 km sits inside doctrine.md's 10–150+ km strike/recon band, still clear of the densest 0–10 km FPV zone.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — M777 howitzer",
+        "url": "https://en.wikipedia.org/wiki/M777_howitzer"
+      }
+    ]
+  },
   "category": "artillery",
   "representative_system": "M777A2 (BAE Systems), firing M795 / M982 Excalibur precision rounds",
   "icon_image": "https://commons.wikimedia.org/wiki/Special:FilePath/M777_Light_Towed_Howitzer_1.jpg",
@@ -90,7 +103,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 3,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]

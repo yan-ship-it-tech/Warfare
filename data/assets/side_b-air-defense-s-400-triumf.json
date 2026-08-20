@@ -9,6 +9,19 @@
   "distance_km_from_zero": 42,
   "operating_range_km": null,
   "band_id": "op_deep",
+  "placement_rationale": {
+    "text": "S-400's own sourced characteristics call it \"primarily a homeland/rear-area asset rather than something used far forward near the line,\" and real reporting on Russia's Crimea-based batteries confirms both roles side by side: protecting military infrastructure, air bases and logistics hubs deep in the rear, while also extending area-denial coverage forward over contested corridors and frontline zones. 42 km — comfortably inside its shortest-range 9M96 bracket and a small fraction of its 400 km maximum — represents that forward-coverage edge of a system whose main batteries sit much further back, rather than claiming the whole S-400 force postures this close.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "web: Kyiv Post — Ukraine's Drone Forces Strike Russian S-400 Radar in Crimea, Targets in Donbas",
+        "url": "https://www.kyivpost.com/post/73242"
+      }
+    ]
+  },
   "category": "air-defense-long-range",
   "representative_system": "S-400 'Triumf' — Long-range SAM / ABM",
   "icon_image": "/icons/s-400-triumf.png",
@@ -57,7 +70,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]

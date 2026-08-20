@@ -12,6 +12,23 @@
     "max_km": 5
   },
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "4 km is the Orlan-10 crew's catapult-launch and control site, not the ~100–140 km control range or ~16 hr endurance this asset's own characteristics report, which describe what the airframe can do once airborne rather than how close the crew stations itself. That places the crew inside doctrine.md §2's close-reconnaissance band (1–5 km) — the 'second line' role this asset's own employment_notes describe — and the stated 1–5 km operating_range_km envelope independently confirms the same band.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — STC Orlan-10",
+        "url": "https://en.wikipedia.org/wiki/Orlan-10"
+      },
+      {
+        "label": "Combat Operators — Orlan-10: A UAV for reconnaissance and electronic warfare",
+        "url": "https://combatoperators.com/vehicles/air/uav/orlan-10/"
+      }
+    ]
+  },
   "category": "uav-reconnaissance",
   "representative_system": "STC Orlan-10",
   "icon_image": "https://commons.wikimedia.org/wiki/Special:FilePath/UAV_Orlan-10.JPG",
@@ -72,7 +89,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]

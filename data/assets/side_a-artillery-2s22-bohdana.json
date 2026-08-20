@@ -5,9 +5,22 @@
   "domain": "land",
   "echelon": "tactical",
   "group": "artillery",
-  "distance_km_from_zero": 14,
+  "distance_km_from_zero": 13.6,
   "operating_range_km": null,
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "Bohdana's own stated range of up to ~42 km with extended-range rounds means 14 km uses only about a third of its maximum reach, leaving a comfortable counter-battery survivability margin rather than sitting near max range with no room to displace. The wheeled 6x8/8x8 chassis exists specifically to exploit that margin, firing and relocating rather than trading mobility for a few extra kilometers of standoff. 14 km sits inside doctrine.md §2's 10–150+ km medium/long-range strike layer while staying clear of the close-in 0–10 km FPV strike zone that most threatens a static gun position. (Nudged 14→13.6 km from this category's shared round-number value so it doesn't literally coincide with side_a-artillery-caesar-155mm-self-propelled-gun on the map's distance axis — a small, deterministic spread within the same band, not a new plausibility claim beyond what's already argued above.)",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — 2S22 Bohdana",
+        "url": "https://en.wikipedia.org/wiki/2S22_Bohdana"
+      }
+    ]
+  },
   "category": "artillery-self-propelled",
   "representative_system": "2S22 Bohdana — Self-propelled artillery (wheeled, domestic)",
   "icon_image": "/icons/2s22-bohdana.png",
@@ -57,7 +70,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

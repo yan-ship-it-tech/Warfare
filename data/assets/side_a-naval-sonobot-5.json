@@ -5,9 +5,26 @@
   "domain": "sea",
   "echelon": "operational",
   "group": "naval",
-  "distance_km_from_zero": 60,
+  "distance_km_from_zero": 20,
   "operating_range_km": null,
-  "band_id": "op_deep",
+  "band_id": "op_near",
+  "placement_rationale": {
+    "text": "Moved from 60 km to 20 km, and the band tag from op_deep to op_near — 60 km exceeded the asset's own stated 30 km operating range (see key_facts/characteristics), an internal contradiction between the platform's real envelope and where it was placed. Sonobot-5 is a small EvoLogics-built hydrographic-survey/inspection catamaran supplied to Ukraine to inspect harbors and waterways and detect seabed ordnance with side-scan/multibeam sonar, not an open-water strike or deep-reconnaissance platform the way Magura V5 or MANTAS T-12 are — its documented real-world role is close-in coastal/port work, not the 100+ km depths those strike-optimized USVs reach. 20 km sits comfortably inside its own 30 km range with margin for a return transit, and inside doctrine.md §2's operational band depth rather than the deep-strike layer.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "web: Army Recognition — Germany to send 10 additional Sonobot 5 Unmanned Surface Vehicles to Ukraine",
+        "url": "https://armyrecognition.com/news/navy-news/2024/germany-to-send-10-additional-sonobot-5-unmanned-surface-vehicles-to-ukraine"
+      },
+      {
+        "label": "web: Naval Technology — Sonobot 5 USV, Germany",
+        "url": "https://www.naval-technology.com/projects/sonobot-5-usv-germany/"
+      }
+    ]
+  },
   "category": "naval-usv",
   "representative_system": "Sonobot-5 — Uncrewed surface vessel (survey/reconnaissance)",
   "icon_image": "/icons/sonobot-5.png",
@@ -48,7 +65,7 @@
   "verification": {
     "status": "unverified",
     "independent_sources": 0,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Written from doctrine.md and general knowledge; no per-asset citation yet."
     ]

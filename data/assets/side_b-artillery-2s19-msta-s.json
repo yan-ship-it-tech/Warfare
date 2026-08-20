@@ -8,6 +8,19 @@
   "distance_km_from_zero": 18,
   "operating_range_km": null,
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "2S19 Msta-S's real-world range (per this asset's own Wikipedia source) runs about 24.7 km with standard rounds up to ~36 km with rocket-assisted projectiles, so 18 km uses roughly half to three-quarters of that envelope depending on round type — a narrower margin than the NATO-donated SPGs in this comparison set, though still short of firing at true max range. Russian artillery employment has historically favored denser, closer massed fires rather than the wide dispersion-and-displacement discipline doctrine.md §2 documents becoming standard elsewhere on this battlefield, so a tighter standoff than its Ukrainian-side counterparts is plausible for this platform rather than an error. 18 km still sits inside doctrine.md's 10–150+ km medium/long-range strike band, outside the close 0–10 km FPV strike zone.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — 2S19 Msta",
+        "url": "https://en.wikipedia.org/wiki/2S19_Msta"
+      }
+    ]
+  },
   "category": "artillery-self-propelled",
   "representative_system": "2S19 Msta-S — Self-propelled artillery (tracked)",
   "icon_image": "/icons/2s19-msta-s.png",
@@ -53,7 +66,7 @@
   "verification": {
     "status": "sourced_low_confidence",
     "independent_sources": 1,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Rests only on tertiary reference works; wants a primary or trade source."
     ]

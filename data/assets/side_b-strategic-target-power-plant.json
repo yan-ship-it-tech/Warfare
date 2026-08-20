@@ -8,6 +8,19 @@
   "distance_km_from_zero": 250,
   "operating_range_km": null,
   "band_id": "strategic_rear",
+  "placement_rationale": {
+    "text": "250 km sits in the strategic_rear band, mirroring the side_a power-plant node for a symmetric picture of deep-strike reach on both sides, per this asset's own employment_notes. This extends past doctrine.md §2's explicitly quantified 'medium/long-range strike & recon: 10–150+ km' layer, whose '+' marks exactly this kind of deeper reach, consistent with both sides fielding cruise missiles and one-way-attack drones capable of reaching well past 150 km. As a representative composite node (not a named facility, per its own sources) rather than a specific documented location, deep-rear siting is the doctrinally correct default for the category.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Composite/illustrative — no single named facility; category per master prompt asset list",
+        "url": ""
+      }
+    ]
+  },
   "category": "strategic-infrastructure-target",
   "representative_system": "Composite — a generic thermal/hydro generation plant and grid substation, not a named facility",
   "icon_image": "/icons/power-plant.png",
@@ -50,7 +63,7 @@
   "verification": {
     "status": "unverified",
     "independent_sources": 0,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Written from doctrine.md and general knowledge; no per-asset citation yet."
     ]

@@ -8,6 +8,19 @@
   "distance_km_from_zero": 5,
   "operating_range_km": null,
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "Challenger 2 is a direct-fire main battle tank with a 120mm rifled gun, the class of asset doctrine.md's lower-sky finding addresses most directly: with local air/drone superiority a tank can push to 1–1.5 km and fight from direct-fire positions, while without it the same asset is pushed back to roughly 7 km. 5 km sits at the tactical band's outer edge, a middle position consistent with the asset's own record — used in the 2023 counteroffensive and the Kursk incursion, then subsequently lost to drones/ATGMs as local air conditions varied by sector. It is not parked at the zero line, matching the expectation that even a heavily armored MBT holds some standoff once persistent drone ISR is present.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Army Recognition — Challenger 2 in Ukraine (deployment, specs)",
+        "url": "https://www.armyrecognition.com/focus-analysis-conflicts/army/conflicts-in-the-world/russia-ukraine-war-2022/ukrainian-forces-deploy-british-donated-challenger-2-tanks-in-first-ever-offensive-on-russian-soil"
+      }
+    ]
+  },
   "category": "armor-main-battle-tank",
   "representative_system": "Challenger 2 — Main battle tank",
   "icon_image": "/icons/challenger-2.png",
@@ -58,7 +71,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]

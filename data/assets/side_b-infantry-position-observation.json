@@ -1,0 +1,75 @@
+{
+  "id": "side_b-infantry-position-observation",
+  "name": "Observation Post",
+  "side": "side_b",
+  "domain": "land",
+  "platform_domain": "land",
+  "echelon": "tactical",
+  "group": "infantry",
+  "distance_km_from_zero": 4.5,
+  "operating_range_km": null,
+  "band_id": "tactical",
+  "placement_rationale": {
+    "text": "4.5 km sits inside doctrine.md §2's close-reconnaissance depth (1-5 km, \"activated within seconds of detection\") and, on this map's own terrain, gravitates toward a real elevated treeline Pass 17 built — the same high-ground-plus-cover combination a human OP needs for line of sight without being skylined, not just a drone launch/observation position. A human OP and a drone team's launch point serve overlapping functions and plausibly share the same real ground.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      }
+    ]
+  },
+  "category": "infantry-position-observation",
+  "representative_system": "Manned observation post — composite, not a specific site",
+  "icon_image": "/icons/observation-post.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Not a procurement item — a staffed position, not equipment",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Function",
+      "value": "Direct visual observation and call-for-fire cueing, backing up drone coverage"
+    },
+    {
+      "label": "Siting",
+      "value": "Elevated ground with tree cover — line of sight without being skylined"
+    },
+    {
+      "label": "Depth",
+      "value": "Doctrine's close-reconnaissance band, 1-5 km — activated within seconds of detection"
+    }
+  ],
+  "short_role": "A human-crewed lookout position on real high ground — line-of-sight coverage a drone's downward-looking camera doesn't fully replace.",
+  "characteristics": [
+    "Sited on real elevated, tree-covered ground on this map, the same kind of terrain a drone team would also use — not an arbitrary point",
+    "Provides continuous human line-of-sight observation as a backup/cross-check to drone-fed coverage, which can be jammed, shot down, or simply not looking the right way",
+    "Feeds targeting and early-warning data into the same close-reconnaissance layer doctrine.md describes as activated within seconds of detection",
+    "Remains relevant even as drone ISR dominates, precisely because it doesn't depend on an uninterrupted radio link or battery endurance"
+  ],
+  "employment_notes": "Represents a generic manned OP rather than a specific coordinate, sited on real elevated/wooded ground this map already models rather than assumed open steppe. Works alongside, not instead of, the tactical reconnaissance drones already on this map — different failure modes, same close-in depth.",
+  "contrast_vs_traditional": "A traditional OP was often the primary source of local battlefield awareness. It hasn't disappeared, but it's now one input among several — a drone can cover more ground and doesn't tire, but it can also be jammed, shot down or simply airborne elsewhere, which is why a human OP on real high ground still earns its place rather than being fully replaced.",
+  "connections": [
+    {
+      "target_id": "side_b-uav-reconnaissance-tactical",
+      "type": "data_c2",
+      "description": "Cross-checks and supplements the same close-reconnaissance picture the tactical recon drone feeds."
+    }
+  ],
+  "sources": [
+    {
+      "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+      "url": ""
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "unverified",
+    "independent_sources": 0,
+    "last_audit": "2026-08-20",
+    "notes": [
+      "Written from doctrine.md and general knowledge; no per-asset citation yet."
+    ]
+  }
+}

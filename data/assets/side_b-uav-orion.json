@@ -5,9 +5,26 @@
   "domain": "air",
   "echelon": "tactical",
   "group": "uav",
-  "distance_km_from_zero": 7,
+  "distance_km_from_zero": 7.4,
   "operating_range_km": null,
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "7 km marks Orion's forward ISR/strike orbit, not the airfield its 550 kg, runway-dependent airframe actually operates from — like Forpost-RU and its Ukrainian counterpart Bayraktar TB2 in this same catalog, a MALE-class platform this size is normally based well to the rear and reaches the front via its stated 250 km comms range. 7 km sits inside doctrine.md §2's drone-dense corridor (~30 km either side of the front), plausible for the persistent overwatch-plus-strike role this asset's own employment_notes compare directly to TB2's. (Nudged 7→7.4 km from this category's shared round-number value so it doesn't literally coincide with side_b-uav-forpost-ru on the map's distance axis — a small, deterministic spread within the same band, not a new plausibility claim beyond what's already argued above.)",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — Kronshtadt Orion",
+        "url": "https://en.wikipedia.org/wiki/Kronshtadt_Orion"
+      },
+      {
+        "label": "The National Interest — Is the Orion UAV Russia's answer to Ukraine's Turkish drones?",
+        "url": "https://nationalinterest.org/blog/buzz/orion-uav-russias-answer-ukraines-turkish-drones-198374"
+      }
+    ]
+  },
   "category": "uav-strike",
   "representative_system": "Orion — Medium-altitude long-endurance UAV",
   "icon_image": "/icons/orion.png",
@@ -61,7 +78,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]

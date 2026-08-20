@@ -5,9 +5,22 @@
   "domain": "land",
   "echelon": "tactical",
   "group": "armor",
-  "distance_km_from_zero": 4,
+  "distance_km_from_zero": 3.6,
   "operating_range_km": null,
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "T-14 Armata's own employment_notes are explicit that the type is effectively absent from confirmed combat use in Ukraine — reportedly kept out of theater rather than risked — so its 4 km placement should be read as a representative direct-fire MBT posture consistent with other tanks in this category (inside doctrine.md's lower-sky bracket of 1–1.5 km with local air/drone superiority to ~7 km without), not as a claim that a specific Armata has actually been positioned at that depth on the current front. This is the one asset in the batch where the placement number describes doctrine-typical siting for its class rather than an attested real deployment, worth flagging for anyone reading the map literally. (Nudged 4→3.6 km from this category's shared round-number value so it doesn't literally coincide with side_b-armor-t72 on the map's distance axis — a small, deterministic spread within the same band, not a new plausibility claim beyond what's already argued above.)",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — T-14 Armata",
+        "url": "https://en.wikipedia.org/wiki/T-14_Armata"
+      }
+    ]
+  },
   "category": "armor-main-battle-tank",
   "representative_system": "T-14 Armata — Main battle tank (next-generation, limited fielding)",
   "icon_image": "/icons/t-14-armata.png",
@@ -57,7 +70,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]

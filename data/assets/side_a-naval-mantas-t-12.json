@@ -8,6 +8,23 @@
   "distance_km_from_zero": 83,
   "operating_range_km": null,
   "band_id": "op_deep",
+  "placement_rationale": {
+    "text": "83 km sits well inside MANTAS T-12's own sourced 250 km range (MARTAC Systems; Naval Technology), consistent with doctrine.md §2's medium/long-range strike & recon band (10–150+ km) rather than being pushed to the edge of its envelope. As a Western-donated multi-role patrol/intercept USV operating alongside Ukraine's domestic strike-focused fleet, sitting closer to zero than Magura V5's deeper strike-run placement (120 km) while staying well beyond FPV/close-reconnaissance range is consistent with faster, more general-purpose patrol tasking rather than the deepest one-way strike profile.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "MARTAC Systems — MANTAS T12 (manufacturer)",
+        "url": "https://martacsystems.com/products/t12/"
+      },
+      {
+        "label": "Naval Technology — MANTAS T-Series USVs",
+        "url": "https://www.naval-technology.com/projects/mantas-t-series-unmanned-surface-vessels-usv/"
+      }
+    ]
+  },
   "category": "naval-usv",
   "representative_system": "MANTAS T-12 — Uncrewed surface vessel (multi-role)",
   "icon_image": "/icons/mantas-t-12.png",
@@ -56,7 +73,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

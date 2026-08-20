@@ -63,85 +63,58 @@ cheap to bring back into line once the 3D view settles. Do not spend pass budget
 
 ---
 
-## Pass 17 — World and terrain
+## ✅ Pass 17 — World and terrain — DONE
 
-**Model: Sonnet 5, High effort.**
+**Landed at `8d0afe0`.** Full detail in `DECISIONS.md`; summary for context on later passes:
 
-Depends on: Pass 16 (done). Enables: Pass 18 (assets need terrain features to be placed
-*into*). `data/osm/pokrovsk.json` exists in the repo (115k lines, already committed) but is
-not imported or consumed anywhere in `src/three/` — this pass starts from zero on the
-integration itself, the data is just sitting there ready to use.
-
-0. **First: check whether the border/seam artifact is still present.** Pass 16 fixed the
-   interaction-layer version of several similar-sounding bugs but didn't confirm this one.
-   If it's a terrain rendering seam, it belongs here — item 6 below was already going to
-   touch this area, just make sure it's actually resolved and verified with a screenshot,
-   not assumed fixed because Pass 16 touched something adjacent.
-1. **Integrate `data/osm/pokrovsk.json`** per the metric-inset decision above. Extrude rail
-   lines along their `xz` lists; instance tree props along `tree_row` features, respecting
-   the `closed` flag (closed ring = wood to fill, open line = windbreak to follow).
-   Read `docs/OSM_PIPELINE.md` first. **Watch the draw-call budget while doing this** —
-   Pass 16 got the ceiling to 845 with real measurement discipline; tree/rail instancing
-   done carelessly here could blow past it. Instance from the start, don't retrofit.
-2. **Add the ODbL credit.** Non-optional.
-3. **Derive procedural dressing patterns** from the OSM data (tree-row spacing and
-   orientation, field block size) and apply across the wider map so the whole terrain
-   reads as Donbas steppe, not just the inset patch.
-4. **Water body rework.** Currently sits only at the far end of each side. Should wrap
-   around the near/underside where the frontline meets the coast — both sides have Black
-   Sea access and it's operationally relevant.
-   - **Consider a river instead of / in addition to coast.** A river running along or
-     across the front, with a destroyed bridge, is far more characteristic of this war
-     (Dnipro in Kherson) than a coastline, and gives the frontline zone a natural feature.
-     Worth deciding explicitly.
-5. **Add a bridge** (user request). If the river option above is taken, a *destroyed*
-   bridge plus a pontoon crossing tells the story better than an intact one.
-6. **Make the zero line not empty.** Currently: no assets cross, nothing burning, no
-   infantry, and a visible hard seam/border artifact (see item 0).
-   - Remove the visible seam — it reads as a rendering bug.
-   - Add contested-zone dressing: craters, burnt vehicle hulks, smoke, damaged treelines.
-   - Terrain features that later passes can place assets into: forest patches (artillery
-     cover), elevated treelines (drone positions), built-up blocks.
-
-**Verification standard (per Pass 16):** don't trust `npm run build`. Screenshot the
-result — seam, water, bridge, dressing should all be visually confirmable, not just
-present in the scene graph.
+- Seam artifact confirmed and fixed (it was `Scene3D.tsx`'s standing distance-graticule lines,
+  redundant with Pass 16's own DOM ruler — removed outright, A/B-tested not assumed).
+- OSM metric inset shipped (`src/three/osmTerrain.ts`): real rail/road/river/tree geometry from
+  `data/osm/pokrovsk.json`, drawn at true 1:1 scale inside `op_near`/side_a/17 km, anchor/scale
+  derived live from the projection. ODbL credit visible in-scene and on the About page.
+- Pattern-derived dressing (`scripts/analyze-osm-patterns.mjs`) retuned `props.ts`/`terrain3d.ts`'s
+  tree-belt orientation and field-cell frequency to real measured ratios.
+- River (not an extended coastline — a deliberate either/or call, justified in `DECISIONS.md`)
+  crosses the strip, with a destroyed bridge + pontoon crossing. Pass 10's coastal basin kept,
+  untouched. `isInWater()` now guards every scatter/placement loop, closing a pre-existing gap
+  for the coastal basin too.
+- `TERRAIN_FEATURES` (`src/three/scenery.ts` — not `osmTerrain.ts`) ships real standing geometry
+  for Pass 18 to site assets into: forest patches, elevated treelines, built-up blocks.
+- **New draw-call ceiling for Pass 19: 1140** (was 845/865), from the bridge/pontoon/ten terrain
+  features — recorded, not fixed, matching Pass 16's own precedent of deferring instancing.
 
 ---
 
-## Pass 18 — Tactical asset placement
+## ✅ Pass 18 — Tactical asset placement — DONE
 
-**Model: Sonnet 5, High effort.**
+**Landed this pass.** Full detail in `DECISIONS.md`; summary for context on later passes:
 
-Depends on: Pass 17. This is the pass that most directly serves "capture the experience
-of war in Ukraine."
-
-1. **Review every asset's distance-from-front for doctrinal plausibility.** Current values
-   include some that don't hold up (NASAMS at 20 km is far forward and very exposed for a
-   medium-range SAM that in practice defends cities and infrastructure well back).
-   - **Add a `placement_rationale` field with a citation**, matching the existing
-     two-source verification standard already used for asset facts. Placement should be
-     as auditable as the rest of the data. Run it through `scripts/audit-content.mjs`.
-2. **Break up the straight lines.** Assets currently sit in a rank at each distance.
-   Real deployment is dispersed, terrain-driven, and clustered by function.
-3. **Tactically sensible siting** — assets should sit where they'd actually sit:
-   Patriot near a high-value target it defends; artillery hidden in forest; drone team on
-   an elevated treeline; logistics on a road/rail node; command post dispersed and rearward.
-   This requires Pass 17's terrain features to exist first.
-4. **Not every asset should be on the map at once.** Build:
-   - a **swap** mechanism (replace a placed asset with another of the same category),
-   - **duplicate** (already exists from Pass 11 — reuse, don't rebuild),
-   - and a guarantee that **every category stays represented** on the map.
-5. **Allow legitimate duplicates.** FPV teams, Starlink terminals etc. should appear
-   multiple times — that's accurate, not a bug.
-6. **Add missing human/positional layer:** infantry and dismounted soldiers, infantry
-   shelters/dugouts, and tactical positions as first-class map objects — medical point,
-   artillery firing position, command post, observation post, ammo point.
-   Note: `BACKLOG.md` already records infantry and engineering as known category gaps —
-   this closes part of that.
-7. **Selection behavior changed in Pass 16** (drop no longer selects; tap does). If any
-   placement/swap UI here assumes the old drop-selects behavior, it's wrong — build against
-   current behavior.
+- **`placement_rationale`** (new optional field, `{text, sources[]}`) added to all 103 assets
+  (89 shipped + 14 new). Sourced from each asset's own already-audited characteristics plus
+  `doctrine.md` §2, per a documented, bounded scope decision — not 103 fresh research passes.
+- **Three real distance/band corrections found on review**: NASAMS 19→95 km (the one the brief
+  named), TOS-1A 21→6 km (exceeded its own stated range), Sonobot-5 60→20 km (same). Patriot
+  (40 km) reviewed and kept, now citing the real "SAMbush" forward-ambush tactic alongside its
+  own "well back from the line" framing.
+- **Straight-line ranks fixed as a data change**, not a 3D-only visual hack: 14 groups of
+  same-side/category assets sharing an identical km got small, disclosed, in-band nudges — X is
+  shared with the 2D view and the ruler, so it was never going to be faked in one renderer alone.
+- **`src/three/tacticalSiting.ts`** (new) — a post-process on `lateralLayout()`, not a change to
+  it: artillery gravitates to real forest patches, drone teams/observation posts to elevated
+  treelines, logistics to built-up blocks (one asset — the `side_a` ammunition point — sits on an
+  actual OSM rail vertex, not a proxy), air-defense toward the real `LANDMARK` it plausibly
+  defends, command posts pushed apart from each other rather than toward a point.
+- **14 new human/positional assets**, `infantry` group populated for the first time (was 0):
+  dismounted squad, dugout, casualty collection point, artillery firing position, command post,
+  observation post, ammo point × 2 sides. Icon registry needed zero changes — the existing
+  group→icon fallback chain already absorbed every new category.
+- **Roster-level same-category swap** (`RosterSwapPicker`, `DetailPanel.tsx`) — reuses Pass 11's
+  `duplicateAsset()`/`customAssets` mechanism directly rather than rebuilding it. Additive only
+  (nothing hidden/removed), which is what makes "every category stays represented" true by
+  construction rather than by a separately-maintained guard.
+- Verified headless throughout: 0 Data Health errors, category counts cross-checked against an
+  independent hand-run tally, the railhead ammo point's pin confirmed sitting inside the real OSM
+  tree cluster by screenshot, the swap flow driven end-to-end (not just type-checked).
 
 ---
 
@@ -255,15 +228,17 @@ chain collapsed from hours to minutes" includes a Leleka, HIMARS, a howitzer (al
 
 ```
 16. Perf + interaction        ← DONE (bd04cba)             (Opus 4.8, High)
-17. World + terrain           ← needs 16 (done); enables 18 (Sonnet 5, High)
-18. Tactical placement        ← needs 17                    (Sonnet 5, High)
+17. World + terrain           ← DONE (8d0afe0)              (Sonnet 5, High)
+18. Tactical placement        ← DONE (this pass)            (Sonnet 5, High)
 19. Model integration         ← needs 16 for headroom       (Sonnet 5, High)
 20. Detail page + imagery     ← imagery already sourced      (Sonnet 5, Medium)
 21. Scenario rework           ← content only, after 16       (Sonnet 5, Medium)
 ```
 
-Passes 17–18 are the critical path now. 19 can run alongside 18 if you want two threads.
+19 is next. Its draw-call ceiling to instance against is now **1140** (Pass 17's number — Pass 18
+added zero net new draw calls of its own; the new human-layer assets and siting logic reuse the
+existing marker/ring/fill trio and existing terrain-feature geometry rather than adding meshes).
 20 has no remaining research dependency — the ledger is done.
 
-**Paste-in order:** Pass 17 next. **After each pass:** screenshot-verify per Pass 16's
+**Paste-in order:** Pass 19 next. **After each pass:** screenshot-verify per Pass 16's
 standard before moving on — a green build is not evidence.

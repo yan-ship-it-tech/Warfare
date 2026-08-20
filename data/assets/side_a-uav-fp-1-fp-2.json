@@ -8,6 +8,23 @@
   "distance_km_from_zero": 308,
   "operating_range_km": null,
   "band_id": "strategic_rear",
+  "placement_rationale": {
+    "text": "308 km reflects FP-1/FP-2's confirmed strike depth into Russian territory as a one-way-attack airframe, not a launch-site offset from the line — like the rest of Ukraine's deep-strike drone family, the launch point itself sits inside Ukraine. This asset's own characteristics note the Starlink-relayed terminal-guidance link but don't record a single flight-range figure, so 308 km is read against doctrine.md §2's 10–150+ km medium/long-range strike layer extended into the strategic_rear band, consistent with how the sibling Beaver/Scythe/Lyutyy entries in this same category are placed rather than against the highest ranges reported for this airframe elsewhere.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — Fire Point FP-1",
+        "url": "https://en.wikipedia.org/wiki/Fire_Point_FP-1"
+      },
+      {
+        "label": "Covert Shores (H I Sutton) — Ukrainian FP-1/FP-2 deep strike drones",
+        "url": "https://www.hisutton.com/FP-1-Drone.html"
+      }
+    ]
+  },
   "category": "uav-strike-deep",
   "representative_system": "FP-1 / FP-2 — One-way attack drone (deep strike)",
   "icon_image": "/icons/fp-1-fp-2.png",
@@ -57,7 +74,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

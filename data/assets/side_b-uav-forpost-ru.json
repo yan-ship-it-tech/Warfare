@@ -5,9 +5,26 @@
   "domain": "air",
   "echelon": "tactical",
   "group": "uav",
-  "distance_km_from_zero": 7,
+  "distance_km_from_zero": 6.6,
   "operating_range_km": null,
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "7 km marks where Forpost-RU does its forward ISR/strike work, not the airfield its 1,150 kg, runway-dependent airframe actually launches and recovers from — a license-built Searcher derivative this large needs fixed ground infrastructure normally sited well to the rear, reached via its 250 km comms range rather than by operating close to that infrastructure itself. 7 km sits inside doctrine.md §2's drone-dense corridor (~30 km either side of the front), the same forward-operating convention applied to its Ukrainian counterpart (Bayraktar TB2) and to Orion in this same catalog, plausible for the reconnaissance-strike orbit this asset's own characteristics describe rather than for the rear airfield itself. (Nudged 7→6.6 km from this category's shared round-number value so it doesn't literally coincide with side_b-uav-orion on the map's distance axis — a small, deterministic spread within the same band, not a new plausibility claim beyond what's already argued above.)",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Military Factory — Forpost ISR drone",
+        "url": "https://www.militaryfactory.com/aircraft/detail.php?aircraft_id=1486"
+      },
+      {
+        "label": "GlobalMilitary.net — IAI Forpost specs",
+        "url": "https://www.globalmilitary.net/aircraft/forpost/"
+      }
+    ]
+  },
   "category": "uav-strike",
   "representative_system": "Forpost-RU — Strike-reconnaissance UAV (Israeli-derived, license-built)",
   "icon_image": "/icons/forpost-ru.png",
@@ -61,7 +78,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]

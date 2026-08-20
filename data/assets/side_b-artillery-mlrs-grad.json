@@ -12,6 +12,19 @@
     "max_km": 20
   },
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "BM-21 Grad's own operating_range_km (5–20 km) already brackets 8 km, sitting toward the shorter end of that stated envelope — appropriate for a short-range saturation system whose entire draw, per this asset's own characteristics, is being cheap and weather-independent rather than precise or deep-reaching. Doctrine.md §2 places FPV strike range at 0–10 km and close reconnaissance at 1–5 km, so 8 km keeps Grad inside the same dense forward zone those systems occupy, consistent with a weapon whose 40-rocket salvo empties in ~20 seconds and is meant to displace immediately after rather than sit at standoff. This is the shortest-ranged, most forward-sited launcher in this artillery batch, matching its role as the all-weather fallback fire support least dependent on the drone-cued precision kill chain doctrine.md documents elsewhere.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "GlobalSecurity.org — BM-21 122-mm Multiple Rocket Launcher",
+        "url": "https://www.globalsecurity.org/military/world/russia/bm-21.htm"
+      }
+    ]
+  },
   "category": "artillery-rocket",
   "representative_system": "BM-21 Grad (122mm MLRS); modernized as Tornado-G",
   "icon_image": "https://commons.wikimedia.org/wiki/Special:FilePath/1_multiple_rocket_launcher_BM-21_Grad.JPG",
@@ -84,7 +97,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]

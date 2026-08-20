@@ -8,6 +8,23 @@
   "distance_km_from_zero": 350,
   "operating_range_km": null,
   "band_id": "strategic_rear",
+  "placement_rationale": {
+    "text": "350 km is explicitly a composite/representative figure per this asset's own employment_notes — deliberately larger than a 'normal' strategic-rear placement to represent the fleet's forced relocation, not one hull's exact position. It sits closer to zero than the individual Admiral Grigorovich (480 km) and Kilo-class (440 km) entries because it represents the fleet's mixed posture, including units still operating or transiting closer to the line, rather than the single most-relocated asset class; all three stay inside the strategic_rear band. USNI Proceedings and Army Recognition (already in sources) document the Sevastopol-to-Novorossiysk shift this figure represents, directly reflecting doctrine.md §2's finding that local air/sea superiority — not doctrine — sets how close a naval asset can safely operate.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "USNI Proceedings — Ukraine's Magura Naval Drones: Black Sea Equalizers",
+        "url": "https://www.usni.org/magazines/proceedings/2025/september/ukraines-magura-naval-drones-black-sea-equalizers"
+      },
+      {
+        "label": "Army Recognition — Ukrainian MAGURA V5 drone paralyzes Russian Black Sea Fleet",
+        "url": "https://www.armyrecognition.com/news/navy-news/2024/ukrainian-magura-v5-drone-paralyzes-russian-black-sea-fleet-damages-18-ships-in-18-months"
+      }
+    ]
+  },
   "category": "naval-surface-fleet",
   "representative_system": "Composite — Black Sea Fleet surface combatants (e.g. Admiral Grigorovich-class frigates), representing the fleet's post-2023 basing pattern",
   "icon_image": "https://commons.wikimedia.org/wiki/Special:FilePath/Russian_cruiser_Moskva.jpg",
@@ -60,7 +77,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

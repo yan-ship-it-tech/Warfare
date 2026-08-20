@@ -8,6 +8,23 @@
   "distance_km_from_zero": 6,
   "operating_range_km": null,
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "6 km is KUB-1's launch/control depth, not the 40 km flight range its own characteristics report — that range describes the munition's reach once launched, not the crew's stand-off from the line. Placed alongside the similarly-sized Switchblade 600 at the same 6 km mark, it sits just past doctrine.md §2's 1–5 km close-reconnaissance band and inside the 0–10 km FPV-strike-range band, consistent with this asset's own description as a smaller, cheaper loitering munition one tier down from Lancet.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — ZALA Kub-BLA",
+        "url": "https://en.wikipedia.org/wiki/ZALA_Kub-BLA"
+      },
+      {
+        "label": "Army Recognition — Russia confirms deployment of KUB loitering munition",
+        "url": "https://www.armyrecognition.com/focus-analysis-conflicts/army/conflicts-in-the-world/russia-ukraine-war-2022/russia-confirms-deployement-in-ukraine-of-new-kub-loitering-munition-able-to-reach-target-at-50-km"
+      }
+    ]
+  },
   "category": "uav-strike",
   "representative_system": "KUB-1 — Loitering munition (small)",
   "icon_image": "/icons/kub-1.png",
@@ -61,7 +78,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]

@@ -5,9 +5,18 @@
   "domain": "land",
   "echelon": "tactical",
   "group": "ground_robots",
-  "distance_km_from_zero": 2,
+  "distance_km_from_zero": 1.5,
   "operating_range_km": null,
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "Combat UGVs fight at essentially the same depth as the dismounted infantry they support, inside doctrine.md's 1-5km close-reconnaissance band rather than further back — a remote fire-support platform only has value if it's close enough to engage the same targets a crew-served weapon in the trench line would. Krab-M1's own stated tank-target recognition range (up to 2km) lines up almost exactly with its 2km siting: positioning it deeper would put targets beyond the sensor's own effective range. (Nudged 2→1.5 km from this category's shared round-number value so it doesn't literally coincide with side_a-ground-robots-nprk-moroz, side_a-ground-robots-nrtk-ironclad on the map's distance axis — a small, deterministic spread within the same band, not a new plausibility claim beyond what's already argued above.)",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      }
+    ]
+  },
   "category": "ground-robot-combat",
   "representative_system": "Krab-M1 — Ground robot (fire support)",
   "icon_image": "/icons/krab-m1.png",
@@ -49,7 +58,7 @@
   "verification": {
     "status": "unverified",
     "independent_sources": 0,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Written from doctrine.md and general knowledge; no per-asset citation yet."
     ]

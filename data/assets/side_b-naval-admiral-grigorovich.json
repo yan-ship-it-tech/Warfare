@@ -11,6 +11,23 @@
     "max_km": 4850
   },
   "band_id": "strategic_rear",
+  "placement_rationale": {
+    "text": "480 km is consistent with this asset's own employment_notes: since relocating from Sevastopol to Novorossiysk, Kalibr strikes are launched from further up the coast and further from Ukrainian USV range, not forward-based near Crimea. FPRI and USNI Proceedings (both already in sources) document the Feb 2022 Montreux Straits closure trapping the fleet's peacetime composition and the wartime Sevastopol-to-Novorossiysk shift under sustained missile/USV pressure — 480 km, near the top of the strategic_rear band (150–500 km), reflects a fleet actually pushed to greater stand-off distance, matching doctrine.md §2's finding that local air/sea superiority, not doctrine or preference, sets how close a naval asset can safely sit.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Foreign Policy Research Institute — Russia's Black Sea Fleet in the \"Special Military Operation\" in Ukraine",
+        "url": "https://www.fpri.org/article/2024/02/russias-black-sea-fleet-in-the-special-military-operation-in-ukraine/"
+      },
+      {
+        "label": "USNI Proceedings — Turkey, the Montreux Convention, and Russian Navy Transits of the Turkish Straits",
+        "url": "https://www.usni.org/magazines/proceedings/2022/march/turkey-montreux-convention-and-russian-navy-transits-turkish"
+      }
+    ]
+  },
   "category": "naval-frigate",
   "representative_system": "Admiral Grigorovich-class (Project 11356R) guided-missile frigate",
   "icon_image": "/icons/admiral-grigorovich.png",
@@ -68,7 +85,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 4,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]

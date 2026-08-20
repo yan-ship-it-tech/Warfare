@@ -5,9 +5,26 @@
   "domain": "air",
   "echelon": "tactical",
   "group": "uav",
-  "distance_km_from_zero": 6,
+  "distance_km_from_zero": 6.4,
   "operating_range_km": null,
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "6 km is the Zala Z-16 crew's launch/control depth, not the 75 km comms range its own characteristics report. Like the Supercam S350 it's paired with in this catalog, it sits one notch deeper than the Orlan-10's 4 km — just past doctrine.md §2's 1–5 km close-reconnaissance band but well inside the drone-dense corridor (~30 km either side of the front) — plausible for a small electric reconnaissance type flown persistently rather than for a single high-value sortie, per this asset's own employment_notes on multi-day pattern-of-life mapping. (Nudged 6→6.4 km from this category's shared round-number value so it doesn't literally coincide with side_b-uav-supercam-s350 on the map's distance axis — a small, deterministic spread within the same band, not a new plausibility claim beyond what's already argued above.)",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Army Recognition — Russia upgrades Zala Z-16 with AI",
+        "url": "https://www.armyrecognition.com/focus-analysis-conflicts/army/conflicts-in-the-world/russia-ukraine-war-2022/russia-upgrades-zala-z-16-reconnaissance-drone-with-ai-to-autonomously-evade-ukrainian-drone-interceptors"
+      },
+      {
+        "label": "ZALA Aero — Z-16E product page (manufacturer)",
+        "url": "https://zala-aero.com/en/product/zala-z-16/"
+      }
+    ]
+  },
   "category": "uav-reconnaissance",
   "representative_system": "Zala Z-16 — Reconnaissance UAV",
   "icon_image": "/icons/zala-z-16.png",
@@ -63,7 +80,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]

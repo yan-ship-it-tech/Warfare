@@ -8,6 +8,19 @@
   "distance_km_from_zero": 1050,
   "operating_range_km": null,
   "band_id": "deep_strategic",
+  "placement_rationale": {
+    "text": "Unlike a near-line strike drone, Zozulia is a one-way-attack airframe with no return flight, so 1,050 km represents a confirmed/typical strike depth into Russian territory rather than a launch-site offset from the front — the crew and launch rail sit inside Ukraine, far outside this figure. 1,050 km sits almost exactly halfway between the two ranges this asset's own characteristics report — ~1,000 km carrying a 50 kg warhead and ~2,100 km with a lighter, unstated payload — a conservative reading rather than the maximum claimed reach. This extends doctrine.md §2's 10–150+ km medium/long-range strike layer into the deep_strategic band the same way the Spiderweb entry documents for cross-border reach generally: once the delivery is a mass-producible airframe, distance alone stops being a reliable defensive factor.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Euromaidan Press — Zozulia drones striking Russian supply lines",
+        "url": "https://euromaidanpress.com/2026/04/29/zozulia-drone/"
+      }
+    ]
+  },
   "category": "uav-strike-deep",
   "representative_system": "Zozulia — One-way attack drone (extreme range)",
   "icon_image": "/icons/zozulia.png",
@@ -53,7 +66,7 @@
   "verification": {
     "status": "sourced_low_confidence",
     "independent_sources": 1,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

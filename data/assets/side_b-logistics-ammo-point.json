@@ -1,0 +1,74 @@
+{
+  "id": "side_b-logistics-ammo-point",
+  "name": "Forward Ammunition Point",
+  "side": "side_b",
+  "domain": "logistics",
+  "platform_domain": "land",
+  "echelon": "operational",
+  "group": "logistics",
+  "distance_km_from_zero": 6,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "placement_rationale": {
+    "text": "6 km places this at the built-up block Pass 17 sited on this side of the strip — real standing ground with the kind of road access and structures a forward ammunition point would actually use, rather than open steppe. No committed OSM rail data exists on this side (the Pass 17 inset is anchored side_a-only, per docs/BACKLOG.md), so a built-up-block proxy is the honest, closest-available siting rather than inventing a second, independent rail claim this map cannot back with real geometry.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      }
+    ]
+  },
+  "category": "logistics-ammo-point",
+  "representative_system": "Forward ammunition supply point — composite, not a specific named facility",
+  "icon_image": "/icons/ammo-point.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Not a procurement item — a supply node, not equipment",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Siting",
+      "value": "Sited at this map's built-up block terrain feature — real road-accessible ground, not open steppe"
+    },
+    {
+      "label": "Function",
+      "value": "Break-bulk point — bulk delivery in, distributed forward by vehicle or ground robot"
+    },
+    {
+      "label": "Note",
+      "value": "No committed real rail data exists for this side yet — see side_a's railhead-sited counterpart"
+    }
+  ],
+  "short_role": "A forward ammunition supply point where bulk resupply transitions to the last mile forward.",
+  "characteristics": [
+    "Sited on this map's built-up-block terrain feature rather than open ground, for realistic road access",
+    "Represents the break-bulk function: bulk delivery arrives here, then moves forward by truck or logistics UGV for the final leg",
+    "The side_a counterpart is instead sited on real OSM rail geometry — this one uses the closest honest proxy available on this side"
+  ],
+  "employment_notes": "Represents a forward ammunition point rather than a specific named facility, sited on real standing terrain (a built-up block) rather than an arbitrary coordinate.",
+  "contrast_vs_traditional": "Traditional logistics could stage ammunition dumps relatively close to the line under the protection of distance and counter-battery limits. Persistent drone ISR pushes bulk storage back and forces the last-mile leg onto vehicles — increasingly unmanned — making short, fast runs rather than a standing supply column.",
+  "connections": [
+    {
+      "target_id": "side_b-ground-robots-omich-2",
+      "type": "supply",
+      "description": "Last-mile resupply run forward from this point via logistics UGV."
+    }
+  ],
+  "sources": [
+    {
+      "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+      "url": ""
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "unverified",
+    "independent_sources": 0,
+    "last_audit": "2026-08-20",
+    "notes": [
+      "Written from doctrine.md and general knowledge; no per-asset citation yet."
+    ]
+  }
+}

@@ -8,6 +8,19 @@
   "distance_km_from_zero": 80,
   "operating_range_km": null,
   "band_id": "op_deep",
+  "placement_rationale": {
+    "text": "Supply/depot nodes sit back from contact for survivability — a hub feeds many units at once, so a single hit here cascades far wider than a single gun's loss, exactly as the asset's own text argues. At 80km the hub sits inside doctrine.md §2's medium/long-range strike layer (10-150+km) but well beyond FPV range and most counter-battery reach, matching the op_deep band's purpose. Confirmed plausible at current depth, no change.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Composite/illustrative — no single named facility; force-structure pattern per doctrine reference §6",
+        "url": ""
+      }
+    ]
+  },
   "category": "logistics-hub",
   "representative_system": "Generic brigade/divisional forward distribution point — composite, not a named facility",
   "icon_image": "/icons/logistics-hub.png",
@@ -56,7 +69,7 @@
   "verification": {
     "status": "unverified",
     "independent_sources": 0,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Written from doctrine.md and general knowledge; no per-asset citation yet."
     ]

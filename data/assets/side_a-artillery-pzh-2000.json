@@ -8,6 +8,19 @@
   "distance_km_from_zero": 18,
   "operating_range_km": null,
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "PzH 2000's own stated range — up to 60 km with guided projectiles, 40 km active-reactive, 30 km conventional — puts 18 km at roughly 30% of its maximum guided reach, matching the ~30–35% standoff fraction used across this batch's tracked and wheeled SPGs and consistent with doctrine.md §2's counter-battery survivability logic. At 55+ tonnes it is the least mobile of the donated SPG types, so the margin below max range compensates for a rate-of-fire doctrine (per this asset's own contrast_vs_traditional) that otherwise keeps a crew in position longer than a lighter wheeled gun would risk. 18 km sits inside doctrine.md's 10–150+ km medium/long-range strike band, outside the close 0–10 km FPV strike zone.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "GlobalSecurity.org — PzH 2000 self-propelled howitzer",
+        "url": "https://www.globalsecurity.org/military/world/europe/pzh2000.htm"
+      }
+    ]
+  },
   "category": "artillery-self-propelled",
   "representative_system": "PzH 2000 — Self-propelled artillery (tracked)",
   "icon_image": "/icons/pzh-2000.png",
@@ -59,7 +72,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

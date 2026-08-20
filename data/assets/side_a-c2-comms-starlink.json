@@ -12,6 +12,19 @@
     "max_km": 500
   },
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "This entry represents the terminal's front-line use specifically, per its own text — a dugout or forward vehicle relaying drone video, not the rear-headquarters use of the same technology. A shallow tactical siting near doctrine.md §2's forward-CP depth (2-5km) fits that framing: the terminal is used at every echelon, but the 3km position captures the forward end deliberately singled out here.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "GlobalSecurity.org — Starlink in Ukraine",
+        "url": "https://www.globalsecurity.org/space/world/ukraine/starlink.htm"
+      }
+    ]
+  },
   "category": "satcom-comms",
   "representative_system": "SpaceX Starlink (military/field-deployed terminal)",
   "icon_image": "/icons/starlink.png",
@@ -64,7 +77,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 3,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

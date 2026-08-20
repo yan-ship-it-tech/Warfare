@@ -5,9 +5,22 @@
   "domain": "land",
   "echelon": "tactical",
   "group": "armor",
-  "distance_km_from_zero": 3,
+  "distance_km_from_zero": 3.4,
   "operating_range_km": null,
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "T-64BM Bulat is a 125mm autoloader-armed direct-fire tank, the category doctrine.md's lower-sky finding covers most directly (1–1.5 km with local air/drone superiority, ~7 km without). 3 km sits inside that bracket, though the asset's own employment_notes note the irreplaceable fleet is increasingly used in static/indirect roles as losses can't be replaced from abroad — a reason this placement leans toward caution rather than the closest 1–1.5 km end even where local conditions might allow it. (Nudged 3→3.4 km from this category's shared round-number value so it doesn't literally coincide with side_a-armor-leopard2 on the map's distance axis — a small, deterministic spread within the same band, not a new plausibility claim beyond what's already argued above.)",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "GlobalSecurity.org — T-64BM Bulat design",
+        "url": "https://www.globalsecurity.org/military/world/ukraine/t-64bm-design.htm"
+      }
+    ]
+  },
   "category": "armor-main-battle-tank",
   "representative_system": "T-64BV / T-64BM Bulat — Main battle tank (Soviet-legacy, Ukrainian-upgraded)",
   "icon_image": "/icons/t-64bv-t-64bm-bulat.png",
@@ -57,7 +70,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

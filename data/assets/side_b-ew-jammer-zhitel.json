@@ -13,6 +13,19 @@
     "max_km": 25
   },
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "As a large, high-value truck-mounted jammer, Zhitel sits back from the direct-fire line to reduce its own exposure as a priority target once triangulated, per its own text, while staying forward enough to cover the ~30km drone-dense corridor doctrine.md §2 identifies as the zone that matters most. At 15km it sits well inside its own ~20-25km ground jamming range and inside that corridor, consistent with doctrine.md §4's framing of EW as a standoff capability rather than a forward, exposed one.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §4 — EW",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — R-330Zh Zhitel",
+        "url": "https://en.wikipedia.org/wiki/R-330Zh_Zhitel"
+      }
+    ]
+  },
   "category": "ew-jamming",
   "representative_system": "R-330Zh Zhitel (NVP Protek)",
   "icon_image": "/icons/r330zh-zhitel.png",
@@ -69,7 +82,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 3,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

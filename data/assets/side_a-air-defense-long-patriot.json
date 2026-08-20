@@ -13,6 +13,23 @@
     "max_km": 120
   },
   "band_id": "op_deep",
+  "placement_rationale": {
+    "text": "40 km sits inside Patriot's own sourced 25-120 km engagement bracket and matches its characteristics field's own framing — \"typically positioned well back from the line to protect high-value rear-area targets.\" It is deliberately not pushed to the deepest end of that bracket: Ukraine's real, well-documented \"SAMbush\" tactic moves a Patriot battery unusually close to the front specifically to ambush Russian aircraft operating just behind their own lines (an A-50 AWACS and multiple Su-34/Su-35 losses attributed to this tactic in 2023-2024) — 40 km represents a position that keeps both employment patterns doctrinally reachable rather than picking the single most conservative rear depth.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "web: The War Zone — U.S. Army Officer Confirms Russian A-50 Radar Jet Was Shot Down With Patriot Missile",
+        "url": "https://www.twz.com/land/u-s-army-officer-confirms-russian-a-50-radar-jet-was-shot-down-with-patriot-missile"
+      },
+      {
+        "label": "web: Forbes — A Ukrainian Patriot Missile Crew Shot Down Five Russian Aircraft In Two Minutes",
+        "url": "https://www.forbes.com/sites/davidaxe/2023/07/03/a-ukrainian-patriot-missile-crew-shot-down-five-russian-aircraft-in-two-minutes-and-possibly-forced-the-kremlin-to-rethink-its-tactics/"
+      }
+    ]
+  },
   "category": "air-defense-long-range",
   "representative_system": "MIM-104 Patriot, PAC-3 MSE interceptor",
   "icon_image": "https://commons.wikimedia.org/wiki/Special:FilePath/MIM-104_Patriot.JPG",
@@ -90,7 +107,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 4,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

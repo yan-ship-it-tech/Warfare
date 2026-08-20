@@ -12,6 +12,23 @@
     "max_km": 10
   },
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "3 km is the Lancet crew's catapult launch/control site, not the ~40–50 km control/strike radius this asset's own key_facts report — that radius is how far the munition can be directed to a target once cued by a paired reconnaissance drone, not how close the crew itself sits. 3 km falls inside doctrine.md §2's 1–5 km close-reconnaissance band and its own stated 1–10 km operating_range_km envelope, plausible for a crew this asset's own employment_notes describe as working a tight hunter-killer pair with an Orlan/Zala-type spotter close enough to receive a live handoff.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — ZALA Lancet",
+        "url": "https://en.wikipedia.org/wiki/ZALA_Lancet"
+      },
+      {
+        "label": "Kyiv Post — Russian Lancet Kamikaze Drone in Ukraine: An Overview",
+        "url": "https://www.kyivpost.com/analysis/23923"
+      }
+    ]
+  },
   "category": "uav-strike",
   "representative_system": "ZALA Lancet (Lancet-1 / Lancet-3)",
   "icon_image": "https://commons.wikimedia.org/wiki/Special:FilePath/ZALA_Lancet_at_IDEX_2025.jpg",
@@ -90,7 +107,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 3,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

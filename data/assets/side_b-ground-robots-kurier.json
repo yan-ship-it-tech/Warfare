@@ -5,9 +5,22 @@
   "domain": "land",
   "echelon": "tactical",
   "group": "ground_robots",
-  "distance_km_from_zero": 3,
+  "distance_km_from_zero": 2.6,
   "operating_range_km": null,
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "Kurier's dominant real-world role is logistics — running supplies the last stretch to forward positions — which by its own text is the same last-mile job doctrine.md's category logic places at close-reconnaissance depth (1-5km), not a rear staging point. Its own documented radio-control-range limitation (operator must stay near the platform, unlike Starlink-relay-extended Ukrainian systems) further supports a close, not deep, representative siting at 3km. (Nudged 3→2.6 km from this category's shared round-number value so it doesn't literally coincide with side_b-ground-robots-omich-2 on the map's distance axis — a small, deterministic spread within the same band, not a new plausibility claim beyond what's already argued above.)",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Militarnyi — Russian unmanned ground vehicles deployed against Ukraine",
+        "url": "https://militarnyi.com/en/articles/russian-unmanned-ground-vehicles-deployed-in-the-war-against-ukraine/"
+      }
+    ]
+  },
   "category": "ground-robot-logistics",
   "representative_system": "Kurier — Ground robot (tracked, modular)",
   "icon_image": "/icons/kurier.png",
@@ -54,7 +67,7 @@
   "verification": {
     "status": "sourced_low_confidence",
     "independent_sources": 1,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

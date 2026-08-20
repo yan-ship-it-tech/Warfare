@@ -9,6 +9,15 @@
   "distance_km_from_zero": 22,
   "operating_range_km": null,
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "22 km sits well inside Buk-M1's sourced ~35 km engagement envelope and matches how this legacy system is actually used — road-mobile, self-contained fire units moving with maneuvering formations rather than fixed rear-area assets like the newer Western systems. doctrine.md's drone-dense corridor (~30 km either side) covers the same band this entry sits in.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      }
+    ]
+  },
   "category": "air-defense-medium-range",
   "representative_system": "S-300 / Buk-M1 (Soviet-legacy) — Legacy medium/long-range SAM",
   "icon_image": "/icons/s-300-buk-m1-soviet-legacy.png",
@@ -58,7 +67,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

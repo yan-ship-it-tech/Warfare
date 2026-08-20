@@ -8,6 +8,19 @@
   "distance_km_from_zero": 5,
   "operating_range_km": null,
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "5 km sits inside doctrine.md's lower-sky bracket (1-1.5 km with local air/drone superiority, ~7 km without) that the whole armor category is checked against. BMP-3's dual 100mm/30mm turret gives it genuine direct-fire reach, which argues for a closer position, but its own characteristics also flag thin aluminium-alloy armor against drone/ATGM threats — the same vulnerability that sets the standoff for every other armor asset on this map — so 5 km represents that balance rather than the closest end of the bracket.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Army Recognition — Russia increases BMP-3 production for the Ukraine war",
+        "url": "https://www.armyrecognition.com/news/army-news/2026/russia-increases-bmp-3-ifv-production-40-with-new-drone-and-mine-protection-for-ukraine-war"
+      }
+    ]
+  },
   "category": "armor-ifv",
   "representative_system": "BMP-3 — Infantry fighting vehicle",
   "icon_image": "/icons/bmp-3.png",
@@ -57,7 +70,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

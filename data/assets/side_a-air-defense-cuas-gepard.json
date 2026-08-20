@@ -13,6 +13,19 @@
     "max_km": 15
   },
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "Gepard's own sourced engagement envelope (2-15 km) is a short-range counter-drone bracket, not an area-defense one, so 6 km sits inside its real employment range rather than at an arbitrary point. This is also where Shahed/Lancet-class threats are actually intercepted on this front — doctrine.md's sourced FPV strike range (0-10 km) and the ~30 km drone-dense corridor both describe the same near-line airspace a gun-based C-UAS system exists to cover. Kept close to the line by design: a 35mm proximity-fused round has no standoff reach to compensate for sitting further back.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Euromaidan Press — Ukraine just solved the hardest math problem in modern air defense",
+        "url": "https://euromaidanpress.com/2025/07/20/ukraine-drone-defense/"
+      }
+    ]
+  },
   "category": "cuas-gun",
   "representative_system": "Flakpanzer Gepard self-propelled anti-aircraft gun",
   "icon_image": "https://commons.wikimedia.org/wiki/Special:FilePath/Flakpanzer_Gepard_SPAAG.JPG",
@@ -94,7 +107,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 3,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

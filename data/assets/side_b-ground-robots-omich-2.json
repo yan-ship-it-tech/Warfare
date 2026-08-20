@@ -5,9 +5,22 @@
   "domain": "land",
   "echelon": "tactical",
   "group": "ground_robots",
-  "distance_km_from_zero": 3,
+  "distance_km_from_zero": 3.4,
   "operating_range_km": null,
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "Omich-2's ammunition/transport/casevac role is the same last-mile job as Ukraine's NPRK Mul, per its own contrast text, placing it inside doctrine.md's 1-5km close-reconnaissance band rather than a rear logistics depth. Its short endurance (40min) and range (20km) comfortably cover a 3km siting near the positions it resupplies; a deeper placement would exceed what the platform is actually built to run. (Nudged 3→3.4 km from this category's shared round-number value so it doesn't literally coincide with side_b-ground-robots-kurier on the map's distance axis — a small, deterministic spread within the same band, not a new plausibility claim beyond what's already argued above.)",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Defence Blog — Russian Airborne units evaluate Omich-2",
+        "url": "https://defence-blog.com/russian-airborne-units-evaluate-omich-2-unmanned-vehicle/"
+      }
+    ]
+  },
   "category": "ground-robot-logistics",
   "representative_system": "Omich-2 — Ground robot (logistics/transport/casevac)",
   "icon_image": "/icons/omich-2.png",
@@ -58,7 +71,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

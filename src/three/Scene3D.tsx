@@ -25,6 +25,7 @@ import { buildTerrain, terrainHeight } from "./terrain3d";
 import { buildProps, PROP_BUDGET } from "./props";
 import { buildScenery, disposeScenery, SCENERY_BUDGET } from "./scenery";
 import { loadOsmData, buildOsmInset, disposeOsmInset } from "./osmTerrain";
+import { applyTacticalSiting } from "./tacticalSiting";
 import { buildHeroModel, hasHeroModel } from "./models";
 import { perf } from "./perfMonitor";
 import {
@@ -1034,15 +1035,33 @@ export function Scene3D({ world }: { world: WorldModel }) {
 
     // Breadth layout first: every asset needs to know its cohort before any of
     // them can be positioned, so this cannot be folded into the loop below.
+    const autoNodes = nodes.filter((n) => !manualZ.has(n.id));
     const lateral = lateralLayout(
-      nodes
-        .filter((n) => !manualZ.has(n.id))
+      autoNodes.map((n) => ({
+        id: n.id,
+        side: nodeSide(n),
+        km: nodeDistance(n),
+        platformDomain: nodePlatformDomain(n),
+      })),
+      proj,
+    );
+    // Pass 18: nudge terrain-affine categories (artillery, drone teams,
+    // logistics, air-defense, command posts) toward the real ground Pass 17
+    // built, without disturbing lateralLayout's own collision-safe spread —
+    // see tacticalSiting.ts's header for why this is a post-process, not a
+    // change to lateralLayout itself. Only auto-placed nodes participate; a
+    // manually-dragged asset is a deliberate user override, same reasoning
+    // manualZ already uses to skip lateralLayout above.
+    const sited = applyTacticalSiting(
+      autoNodes
+        .filter((n) => n.kind === "asset")
         .map((n) => ({
           id: n.id,
           side: nodeSide(n),
-          km: nodeDistance(n),
-          platformDomain: nodePlatformDomain(n),
+          category: n.asset.category,
+          x: worldXFor(nodeSide(n), nodeDistance(n), proj),
         })),
+      lateral,
       proj,
     );
 
@@ -1057,7 +1076,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
         side,
         platformDomain,
         km,
-        z: manualZ.get(node.id) ?? lateral.get(node.id) ?? 0,
+        z: manualZ.get(node.id) ?? sited.get(node.id) ?? lateral.get(node.id) ?? 0,
         proj,
         terrainHeightAt: terrainHeight,
       });

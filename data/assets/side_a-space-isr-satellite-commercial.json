@@ -8,6 +8,23 @@
   "distance_km_from_zero": 300,
   "operating_range_km": null,
   "band_id": "strategic_rear",
+  "placement_rationale": {
+    "text": "Space assets have no literal 'distance from the front' — orbital mechanics doesn't work that way — so the 300 km figure is a mapping convention, exactly as this asset's own employment_notes already states: it represents the strategic-rear echelon this ISR capability is tasked, analyzed and fused from, not a ground footprint or coverage radius. Placing it in the strategic_rear band (150–500 km) rather than any operational band keeps the map's echelon logic honest — SAR/optical tasking from ICEYE and Maxar/Planet/BlackSky (this asset's own sources) feeds the multi-day pattern-of-life and battle-damage-assessment picture, a rear analytical function, not a forward sensor with a real detection or strike radius the way a ground or airborne ISR platform has.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Kyiv Independent — Ukrainian charity buys satellite for the army",
+        "url": "https://kyivindependent.com/ukrainian-charity-buys-satellite-for-the-army-how-will-it-help-fight-against-russia/"
+      },
+      {
+        "label": "ICEYE — ICEYE Provides Ukraine with Access to Its SAR Satellite Constellation",
+        "url": "https://www.iceye.com/newsroom/press-releases/iceye-signs-contract-to-provide-government-of-ukraine-with-access-to-its-sar-satellite-constellation"
+      }
+    ]
+  },
   "category": "space-isr",
   "representative_system": "Composite: ICEYE SAR constellation + Maxar/Planet/BlackSky optical imagery",
   "icon_image": "/icons/isr-satellite.png",
@@ -59,7 +76,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 3,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

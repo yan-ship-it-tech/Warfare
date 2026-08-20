@@ -1,0 +1,78 @@
+{
+  "id": "side_b-c2-position-command-post",
+  "name": "Tactical Command Post",
+  "side": "side_b",
+  "domain": "c2_comms",
+  "platform_domain": "land",
+  "echelon": "operational",
+  "group": "c2",
+  "distance_km_from_zero": 10.5,
+  "operating_range_km": {
+    "min_km": 2,
+    "max_km": 12
+  },
+  "band_id": "op_near",
+  "placement_rationale": {
+    "text": "10.5 km sits directly on doctrine.md §2's own sourced figure for a combat-trains/rear command post (~10 km back from the line — the forward CP itself sits 2-5 km out, a depth this map already represents through the forward-sited squad and observation-post assets rather than duplicating here). Command posts are also deliberately dispersed from each other on this map's own lateral axis rather than clustered — concentrating C2 nodes is exactly the pattern that makes one lucky strike disproportionately costly, which is the opposite of the distributed-kill-chain shift doctrine.md §6 describes.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      }
+    ]
+  },
+  "category": "c2-position-command-post",
+  "representative_system": "Tactical/combat-trains command post — composite, not a specific named HQ",
+  "icon_image": "/icons/command-post.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Not a procurement item — a staffed position, not equipment",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Depth",
+      "value": "~10 km back — doctrine.md's sourced combat-trains CP figure"
+    },
+    {
+      "label": "Function",
+      "value": "Directs the maneuver units and coordinates fires within its sector"
+    },
+    {
+      "label": "Survivability",
+      "value": "Dispersed from other C2 nodes rather than co-located, and relies on resilient comms"
+    }
+  ],
+  "short_role": "The maneuver-unit command post that actually directs the squads, guns and drone teams around it — distinct from the deep-rear sensor-fusion network node already on this map.",
+  "characteristics": [
+    "Sits at doctrine.md's own sourced combat-trains-CP depth (~10 km), not the closer 2-5 km forward-CP figure this map represents through other forward-sited assets",
+    "Deliberately dispersed from other command posts and C2 nodes rather than co-located, to avoid one strike degrading the whole sector's command chain",
+    "Depends on resilient comms (including satellite links) the same way the deep-rear IADS network node does, just at a much shallower depth",
+    "Distinct from the existing c2-battle-management network asset, which is a rear sensor-fusion hub, not a maneuver command post"
+  ],
+  "employment_notes": "Represents a generic tactical/combat-trains command post directing a sector rather than a specific named headquarters. Positioned and dispersed per doctrine.md's own sourced depth figures rather than an assumed 'safe rear' distance.",
+  "contrast_vs_traditional": "Traditional command posts could mass staff and communications equipment at one relatively fixed, well-protected location, trading concentration for coordination. Persistent drone ISR and precision strike make a concentrated C2 node a high-value, findable target, so the surviving pattern is smaller, more dispersed posts leaning on redundant, jam-resistant comms rather than one hardened bunker.",
+  "connections": [
+    {
+      "target_id": "side_b-c2-comms-strelets",
+      "type": "data_c2",
+      "description": "Uses a resilient satellite link when terrestrial comms are jammed or cut."
+    }
+  ],
+  "sources": [
+    {
+      "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+      "url": ""
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "unverified",
+    "independent_sources": 0,
+    "last_audit": "2026-08-20",
+    "notes": [
+      "Written from doctrine.md and general knowledge; no per-asset citation yet."
+    ]
+  }
+}

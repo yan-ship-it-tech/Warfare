@@ -8,6 +8,19 @@
   "distance_km_from_zero": 2,
   "operating_range_km": null,
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "As an armed remote combat platform, Uran-9's representative position sits at close-reconnaissance depth (doctrine.md's 1-5km band) alongside the dismounted positions and direct-fire assets it's built to substitute for — a cannon/ATGM/flamethrower loadout only has tactical value at engagement ranges near the line itself. 2km is consistent with that role, independent of the source's own note that fielding has lagged the concept.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — Uran-9",
+        "url": "https://en.wikipedia.org/wiki/Uran-9"
+      }
+    ]
+  },
   "category": "ground-robot-combat",
   "representative_system": "Uran-9 — Ground robot (armed, remotely controlled)",
   "icon_image": "/icons/uran-9.png",
@@ -55,7 +68,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

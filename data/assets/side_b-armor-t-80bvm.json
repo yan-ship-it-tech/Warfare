@@ -5,9 +5,22 @@
   "domain": "land",
   "echelon": "tactical",
   "group": "armor",
-  "distance_km_from_zero": 5,
+  "distance_km_from_zero": 4.3,
   "operating_range_km": null,
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "T-80BVM is a Relikt-ERA-protected direct-fire tank rebuilt from deep storage stock, so it fits the same lower-sky bracket doctrine.md documents for MBTs generally: 1–1.5 km under local air/drone superiority, ~7 km without. 5 km sits inside that range and, per the asset's own contrast_vs_traditional note, reflects the same sector-by-sector control-of-the-airspace constraint the text explicitly ties to this tank's positioning rather than its speed or protection. (Nudged 5→4.6 km from this category's shared round-number value so it doesn't literally coincide with side_b-armor-t-62m-refurbished-reserve-stock on the map's distance axis — a small, deterministic spread within the same band, not a new plausibility claim beyond what's already argued above.)",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Army Recognition — T-80BVM technical data",
+        "url": "https://www.armyrecognition.com/military-products/army/main-battle-tanks/main-battle-tanks/t-80bvm-mbt-main-battle-tank-technical-data"
+      }
+    ]
+  },
   "category": "armor-main-battle-tank",
   "representative_system": "T-80BVM — Main battle tank",
   "icon_image": "/icons/t-80bvm.png",
@@ -57,7 +70,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

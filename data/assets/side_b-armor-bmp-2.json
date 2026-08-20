@@ -5,9 +5,22 @@
   "domain": "land",
   "echelon": "tactical",
   "group": "armor",
-  "distance_km_from_zero": 5,
+  "distance_km_from_zero": 4.6,
   "operating_range_km": null,
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "BMP-2 carries a 30mm autocannon and Konkurs ATGM giving it real direct-fire reach, so a tactical-band placement is appropriate for an IFV rather than a pure troop taxi. 5 km sits inside the 0–10 km FPV strike-range band doctrine.md documents and is consistent with the asset's own contrast_vs_traditional note on individually targeted, dispersed vehicle movement rather than massed columns advancing to the closest possible edge of the line. (Nudged 5→4.6 km from this category's shared round-number value so it doesn't literally coincide with side_b-armor-bmp-3 on the map's distance axis — a small, deterministic spread within the same band, not a new plausibility claim beyond what's already argued above.)",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — BMP-2",
+        "url": "https://en.wikipedia.org/wiki/BMP-2"
+      }
+    ]
+  },
   "category": "armor-ifv",
   "representative_system": "BMP-2 — Infantry fighting vehicle",
   "icon_image": "/icons/bmp-2.png",
@@ -58,7 +71,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

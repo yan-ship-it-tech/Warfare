@@ -8,6 +8,23 @@
   "distance_km_from_zero": 6,
   "operating_range_km": null,
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "6 km is the Punisher/Spectre hunter-killer pair's forward launch and control depth, not a stated flight range — no numeric range is recorded in this asset's own characteristics, so the placement leans on doctrine.md §2's operational-band structure rather than a self-reported figure. That puts it just past the 1–5 km close-reconnaissance band and inside the wider 0–10 km FPV-strike-range band, plausible for a catapult-launched, fixed-wing strike drone operating a rung above squad-portable systems like Switchblade but well short of the 10–150+ km deep-strike layer.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Military Factory — UA Dynamics Punisher reusable attack drone",
+        "url": "https://www.militaryfactory.com/aircraft/detail.php?aircraft_id=2494"
+      },
+      {
+        "label": "UkraineWorld — The Punisher: an impressive drone produced in Ukraine",
+        "url": "https://ukraineworld.org/en/articles/analysis/punisher-drone-ukraine"
+      }
+    ]
+  },
   "category": "uav-strike",
   "representative_system": "Punisher — Strike UAV (domestic)",
   "icon_image": "/icons/punisher.png",
@@ -56,7 +73,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

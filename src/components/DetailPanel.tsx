@@ -234,6 +234,7 @@ function AssetDetail({
       </header>
 
       <SwapPicker asset={asset} />
+      <RosterSwapPicker asset={asset} world={world} />
 
       {display.isSwapped && (
         <p className="swap-banner">
@@ -476,6 +477,86 @@ function SwapPicker({ asset }: { asset: Asset }) {
           ))}
         </select>
       </label>
+    </div>
+  );
+}
+
+/**
+ * "Swap in a different real system" — Pass 18's same-category replacement,
+ * built by reusing `duplicateAsset()`'s own clone-into-`customAssets`
+ * mechanism (Pass 11), not a second, independent one. Lists every OTHER
+ * asset sharing this one's `category` and `side` (the roster itself, not
+ * just the 14/89 assets that carry a `comparison_group` — that's what
+ * `SwapPicker` above already covers). Picking one clones the TARGET's full
+ * profile but keeps THIS asset's own site (`distance_km_from_zero` /
+ * `operating_range_km` / `band_id`), so the clone visibly takes over this
+ * position rather than adding a second marker at the target's own spot.
+ *
+ * Deliberately additive, same as Duplicate: nothing is hidden or removed.
+ * The original stays exactly where it was, and the target's own separate
+ * entry (if it has one) is untouched — this map already treats duplicate
+ * representation as accurate (FPV teams, Starlink terminals really do
+ * appear more than once on a real battlefield), so a swapped-in system
+ * showing up twice is consistent with that, not a bug. That also makes
+ * "every category stays represented" true by construction: a swap can only
+ * ever ADD an instance of a category that was already present, never
+ * subtract one.
+ */
+function RosterSwapPicker({ asset, world }: { asset: Asset; world: WorldModel }) {
+  const overrides = useOverrides();
+  const view = useViewState();
+  const siblings = useMemo(
+    () => world.assets.filter((a) => a.id !== asset.id && a.side === asset.side && a.category === asset.category),
+    [world.assets, asset.id, asset.side, asset.category],
+  );
+  if (siblings.length === 0) return null;
+
+  const swapIn = (target: Asset) => {
+    const existingIds = new Set([...world.assetsById.keys(), ...Object.keys(overrides.customAssets)]);
+    const existingNames = new Set([
+      ...world.assets.map((a) => a.name),
+      ...Object.values(overrides.customAssets).map((a) => a.name),
+    ]);
+    const slot = asset.id.replace(/^side_[ab]-/, "");
+    let id = `${target.id}-at-${slot}`;
+    for (let n = 2; existingIds.has(id); n++) id = `${target.id}-at-${slot}-${n}`;
+    let name = `${target.name} (swapped in)`;
+    for (let n = 2; existingNames.has(name); n++) name = `${target.name} (swapped in ${n})`;
+
+    overrides.saveCustomAsset({
+      ...target,
+      id,
+      name,
+      distance_km_from_zero: asset.distance_km_from_zero,
+      operating_range_km: asset.operating_range_km,
+      band_id: asset.band_id,
+    });
+    view.select(id);
+  };
+
+  return (
+    <div className="swap-picker">
+      <label>
+        Swap in a different {asset.category} system here
+        <select
+          value=""
+          onChange={(e) => {
+            const target = siblings.find((s) => s.id === e.target.value);
+            if (target) swapIn(target);
+          }}
+        >
+          <option value="">Pick a same-category system to place here…</option>
+          {siblings.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      <p className="swap-picker__hint">
+        Adds an independent copy of the chosen system at this position — {asset.name} stays on the map too, same as
+        Duplicate above.
+      </p>
     </div>
   );
 }

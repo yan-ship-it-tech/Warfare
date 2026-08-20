@@ -8,6 +8,19 @@
   "distance_km_from_zero": 4,
   "operating_range_km": null,
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "Mine clearance is inherently a close-in engineering task — the minefields being cleared sit at or forward of friendly positions, so Uran-6's representative depth needs to fall inside doctrine.md's 1-5km close-reconnaissance band rather than further back. 4km fits an engineering platform operating just behind the leading edge of a breach lane rather than directly on it.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Army Technology — Uran-6 Mine-Clearing Robot",
+        "url": "https://www.army-technology.com/projects/uran-6-mine-clearing-robot/"
+      }
+    ]
+  },
   "category": "ground-robot-engineering",
   "representative_system": "Uran-6 — Ground robot (remote mine clearance)",
   "icon_image": "/icons/uran-6.png",
@@ -55,7 +68,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

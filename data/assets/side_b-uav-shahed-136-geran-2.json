@@ -5,9 +5,26 @@
   "domain": "air",
   "echelon": "tactical",
   "group": "uav",
-  "distance_km_from_zero": 18,
+  "distance_km_from_zero": 18.4,
   "operating_range_km": null,
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "18 km is a launch/staging depth, not the ~2,500 km stated range (1,700 km demonstrated) this asset's own characteristics report — that range is what lets Shahed/Geran-2 reach targets deep inside Ukraine (Kyiv and beyond) from a launch point that itself only needs to sit inside doctrine.md §2's drone-dense corridor (~30 km either side of the front). It shares its exact placement with Gerbera (also 18 km) for the reason Gerbera's own employment_notes give in this catalog — the two fly mixed swarms from shared forward launch positions specifically so defenders can't tell them apart before impact. (Nudged 18→18.4 km from this category's shared round-number value so it doesn't literally coincide with side_b-uav-gerbera on the map's distance axis — a small, deterministic spread within the same band, not a new plausibility claim beyond what's already argued above.)",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — HESA Shahed 136",
+        "url": "https://en.wikipedia.org/wiki/HESA_Shahed_136"
+      },
+      {
+        "label": "Covert Shores (H I Sutton) — Guide to Russian Shahed/Geran strike drones",
+        "url": "https://www.hisutton.com/Russian-Geran-Shahed-Drones.html"
+      }
+    ]
+  },
   "category": "uav-strike",
   "representative_system": "Shahed-136 / Geran-2 — Long-range one-way attack drone",
   "icon_image": "/icons/shahed-136-geran-2.png",
@@ -60,7 +77,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]

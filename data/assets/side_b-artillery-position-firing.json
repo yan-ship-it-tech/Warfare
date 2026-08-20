@@ -1,0 +1,75 @@
+{
+  "id": "side_b-artillery-position-firing",
+  "name": "Artillery Firing Position",
+  "side": "side_b",
+  "domain": "land",
+  "platform_domain": "land",
+  "echelon": "operational",
+  "group": "artillery",
+  "distance_km_from_zero": 10,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "placement_rationale": {
+    "text": "10 km places this inside real standing forest cover Pass 17 built on this side of the strip — a firing position doesn't just need to be within range, it needs overhead concealment from persistent drone ISR, which is exactly what a forest patch provides and open steppe doesn't. This is a first-class asset for the *position itself* (the dug-in pit, camouflage, ammunition dispersed nearby), distinct from the self-propelled gun assets already on this map, which represent the vehicles that occupy positions like this one and then displace after firing.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      }
+    ]
+  },
+  "category": "artillery-position-firing",
+  "representative_system": "Dug-in tube-artillery firing position under tree cover — composite, not a specific site",
+  "icon_image": "/icons/artillery-position.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Not a procurement item — a prepared position, not equipment",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Concealment",
+      "value": "Sited under canopy specifically to defeat persistent overhead drone ISR"
+    },
+    {
+      "label": "Doctrine",
+      "value": "\"Shoot and scoot\" — occupied briefly, not a fixed emplacement"
+    },
+    {
+      "label": "Threat",
+      "value": "Counter-battery radar and loitering munitions once the position fires and is located"
+    }
+  ],
+  "short_role": "The prepared, camouflaged ground a self-propelled or towed gun actually occupies to fire from — distinct from the gun itself.",
+  "characteristics": [
+    "Sited inside real forest cover (this map's own Pass 17 terrain feature, not an assumed location) rather than open ground",
+    "Ammunition and camouflage netting dispersed around the position rather than stacked at one point",
+    "Occupied for a short window per fire mission under modern counter-battery/drone-ISR pressure, then vacated",
+    "Represents the position, not the piece — the self-propelled/towed gun assets on this map occupy positions like this one"
+  ],
+  "employment_notes": "Represents a generic firing position rather than a specific coordinate — the point is that real cover (forest, not open steppe) is what makes a position survivable long enough to fire a mission, not distance from the line alone. Guns rotate through positions like this one rather than occupying one permanently.",
+  "contrast_vs_traditional": "Traditional artillery could mass in relatively open, fixed gun lines protected mainly by distance and counter-battery radar's own limits. Persistent drone ISR means an exposed position in open ground is found and struck within minutes of firing, which is why real cover — forest patches, not just standoff distance — has become load-bearing for artillery survivability.",
+  "connections": [
+    {
+      "target_id": "side_b-artillery-2s19-msta-s",
+      "type": "fires_support",
+      "description": "A position this gun occupies to fire a mission before displacing."
+    }
+  ],
+  "sources": [
+    {
+      "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+      "url": ""
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "unverified",
+    "independent_sources": 0,
+    "last_audit": "2026-08-20",
+    "notes": [
+      "Written from doctrine.md and general knowledge; no per-asset citation yet."
+    ]
+  }
+}

@@ -90,6 +90,45 @@ landmarks already do.
 
 ---
 
+## Resolved in Pass 18 (tactical asset placement)
+
+### `placement_rationale`, doctrinal review, terrain siting, human/positional layer, roster swap
+Full detail in `docs/DECISIONS.md` Pass 18. Summary: all 103 assets (89 shipped + 14 new) carry
+a sourced `placement_rationale`; three real distance corrections were found on review (NASAMS,
+TOS-1A, Sonobot-5); 14 straight-line-rank duplicates were nudged apart; `src/three/
+tacticalSiting.ts` sites terrain-affine categories onto Pass 17's real ground (forest patches,
+elevated treelines, built-up blocks, defended landmarks); the `infantry` group is no longer
+empty (see the struck entry above); `RosterSwapPicker` gives every asset a same-category swap,
+reusing Pass 11's `duplicateAsset()` mechanism rather than rebuilding it.
+
+## Open after Pass 18
+
+### Only one asset sits on real, committed rail geometry
+`side_a-logistics-ammo-point-railhead` genuinely sits on a real `data/osm/pokrovsk.json` rail
+vertex. Its `side_b` counterpart (`side_b-logistics-ammo-point`) uses the generic built-up-block
+terrain-affinity siting instead, honestly, because no committed OSM data exists for that side —
+same root cause as the pre-existing `kramatorsk.json` gap above. Once a second AOI/side gets real
+OSM data, `tacticalSiting.ts`'s OSM-railhead special case is written narrowly (one hardcoded
+asset id) and would need generalizing rather than just duplicating.
+
+### Swap mechanism has no UI-level "reset"/cleanup for accumulated clones
+Each roster swap and each Duplicate writes a permanent `customAssets` entry (same store, same
+persistence as every other override). Nothing currently offers "remove this clone" from the
+detail panel the way placement/text overrides get an independent reset (`docs/BACKLOG.md` #7) —
+the Asset Editor page can delete a custom asset, but that's a separate page, not a one-click
+action from the clone's own detail panel. Not a data-integrity problem (nothing is silently
+lost), just a workflow gap worth closing if swap/duplicate see heavy use in a live session.
+
+### Human/positional layer is illustrative density, not an order of battle
+6 new `infantry`-group assets (one squad, one dugout, one OP per side) represent the layer
+conceptually, matching this map's existing "representative, not measured" convention for every
+composite node — not a claim about how many squads/dugouts/OPs actually exist along the front.
+Extending density (more duplicates, more variety — e.g. a distinct MG/ATGM position) is
+mechanical from here (the swap/duplicate mechanisms already support it) but wasn't done blindly
+in this pass to avoid implying false precision about troop density.
+
+---
+
 ## Resolved in Pass 10
 
 ### Terrain destruction gradient
@@ -473,11 +512,14 @@ started.
   gap in the asset roster itself: no engineering vehicles (mine-clearing
   vehicles beyond Uran-6, bridging equipment, dozers) as their own
   data-carrying, clickable assets.
-- **Infantry positions / small arms** — `infantry` is a real group in
-  `data/groups.json` but **zero assets use it** — genuinely empty, not just
-  thin. Fighting positions as data (distinct from Pass 7's decorative
-  scenery version, which is deliberately not clickable), man-portable ATGMs
-  (Javelin, NLAW — see item 5 above), small arms: none of it exists yet.
+- ~~**Infantry positions / small arms**~~ — no longer empty as of Pass 18,
+  which added 6 real, clickable `infantry`-group assets (dismounted rifle
+  squad, fighting position/dugout, observation post — × 2 sides), distinct
+  from Pass 7's decorative, unclickable trench/fighting-position scenery.
+  Still thin relative to a full order of battle: man-portable ATGMs
+  (Javelin, NLAW — see item 5 above) and small arms as their own assets
+  don't exist yet. Kept here, struck rather than deleted, per this file's
+  own "Russia naval" convention below.
 - **EW as its own asset category** — correction while writing this: `ew` is
   already a real, structurally distinct group in `data/groups.json` (not
   folded into anything else), so this gap isn't structural. It's breadth:

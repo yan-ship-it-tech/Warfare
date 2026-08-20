@@ -8,6 +8,19 @@
   "distance_km_from_zero": 3,
   "operating_range_km": null,
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "Ratel-S's three roles — transport, remote mine-laying, and kamikaze use — are all close-in tasks that have to happen at or just behind the line itself, squarely inside doctrine.md's 1-5km close-reconnaissance band rather than a rear logistics depth. Its EW-hardening is itself evidence of a close siting: that hardening only matters where jamming density is highest, which is near the contact line, not in the rear.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Defense Express — Ratel S suicide UGV-drone specifications",
+        "url": "https://en.defence-ua.com/weapon_and_tech/ukrainian_officials_reveal_the_ratel_s_suicide_ugv_drone_specifications_included-8355.html"
+      }
+    ]
+  },
   "category": "ground-robot-multipurpose",
   "representative_system": "NRTK Ratel-S — Ground robot (mining / kamikaze / transport)",
   "icon_image": "/icons/nrtk-ratel-s.png",
@@ -57,7 +70,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

@@ -8,6 +8,19 @@
   "distance_km_from_zero": 2,
   "operating_range_km": null,
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "As a combat UGV, Moroz sits at close-reconnaissance depth (doctrine.md's 1-5km band) alongside the dismounted positions it supports, not further back. Its 1,000m MG range and 48hr standby endurance both fit an overwatch position held for extended periods near the line rather than a rear firing point, and the 2km siting keeps its own weapon's range envelope relevant to the front it's covering.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Defense Express — Brave1 unveils the MOROZ reconnaissance system",
+        "url": "https://en.defence-ua.com/news/brave1_unveils_the_moroz_reconnaissance_system-10774.html"
+      }
+    ]
+  },
   "category": "ground-robot-combat",
   "representative_system": "NPRK Moroz — Ground robot (fire support / logistics)",
   "icon_image": "/icons/nprk-moroz.png",
@@ -58,7 +71,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

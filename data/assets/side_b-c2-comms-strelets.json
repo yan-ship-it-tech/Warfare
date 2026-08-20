@@ -12,6 +12,19 @@
     "max_km": 8
   },
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "A soldier-portable squad-level fire-control terminal travels with the reconnaissance/infantry sub-unit carrying it, so its representative depth should track doctrine.md §2's close-reconnaissance band (1-5km) and forward-CP depth (2-5km) rather than sit further back with a battalion or higher headquarters. 4km fits a terminal used at the same depth as the small units it equips, consistent with the distributed, squad-level kill chain its own text describes.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Small Wars Journal — Distributed Combat Power (referenced in doctrine reference §1)",
+        "url": ""
+      }
+    ]
+  },
   "category": "c2-squad-level",
   "representative_system": "Sozvezdie-M2 'Strelets' automated reconnaissance and fire-control terminal",
   "icon_image": "/icons/strelets-terminal.png",
@@ -64,7 +77,7 @@
   "verification": {
     "status": "unverified",
     "independent_sources": 0,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Written from doctrine.md and general knowledge; no per-asset citation yet."
     ]

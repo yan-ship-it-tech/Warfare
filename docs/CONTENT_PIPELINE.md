@@ -124,6 +124,38 @@ Closing them is tracked in `docs/BACKLOG.md`.
 
 ---
 
+## Placement rationale (Pass 18)
+
+A second, narrower claim sits alongside the specification claims above:
+*is `distance_km_from_zero` doctrinally plausible for this category?* That's
+`placement_rationale` — `{ text, sources[] }`, same shape and citation
+convention as `sources` (a source with a blank `url` is named-but-unlinked,
+e.g. a citation to this repo's own `docs/doctrine.md`, never a fabricated
+link).
+
+It is sourced differently from the rest of an asset's content on purpose,
+and that's a deliberate, bounded scope decision rather than an oversight:
+rather than fresh independent research per asset, a placement rationale
+draws on two things that are already real, already-vetted evidence —
+
+1. **The asset's own `characteristics`/`operating_range_km`** — already
+   audited under this same pipeline — read against whether the placed
+   km actually sits inside the system's real engagement/operating envelope.
+2. **`docs/doctrine.md` §2's sourced distance/echelon table** — FPV strike
+   range, close reconnaissance, forward CP depth, the drone-dense corridor,
+   deep-strike layer, offensive staging depth — each already carrying a real
+   citation tag.
+
+Where a category's real-world deployment pattern isn't obvious from either
+of those (this is what actually catches an implausible placement — Pass 18
+found NASAMS sited at 19 km, forward of how it's actually employed in
+Ukraine), do the same web research CONTENT_PIPELINE's own drafting pass
+already licenses, and cite it with a `web:` label per `doctrine.md`'s own
+sourcing-key convention. `node scripts/audit-content.mjs` reports
+placement-rationale coverage (present / missing) alongside the existing
+verification tally — informational only, since `placement_rationale` isn't
+part of the `verification` status derivation.
+
 ## Adding a new category — the checklist
 
 - [ ] Draft the whole category in one sitting (pass 1). No verification yet.

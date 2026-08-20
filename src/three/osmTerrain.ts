@@ -29,8 +29,12 @@ import { worldXFor } from "./worldMapping";
  *  without the UI ever asserting it IS that town. 17 km leaves a comfortable
  *  margin either side of the AOI's own ~9 km half-extent before the band's
  *  5 km / 30 km edges (docs/DECISIONS.md Pass 17 works the exact numbers). */
-const ANCHOR_SIDE: Side = "side_a";
-const ANCHOR_KM = 17;
+// Exported (Pass 18) so the OSM-railhead ammo point's siting code — and its
+// own data/assets/*.json rationale text — can cite the literal same
+// constant instead of a second hardcoded "17" that could silently drift
+// from this one.
+export const ANCHOR_SIDE: Side = "side_a";
+export const ANCHOR_KM = 17;
 /** Half-extent of the patch, in the OSM data's own km frame. A bit past the
  *  AOI's real half-extent (~8.9 km) so the whole fetched box is eligible,
  *  well short of the tens/hundreds of km some ways run to past the AOI
@@ -49,13 +53,17 @@ const PATCH_HALF_KM = 10;
  *  piecewise-linear in km→world-X (verified against the shipped projection,
  *  docs/DECISIONS.md Pass 17), so any small delta inside one band gives the
  *  same answer; 1 km keeps the probe local to the anchor on principle. */
-function unitsPerKmAt(proj: Projection): number {
+// Exported (Pass 18): tacticalSiting.ts sites one asset — the OSM-railhead
+// ammo point — at a real point inside this same inset, and has to use the
+// exact same anchor/scale, not an independently re-derived approximation
+// that could drift from where the rail geometry itself actually draws.
+export function unitsPerKmAt(proj: Projection): number {
   const a = worldXFor(ANCHOR_SIDE, ANCHOR_KM - 0.5, proj);
   const b = worldXFor(ANCHOR_SIDE, ANCHOR_KM + 0.5, proj);
   return Math.abs(b - a);
 }
 
-function anchorXAt(proj: Projection): number {
+export function anchorXAt(proj: Projection): number {
   return worldXFor(ANCHOR_SIDE, ANCHOR_KM, proj);
 }
 

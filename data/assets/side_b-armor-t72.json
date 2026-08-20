@@ -6,12 +6,25 @@
   "echelon": "tactical",
   "group": "armor",
   "comparison_group": "main_battle_tank",
-  "distance_km_from_zero": 4,
+  "distance_km_from_zero": 4.4,
   "operating_range_km": {
     "min_km": 1,
     "max_km": 8
   },
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "This asset's own operating_range_km (1–8 km) already tracks doctrine.md's lower-sky bracket closely: 1–1.5 km under local air/drone superiority in a direct-fire posture, pushed back toward ~7 km without it. The placed 4 km sits inside that envelope, and the asset's own employment_notes describe increasingly dispersed, single-tank use rather than massed formations — a posture consistent with a moderate standoff rather than either extreme of the range. (Nudged 4→4.4 km from this category's shared round-number value so it doesn't literally coincide with side_b-armor-t-14-armata on the map's distance axis — a small, deterministic spread within the same band, not a new plausibility claim beyond what's already argued above.)",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "GlobalSecurity.org — T-72B3 Medium Tank",
+        "url": "https://www.globalsecurity.org/military/world/russia/t-72b3.htm"
+      }
+    ]
+  },
   "category": "armor-main-battle-tank",
   "representative_system": "T-72B3 / T-72B3M",
   "icon_image": "https://commons.wikimedia.org/wiki/Special:FilePath/Tank_T-72.JPG",
@@ -93,7 +106,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 3,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]

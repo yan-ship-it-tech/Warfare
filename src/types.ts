@@ -138,6 +138,20 @@ export interface Asset {
 
   sources: { label: string; url: string }[];
 
+  /** Why this asset sits where it does — Pass 18's answer to "is this
+   *  doctrinally plausible," not just "is this sourced." Same citation
+   *  convention as `sources`: a blank `url` is a named-but-unlinked
+   *  reference (e.g. this repo's own doctrine.md), never a fabricated one.
+   *  Optional and sparse by design — see docs/CONTENT_PIPELINE.md's
+   *  placement-rationale section — but every asset touched by Pass 18
+   *  carries one. Never hand-waved into `sources` itself: placement and
+   *  specification claims are different kinds of claim and stay auditable
+   *  separately. */
+  placement_rationale?: {
+    text: string;
+    sources: { label: string; url: string }[];
+  };
+
   /** Stamped by `node scripts/audit-content.mjs --write` — the verification
    *  half of the two-pass content pipeline (docs/CONTENT_PIPELINE.md).
    *  Never hand-edited: it is derived from `sources` so it cannot drift into

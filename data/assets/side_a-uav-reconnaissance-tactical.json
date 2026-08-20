@@ -12,6 +12,23 @@
     "max_km": 5
   },
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "The 4 km mark represents the Leleka-100 crew's launch/control site, not the ~100 km airframe range or the ~45 km video/radio link this asset's own characteristics report — those figures describe what the airframe can physically do once airborne, not how close the ground crew stations itself. At 4 km the crew sits inside doctrine.md §2's close-reconnaissance band (1–5 km), the 'second line' activated within seconds of a detection, matching this asset's own employment_notes on that exact role. The system's own 1–5 km operating_range_km envelope independently confirms the same band.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — DeViRo Leleka-100",
+        "url": "https://en.wikipedia.org/wiki/Leleka-100"
+      },
+      {
+        "label": "Army Technology — Leleka-100 UAV, Ukraine",
+        "url": "https://www.army-technology.com/projects/leleka-100-unmanned-aerial-vehicle-uav-ukraine/"
+      }
+    ]
+  },
   "category": "uav-reconnaissance",
   "representative_system": "DeViRo Leleka-100",
   "icon_image": "/icons/leleka-100.png",
@@ -75,7 +92,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 3,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

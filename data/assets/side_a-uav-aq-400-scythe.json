@@ -8,6 +8,23 @@
   "distance_km_from_zero": 375,
   "operating_range_km": null,
   "band_id": "strategic_rear",
+  "placement_rationale": {
+    "text": "375 km is a confirmed/typical strike depth for this one-way-attack airframe, not a launch-site offset — Scythe launches from inside Ukraine off a dolly/rail, so the crew position sits far outside this figure. It lands at exactly half this asset's own sourced 750 km range, the same conservative 'half of stated max range' reading applied across this deep-strike family (matching Beaver's 500 km against its ~1,000 km range) rather than the nominal maximum, and it extends doctrine.md §2's 10–150+ km medium/long-range strike layer into the strategic_rear band the way the whole one-way-attack drone family is placed here.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — Terminal Autonomy AQ-400 Scythe",
+        "url": "https://en.wikipedia.org/wiki/Terminal_Autonomy_AQ-400_Scythe"
+      },
+      {
+        "label": "Militarnyi — Ukrainian military received AQ-400 Scythe UAVs",
+        "url": "https://militarnyi.com/en/news/the-ukrainian-military-received-aq-400-scythe-long-range-unmanned-aerial-vehicles/"
+      }
+    ]
+  },
   "category": "uav-strike-deep",
   "representative_system": "AQ-400 Scythe — One-way attack drone (deep strike, volunteer-developed)",
   "icon_image": "/icons/aq-400-scythe.png",
@@ -58,7 +75,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

@@ -9,6 +9,15 @@
   "distance_km_from_zero": 5,
   "operating_range_km": null,
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "5 km matches Tor-M2's own sourced role — \"designed specifically for point defense of maneuver units, not just fixed sites\" — with a reaction time fast enough to escort forces close to the line, unlike the larger networked SAM batteries this map keeps further back.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      }
+    ]
+  },
   "category": "air-defense-short-range",
   "representative_system": "Tor-M2 — Short-range mobile SAM",
   "icon_image": "/icons/tor-m2.png",
@@ -53,7 +62,7 @@
   "verification": {
     "status": "sourced_low_confidence",
     "independent_sources": 1,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

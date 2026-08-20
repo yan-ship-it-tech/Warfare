@@ -1,0 +1,84 @@
+{
+  "id": "side_a-medical-point-forward",
+  "name": "Forward Casualty Collection Point",
+  "side": "side_a",
+  "domain": "medical",
+  "platform_domain": "land",
+  "echelon": "tactical",
+  "group": "medical",
+  "distance_km_from_zero": 3,
+  "operating_range_km": {
+    "min_km": 0,
+    "max_km": 10
+  },
+  "band_id": "tactical",
+  "placement_rationale": {
+    "text": "3 km sits between the point of injury and the rear end of the existing Ukrainian casevac-chain asset — this is the physical collection point itself, a first-class position distinct from that chain-level composite. Real 2025-2026 reporting is explicit that FPV drones have turned the area out to 10-15 km from the line into a lethal zone for evacuation, well past the old \"golden hour\" assumption — which is exactly why doctrine.md's close-reconnaissance depth (1-5 km) is also roughly where the first, most urgent collection point has to sit rather than further back: further back doesn't mean safer once the whole belt is covered by drones, and every extra km is time a casualty doesn't have.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "web: Kyiv Independent — Under Russian drone onslaught, Ukraine's critically wounded face slim survival chance",
+        "url": "https://kyivindependent.com/under-russian-drone-onslaught-ukraines-critically-wounded-face-slim-survival-chance/"
+      }
+    ]
+  },
+  "category": "medical-point-forward",
+  "representative_system": "Forward casualty collection point (point-of-injury care) — composite, not a specific unit",
+  "icon_image": "/icons/medical-point.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Not a procurement item — a staffed position, not equipment",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Function",
+      "value": "Point-of-injury stabilization before evacuation further to the rear"
+    },
+    {
+      "label": "Kill zone",
+      "value": "Documented FPV threat extends evacuation risk out to 10-15 km, not just at the line"
+    },
+    {
+      "label": "Adaptation",
+      "value": "UGV-based evacuation now used when a manned vehicle/stretcher run is judged too exposed"
+    }
+  ],
+  "short_role": "The physical point-of-injury / casualty collection position — the forward end of the medical chain the existing casevac-chain asset represents end to end.",
+  "characteristics": [
+    "Sits at the most exposed, time-critical end of the evacuation chain — stabilization happens here before any vehicle movement",
+    "FPV drones targeting medical evacuation specifically has become a documented, deliberate tactic, not an incidental risk",
+    "Ground evacuation robots increasingly cover the first, most exposed leg when a manned team or vehicle would be too exposed",
+    "Distinct from side_?-medical-casevac-chain: that asset represents the whole point-of-injury-through-definitive-care chain; this one is the physical forward position itself"
+  ],
+  "employment_notes": "Represents the actual collection point structure — camouflaged, close to the fighting positions it serves — rather than the evacuation chain as a whole. Real reporting describes wounded soldiers arriving too late specifically because the belt between here and the rear treatment facility is now contested airspace for a stretcher party or a soft-skinned vehicle alike.",
+  "contrast_vs_traditional": "Traditional battlefield medicine measured survival against the \"golden hour\" from injury to surgical care, with the evacuation route itself assumed relatively safe once clear of direct fire. Persistent drone coverage has erased that assumption for roughly the first 10-15 km of the route, forcing a shift toward unmanned ground evacuation for the most exposed leg and toward keeping this collection point itself smaller and better hidden rather than larger and better equipped.",
+  "connections": [
+    {
+      "target_id": "side_a-medical-casevac-chain",
+      "type": "casevac",
+      "description": "Feeds the wider point-of-injury-through-definitive-care evacuation chain."
+    }
+  ],
+  "sources": [
+    {
+      "label": "web: Kyiv Independent — Under Russian drone onslaught, Ukraine's critically wounded face slim survival chance",
+      "url": "https://kyivindependent.com/under-russian-drone-onslaught-ukraines-critically-wounded-face-slim-survival-chance/"
+    },
+    {
+      "label": "web: Nikkei Asia — Ukraine-Russia drone war turns UGVs into medevac lifeline",
+      "url": "https://asia.nikkei.com/politics/ukraine-war/ukraine-russia-drone-war-turns-ugvs-into-medevac-lifeline"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-20",
+    "notes": []
+  }
+}

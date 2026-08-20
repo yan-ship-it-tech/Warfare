@@ -1,0 +1,81 @@
+{
+  "id": "side_a-infantry-dismounted-squad",
+  "name": "Dismounted Rifle Squad",
+  "side": "side_a",
+  "domain": "land",
+  "platform_domain": "land",
+  "echelon": "tactical",
+  "group": "infantry",
+  "distance_km_from_zero": 1.5,
+  "operating_range_km": null,
+  "band_id": "tactical",
+  "placement_rationale": {
+    "text": "Sited at 1.5 km — inside doctrine.md §2's \"control of the lower sky\" bracket (1-1.5 km with local air/drone superiority, ~7 km without), the sourced finding that whichever side holds the lower airspace over its own trenches sets how close dismounted troops can actually operate, not doctrine or preference. Real reporting on 2024-2025 infantry tactics confirms the practical effect: units now move and fight in smaller, more dispersed sub-groups specifically because 24-hour drone coverage makes any above-ground movement visible within minutes.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "web: European Security & Defence — Infantry Tactical Insights from Ukraine",
+        "url": "https://euro-sd.com/2026/03/articles/armed-forces/49802/infantry-tactical-insights-from-ukraine/"
+      }
+    ]
+  },
+  "category": "infantry-dismounted-squad",
+  "representative_system": "Generic mechanized/motorized rifle squad — composite, not a named unit",
+  "icon_image": "/icons/infantry-squad.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Not a procurement line item — represents personnel, not equipment",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Typical size",
+      "value": "4-9 soldiers, split into entry/fire-support/reserve sub-teams"
+    },
+    {
+      "label": "Movement",
+      "value": "Night movement and dispersal below the surveillance threshold, per doctrine"
+    },
+    {
+      "label": "Primary threat",
+      "value": "FPV strike and artillery fire on any detected above-ground movement"
+    }
+  ],
+  "short_role": "The human element every other marker on this map ultimately supports or targets — the infantry actually holding or contesting ground at the line.",
+  "characteristics": [
+    "Operates in small, dispersed sub-groups rather than a massed formation — the direct tactical response to persistent overhead drone coverage",
+    "Moves mainly at night or in short, covered rushes between positions",
+    "Organic short-range air defense (MANPADS, small arms) and its own FPV/recon drones increasingly supplement or replace calls for supporting fire",
+    "The most under-represented layer on this map until Pass 18 — every other asset exists to support, resupply, defend, or evacuate this one"
+  ],
+  "employment_notes": "Represents a generic Ukrainian rifle squad holding or contesting a section of the line — not a specific named unit. Splits into an entry/assault element, a fire-support element suppressing the objective, and a reserve held back to organize defense or repel a counterattack, per documented 2024-2025 Ukrainian infantry tactics. Movement between positions is timed around drone-coverage gaps rather than tactical convenience.",
+  "contrast_vs_traditional": "Traditional infantry maneuver massed troops for a coordinated assault or held a continuous manned line. Persistent overhead drone coverage on both sides has made any concentration of troops a target within minutes of forming, so units now fight dispersed by default — smaller sub-groups, longer gaps between positions, and movement scheduled around when the sky is actually watched rather than around when the mission needs it.",
+  "connections": [
+    {
+      "target_id": "side_a-air-defense-cuas-gepard",
+      "type": "fires_support",
+      "description": "Covered by counter-drone fire while moving between positions."
+    }
+  ],
+  "sources": [
+    {
+      "label": "web: European Security & Defence — Infantry Tactical Insights from Ukraine",
+      "url": "https://euro-sd.com/2026/03/articles/armed-forces/49802/infantry-tactical-insights-from-ukraine/"
+    },
+    {
+      "label": "web: ICDS — Russia's War in Ukraine: Fortification for Drone Warfare",
+      "url": "https://icds.ee/en/russias-war-in-ukraine-fortification-for-drone-warfare/"
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "verified",
+    "independent_sources": 2,
+    "last_audit": "2026-08-20",
+    "notes": []
+  }
+}

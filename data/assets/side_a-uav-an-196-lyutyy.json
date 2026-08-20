@@ -8,6 +8,23 @@
   "distance_km_from_zero": 274,
   "operating_range_km": null,
   "band_id": "strategic_rear",
+  "placement_rationale": {
+    "text": "As a one-way-attack airframe, Lyutyy's 274 km is a representative strike depth into Russian territory, not a launch-site offset — the airframe is Ukrainian-built and launched from inside Ukraine, so this figure describes reach, not a crew's stand-off from the line. No single numeric range is recorded in this asset's own characteristics, only that it carries 'longer range and greater payload than most other Ukrainian long-range types,' so 274 km is read conservatively against doctrine.md §2's 10–150+ km medium/long-range strike layer, extended into the strategic_rear band the same way the rest of Ukraine's deep-strike drone family is placed in this catalog, rather than against the highest range figures reported for this airframe in open-source tracking.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — Liutyi",
+        "url": "https://en.wikipedia.org/wiki/Liutyi"
+      },
+      {
+        "label": "Covert Shores (H I Sutton) — Guide to Ukraine's long-range attack drones",
+        "url": "https://www.hisutton.com/Ukraine-OWA-UAVs.html"
+      }
+    ]
+  },
   "category": "uav-strike-deep",
   "representative_system": "AN-196 Lyutyy — One-way attack drone (large, deep strike)",
   "icon_image": "/icons/an-196-lyutyy.png",
@@ -57,7 +74,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

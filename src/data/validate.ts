@@ -213,6 +213,21 @@ export function validateAsset(
     }
   }
 
+  // ── placement rationale (Pass 18 — optional, but checked when present) ──
+  if (a.placement_rationale !== undefined && a.placement_rationale !== null) {
+    const pr = a.placement_rationale as Record<string, unknown>;
+    if (typeof pr.text !== "string" || pr.text.trim() === "") {
+      push("warning", "`placement_rationale.text` is present but empty.", subject);
+    }
+    if (!Array.isArray(pr.sources) || pr.sources.length === 0) {
+      push(
+        "info",
+        "`placement_rationale` has no `sources` — the km value isn't tied to anything checkable yet.",
+        subject,
+      );
+    }
+  }
+
   // ── connections ───────────────────────────────────────────────────────
   if (!Array.isArray(a.connections)) {
     push("warning", "`connections` is missing — the dependency overlay will show this asset isolated.", subject);

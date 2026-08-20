@@ -12,6 +12,23 @@
     "max_km": 800
   },
   "band_id": "op_deep",
+  "placement_rationale": {
+    "text": "120 km is grounded in Magura V5's own documented operating history, not a guess: the Feb 2024 sinking of the Sergey Kotov (this asset's own notable_events entry) took place near the Kerch Strait, and USNI Proceedings / Army Recognition (both already in sources) describe an 18-vessel damage record built up by USVs launched from Ukrainian-controlled coastline and remotely piloted via satellite link well beyond radio horizon. That reported engagement depth sits well inside the platform's own sourced ~800 km range, so 120 km reflects a real strike distance rather than the edge of the platform's technical envelope, and lands inside doctrine.md §2's medium/long-range strike & recon band (10–150+ km).",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Kyiv Post — Ukraine-Built MAGURA V5 Naval Drones Sink Russian Patrol Ship Sergey Kotov",
+        "url": "https://www.kyivpost.com/post/29016"
+      },
+      {
+        "label": "USNI Proceedings — Ukraine's Magura Naval Drones: Black Sea Equalizers",
+        "url": "https://www.usni.org/magazines/proceedings/2025/september/ukraines-magura-naval-drones-black-sea-equalizers"
+      }
+    ]
+  },
   "category": "naval-usv-strike",
   "representative_system": "Magura V5 uncrewed surface vessel",
   "icon_image": "/icons/magura-v5.png",
@@ -93,7 +110,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 3,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

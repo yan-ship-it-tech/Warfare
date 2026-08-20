@@ -8,6 +8,19 @@
   "distance_km_from_zero": 15,
   "operating_range_km": null,
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "BM-27 Uragan's own sourced range (~35 km per this asset's own Wikipedia source) puts 15 km at roughly 40% of maximum reach, comfortably inside a counter-battery survivability margin and further back than the shorter-ranged BM-21 Grad on this same roster, reflecting the extra reach Uragan trades range-for-range against Grad. As an unguided saturation system it carries a heavier post-launch counter-battery signature per this asset's own characteristics, so standing off proportionally to its longer range also fits the depth doctrine.md §2 records for Russian-side offensive staging (up to 30 km). 15 km sits inside doctrine.md's 10–150+ km medium/long-range strike layer while staying outside the closest 0–10 km FPV strike zone.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — BM-27 Uragan",
+        "url": "https://en.wikipedia.org/wiki/BM-27_Uragan"
+      }
+    ]
+  },
   "category": "artillery-rocket",
   "representative_system": "BM-27 Uragan — Multiple launch rocket system (unguided, long-range)",
   "icon_image": "/icons/bm-27-uragan.png",
@@ -55,7 +68,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

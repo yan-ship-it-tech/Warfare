@@ -8,6 +8,19 @@
   "distance_km_from_zero": 3,
   "operating_range_km": null,
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "T-90M is Russia's most modern MBT actually fielded at scale, with a 125mm gun, Relikt ERA and Shtora-1 soft-kill APS — protection built for a direct-fire posture close to the line. 3 km sits toward the close end of doctrine.md's lower-sky bracket (1–1.5 km with local air/drone superiority, ~7 km without), plausible for a modern tank but tempered by the asset's own contrast_vs_traditional note: photographed with improvised slat 'cope cage' armor, evidence that factory protection alone hasn't been enough to hold the closest positions safely.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Army Recognition — T-90M production ramp-up",
+        "url": "https://armyrecognition.com/news/army-news/2025/alert-russia-increases-production-of-most-modern-t-90m-tank-to-300-yearly-with-target-of-1-000-by-2028"
+      }
+    ]
+  },
   "category": "armor-main-battle-tank",
   "representative_system": "T-90M 'Proryv' — Main battle tank",
   "icon_image": "/icons/t-90m-proryv.png",
@@ -56,7 +69,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]

@@ -502,7 +502,11 @@ const TACTICAL_FEATURE_BUILDERS = {
   built_up_block: () => buildUrbanCluster(0xb10c),
 } as const;
 
-interface LandmarkSpec {
+/** Exported (Pass 18) alongside `TERRAIN_FEATURES` for the same reason:
+ *  "Patriot near what it defends" needs to know where "what it defends"
+ *  actually stands, not just have Pass 18 invent a second, unrelated
+ *  coordinate for a power plant or urban cluster that already has one. */
+export interface LandmarkSpec {
   kind: keyof typeof LANDMARK_BUILDERS;
   side: Side;
   km: number;
@@ -522,7 +526,7 @@ interface LandmarkSpec {
  * the destruction-gradient *tint* in terrain3d.ts, which is a fixed
  * world-X and does not track band edits (see that file's header).
  */
-const LANDMARKS: LandmarkSpec[] = [
+export const LANDMARKS: LandmarkSpec[] = [
   { kind: "power_plant", side: "side_a", km: 95, z: 22, rotationY: 0.4 },
   { kind: "power_plant", side: "side_b", km: 110, z: -18, rotationY: -0.3 },
   { kind: "fuel_depot", side: "side_a", km: 42, z: -26, rotationY: 0.2 },

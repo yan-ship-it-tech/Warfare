@@ -9,6 +9,19 @@
   "distance_km_from_zero": 18,
   "operating_range_km": null,
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "IRIS-T SLM's sourced ~40 km engagement envelope covers 18 km comfortably. Real Ukrainian employment is split between rear-area city/infrastructure defense (Kyiv) and forward coverage of frontline logistics nodes and energy infrastructure closer to the line — this entry represents the forward end of that real spread rather than the Kyiv-defense posture (see the separate NASAMS entry for why that posture was moved rearward instead of assumed here too). 18 km also sits inside doctrine.md's ~30 km drone-dense corridor, consistent with a medium-range IR-seeking system tasked partly against cruise-missile and drone threats transiting that zone.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "web: Militarnyi — IRIS-T: Missile Shield for Ukraine (deployment around cities, energy infrastructure and frontline logistics)",
+        "url": "https://militarnyi.com/en/articles/iris-t-missile-shield-for-ukraine/"
+      }
+    ]
+  },
   "category": "air-defense-medium-range",
   "representative_system": "IRIS-T SLM — Medium-range SAM",
   "icon_image": "/icons/iris-t-slm.png",
@@ -57,7 +70,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

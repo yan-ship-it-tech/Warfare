@@ -5,9 +5,22 @@
   "domain": "air",
   "echelon": "tactical",
   "group": "uav",
-  "distance_km_from_zero": 6,
+  "distance_km_from_zero": 5.6,
   "operating_range_km": null,
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "6 km is the Supercam crew's launch/control depth, not the 100–120 km comms range its own characteristics report. Placed one notch deeper than the Orlan-10/Leleka-100 pair at 4 km, this sits just past doctrine.md §2's 1–5 km close-reconnaissance band and is still comfortably inside the wider drone-dense corridor (~30 km either side of the front) — a plausible, slightly more conservative launch posture for a system this catalog itself compares against Zala Z-16 in the same tactical-reconnaissance niche. (Nudged 6→5.6 km from this category's shared round-number value so it doesn't literally coincide with side_b-uav-zala-z-16 on the map's distance axis — a small, deterministic spread within the same band, not a new plausibility claim beyond what's already argued above.)",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Army Recognition — Russia unveils Supercam S350",
+        "url": "https://www.armyrecognition.com/archives/archives-defense-exhibitions/2026-archives-news-defense-exhibitions/world-defense-show-2026/russia-unveils-supercam-s350-drone-with-240-km-range-for-artillery-targeting-operations-2"
+      }
+    ]
+  },
   "category": "uav-reconnaissance",
   "representative_system": "Supercam S350 — Reconnaissance UAV",
   "icon_image": "/icons/supercam-s350.png",
@@ -58,7 +71,7 @@
   "verification": {
     "status": "sourced_low_confidence",
     "independent_sources": 1,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

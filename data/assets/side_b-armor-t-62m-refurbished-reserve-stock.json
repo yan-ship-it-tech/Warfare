@@ -5,9 +5,22 @@
   "domain": "land",
   "echelon": "tactical",
   "group": "armor",
-  "distance_km_from_zero": 5,
+  "distance_km_from_zero": 4.6,
   "operating_range_km": null,
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "T-62M is 1960s-era reserve stock reactivated by attrition rather than a front-line-optimized design — a 115mm rifled gun a full generation behind the 125mm smoothbore standard — so 5 km, toward the rear edge of doctrine.md's lower-sky bracket (1–1.5 km with local air/drone superiority, ~7 km without) rather than its closest end, is consistent with a unit fielding obsolete armor cautiously rather than committing it to the tightest direct-fire positions a modern tank might hold. (Nudged 5→4.6 km from this category's shared round-number value so it doesn't literally coincide with side_b-armor-t-80bvm on the map's distance axis — a small, deterministic spread within the same band, not a new plausibility claim beyond what's already argued above.)",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Army Recognition — Russia reactivates T-62M/T-62MV for Ukraine",
+        "url": "https://www.armyrecognition.com/focus-analysis-conflicts/army/conflicts-in-the-world/russia-ukraine-war-2022/russia-keeps-upgrading-soviet-era-t-62m-and-t-62mv-tanks-for-combat-in-ukraine"
+      }
+    ]
+  },
   "category": "armor-main-battle-tank",
   "representative_system": "T-62M (refurbished reserve stock) — Main battle tank (1960s-era, reactivated)",
   "icon_image": "/icons/t-62m-refurbished-reserve-stock.png",
@@ -56,7 +69,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

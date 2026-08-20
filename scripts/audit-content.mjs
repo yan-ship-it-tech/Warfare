@@ -125,3 +125,28 @@ console.log(
     `low-confidence ${by("sourced_low_confidence").length}   unverified ${by("unverified").length}`,
 );
 console.log(WRITE ? "Stamped `verification` into every asset file." : "Report only — pass --write to stamp files.");
+
+// ── placement_rationale coverage (Pass 18) ──────────────────────────────
+// Informational only — this field is not part of the `verification` status
+// derivation above (that stays exactly what CONTENT_PIPELINE.md's two-pass
+// bar has always measured: specification sourcing). This is a second,
+// separate tally so a future pass can see at a glance whether every asset's
+// *placement* is backed by something checkable, the same way this script
+// already reports whether its *specifications* are.
+const withRationale = [];
+const missingRationale = [];
+for (const f of files) {
+  const asset = JSON.parse(readFileSync(join(DIR, f), "utf8"));
+  const pr = asset.placement_rationale;
+  const hasText = typeof pr?.text === "string" && pr.text.trim() !== "";
+  const hasSources = Array.isArray(pr?.sources) && pr.sources.length > 0;
+  if (hasText && hasSources) withRationale.push(asset.id);
+  else missingRationale.push(asset.id);
+}
+console.log("\nPLACEMENT RATIONALE COVERAGE");
+console.log("=".repeat(78));
+console.log(`  with placement_rationale (text + sources): ${withRationale.length} / ${files.length}`);
+if (missingRationale.length > 0) {
+  console.log(`  missing:`);
+  for (const id of missingRationale) console.log(`    · ${id}`);
+}

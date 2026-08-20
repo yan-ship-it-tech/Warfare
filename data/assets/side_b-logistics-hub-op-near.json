@@ -8,6 +8,19 @@
   "distance_km_from_zero": 18,
   "operating_range_km": null,
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "Reviewed specifically against the general logistics-doctrine expectation that supply nodes sit back from contact for survivability: at 18km this hub does read shallow for a 'hub' by that generic standard alone. But its own text makes the shallow siting a deliberate point rather than an oversight — it explicitly sits inside doctrine.md §2's ~30km drone-dense corridor on purpose, to illustrate how persistent overhead coverage has compressed what 'near-rear and relatively safe' means, forcing convoy movement discipline (staggered segments, radio silence) down to a level that used to only apply at the line itself. That justification is already load-bearing across three fields (characteristics, employment_notes, contrast_vs_traditional), so kept at 18km rather than moved deeper — moving it would erase the asset's own stated point. Contrast with side_a-logistics-hub-op-deep (80km), which is explicitly framed as sitting beyond the corridor instead.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Andrey Markin, 'Summary of Combat Experience of the SVO' — movement/logistics patterns referenced in doctrine reference",
+        "url": ""
+      }
+    ]
+  },
   "category": "logistics-hub",
   "representative_system": "Generic battalion/regimental near-rear supply point — composite, not a named facility",
   "icon_image": "/icons/logistics-hub.png",
@@ -50,7 +63,7 @@
   "verification": {
     "status": "unverified",
     "independent_sources": 0,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Written from doctrine.md and general knowledge; no per-asset citation yet."
     ]

@@ -5,9 +5,22 @@
   "domain": "land",
   "echelon": "tactical",
   "group": "armor",
-  "distance_km_from_zero": 6,
+  "distance_km_from_zero": 6.4,
   "operating_range_km": null,
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "Marder's own characteristics list an effective cannon range of ~1,100 m — an autocannon engagement envelope, not a distance an IFV sits at while waiting to commit. 6 km in the near-operational band reflects the vehicle's actual employment: per its own contrast_vs_traditional note, getting infantry to a position increasingly means dismounting short of the objective and moving the final stretch on foot, so the IFV itself holds further back than a hull-down tank would, inside doctrine.md's close-reconnaissance depth (1–5 km) but not at its inner edge. (Nudged 6→6.4 km from this category's shared round-number value so it doesn't literally coincide with side_a-armor-m1126-icv-stryker on the map's distance axis — a small, deterministic spread within the same band, not a new plausibility claim beyond what's already argued above.)",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — Marder (infantry fighting vehicle)",
+        "url": "https://en.wikipedia.org/wiki/Marder_(infantry_fighting_vehicle)"
+      }
+    ]
+  },
   "category": "armor-ifv",
   "representative_system": "Marder 1A3 — Infantry fighting vehicle",
   "icon_image": "/icons/marder-1a3.png",
@@ -58,7 +71,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

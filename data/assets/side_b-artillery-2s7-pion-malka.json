@@ -8,6 +8,19 @@
   "distance_km_from_zero": 12,
   "operating_range_km": null,
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "2S7 Pion/Malka's real-world range (per this asset's own Wikipedia source) runs to roughly 37 km with standard rounds and up to ~47.5 km with rocket-assisted projectiles, so 12 km draws on only about a quarter to a third of that reach — a wider margin, in absolute terms, than most of the tracked SPGs in this comparison set. That extra standoff offsets the platform's own noted limitation of being very heavy and slow to reposition: a gun that can't shoot-and-scoot needs more distance rather than more speed to survive counter-battery fire, consistent with doctrine.md §2's finding that local drone/counter-battery pressure sets standoff distance. 12 km sits inside doctrine.md's 10–150+ km medium/long-range strike layer, clear of the close-in 0–10 km FPV strike zone.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — 2S7 Pion",
+        "url": "https://en.wikipedia.org/wiki/2S7_Pion"
+      }
+    ]
+  },
   "category": "artillery-self-propelled",
   "representative_system": "2S7 Pion / Malka — Self-propelled artillery (heavy, tracked)",
   "icon_image": "/icons/2s7-pion-malka.png",
@@ -56,7 +69,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

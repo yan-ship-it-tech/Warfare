@@ -13,6 +13,15 @@
     "max_km": 20
   },
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "7 km sits inside Pantsir-S1's own sourced 2-20 km operating envelope. Its gun-plus-missile combination is built for close point defense of high-value assets and forward positions alike, which is also why (per its own characteristics) it has itself become a frequent target for cheap strike drones at this depth.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      }
+    ]
+  },
   "category": "air-defense-short-range",
   "representative_system": "Pantsir-S1 (combined gun/missile point-defense system)",
   "icon_image": "https://commons.wikimedia.org/wiki/Special:FilePath/Pantsir-S1_SAM.jpg",
@@ -72,7 +81,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

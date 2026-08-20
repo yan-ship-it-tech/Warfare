@@ -5,9 +5,22 @@
   "domain": "land",
   "echelon": "tactical",
   "group": "armor",
-  "distance_km_from_zero": 4,
+  "distance_km_from_zero": 3.6,
   "operating_range_km": null,
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "Like the other donated MBTs, Abrams is a direct-fire platform (120mm smoothbore) whose viable standoff is set by which side controls the lower sky over its sector — 1–1.5 km with local air/drone superiority, ~7 km without, per doctrine.md. 4 km sits inside that bracket and inside the tactical band, consistent with the asset's own employment_notes describing it as used sparingly and at points withdrawn from front-line use due to drone vulnerability, i.e. held further back than the closest end of the range rather than parked at the zero line. (Nudged 4→3.6 km from this category's shared round-number value so it doesn't literally coincide with side_a-armor-t-72amt-upgraded-t-72 on the map's distance axis — a small, deterministic spread within the same band, not a new plausibility claim beyond what's already argued above.)",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "National Security Journal — Ukraine's M1A1 Abrams fleet",
+        "url": "https://nationalsecurityjournal.org/ukraine-has-49-new-m1a1-abrams-tanks-and-america-isnt-happy-one-bit/"
+      }
+    ]
+  },
   "category": "armor-main-battle-tank",
   "representative_system": "M1A1 Abrams — Main battle tank",
   "icon_image": "/icons/m1a1-abrams.png",
@@ -57,7 +70,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]

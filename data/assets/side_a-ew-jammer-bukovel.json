@@ -13,6 +13,19 @@
     "max_km": 20
   },
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "EW systems sit back from the direct-fire line — a large emitter close in is an easy target once triangulated — but need to stay forward enough to cover the ~30km drone-dense corridor where persistent coverage matters most (doctrine.md §2). At 8km, Bukovel-AD is well inside its own ~20km jamming range and comfortably within the corridor while standing off from direct-fire engagement; doctrine.md §4's passive-first detection logic (listen before transmitting) also favors a position with room to triangulate before it's triangulated.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §4 — EW",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — Bukovel (counter unmanned aircraft system)",
+        "url": "https://en.wikipedia.org/wiki/Bukovel_(counter_unmanned_aircraft_system)"
+      }
+    ]
+  },
   "category": "ew-counter-uas",
   "representative_system": "Proximus Bukovel-AD",
   "icon_image": "/icons/bukovel-ad.png",
@@ -75,7 +88,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 3,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

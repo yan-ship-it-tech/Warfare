@@ -8,6 +8,19 @@
   "distance_km_from_zero": 3,
   "operating_range_km": null,
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "Varan's modular loadout spans reconnaissance, EW, engineering and direct-fire weapons up to ATGMs — all close-in roles that place it inside doctrine.md's 1-5km close-reconnaissance band alongside the positions it's configured to support, whichever module is mounted. 3km fits a heavier, more capable combat-UGV chassis operating just behind the leading edge rather than the line itself.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Militarnyi — Russian unmanned ground vehicles deployed against Ukraine",
+        "url": "https://militarnyi.com/en/articles/russian-unmanned-ground-vehicles-deployed-in-the-war-against-ukraine/"
+      }
+    ]
+  },
   "category": "ground-robot-multipurpose",
   "representative_system": "Varan — Ground robot (tracked, modular, combat-capable)",
   "icon_image": "/icons/varan.png",
@@ -52,7 +65,7 @@
   "verification": {
     "status": "sourced_low_confidence",
     "independent_sources": 1,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

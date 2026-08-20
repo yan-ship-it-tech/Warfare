@@ -9,6 +9,19 @@
   "distance_km_from_zero": 60,
   "operating_range_km": null,
   "band_id": "op_deep",
+  "placement_rationale": {
+    "text": "Doctrine.md §2's forward-CP figures (2-5km, ~10km for combat-trains CP) describe maneuver-unit command posts that need to sit close to the units they direct — this asset is a different thing, a sensor-fusion/battle-management network hub whose entire design point (per its own text) is surviving the loss of any single sensor or shooter node. Reviewed against that distinction: a deep-rear siting at 60km, well beyond routine counter-battery and short-range strike reach, is consistent with rather than in tension with the forward-CP figures, since a networked hub's survivability requirement pushes it the opposite direction from a maneuver CP's need for proximity. Confirmed at current depth, no change.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Northrop Grumman — Integrated Air and Missile Defense Battle Command System (IBCS)",
+        "url": "https://www.northropgrumman.com/what-we-do/land/integrated-air-and-missile-defense-battle-command-system-ibcs"
+      }
+    ]
+  },
   "category": "c2-battle-management",
   "representative_system": "IBCS-style integrated air/missile defense battle command (Northrop Grumman IBCS pattern)",
   "icon_image": "/icons/iads-c2.png",
@@ -61,7 +74,7 @@
   "verification": {
     "status": "sourced_low_confidence",
     "independent_sources": 1,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

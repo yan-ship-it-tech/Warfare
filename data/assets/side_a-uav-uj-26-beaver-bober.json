@@ -8,6 +8,23 @@
   "distance_km_from_zero": 500,
   "operating_range_km": null,
   "band_id": "strategic_rear",
+  "placement_rationale": {
+    "text": "500 km is a confirmed/typical strike depth, not a launch-site offset — Beaver launches from inside Ukraine, so the crew/launch position sits far outside this figure. It lands at exactly half this asset's own sourced ~1,000 km range, the same conservative reading applied to Scythe (375 km against 750 km) rather than the nominal maximum, landing it at the top edge of the strategic_rear band (150–500 km) — appropriate for one of the earliest and longest-established members of Ukraine's deep-strike drone family, extending doctrine.md §2's 10–150+ km medium/long-range strike layer into strategic depth.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — Bober (drone)",
+        "url": "https://en.wikipedia.org/wiki/Bober_(drone)"
+      },
+      {
+        "label": "Covert Shores (H I Sutton) — Guide to Ukraine's long-range attack drones",
+        "url": "https://www.hisutton.com/Ukraine-OWA-UAVs.html"
+      }
+    ]
+  },
   "category": "uav-strike-deep",
   "representative_system": "UJ-26 Beaver (Bober) — One-way attack drone (deep strike)",
   "icon_image": "/icons/uj-26-beaver-bober.png",
@@ -58,7 +75,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

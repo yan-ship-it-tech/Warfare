@@ -2821,3 +2821,226 @@ once from a single oblique angle — no seam, the river, the bridge, an OSM buil
 and a forest patch on the left bank, a built-up block and another forest patch on the
 right — which is as close to "the whole pass, confirmed in one frame" as this kind of
 verification gets.
+
+---
+
+# Pass 18 — Tactical asset placement
+
+Depends on Pass 17 (confirmed landed before writing any code): `TERRAIN_FEATURES` in
+`src/three/scenery.ts` — not `osmTerrain.ts`, a brief imprecision worth flagging — ships real
+standing geometry (`buildForestPatch`, `buildElevatedTreeline`, reused `buildUrbanCluster` for
+built-up blocks), the destroyed bridge and pontoon crossing render, and `RIVER_HALF_WIDTH = 6`
+(≈12-unit worst-case width with wobble) plus `isInWater()` guards were already threaded through
+every scatter/placement loop. Read as instructed before starting.
+
+## 1. `placement_rationale` — schema, then content for all 103 assets
+
+New optional field on `Asset` (`src/types.ts`): `{ text: string; sources: {label,url}[] }`, same
+citation convention as `sources` (a blank `url` is a named-but-unlinked reference, e.g. this
+repo's own `docs/doctrine.md`, never a fabricated link). `validate.ts` warns (never errors) on a
+present-but-empty one. `docs/CONTENT_PIPELINE.md` gets a new section documenting the sourcing
+method actually used — a deliberate, bounded scope decision, not fresh independent research per
+asset: draw on (1) the asset's own already-audited `characteristics`/`operating_range_km`, read
+against whether the placed km sits inside the system's real envelope, and (2) `docs/doctrine.md`
+§2's sourced distance/echelon table, with a targeted web search only where neither covers a
+category's real deployment pattern. `scripts/audit-content.mjs` gained a second, separate
+coverage tally for this field — informational only, since placement sourcing and specification
+sourcing are different claims and the existing `verification` derivation stays exactly what it
+already measured.
+
+**Every one of the 89 shipped assets plus the 14 new ones (103 total) now carries one.** The 11
+air-defense/CUAS assets were reviewed directly (below); the other 78 were split into five
+category batches (armor 18, artillery 12, UAV 20, ground-robots+EW+C2+logistics+medical 19,
+naval+space+strategic 9) and run in parallel, each grounded in doctrine.md + the asset's own
+sourced characteristics per the convention above, each reporting back any distance it judged
+implausible for my review rather than changing things unsupervised. `node
+scripts/audit-content.mjs --write` re-stamped `verification` at the end (unchanged derivation,
+run because the underlying `sources` arrays were untouched by this pass except where noted below
+— confirms nothing regressed): **70 verified, 15 low-confidence, 18 unverified** of 103, up from
+64/13/10 of 87 before Pass 7's last count and 66/15/10 of 89 just before this pass (the 8 new
+`unverified` are new composite human-layer positions in the same honest spirit as the pre-existing
+logistics-hub/casevac-chain/power-plant composites, not a regression).
+
+### Distance/band corrections found on review
+
+Exactly the shape of catch this pass was for — an asset's own sourced envelope contradicting where
+it was placed:
+
+- **NASAMS (`side_a-air-defense-nasams`), 19 → 95 km, `op_near` → `op_deep`.** The one named in the
+  brief. Real reporting (Kyiv Post's NASAMS analysis; a February 2024 Pravda/Forbes-sourced piece
+  on Ukraine relocating some batteries closer to the front) frames a forward NASAMS deployment as a
+  deliberate, newsworthy departure from the norm — its default, most-documented role is medium-
+  range point defense of Kyiv and other high-value rear infrastructure. Moved to 95 km specifically
+  to coincide with this map's own `side_a` power-plant `LANDMARK` (also at km 95), so the
+  siting logic below can visibly place it defending real ground rather than an arbitrary rear
+  coordinate. IRIS-T SLM (18 km) was reviewed against the same question and left unchanged — real
+  reporting supports both a Kyiv-defense posture *and* forward coverage of frontline logistics/
+  energy infrastructure for that specific system, so 18 km already sits inside its real employment
+  spread rather than contradicting it.
+- **TOS-1A (`side_b-artillery-tos-1a`), 21 → 6 km.** Found by the artillery batch: the asset's own
+  characteristics state a ~6-10 km engagement envelope; at 21 km it could not have reached the
+  front at all.
+- **Sonobot-5 (`side_a-naval-sonobot-5`), 60 → 20 km, `op_deep` → `op_near`.** Found by the naval
+  batch: its own key_facts state a 30 km operating range; 60 km was double that.
+
+Patriot (40 km, unchanged) got the opposite kind of review — its own characteristics already say
+"typically positioned well back... to protect high-value rear-area targets," and 40 km is real and
+defensible, but the rationale also had to reckon with Ukraine's well-documented "SAMbush" tactic
+(a Patriot moved unusually close to the front specifically to ambush Russian aircraft — the A-50
+AWACS kill and multiple Su-34/Su-35 losses attributed to it in 2023-2024). 40 km was kept as the
+position that keeps both employment patterns doctrinally reachable rather than picking the single
+most conservative rear depth.
+
+### Breaking up the straight-line ranks — a data fix, not a rendering hack
+
+`worldMapping.ts`'s `lateralLayout()` (Pass 8, refined Pass 16/17) already does real Z-axis
+dispersion — the "everything piles up down the middle" bug this section's title might suggest was
+already fixed two passes ago. The real remaining rank artifact was on **X**: 14 groups of
+same-side, same-category assets sat at the *exact same* `distance_km_from_zero` (e.g. both
+Ukrainian self-propelled howitzers at 14 km, three side_a `uav-strike` assets at 6 km) — since X is
+the one axis shared with the 2D schematic view and the ruler, faking a visual-only offset in the 3D
+renderer alone would have broken the "both views can never disagree about where anything is"
+invariant `CLAUDE.md` states as load-bearing. So this was fixed as data: a small script found every
+exact-duplicate `(side, category, km)` group and nudged each member by a deterministic ±0.3-0.6 km
+within its own band (never crossing a boundary — clamped/mirrored where a value sat right at one,
+one manual correction where two mirrored offsets still collided), appending a one-sentence note to
+each affected asset's own `placement_rationale.text` explaining the nudge rather than changing it
+silently. Verified zero duplicate `(side, category, km)` groups remain across all 103 assets,
+re-checked independently after the fix (not trusting the script's own "changed: N" printout alone).
+
+## 2. Terrain-driven siting — `src/three/tacticalSiting.ts`, a post-process on `lateralLayout()`
+
+New module, deliberately **not** a change to `lateralLayout()` itself — that function is tested,
+perf-measured machinery (Pass 8/16/17) and reworking its collision-avoidance/relaxation pass mid-
+pass would have risked exactly the kind of regression Pass 16's own testing doctrine warns about.
+Instead `applyTacticalSiting()` runs after it, in `Scene3D.tsx`'s asset-placement effect, and
+blends (never snaps — `BLEND_TOWARD_FEATURE = 0.72`) a bounded set of terrain-affine categories'
+already-collision-safe Z toward real ground:
+
+| Category prefix | Affinity | Real ground used |
+|---|---|---|
+| `artillery*` | `forest` | Nearest same-side `forest_patch` `TERRAIN_FEATURE` |
+| `uav-strike*` / `uav-reconnaissance*` (not `-deep`/`-strategic`), or category containing `observation` | `treeline` | Nearest same-side `elevated_treeline` — a human OP and a drone team's launch/observation point plausibly share the same real ground |
+| `logistics*` / `ground-robot-logistics*` | `built_up` | Nearest same-side `built_up_block` |
+| `air-defense*` / `cuas*` | `defended` | Nearest same-side `power_plant`/`fuel_depot`/`urban_cluster` `LANDMARK` — "Patriot near what it defends," generalized |
+| `c2-*` / category containing `command` | `rearward` | No feature — pushed toward whichever side of its own cohort spread is less crowded (stable per-id hash), i.e. dispersed from other C2 nodes, not toward a point |
+
+Multiple assets sharing one feature fan out around its own radius (angular jitter, same pattern
+`scenery.ts`'s own rejection-sampled tree/fighting-position clusters already use) rather than
+stacking at its exact center. `LANDMARKS` (previously module-private in `scenery.ts`) is now
+exported alongside the already-exported `TERRAIN_FEATURES` so the "defended" affinity has real
+coordinates to read, not a second, independently-invented set.
+
+**One asset is sited on literally real geometry, not an affinity search.** The Ukrainian forward
+ammunition point (`side_a-logistics-ammo-point-railhead`) sits at km 17 — the exact `ANCHOR_KM`
+`osmTerrain.ts` already anchors its Pokrovsk-AOI metric inset to — and its Z is the real local
+offset of a specific rail vertex from `data/osm/pokrovsk.json` (feature `osm_314023821`, the
+closest rail point in the file to the inset's own anchor), converted through `unitsPerKmAt()` /
+`anchorXAt()` (now exported from `osmTerrain.ts` rather than reimplemented, so this can never drift
+from where the rail ribbon itself draws). Confirmed by panning the camera to that band and
+screenshotting: the pin sits inside the same dense, organically-clustered tree/building patch Pass
+17's own verification already identified as visually distinct from the sparse battle-damage
+treeline elsewhere. No other side/band currently has committed real OSM geometry (`kramatorsk.json`
+still doesn't exist — `docs/BACKLOG.md`), so the `side_b` ammo point uses the generic `built_up`
+affinity honestly rather than inventing a second, unbacked "real geometry" claim.
+
+## 3. Human/positional layer — 14 new first-class assets, `infantry` group populated for the first time
+
+`docs/BACKLOG.md` flagged `infantry` as a real group in `data/groups.json` with **zero** assets —
+genuinely empty, not thin. Seven position types × two sides:
+
+dismounted rifle squad · fighting position/dugout · forward casualty collection point · artillery
+firing position · tactical command post · observation post · forward ammunition point
+
+Each is a real, validated `Asset` record (not decorative scenery — `scenery.ts`'s trench
+lines/fighting positions stay exactly what they were, unclickable dressing) with its own
+`placement_rationale`, sourced from doctrine.md §2/§5 plus two new pieces of real 2025-2026
+reporting found for this pass specifically: FPV drones have turned the belt out to 10-15 km from
+the line into a lethal zone for evacuation (Kyiv Independent), and 2024-2025 Ukrainian infantry
+tactics have shifted toward smaller, more dispersed sub-groups and deeper, camouflaged fighting
+positions specifically because 24-hour drone coverage makes any above-ground movement visible
+within minutes (European Security & Defence, ICDS). Every icon resolves correctly with **zero**
+registry changes needed — `src/icons/registry.tsx`'s `BY_GROUP` already had entries for every group
+used (`infantry` → the existing `INFANTRY_POSITION` symbol, `medical`, `artillery`, `c2`,
+`logistics`), confirming the existing group→icon fallback chain was already built to absorb a new
+category without a code change, exactly as its own header comment claims.
+
+Distinct from, and connected to, the pre-existing composite nodes rather than duplicating them: the
+new casualty collection points carry a `casevac` edge into the existing `*-medical-casevac-chain`
+assets (they're the forward end of that chain, not a competing narrative), the new ammunition
+points carry a `supply` edge to an existing logistics UGV, the new observation posts cross-check
+the existing tactical recon UAVs, and the new command posts are explicitly distinguished in their
+own text from the existing deep-rear `c2-battle-management` sensor-fusion hub (a different kind of
+C2 node at a different depth, not a renamed duplicate of it).
+
+## 4. Swap mechanism — reusing Pass 11's `duplicateAsset()`, not rebuilding it
+
+`RosterSwapPicker` (`DetailPanel.tsx`), rendered alongside the existing catalog-based `SwapPicker`
+(Pass 3 — still only covers the 14/89 assets with a `comparison_group`). Lists every other asset
+sharing this one's `category` and `side` — the full 103-asset roster, not just the catalog-linked
+subset — and picking one calls the exact same `saveCustomAsset()`/`customAssets` mechanism
+`duplicateAsset()` already uses, cloning the **target's** full profile but keeping **this asset's**
+own site (`distance_km_from_zero` / `operating_range_km` / `band_id`), so the clone visibly takes
+over the position instead of adding a second marker at the target's own spot.
+
+Deliberately additive, same as Duplicate: nothing is hidden or removed. Verified end to end
+(headless): clicking a T-90M pin, swapping in a T-80BVM, confirms the original T-90M pin is still
+present *and* a new "T-80BVM (swapped in)" pin now sits at the T-90M's former position *and* the
+T-80BVM's own original pin is untouched elsewhere — three independent markers where there were two.
+That is what makes "every category stays represented" true **by construction** rather than by a
+separate guard that has to be maintained: a same-category swap can only ever add an instance of a
+category that was already present, never subtract one, and Duplicate already never removed
+anything either. No new "hidden" concept was introduced to the data model — considered (hide the
+original, clone the target into its place) and rejected: it would have needed the loader to filter
+hidden assets out of the connections graph too, manufacturing broken-edge noise in Data health for
+a feature the brief's own framing ("not every asset should be on the map *at once*") is satisfied
+by the always-on category-filter toggle already shipped since Pass 2, not by anything this pass
+needed to add.
+
+## Where the brief and prior passes disagreed
+
+- **"`TERRAIN_FEATURES` in `src/three/osmTerrain.ts`"** — it's in `scenery.ts`; `osmTerrain.ts`
+  only consumes the OSM file itself. Confirmed by reading the code rather than assuming the brief's
+  file reference was current, per the item-0 verification instruction.
+- **The "straight-line ranks" fix touches `distance_km_from_zero`, not just Z.** `lateralLayout()`
+  already handled lateral spread reasonably well by Pass 17; the actual rank artifact left was
+  same-category assets sharing an identical km value, which is an X-axis fact, and X is the one
+  axis this map promises never to fake for layout's sake. Fixed as small, disclosed data nudges,
+  not a 3D-only visual offset.
+- **`RosterSwapPicker` clones the target at the original's site rather than hiding the original.**
+  Read "reuse Pass 11's duplicate mechanism, don't rebuild it" as license to reuse the *clone-into-
+  customAssets* mechanism specifically, not as a mandate to also invent a hide/remove capability
+  the data model doesn't have and the brief's stated goal (category representation, "not every
+  asset on the map at once") doesn't actually require. Flagged because it's a real reading choice.
+- **Placement-rationale sourcing is category-grounded, not independently researched per asset.**
+  Stated as a deliberate, bounded scope decision in `docs/CONTENT_PIPELINE.md`'s new section rather
+  than silently applying a lighter bar than the two-source specification standard — the two are
+  different kinds of claim (is this placement doctrinally plausible vs. is this specification
+  correct), and conflating them would have meant either 103 fresh research passes this session
+  didn't have room for, or a false claim of parity with the existing verification bar.
+
+## Verification
+
+`npm run build` and `npx tsc --noEmit` clean throughout (including after the parallel content
+batches landed) — treated as necessary, not sufficient, per Pass 16/17's own standard. Headless
+Chromium (`--use-gl=swiftshader --enable-unsafe-swiftshader --no-sandbox`) against `npm run preview`:
+
+- **Data Health**: 0 errors, 3 warnings (all three pre-existing unsourced assets, unrelated to this
+  pass), 103/103 assets carry `placement_rationale`, confirmed both by the in-app panel and an
+  independent `python3`/`json` pass over every file in `data/assets/` (not trusting either alone).
+- **Category counts cross-checked two ways**: the in-app scene overlay reports "103 assets," and an
+  independent hand-run tally by `group` over `data/assets/*.json` also sums to 103, with `infantry`
+  at 6 (was 0) and every other Pass-18-touched group's count matching what was actually added —
+  per this repo's own standard that a script's output needs an independent check before it's
+  trusted, not just an absence of thrown errors.
+- **Screenshots**: default oblique framing shows visibly dispersed, terrain-sited placements (an
+  artillery firing position sitting among real tree geometry, a forward ammunition point and
+  tactical command post correctly set back from the line, no visible rank/row alignment); a panned
+  view over the `side_a` 17 km band shows the new railhead ammunition point's pin sitting inside the
+  same dense OSM tree/building cluster Pass 17 identified, confirming the anchor-math reuse actually
+  lines up rather than merely type-checking; the roster swap flow was driven end to end (open T-90M
+  → swap in T-80BVM → confirm three independent pins exist afterward, not two).
+- **Zero page errors** across the full run except one benign 404 for a new asset's placeholder
+  `icon_image` path — expected and harmless per the existing, unchanged convention (`icon_image` is
+  never read for the map glyph; every marker resolves via `group`/`category`/`domain` through
+  `src/icons/registry.tsx`, confirmed working for every new category with no registry change).

@@ -8,6 +8,19 @@
   "distance_km_from_zero": 7,
   "operating_range_km": null,
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "BTR-82A adds a 30mm autocannon over the older BTR-80 but remains a thinly armored wheeled troop carrier, not a tank-class direct-fire asset, so 7 km in the near-operational band is consistent with its road-mobility role rather than a close ambush posture. That places it inside the ~30 km drone-dense corridor doctrine.md documents either side of the front, matching the asset's own contrast_vs_traditional note that wheeled rear movement is no longer the relatively safe route it once was.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Army Technology — BTR-82A Armoured Personnel Carrier",
+        "url": "https://www.army-technology.com/projects/btr-82a-armoured-personnel-carrier/"
+      }
+    ]
+  },
   "category": "armor-apc",
   "representative_system": "BTR-82A — Wheeled armored personnel carrier",
   "icon_image": "/icons/btr-82a.png",
@@ -55,7 +68,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

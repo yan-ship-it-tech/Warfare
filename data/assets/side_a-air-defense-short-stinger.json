@@ -12,6 +12,15 @@
     "max_km": 5
   },
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "2 km is squarely inside Stinger's own sourced 0-5 km operating range and doctrine.md's FPV strike range (0-10 km) — a one-person MANPADS is organic short-range air defense carried by the same forward infantry elements this map's close-reconnaissance/dismounted-soldier assets represent, so it belongs at the same depth they do, not set back with the larger networked SAM batteries.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      }
+    ]
+  },
   "category": "air-defense-short-range",
   "representative_system": "FIM-92 Stinger MANPADS",
   "icon_image": "https://commons.wikimedia.org/wiki/Special:FilePath/Danish_soldier_with_a_Stinger_MANPAD.JPEG",
@@ -70,7 +79,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

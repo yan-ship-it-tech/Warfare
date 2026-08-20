@@ -8,6 +8,19 @@
   "distance_km_from_zero": 7,
   "operating_range_km": null,
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "The Viking is a troop and cargo carrier, not a direct-fire platform, so it doesn't need the close-in ambush positioning a tank uses — its articulated tracked hull is built to move across terrain that has no road, feeding troops forward rather than fighting from the line itself. 7 km sits just inside doctrine.md's operational-near band, consistent with the ~7 km rear posture the lower-sky finding assigns to armor operating without local air/drone superiority, and appropriate for a lightly armed carrier staging behind the close-reconnaissance zone (1–5 km) rather than inside it.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — BvS10",
+        "url": "https://en.wikipedia.org/wiki/BvS10"
+      }
+    ]
+  },
   "category": "armor-apc",
   "representative_system": "BvS 10 Viking — Tracked all-terrain armored carrier",
   "icon_image": "/icons/bvs-10-viking.png",
@@ -57,7 +70,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

@@ -5,9 +5,22 @@
   "domain": "air",
   "echelon": "tactical",
   "group": "uav",
-  "distance_km_from_zero": 6,
+  "distance_km_from_zero": 5.5,
   "operating_range_km": null,
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "6 km represents where TB2 does its forward ISR/strike orbit near the line, not the runway-based airfield its ground control station actually operates from — a fixed-wing MALE UAV needing a runway is normally based well to the rear and reaches the front via satellite/line-of-sight relay, so the airfield itself sits far outside this band. 6 km falls inside doctrine.md §2's drone-dense corridor (~30 km either side of the front), consistent with this asset's own employment_notes, which describe reduced but still-present forward activity now that denser Russian IADS has pushed most of its work further from direct front-line contact than in the war's opening weeks. (Nudged 6→5.5 km from this category's shared round-number value so it doesn't literally coincide with side_a-uav-punisher, side_a-uav-switchblade-600 on the map's distance axis — a small, deterministic spread within the same band, not a new plausibility claim beyond what's already argued above.)",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — Bayraktar TB2",
+        "url": "https://en.wikipedia.org/wiki/Bayraktar_TB2"
+      }
+    ]
+  },
   "category": "uav-strike",
   "representative_system": "Bayraktar TB2 — Medium-altitude strike/reconnaissance UAV",
   "icon_image": "/icons/bayraktar-tb2.png",
@@ -53,7 +66,7 @@
   "verification": {
     "status": "sourced_low_confidence",
     "independent_sources": 1,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Rests only on tertiary reference works; wants a primary or trade source."
     ]

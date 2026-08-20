@@ -1,0 +1,75 @@
+{
+  "id": "side_b-infantry-position-dugout",
+  "name": "Fighting Position / Dugout",
+  "side": "side_b",
+  "domain": "land",
+  "platform_domain": "land",
+  "echelon": "tactical",
+  "group": "infantry",
+  "distance_km_from_zero": 1.3,
+  "operating_range_km": null,
+  "band_id": "tactical",
+  "placement_rationale": {
+    "text": "1.3 km — inside the same lower-sky-control bracket as the dismounted squad it shelters, and close enough to read as literally in the trench line this map's own scenery (trench segments, fighting positions) already draws near the zero line. doctrine.md §5's countermeasure guidance is specifically about defeating a strike once found, not about standing back from it — a dugout's whole purpose is surviving in place, so it sits at the closest end of the bracket rather than the dismounted squad's own slightly more mobile 1.5 km.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "docs/doctrine.md §5 — FPV tactical pattern taxonomy / countermeasures",
+        "url": ""
+      }
+    ]
+  },
+  "category": "infantry-position-dugout",
+  "representative_system": "Dug-in fighting position with overhead cover — composite, not a specific site",
+  "icon_image": "/icons/dugout.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Not a procurement item — field-engineered with hand tools/excavators and local materials",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Construction",
+      "value": "Side niches and \"G\"-shaped exits — no straight line of sight for a following FPV"
+    },
+    {
+      "label": "Depth trend",
+      "value": "Deeper, stronger and better-camouflaged than earlier-war positions, per 2025-2026 reporting"
+    },
+    {
+      "label": "Defeats",
+      "value": "Fragmentation and blast primarily — not a hit-to-kill counter to a direct FPV strike"
+    }
+  ],
+  "short_role": "The physical shelter a fighting position actually is — where the dismounted squad survives when it isn't moving.",
+  "characteristics": [
+    "Zigzag/traversed layout (matching this map's own trench-line scenery) rather than one straight cut, to limit blast and enfilade along the trench's own length",
+    "Side niches and \"G\"-shaped exits specifically to deny a pursuing FPV a straight approach line, per doctrine.md's sourced countermeasure guidance",
+    "Increasingly built with excavator support rather than hand-dug alone, and camouflaged against thermal as well as visual detection",
+    "Passive countermeasure layer — works alongside, not instead of, active detection and jamming"
+  ],
+  "employment_notes": "Represents the individual/small-team fighting position — not a whole trench network — sited at the closest, most exposed depth on this map. Construction has shifted toward deeper, more heavily engineered positions since 2024-2025 specifically because shallower, earlier-war dugouts weren't surviving sustained drone-directed fire.",
+  "contrast_vs_traditional": "A traditional trench line was built against artillery and direct fire along predictable axes. A position built for this war has to defeat a threat that can approach from directly overhead and follow a fleeing soldier around a corner — hence side niches, non-straight exits, and overhead cover as standard, not optional, features.",
+  "connections": [],
+  "sources": [
+    {
+      "label": "web: ICDS — Russia's War in Ukraine: Fortification for Drone Warfare",
+      "url": "https://icds.ee/en/russias-war-in-ukraine-fortification-for-drone-warfare/"
+    },
+    {
+      "label": "docs/doctrine.md §5 — FPV tactical pattern taxonomy / countermeasures",
+      "url": ""
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "sourced_low_confidence",
+    "independent_sources": 1,
+    "last_audit": "2026-08-20",
+    "notes": []
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "id": "side_a-logistics-ammo-point-railhead",
+  "name": "Forward Ammunition Point (Railhead)",
+  "side": "side_a",
+  "domain": "logistics",
+  "platform_domain": "land",
+  "echelon": "operational",
+  "group": "logistics",
+  "distance_km_from_zero": 17,
+  "operating_range_km": null,
+  "band_id": "op_near",
+  "placement_rationale": {
+    "text": "Sited at 17 km — the exact same anchor Pass 17's OSM metric inset (src/three/osmTerrain.ts) uses to draw real rail geometry from data/osm/pokrovsk.json at true 1:1 scale — and, on the 3D map, placed directly on a real rail vertex from that dataset (feature osm_314023821, the closest rail point in the file to the inset's own anchor), not a proxy or an assumed location. A forward ammunition point sited on an actual rail spur is the single most literal reading of the brief's \"logistics on road/rail nodes\" item this map can currently support, since real rail data only exists inside this one band-and-side inset.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "docs/OSM_PIPELINE.md and docs/DECISIONS.md Pass 17 — OSM metric-inset anchor/scale derivation",
+        "url": ""
+      }
+    ]
+  },
+  "category": "logistics-ammo-point",
+  "representative_system": "Forward ammunition supply point on a rail spur — composite, sited on real OSM rail geometry",
+  "icon_image": "/icons/ammo-point.png",
+  "gallery_images": [],
+  "cost": {
+    "unit_cost_usd": null,
+    "display": "Not a procurement item — a supply node, not equipment",
+    "confidence": "unknown"
+  },
+  "key_facts": [
+    {
+      "label": "Siting",
+      "value": "Placed on a real rail vertex from the committed Pokrovsk-AOI OSM extract, not an assumed location"
+    },
+    {
+      "label": "Function",
+      "value": "Break-bulk point — rail/road delivery in, distributed forward by vehicle or ground robot"
+    },
+    {
+      "label": "Why rail",
+      "value": "Bulk ammunition tonnage still moves most efficiently by rail as far forward as the network allows"
+    }
+  ],
+  "short_role": "A forward ammunition supply point sited on this map's real rail geometry — where bulk resupply transitions from rail to the last mile forward.",
+  "characteristics": [
+    "The only asset on this map placed on an actual OpenStreetMap-sourced coordinate rather than a hand-picked or terrain-affinity-derived one",
+    "Represents the break-bulk function: rail or road delivery arrives here, then moves forward by truck or logistics UGV for the final, most exposed leg",
+    "Even disused rail infrastructure (most of the modeled AOI's rail is tagged railway=disused — a former freight yard) retains real value as a hardened, already-graded logistics site",
+    "© OpenStreetMap contributors — the same rail data drawn in the 3D inset positions this asset, not a separately invented location"
+  ],
+  "employment_notes": "Represents a forward ammunition point rather than a specific named facility, deliberately sited on the one patch of this map with real, committed rail geometry (Pass 17's Pokrovsk-AOI OSM inset) instead of an assumed road/rail location elsewhere on the strip.",
+  "contrast_vs_traditional": "Traditional logistics could stage large, visible ammunition dumps relatively close to the line under the protection of distance and counter-battery limits. Persistent drone ISR out to tens of kilometers pushes bulk storage back and forces the last-mile leg from a point like this one onto vehicles (increasingly unmanned) making short, fast, camouflage-discipline-dependent runs rather than a standing supply column.",
+  "connections": [
+    {
+      "target_id": "side_a-ground-robots-nprk-mul",
+      "type": "supply",
+      "description": "Last-mile resupply run forward from this point via logistics UGV."
+    }
+  ],
+  "sources": [
+    {
+      "label": "Committed OSM extract — data/osm/pokrovsk.json (© OpenStreetMap contributors, ODbL 1.0)",
+      "url": ""
+    },
+    {
+      "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+      "url": ""
+    }
+  ],
+  "editable": true,
+  "verification": {
+    "status": "unverified",
+    "independent_sources": 0,
+    "last_audit": "2026-08-20",
+    "notes": [
+      "Written from doctrine.md and general knowledge; no per-asset citation yet."
+    ]
+  }
+}

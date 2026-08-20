@@ -8,6 +8,19 @@
   "distance_km_from_zero": 5,
   "operating_range_km": null,
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "5 km marks the squad/platoon launch position, not a strike range — Switchblade 300 is backpack-portable and hand-launched, so its reach is whatever an infantry unit can carry it to, and no flight-range figure is recorded in this asset's own characteristics beyond its ~15-minute endurance class. Sitting at the outer edge of doctrine.md §2's 0–10 km FPV-strike-range band and just past the 1–5 km close-reconnaissance band, 5 km is a plausible depth for a squad/platoon-level launch point rather than a position standing directly on the zero line. Because this is man-portable rather than antenna/relay-dependent equipment, it doesn't carry the deeper 8–10 km launch-team offset doctrine.md describes for RU-side FPV teams with fixed control equipment.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — Switchblade (missile)",
+        "url": "https://en.wikipedia.org/wiki/Switchblade_(missile)"
+      }
+    ]
+  },
   "category": "uav-strike",
   "representative_system": "Switchblade 300 — Loitering munition (man-portable)",
   "icon_image": "/icons/switchblade-300.png",
@@ -53,7 +66,7 @@
   "verification": {
     "status": "sourced_low_confidence",
     "independent_sources": 1,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Rests only on tertiary reference works; wants a primary or trade source."
     ]

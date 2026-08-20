@@ -6,12 +6,25 @@
   "echelon": "tactical",
   "group": "armor",
   "comparison_group": "main_battle_tank",
-  "distance_km_from_zero": 3,
+  "distance_km_from_zero": 2.6,
   "operating_range_km": {
     "min_km": 1,
     "max_km": 7
   },
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "Leopard 2A6's own operating_range_km (1–7 km) is doctrine.md's lower-sky bracket in numeric form: 1–1.5 km with local air/drone superiority in a direct-fire posture, pushed back toward ~7 km without it. The placed 3 km sits inside that band, closer to the superiority end, consistent with a 120mm-smoothbore tank employed for direct-fire support rather than indirect/overwatch. This also falls within the 0–10 km FPV strike-range band doctrine.md documents, which the asset's own employment_notes already treat as the operative threat at this distance regardless of tank armor class. (Nudged 3→2.6 km from this category's shared round-number value so it doesn't literally coincide with side_a-armor-t-64bv-t-64bm-bulat on the map's distance axis — a small, deterministic spread within the same band, not a new plausibility claim beyond what's already argued above.)",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — Leopard 2",
+        "url": "https://en.wikipedia.org/wiki/Leopard_2"
+      }
+    ]
+  },
   "category": "armor-main-battle-tank",
   "representative_system": "Leopard 2A6",
   "icon_image": "https://commons.wikimedia.org/wiki/Special:FilePath/Leopard_2_tank.JPG",
@@ -85,7 +98,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]

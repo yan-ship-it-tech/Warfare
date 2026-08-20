@@ -5,9 +5,26 @@
   "domain": "land",
   "echelon": "operational",
   "group": "artillery",
-  "distance_km_from_zero": 21,
+  "distance_km_from_zero": 6,
   "operating_range_km": null,
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "TOS-1A's own characteristics state a short ~6–10 km engagement envelope (6 km baseline, up to 10 km with newer extended-range rockets), so the previous 21 km siting placed the launcher entirely outside its own maximum range — it could not have reached the front line from there. Corrected to 6 km, which keeps it within its stated envelope while leaving some margin under the ~10 km extended-range ceiling; this matches doctrine.md §2's FPV strike range (0–10 km), the same zone this asset's own characteristics already flag as making TOS-1A 'a high-value target if located' once it fires from inside it. There is little standoff room to trade away for a system this short-ranged — survivability rests on concealment and infrequent firing rather than distance, an inherent limitation of the platform rather than a siting choice.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — TOS-1",
+        "url": "https://en.wikipedia.org/wiki/TOS-1"
+      },
+      {
+        "label": "GlobalSecurity.org — TOS-1A Solntsepek",
+        "url": "https://www.globalsecurity.org/military/world/russia/tos-1a.htm"
+      }
+    ]
+  },
   "category": "artillery-rocket",
   "representative_system": "TOS-1A — Heavy flamethrower / thermobaric MLRS",
   "icon_image": "/icons/tos-1a.png",
@@ -55,7 +72,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

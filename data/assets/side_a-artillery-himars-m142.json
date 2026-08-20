@@ -12,6 +12,19 @@
     "max_km": 70
   },
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "HIMARS' own operating_range_km (15–70 km with GMLRS/ER GMLRS) puts 25 km at roughly a third of maximum range, well inside doctrine.md §2's deep-strike layer (10–150+ km) while retaining most of its reach against operational-rear targets. Because each launch is a deliberately ISR-vetted shot rather than a reactive call for fire (per this asset's own employment_notes), HIMARS doesn't need to crowd the edge of its envelope the way a reactive howitzer might — standoff at 25 km buys counter-battery survivability without meaningfully shrinking its target set. This also keeps the launcher clear of the close-in 0–10 km FPV strike zone doctrine.md documents as the densest threat band.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — M142 HIMARS",
+        "url": "https://en.wikipedia.org/wiki/M142_HIMARS"
+      }
+    ]
+  },
   "category": "artillery-rocket-deep-strike",
   "representative_system": "M142 HIMARS, firing GMLRS / ER GMLRS / ATACMS",
   "icon_image": "https://commons.wikimedia.org/wiki/Special:FilePath/M142_himars.jpg",
@@ -89,7 +102,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 3,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }

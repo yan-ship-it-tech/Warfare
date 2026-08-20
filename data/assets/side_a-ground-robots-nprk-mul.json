@@ -8,6 +8,15 @@
   "distance_km_from_zero": 3,
   "operating_range_km": null,
   "band_id": "tactical",
+  "placement_rationale": {
+    "text": "Mul's job is running the last, most exposed mile of resupply and casualty evacuation directly into the trench line, not staging from a rear depot — its representative position has to sit at the same close-in depth (doctrine.md's 1-5km close-reconnaissance band) as the positions it serves, since the entire point is replacing a human carrying party on that specific short, watched run. A deeper siting would misrepresent what the platform actually does.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      }
+    ]
+  },
   "category": "ground-robot-logistics",
   "representative_system": "NPRK \"Mul\" — Ground robot (logistics / evacuation)",
   "icon_image": "/icons/nprk-mul.png",
@@ -49,7 +58,7 @@
   "verification": {
     "status": "unverified",
     "independent_sources": 0,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Written from doctrine.md and general knowledge; no per-asset citation yet."
     ]

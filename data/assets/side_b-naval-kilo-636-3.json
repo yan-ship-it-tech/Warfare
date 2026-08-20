@@ -11,6 +11,23 @@
     "max_km": 7500
   },
   "band_id": "strategic_rear",
+  "placement_rationale": {
+    "text": "440 km, slightly closer to zero than the surface-fleet frigate entry (480 km) but still deep strategic_rear, matches this asset's own contrast_vs_traditional: submerged and 'effectively immune' to the USV threat that forced Black Sea Fleet surface units out of Sevastopol, so it does not need to stand off as far as a surface combatant to stay survivable, while basing from the same relocated Black Sea Fleet posture (4th Independent Submarine Brigade) that doctrine.md §2's air/sea-superiority finding predicts for any asset in a contested maritime domain. USNI Proceedings and Naval News (both already in sources) document continued Kalibr firings from submerged positions in the Black Sea throughout the war even after the surface fleet's relocation, consistent with a deep-rear but slightly-forward-of-the-surface-fleet placement.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "USNI Proceedings — Russia's Kilo-class Submarine: Improved And More Deadly Than Ever",
+        "url": "https://www.usni.org/magazines/proceedings/2023/august/russias-kilo-class-submarine-improved-and-more-deadly-ever"
+      },
+      {
+        "label": "Naval News — Russia's improved Kilo-class submarine entering Black Sea",
+        "url": "https://www.navalnews.com/naval-news/2022/02/russias-improved-kilo-class-submarine-entering-black-sea/"
+      }
+    ]
+  },
   "category": "naval-submarine",
   "representative_system": "Improved Kilo-class (Project 636.3) diesel-electric attack submarine",
   "icon_image": "/icons/kilo-636-3.png",
@@ -64,7 +81,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 3,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]

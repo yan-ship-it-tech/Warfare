@@ -6,9 +6,26 @@
   "platform_domain": "land",
   "echelon": "operational",
   "group": "air_defense",
-  "distance_km_from_zero": 19,
+  "distance_km_from_zero": 95,
   "operating_range_km": null,
-  "band_id": "op_near",
+  "band_id": "op_deep",
+  "placement_rationale": {
+    "text": "Moved from 19 km to 95 km, and the band tag from op_near to op_deep — 19 km read as implausibly forward for what NASAMS is actually used for in Ukraine. Real reporting frames relocating NASAMS batteries near the front as a deliberate, newsworthy departure from the norm, not the default posture; NASAMS' default, most-documented role is exactly what its own sourced characteristics already say — \"protected Kyiv early with strong results vs cruise missiles\" — i.e. medium-range point defense of the capital and other high-value rear infrastructure, well back from the contact line. 95 km sits alongside this map's own power-plant landmark on this side, so the digital twin's siting logic (worldMapping/tacticalSiting) can place it visibly defending real ground rather than an arbitrary rear coordinate.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "web: Kyiv Post — Analysis: NASAMS Air Defense, Ukraine's Latest Gift From Lithuania",
+        "url": "https://www.kyivpost.com/analysis/22213"
+      },
+      {
+        "label": "web: Reuters/wire reporting via search aggregation — Ukraine relocates some NASAMS batteries closer to the front line (departure from default rear-defense posture)",
+        "url": "https://www.pravda.com.ua/eng/news/2024/02/28/7444087/"
+      }
+    ]
+  },
   "category": "air-defense-medium-range",
   "representative_system": "NASAMS — Medium-range SAM",
   "icon_image": "/icons/nasams.png",
@@ -57,7 +74,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]

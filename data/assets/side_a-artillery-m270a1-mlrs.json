@@ -8,6 +8,19 @@
   "distance_km_from_zero": 18,
   "operating_range_km": null,
   "band_id": "op_near",
+  "placement_rationale": {
+    "text": "M270A1 fires the same GMLRS-family guided rockets as HIMARS and, per this asset's own characteristics, shares a similar range envelope (ER GMLRS to roughly 70 km) — 18 km therefore draws on only about a quarter of that reach, a wide margin consistent with doctrine.md §2's counter-battery survivability logic for the deep-strike layer. The tracked chassis is heavier and slower to displace than a wheeled launcher, so the platform trades some of the fast shoot-and-scoot cycle for a larger onboard magazine (12 rockets vs. HIMARS' 6) and leans on standoff distance rather than displacement speed for survivability. 18 km sits inside doctrine.md's 10–150+ km medium/long-range strike/recon band, outside the close-in 0–10 km FPV strike zone.",
+    "sources": [
+      {
+        "label": "docs/doctrine.md §2 — distance/echelon structure (sourced findings)",
+        "url": ""
+      },
+      {
+        "label": "Wikipedia — M270 Multiple Launch Rocket System",
+        "url": "https://en.wikipedia.org/wiki/M270_Multiple_Launch_Rocket_System"
+      }
+    ]
+  },
   "category": "artillery-rocket",
   "representative_system": "M270A1 MLRS — Multiple launch rocket system (tracked)",
   "icon_image": "/icons/m270a1-mlrs.png",
@@ -55,7 +68,7 @@
   "verification": {
     "status": "verified",
     "independent_sources": 2,
-    "last_audit": "2026-08-19",
+    "last_audit": "2026-08-20",
     "notes": []
   }
 }
