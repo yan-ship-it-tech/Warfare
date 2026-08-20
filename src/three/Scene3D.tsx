@@ -25,6 +25,7 @@ import { buildTerrain, terrainHeight } from "./terrain3d";
 import { buildProps, PROP_BUDGET } from "./props";
 import { buildScenery, disposeScenery, SCENERY_BUDGET } from "./scenery";
 import { buildHeroModel, hasHeroModel } from "./models";
+import { perf } from "./perfMonitor";
 import {
   worldPlacement,
   lateralLayout,
@@ -66,30 +67,106 @@ const LABEL_H = 32;
  *  toward the horizon and grows without bound as it looks down — so the label
  *  slid off its own icon and the CSS leader stub pointed at empty ground. */
 const LABEL_LIFT_PX = 28;
-/** Label distance tiers, expressed RELATIVE to how far the camera currently
- *  sits from its orbit target. Inside the near tier a label may carry its
- *  title; beyond it, it degrades to a dot; past the far tier it is not
- *  rendered at all.
- *
- *  Relative, not absolute, because absolute thresholds break at the ends of
- *  the zoom range: with a fixed 700-unit cutoff and OrbitControls.maxDistance
+/** Beyond this multiple of the current orbit radius a label is not drawn at
+ *  all. Relative, not absolute, because absolute thresholds break at the ends
+ *  of the zoom range: with a fixed 700-unit cutoff and OrbitControls.maxDistance
  *  at 900, pulling all the way back put every asset past the cutoff and the
  *  scene lost its labels entirely instead of thinning. Scaling with the orbit
- *  radius means "far" always means far *for this framing* — zooming out thins
- *  the field via the budget and collision grid, which is the intended
- *  behaviour, rather than emptying it. */
-const LABEL_FULL_DIST = (camDist: number) => camDist * 1.25 + 60;
-const LABEL_DOT_DIST = (camDist: number) => camDist * 3 + 200;
-/** Titled labels allowed per megapixel of viewport. The budget scales with
- *  the area actually available rather than being a fixed count that is stingy
- *  on a desktop and unreadable on a phone. */
-const LABEL_BUDGET_PER_MPX = 30;
+ *  radius means "far" always means far *for this framing*. */
+const LABEL_FAR_DIST = (camDist: number) => camDist * 2 + 140;
+
+// ── proximity labelling (Pass 16 item 5) ─────────────────────────────────
+// "Don't render all of them all the time." Before this pass every asset
+// inside the far tier got a DOM label — titled if it won a collision, a dot
+// if it didn't — so ~90 labels were laid out, written and composited every
+// frame regardless of where the user was actually looking.
+//
+// Now a title is earned, in this order: selection and hover always; a
+// scenario-focus member next; then whatever is nearest the POINTER (or the
+// viewport's centre of interest when the pointer is elsewhere), up to a cap.
+// Everything else is simply not labelled — the WebGL marker and its Pass 8
+// side ring still say "something is here", which is exactly the job the old
+// dot tier was doing badly (see item 6).
+/** Screen radius around the focus point inside which an asset may be titled,
+ *  as a fraction of the viewport's short edge, then clamped to sane pixels. */
+const PROXIMITY_FRACTION = 0.42;
+const PROXIMITY_MIN_PX = 220;
+const PROXIMITY_MAX_PX = 560;
+/** Where "near" is measured from when the pointer is not over the canvas.
+ *  Slightly below centre: the camera's default oblique framing puts the
+ *  subject there, not at the geometric middle. */
+const IDLE_FOCUS_Y = 0.55;
+/** Titled labels allowed per megapixel of viewport, and the hard clamp either
+ *  side of it. Scales with the area actually available rather than being a
+ *  fixed count that is stingy on a desktop and unreadable on a phone. */
+const LABEL_BUDGET_PER_MPX = 14;
+const LABEL_CAP_MIN = 6;
+const LABEL_CAP_MAX = 26;
 /** Terrain samples per occlusion probe. */
 const OCCLUSION_SAMPLES = 6;
+/** Ceiling on occlusion probes per layout. An asset rejected for being
+ *  behind a ridge does not consume label budget, so it stays a candidate and
+ *  gets re-probed on the next frame — which meant a low camera over the
+ *  churned zero-line terrain could still spend hundreds of terrainHeight()
+ *  calls a frame rejecting the same assets. Past this ceiling the probe is
+ *  skipped and the label is allowed: showing one label that a rise would
+ *  have hidden is a far cheaper error than a frame-time spike. */
+const MAX_OCCLUSION_PROBES = 28;
 
-type LabelTier = "full" | "dot" | "hidden";
+// ── pan gain, per input device (item 3) ──────────────────────────────────
+/** Pass 7's damped mouse gain, unchanged — it is correct for a mouse. */
+const MOUSE_PAN_SPEED = 0.4;
+/** A two-finger touch pan has a small fraction of a mouse drag's travel: a
+ *  thumb crosses maybe 200px where a mouse crosses the screen and back. At
+ *  0.4 that meant a full swipe barely moved the field, which is the "far too
+ *  slow on mobile" report. 1.7 makes a comfortable swipe cover roughly the
+ *  same ground a mouse drag does, which is the consistency Pass 7 was after
+ *  — the same damping philosophy, applied to a different input. */
+const TOUCH_PAN_SPEED = 1.7;
 
-interface LabelState {
+// ── tap vs. drag (item 4) ────────────────────────────────────────────────
+// "Drags frequently fail or open the detail panel instead." The old handler
+// had a bare 4px movement check and no notion of time, no pointer capture,
+// and it selected the asset on drop — so a drag ended with the panel open
+// over the map and the camera flying to the thing you had just placed, and a
+// release outside the pin landed on the canvas as a deselect instead.
+//
+// A gesture is a TAP only if it crosses NEITHER threshold: it stayed within
+// the slop radius AND it was released promptly. Crossing the movement
+// threshold commits it to a drag, irreversibly. Crossing only the time
+// threshold makes it neither — a finger resting on a pin and lifting off
+// should not open anything.
+/** Movement, in px, past which the gesture is a drag and can't be a tap.
+ *  6px rather than 4: a touch contact patch wanders more than a mouse, and
+ *  the old 4px made deliberate taps register as failed drags on a phone. */
+const TAP_SLOP_PX = 6;
+/** Hold time, in ms, past which a stationary press stops counting as a tap.
+ *  Well clear of a deliberate mouse click (~80–150ms) so ordinary clicking
+ *  is untouched — this is aimed at the press-hesitate-release gesture. */
+const TAP_MAX_MS = 500;
+/** How long after a pointer gesture resolves a click is ignored. The browser
+ *  synthesises a click on release regardless of how far the pointer
+ *  travelled, and that click is what used to open the detail panel at the
+ *  end of a drag. */
+const CLICK_SWALLOW_MS = 350;
+/** Hysteresis. A label that is ALREADY titled keeps a head start — it is
+ *  ranked as if it were this many px nearer the focus point, and it is
+ *  allowed to sit this much beyond the proximity radius before it drops.
+ *  Without it, drifting the pointer across a crowded stretch makes titles
+ *  swap in and out around the cap boundary every few frames, which reads as
+ *  flicker rather than as decluttering. */
+const PROXIMITY_HOLD_PX = 70;
+const PROXIMITY_HOLD_FACTOR = 1.18;
+/** Pointer movement, in px, that counts as "the focus point moved" and so
+ *  re-runs the label layout. Below this the layout is left alone — a mouse
+ *  jitters constantly and re-laying out for a 2px twitch is pure waste. */
+const POINTER_DIRTY_PX = 10;
+
+/** What React needs to MOUNT a pin. Position and tier are deliberately NOT
+ *  in here: they are written straight to the DOM node each frame by the
+ *  render loop (see applyPin), so panning the camera does not re-render
+ *  React at all. This roster only changes when the asset set changes. */
+interface PinInfo {
   id: string;
   name: string;
   km: number;
@@ -98,13 +175,31 @@ interface LabelState {
   accent: string;
   sideColor: string;
   isStub: boolean;
+}
+
+/** Live per-pin DOM state, so the loop can write only what actually changed.
+ *  Setting an identical style string still dirties style resolution in every
+ *  engine tested, and at ~90 pins × 60fps that was measurable. */
+interface PinDom {
+  el: HTMLButtonElement;
   x: number;
   y: number;
-  tier: LabelTier;
-  /** 0–1 proximity fade, applied to dots so the far field recedes instead of
-   *  presenting every distant asset at full strength. */
-  fade: number;
-  depth: number;
+  z: number;
+  cls: string;
+  shown: boolean;
+}
+
+/** One measured candidate per frame. Reused in place — see `measured` below. */
+interface Measured {
+  entry: Entry;
+  sx: number;
+  sy: number;
+  sz: number;
+  dist: number;
+  /** Distance from the label focus point, in screen px. */
+  focusDist: number;
+  rank: number;
+  offscreen: boolean;
 }
 
 interface Entry {
@@ -128,14 +223,47 @@ interface Entry {
   sideColorHex: THREE.Color;
 }
 
+// ── shared geometry ──────────────────────────────────────────────────────
+// Every asset used to build its own octahedron, ring and disc — at ~90 assets
+// that is 270 BufferGeometries uploaded to the GPU describing 3 distinct
+// shapes, rebuilt from scratch on every filter toggle or band edit (the asset
+// effect below re-runs on those). They are identical by construction, so they
+// are built once for the page instead. Materials stay per-entry: the render
+// loop animates colour and opacity per asset, which a shared material could
+// not express.
+//
+// Marked `userData.shared` so the effect's disposal traverse skips them —
+// disposing a shared geometry on the first rebuild would blank every marker.
+function shared<T extends THREE.BufferGeometry>(g: T): T {
+  g.userData.shared = true;
+  return g;
+}
+const MARKER_GEO = shared(new THREE.OctahedronGeometry(1.5, 0));
+const RING_GEO = shared(new THREE.RingGeometry(2.15, 2.9, 28));
+const FILL_GEO = shared(new THREE.CircleGeometry(2.15, 20));
+const LOD_PROXY_GEO = shared(new THREE.BoxGeometry(5, 2.4, 3));
+const LOD_PROXY_MAT = new THREE.MeshStandardMaterial({
+  color: "#4f5547",
+  flatShading: true,
+  roughness: 0.9,
+});
+LOD_PROXY_MAT.userData.shared = true;
+
 /**
  * Cheap ridge-occlusion probe: march the camera→target segment and report
  * whether terrain rises above it anywhere along the way. Six samples is not a
  * depth buffer, but it reliably catches the case that actually misleads — a
  * label for something sitting in dead ground behind a rise, drawn as if it
  * were in front of it.
+ *
+ * terrainHeight() is genuinely expensive — three octaves of value noise plus
+ * a handful of exp/pow terms — so this is now called only for the handful of
+ * candidates that are actually about to be titled, not for every asset in
+ * the scene every frame (which is what ~500 terrainHeight calls per frame
+ * were before Pass 16).
  */
 function occludedByTerrain(cam: THREE.Vector3, target: THREE.Vector3): boolean {
+  perf.occlusionProbes++;
   for (let i = 1; i < OCCLUSION_SAMPLES; i++) {
     const t = i / OCCLUSION_SAMPLES;
     const px = cam.x + (target.x - cam.x) * t;
@@ -151,7 +279,12 @@ export function Scene3D({ world }: { world: WorldModel }) {
   const view = useViewState();
   const overrides = useOverrides();
 
-  const [labels, setLabels] = useState<LabelState[]>([]);
+  // The pin ROSTER — what React mounts. Changes only when the visible asset
+  // set changes; never per frame.
+  const [pins, setPins] = useState<PinInfo[]>([]);
+  /** Transient confirmation for a completed drag. A drag no longer opens the
+   *  detail panel (item 4) — this is what tells you the drop landed. */
+  const [dropNote, setDropNote] = useState<string | null>(null);
   // Catalog swaps must show through here too, or the same asset would carry
   // two different names depending on which view you were looking at.
   const swapNames = useMemo(() => {
@@ -189,10 +322,46 @@ export function Scene3D({ world }: { world: WorldModel }) {
    *  pointerdown/move/up handlers below. A ref, not state, so a pointermove
    *  doesn't force a re-render 60 times a second — same reasoning as every
    *  other ref the render loop touches. null when nothing is being dragged. */
-  const dragRef = useRef<{ id: string; startClientX: number; startClientY: number; moved: boolean } | null>(null);
+  const dragRef = useRef<{
+    id: string;
+    startClientX: number;
+    startClientY: number;
+    startedAt: number;
+    pointerId: number;
+    /** True once the movement threshold is crossed and this gesture has
+     *  committed to being a drag rather than a tap. */
+    dragging: boolean;
+    target: HTMLElement | null;
+  } | null>(null);
   const dragRaycasterRef = useRef(new THREE.Raycaster());
   const dragPlaneRef = useRef(new THREE.Plane());
   const dragHitRef = useRef(new THREE.Vector3());
+  /** performance.now() before which a click is swallowed. Set when a drag
+   *  commits, because the browser still delivers a click to whatever is under
+   *  the pointer on release — that synthetic click is precisely what used to
+   *  open the detail panel at the end of a drag. */
+  const swallowClickUntilRef = useRef(0);
+  const dropNoteTimerRef = useRef(0);
+
+  // ── render-loop bookkeeping ───────────────────────────────────────────
+  /** Bumped by anything that invalidates the label layout but is not camera
+   *  motion: the asset set rebuilding, selection, hover, scenario focus, and
+   *  a pointer move worth re-ranking for. The loop compares this against the
+   *  value it last laid out at — that comparison plus the camera check is
+   *  what lets an idle frame skip the layout entirely. */
+  const layoutDirtyRef = useRef(0);
+  /** Live DOM handle + last-written state for every mounted pin. */
+  const pinDomRef = useRef(new Map<string, PinDom>());
+  /** Ruler segment elements, keyed `${side}:${bandId}` (item 9). */
+  const rulerElsRef = useRef(new Map<string, HTMLDivElement>());
+  const rulerRootRef = useRef<HTMLDivElement | null>(null);
+  /** Pointer position over the canvas, in CSS px relative to the mount, and
+   *  whether the pointer is actually over it. Drives proximity labelling. */
+  const pointerRef = useRef({ x: 0, y: 0, active: false });
+  /** The render loop is set up once on mount; this keeps it calling the
+   *  current setter rather than one captured on the first render. */
+  const setAxisFlippedRef = useRef(view.setAxisFlipped);
+  setAxisFlippedRef.current = view.setAxisFlipped;
 
   const proj = useMemo(() => buildProjection(world.bands, world.domains), [world.bands, world.domains]);
   // The engine-setup effect below runs once on mount; the drag handlers it
@@ -254,7 +423,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
     // the strip. Slowed down for predictable small-gesture control; damping
     // above still gives motion weight without amplifying the gain.
     controls.rotateSpeed = 0.55;
-    controls.panSpeed = 0.4;
+    controls.panSpeed = MOUSE_PAN_SPEED;
     controls.zoomSpeed = 0.7;
     controlsRef.current = controls;
 
@@ -277,97 +446,270 @@ export function Scene3D({ world }: { world: WorldModel }) {
     const ro = new ResizeObserver(onResize);
     ro.observe(mount);
 
+    // ── pointer tracking for proximity labelling (item 5) ────────────────
+    // Passive: this must never be able to delay a scroll or a gesture. It
+    // only records where the pointer is and flags the layout dirty when it
+    // has moved far enough to change the ranking — a mouse jitters
+    // constantly and re-ranking the field for a 2px twitch was exactly the
+    // kind of unthrottled pointer work item 2 asks about.
+    const onPointerMove = (e: PointerEvent) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const p = pointerRef.current;
+      if (!p.active || Math.hypot(x - p.x, y - p.y) > POINTER_DIRTY_PX) {
+        layoutDirtyRef.current++;
+      }
+      p.x = x;
+      p.y = y;
+      p.active = true;
+    };
+    const onPointerLeave = () => {
+      if (pointerRef.current.active) layoutDirtyRef.current++;
+      pointerRef.current.active = false;
+    };
+
+    // ── item 3: two-finger pan was far too slow on mobile ───────────────
+    // OrbitControls applies one panSpeed to both mouse and touch. Pass 7
+    // damped it to 0.4 for predictable small mouse gestures on a scene where
+    // the default gain traversed a large fraction of the strip per drag —
+    // that call is right for a mouse and badly wrong for a thumb, because a
+    // two-finger touch pan has a fraction of the travel a mouse drag does.
+    // Rather than fighting Pass 7's damping by raising it for everyone, the
+    // gain is chosen per input device at the moment the gesture starts.
+    const onPointerDownDevice = (e: PointerEvent) => {
+      controls.panSpeed = e.pointerType === "touch" ? TOUCH_PAN_SPEED : MOUSE_PAN_SPEED;
+    };
+    renderer.domElement.addEventListener("pointermove", onPointerMove, { passive: true });
+    renderer.domElement.addEventListener("pointerleave", onPointerLeave, { passive: true });
+    renderer.domElement.addEventListener("pointerdown", onPointerDownDevice, { passive: true });
+
     let raf = 0;
     const projected = new THREE.Vector3();
+    const axisProbe = new THREE.Vector3();
 
-    const tick = () => {
-      raf = requestAnimationFrame(tick);
-
-      // Camera fly-to, used by selection and by the Lessons page.
-      const fly = flyRef.current;
-      if (fly) {
-        const t = Math.min(1, (performance.now() - fly.t0) / fly.dur);
-        const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-        camera.position.lerpVectors(fly.from, fly.to, e);
-        controls.target.lerpVectors(fly.tFrom, fly.tTo, e);
-        if (t >= 1) flyRef.current = null;
+    // ── per-frame scratch, allocated exactly once ───────────────────────
+    // The old loop built a fresh array of ~90 measurement objects, sorted it
+    // into another array, and constructed a new LabelGrid, every frame. None
+    // of that showed up as a slow average — it showed up as periodic GC
+    // pauses, which is what "smooth, then it freezes" actually is.
+    const grid = new LabelGrid();
+    /** Ids titled on the previous layout — the hysteresis input. */
+    const shownIds = new Set<string>();
+    /** Backing store. `measured` holds the same objects in whatever order the
+     *  last sort left them, so it is rebuilt from the pool only when the
+     *  asset count actually changes — never per frame. */
+    const pool: Measured[] = [];
+    const measured: Measured[] = [];
+    const sizeMeasured = (n: number) => {
+      while (pool.length < n) {
+        pool.push({
+          entry: null as unknown as Entry,
+          sx: 0, sy: 0, sz: 0, dist: 0, focusDist: 0, rank: 4, offscreen: true,
+        });
       }
-
-      // Soft clamp on the pan target, in X and Z. Not a hard wall — it lets
-      // the target reach a margin past the strip's edge — but it stops a
-      // fast pan gesture from throwing the camera into empty fog with no
-      // landmark to reorient by, which compounds a too-sensitive drag into
-      // "lost," not just "overshot".
-      if (!flyRef.current) {
-        const bx = panBoundXRef.current;
-        controls.target.x = THREE.MathUtils.clamp(controls.target.x, -bx, bx);
-        controls.target.z = THREE.MathUtils.clamp(controls.target.z, -STRIP_HALF_Z - 30, STRIP_HALF_Z + 30);
+      if (measured.length !== n) {
+        measured.length = 0;
+        for (let i = 0; i < n; i++) measured.push(pool[i]);
       }
+    };
+    const byRank = (a: Measured, b: Measured) => a.rank - b.rank || a.focusDist - b.focusDist;
 
-      controls.update();
+    // Camera state as of the last layout, so an idle frame can prove nothing
+    // moved without allocating a Vector3 to compare against.
+    const lastCam = new THREE.Vector3(NaN, NaN, NaN);
+    const lastTarget = new THREE.Vector3(NaN, NaN, NaN);
+    let lastDirty = -1;
+    let lastW = -1;
+    let lastH = -1;
+    let lastFlipped: boolean | null = null;
 
-      const w = mount.clientWidth;
-      const h = mount.clientHeight;
-      const next: LabelState[] = [];
+    /** Writes one pin's position/tier to the DOM, and only what changed. */
+    const applyPin = (
+      id: string,
+      x: number,
+      y: number,
+      z: number,
+      shown: boolean,
+      cls: string,
+    ) => {
+      const dom = pinDomRef.current.get(id);
+      if (!dom) return;
+      if (dom.cls !== cls) {
+        dom.el.className = cls;
+        dom.cls = cls;
+      }
+      if (dom.shown !== shown) dom.shown = shown;
+      // A pin that isn't drawn doesn't need its transform maintained; it is
+      // transparent and non-interactive until it comes back, and it comes
+      // back with a fresh transform in the same frame it is shown.
+      if (!shown) return;
+      // NaN-safe on purpose: a freshly mounted pin starts at x/y = NaN, and
+      // `Math.abs(NaN - x) > 0.25` is FALSE — so the natural way to write
+      // this silently never writes the first transform and every label sits
+      // at the layer's top-left corner forever. Negating the "close enough"
+      // test instead makes the NaN case fall through to a write.
+      if (!(Math.abs(dom.x - x) <= 0.25) || !(Math.abs(dom.y - y) <= 0.25)) {
+        dom.el.style.transform = `translate(-50%, -100%) translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+        dom.x = x;
+        dom.y = y;
+      }
+      if (dom.z !== z) {
+        dom.el.style.zIndex = String(z);
+        dom.z = z;
+      }
+    };
 
-      // Project each marker's OWN world point. Everything that lifts the label
-      // clear of its icon happens below, in pixels, so the offset cannot vary
-      // with camera pitch the way a world-space lift does.
-      const camPos = camera.position;
-      const measured = entriesRef.current.map((entry) => {
-        projected.copy(entry.anchor).project(camera);
-        return {
-          entry,
-          sx: (projected.x * 0.5 + 0.5) * w,
-          sy: (-projected.y * 0.5 + 0.5) * h,
-          sz: projected.z,
-          dist: camPos.distanceTo(entry.anchor),
-        };
-      });
-
-      // Priority, best first. Pinned entries are placed before anything else
-      // so they can never lose a collision to an arbitrary neighbour; a
-      // lesson's focus set outranks the rest of the field; otherwise nearest
-      // wins, which is also what reads correctly when two labels overlap.
-      const focusIds = focusSetRef.current;
-      const pinRank = (id: string): number => {
-        if (selectedRef.current === id) return 0;
-        if (hoveredRef.current === id) return 1;
-        if (focusIds && focusIds.has(id)) return 2;
-        return 3;
+    /** Banded distance ruler (item 9). Positions one segment per band per
+     *  side by projecting that band's real world-X edges to the screen — so
+     *  equal km spans visibly occupy unequal screen width, which IS the
+     *  compression the axis applies. A linear ruler here would lie. */
+    const layoutRuler = (w: number, h: number) => {
+      const root = rulerRootRef.current;
+      if (!root) return;
+      const projRuler = projRef.current;
+      const groundZ = THREE.MathUtils.clamp(controls.target.z, -STRIP_HALF_Z, STRIP_HALF_Z);
+      const screenXAt = (worldX: number): number | null => {
+        axisProbe.set(worldX, terrainHeight(worldX, groundZ) + 1.5, groundZ);
+        axisProbe.project(camera);
+        if (axisProbe.z > 1) return null; // behind the camera
+        return (axisProbe.x * 0.5 + 0.5) * w;
       };
-      const ordered = measured.sort(
-        (a, b) => pinRank(a.entry.id) - pinRank(b.entry.id) || a.dist - b.dist,
+
+      // Foreshortening guard: rotate until the axis points at the camera and
+      // every band edge lands on the same pixel. Showing a ruler then would
+      // be worse than showing none, so it fades out instead.
+      const left = screenXAt(-panBoundXRef.current + 40);
+      const right = screenXAt(panBoundXRef.current - 40);
+      const readable =
+        left !== null && right !== null && Math.abs(right - left) > w * 0.22;
+      if (root.dataset.readable !== String(readable)) {
+        root.dataset.readable = String(readable);
+      }
+      if (!readable) return;
+
+      for (const side of ["side_a", "side_b"] as const) {
+        for (const span of projRuler.spans) {
+          const el = rulerElsRef.current.get(`${side}:${span.band.id}`);
+          if (!el) continue;
+          const x1 = screenXAt(worldXFor(side, span.band.min_km, projRuler));
+          const x2 = screenXAt(worldXFor(side, span.displayMaxKm, projRuler));
+          if (x1 === null || x2 === null) {
+            if (el.dataset.on !== "0") {
+              el.dataset.on = "0";
+              el.style.width = "0px";
+            }
+            continue;
+          }
+          const l = Math.min(x1, x2);
+          const width = Math.abs(x2 - x1);
+          if (el.dataset.on !== "1") el.dataset.on = "1";
+          el.style.transform = `translateX(${l.toFixed(1)}px)`;
+          el.style.width = `${Math.max(0, width).toFixed(1)}px`;
+          // "Wide enough for its text" is a live question — a band that is
+          // 8px across on screen must not print a label over its neighbour.
+          const roomy = width > 54 ? "1" : "0";
+          if (el.dataset.roomy !== roomy) el.dataset.roomy = roomy;
+          const kmSpan = span.displayMaxKm - span.band.min_km;
+          const perHundred = width > 1 ? (kmSpan / width) * 100 : 0;
+          const scale = perHundred >= 100 ? `${Math.round(perHundred)}` : perHundred.toFixed(perHundred < 10 ? 1 : 0);
+          const readout = el.querySelector<HTMLElement>(".ruler3d__scale");
+          if (readout && readout.textContent !== `${scale} km`) readout.textContent = `${scale} km`;
+        }
+      }
+      void h;
+    };
+
+    /** The label layout pass. Everything expensive in this file lives here,
+     *  which is exactly why the loop is allowed to skip it. */
+    const layout = (w: number, h: number) => {
+      const camPos = camera.position;
+      const focusIds = focusSetRef.current;
+      const selId = selectedRef.current;
+      const hovId = hoveredRef.current;
+
+      // Where "near" is measured from: the pointer when it is over the
+      // canvas, otherwise the framing's centre of interest.
+      const fx = pointerRef.current.active ? pointerRef.current.x : w / 2;
+      const fy = pointerRef.current.active ? pointerRef.current.y : h * IDLE_FOCUS_Y;
+      const proximity = THREE.MathUtils.clamp(
+        Math.min(w, h) * PROXIMITY_FRACTION,
+        PROXIMITY_MIN_PX,
+        PROXIMITY_MAX_PX,
       );
 
-      const grid = new LabelGrid();
-      // Budget scales with viewport area rather than being a fixed count.
-      const budget = Math.max(8, Math.round(((w * h) / 1_000_000) * LABEL_BUDGET_PER_MPX));
-      let titled = 0;
-      // Tier thresholds follow the current framing — see LABEL_FULL_DIST.
+      const entries = entriesRef.current;
+      sizeMeasured(entries.length);
       const orbitRadius = camPos.distanceTo(controls.target);
-      const fullDist = LABEL_FULL_DIST(orbitRadius);
-      const dotDist = LABEL_DOT_DIST(orbitRadius);
+      const farDist = LABEL_FAR_DIST(orbitRadius);
 
-      for (const { entry, sx, sy, sz, dist } of ordered) {
-        const isSel = selectedRef.current === entry.id;
-        const isHov = hoveredRef.current === entry.id;
-        const pinned = isSel || isHov;
-        const behind = sz > 1;
+      for (let k = 0; k < entries.length; k++) {
+        const entry = entries[k];
+        projected.copy(entry.anchor).project(camera);
+        const sx = (projected.x * 0.5 + 0.5) * w;
+        const sy = (-projected.y * 0.5 + 0.5) * h;
+        const m = measured[k];
+        m.entry = entry;
+        m.sx = sx;
+        m.sy = sy;
+        m.sz = projected.z;
+        m.dist = camPos.distanceTo(entry.anchor);
+        const held = shownIds.has(entry.id);
+        // Already-titled labels are ranked as if slightly nearer, so a small
+        // pointer drift can't shuffle the set around the budget boundary.
+        m.focusDist = Math.hypot(sx - fx, sy - fy) - (held ? PROXIMITY_HOLD_PX : 0);
         // Cull against the label's own box, not the marker point, so a pin
-        // whose title would land entirely outside the viewport is never built.
-        const offscreen =
+        // whose title would land entirely outside the viewport is never
+        // considered.
+        m.offscreen =
+          projected.z > 1 ||
           sx + LABEL_W / 2 < 0 ||
           sx - LABEL_W / 2 > w ||
           sy < -LABEL_H ||
           sy - LABEL_LIFT_PX - LABEL_H > h;
 
+        // Priority. Selection and hover can never lose a collision to an
+        // arbitrary neighbour; a lesson's focus set outranks the rest of the
+        // field; then it is a question of proximity to where the user is
+        // actually looking, which is what stops the far end of the axis
+        // spending the label budget on things nobody asked about.
+        if (entry.id === selId) m.rank = 0;
+        else if (entry.id === hovId) m.rank = 1;
+        else if (focusIds && focusIds.has(entry.id)) m.rank = 2;
+        else if (
+          !m.offscreen &&
+          m.focusDist <= (held ? proximity * PROXIMITY_HOLD_FACTOR : proximity) &&
+          m.dist <= farDist
+        )
+          m.rank = 3;
+        else m.rank = 4;
+      }
+
+      // Sorted in place — no new array, and byRank is hoisted, so no closure.
+      measured.sort(byRank);
+
+      grid.clear();
+      const budget = THREE.MathUtils.clamp(
+        Math.round(((w * h) / 1_000_000) * LABEL_BUDGET_PER_MPX),
+        LABEL_CAP_MIN,
+        LABEL_CAP_MAX,
+      );
+      let titled = 0;
+      let probes = 0;
+      shownIds.clear();
+
+      for (let k = 0; k < measured.length; k++) {
+        const { entry, sx, sy, sz, dist, rank, offscreen } = measured[k];
+        const isSel = entry.id === selId;
+        const isHov = entry.id === hovId;
+        const pinned = isSel || isHov;
+
+        // ── WebGL appearance ─────────────────────────────────────────────
         // Scenario-focus mode: dim/desaturate everything not in the active
         // focus set, unless the user has selected or hovered it directly —
         // without that override, opening a lesson and then clicking some
         // other asset to compare it would leave the very thing you clicked
-        // on nearly invisible, which is the "half-working" outcome the brief
-        // warned against.
+        // on nearly invisible.
         const isStubEntry = entry.node.kind === "stub";
         const inFocusMode = focusIds !== null;
         const inFocusSet = !inFocusMode || focusIds!.has(entry.id);
@@ -400,75 +742,165 @@ export function Scene3D({ world }: { world: WorldModel }) {
           ringMat.opacity = isSel ? 0.95 : isHov ? 0.7 : highlighted ? 0.62 : 0.42;
           fillMat.opacity = isSel || isHov ? 0.13 : highlighted ? 0.2 : 0.13;
         }
-        const s = isSel ? 1.6 : isHov ? 1.3 : 1;
-        entry.marker.scale.setScalar(s);
-        entry.marker.rotation.y += 0.006;
+        entry.marker.scale.setScalar(isSel ? 1.6 : isHov ? 1.3 : 1);
 
-        let tier: LabelTier;
-        if (behind || offscreen) {
-          tier = "hidden";
+        // ── label tier ───────────────────────────────────────────────────
+        // Two tiers now, not three. The old "dot" tier is gone (item 6): it
+        // lagged its asset during pan because it was React state applied a
+        // frame late, and what it encoded — side, via a blue/red fill — the
+        // Pass 8 ground ring already carries in the scene itself.
+        let show = false;
+        if (offscreen) {
+          show = false;
         } else if (pinned) {
-          // Selection and hover are always fully titled, at any distance.
-          tier = "full";
-        } else if (dist > dotDist) {
-          tier = "hidden";
-        } else if (
-          entry.grounded &&
-          dist < dotDist &&
-          occludedByTerrain(camPos, entry.anchor)
-        ) {
-          // Behind a ridge: keep the dot as a "something is there" cue, but
-          // never the title, which would read as being in front of the rise.
-          tier = "dot";
-        } else if (dist > fullDist || titled >= budget) {
-          tier = "dot";
+          // Selection and hover are always titled, at any distance.
+          show = true;
+        } else if (rank === 4 || dist > farDist || titled >= budget) {
+          show = false;
         } else {
           const y2 = sy - LABEL_LIFT_PX;
-          const box = { x1: sx - LABEL_W / 2, y1: y2 - LABEL_H, x2: sx + LABEL_W / 2, y2 };
-          tier = grid.collides(box) ? "dot" : "full";
+          const x1 = sx - LABEL_W / 2;
+          const x2 = sx + LABEL_W / 2;
+          // Occlusion is probed LAST, and only for a candidate that has
+          // already won everything else — it is the expensive test.
+          if (grid.collides({ x1, y1: y2 - LABEL_H, x2, y2 })) show = false;
+          else if (
+            entry.grounded &&
+            probes < MAX_OCCLUSION_PROBES &&
+            (probes++, occludedByTerrain(camPos, entry.anchor))
+          )
+            show = false;
+          else show = true;
         }
 
-        if (tier === "full") {
+        if (show) {
           const y2 = sy - LABEL_LIFT_PX;
           grid.insert({ x1: sx - LABEL_W / 2, y1: y2 - LABEL_H, x2: sx + LABEL_W / 2, y2 });
           if (!pinned) titled += 1;
-        } else if (tier === "dot") {
-          // Dots reserve their own small footprint so they don't pile into an
-          // unreadable clump at the far end of the axis.
-          grid.insert({ x1: sx - 6, y1: sy - 6, x2: sx + 6, y2: sy + 6 });
+          shownIds.add(entry.id);
         }
 
-        if (tier === "hidden") continue;
-
-        next.push({
-          ...(entry.node.kind === "asset"
-            ? {
-                name: swapNamesRef.current.get(entry.node.asset.id) ?? entry.node.asset.name,
-                km: entry.node.asset.distance_km_from_zero,
-                isStub: false,
-              }
-            : { name: entry.node.stub.label, km: entry.node.stub.distance_km_from_zero, isStub: true }),
-          id: entry.id,
-          side: nodeSide(entry.node),
-          domain: nodeDomain(entry.node),
-          accent: DOMAIN_ACCENT[nodeDomain(entry.node)] ?? "#8b93a3",
-          sideColor: SIDE_ACCENT[nodeSide(entry.node)].base,
-          x: sx,
-          y: sy,
-          tier,
-          fade: THREE.MathUtils.clamp(1 - (dist - fullDist) / (dotDist - fullDist), 0.3, 1),
-          depth: sz,
-        });
+        const cls =
+          "pin3d" +
+          ` pin3d--${nodeSide(entry.node)}` +
+          (entry.node.kind === "stub" ? " pin3d--stub" : "") +
+          (isSel ? " is-selected" : "") +
+          (isHov ? " is-hovered" : "") +
+          (dimmed ? " is-dimmed" : "") +
+          (highlighted ? " is-focused" : "") +
+          (show ? "" : " is-off");
+        applyPin(entry.id, sx, sy, Math.max(1, Math.round((1 - sz) * 1000)), show, cls);
       }
 
-      setLabels(next);
+      perf.entries = entries.length;
+      perf.titled = titled;
+
+      layoutRuler(w, h);
+
+      // ── legend orientation (item 8) ──────────────────────────────────
+      // Which side is on the left is a question about the camera, not the
+      // data. Probe both rears through the same projection the scene uses
+      // and let the answer drive the header.
+      axisProbe.set(-100, 6, 0).project(camera);
+      const aX = axisProbe.x;
+      axisProbe.set(100, 6, 0).project(camera);
+      const flipped = aX > axisProbe.x;
+      if (flipped !== lastFlipped) {
+        lastFlipped = flipped;
+        // Published to view state, not kept local: the Legend panel states
+        // the same orientation in words and must not be able to contradict
+        // the header. Only fires on an actual flip, so this is a handful of
+        // React renders per session, not per frame.
+        setAxisFlippedRef.current(flipped);
+      }
+    };
+
+    const tick = () => {
+      raf = requestAnimationFrame(tick);
+      const frameStart = performance.now();
+
+      // Camera fly-to, used by selection and by the Lessons page.
+      const fly = flyRef.current;
+      if (fly) {
+        const t = Math.min(1, (frameStart - fly.t0) / fly.dur);
+        const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        camera.position.lerpVectors(fly.from, fly.to, e);
+        controls.target.lerpVectors(fly.tFrom, fly.tTo, e);
+        if (t >= 1) flyRef.current = null;
+      }
+
+      // Soft clamp on the pan target, in X and Z. Not a hard wall — it lets
+      // the target reach a margin past the strip's edge — but it stops a
+      // fast pan gesture from throwing the camera into empty fog with no
+      // landmark to reorient by, which compounds a too-sensitive drag into
+      // "lost," not just "overshot".
+      if (!flyRef.current) {
+        const bx = panBoundXRef.current;
+        controls.target.x = THREE.MathUtils.clamp(controls.target.x, -bx, bx);
+        controls.target.z = THREE.MathUtils.clamp(controls.target.z, -STRIP_HALF_Z - 30, STRIP_HALF_Z + 30);
+      }
+
+      controls.update();
+
+      // The markers idle-spin. Kept out of the layout pass so it survives a
+      // skipped layout — it costs one float add and a matrix per marker,
+      // which is nothing next to projecting and ranking the whole field.
+      const entries = entriesRef.current;
+      for (let k = 0; k < entries.length; k++) entries[k].marker.rotation.y += 0.006;
+
+      const w = mount.clientWidth;
+      const h = mount.clientHeight;
+
+      // ── the skip ─────────────────────────────────────────────────────
+      // The label layout depends on the camera, the viewport, and a short
+      // list of discrete events (selection, hover, focus, the asset set,
+      // pointer position). If none of them changed, last frame's layout is
+      // still exactly right and re-deriving it is pure waste. On a still
+      // camera this takes the per-frame cost of this file to approximately
+      // zero, which is what leaves headroom for Passes 17–19.
+      const dirty = layoutDirtyRef.current;
+      const moved =
+        !camera.position.equals(lastCam) ||
+        !controls.target.equals(lastTarget) ||
+        dirty !== lastDirty ||
+        w !== lastW ||
+        h !== lastH;
+
+      let layoutMs = 0;
+      if (moved && w > 0 && h > 0) {
+        const t0 = performance.now();
+        layout(w, h);
+        layoutMs = performance.now() - t0;
+        lastCam.copy(camera.position);
+        lastTarget.copy(controls.target);
+        lastDirty = dirty;
+        lastW = w;
+        lastH = h;
+      }
+
+      const r0 = performance.now();
       renderer.render(scene, camera);
+      const renderMs = performance.now() - r0;
+
+      const info = renderer.info;
+      perf.drawCalls = info.render.calls;
+      perf.triangles = info.render.triangles;
+      perf.programs = info.programs?.length ?? 0;
+      perf.geometries = info.memory.geometries;
+      perf.textures = info.memory.textures;
+      perf.sample(frameStart, layoutMs, renderMs, !moved);
     };
     raf = requestAnimationFrame(tick);
 
     return () => {
       cancelAnimationFrame(raf);
+      // The schematic view's axis cannot rotate, so leaving a flip published
+      // behind would make its Legend state the orientation backwards.
+      setAxisFlippedRef.current(false);
       ro.disconnect();
+      renderer.domElement.removeEventListener("pointermove", onPointerMove);
+      renderer.domElement.removeEventListener("pointerleave", onPointerLeave);
+      renderer.domElement.removeEventListener("pointerdown", onPointerDownDevice);
       controls.dispose();
       renderer.dispose();
       if (renderer.domElement.parentNode) renderer.domElement.parentNode.removeChild(renderer.domElement);
@@ -622,10 +1054,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
         if (model) {
           lod = new THREE.LOD();
           lod.addLevel(model, 0);
-          const proxy = new THREE.Mesh(
-            new THREE.BoxGeometry(5, 2.4, 3),
-            new THREE.MeshStandardMaterial({ color: "#4f5547", flatShading: true, roughness: 0.9 }),
-          );
+          const proxy = new THREE.Mesh(LOD_PROXY_GEO, LOD_PROXY_MAT);
           lod.addLevel(proxy, 165);
           lod.addLevel(new THREE.Group(), 420);
           g.add(lod);
@@ -653,7 +1082,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
         transparent: true,
         opacity: isStub ? 0.55 : 1,
       });
-      const marker = new THREE.Mesh(new THREE.OctahedronGeometry(1.5, 0), markerMat);
+      const marker = new THREE.Mesh(MARKER_GEO, markerMat);
       const markerY = elevated ? 7.5 : 1.4;
       marker.position.y = markerY;
       marker.userData.assetId = node.id;
@@ -686,7 +1115,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
       const padY = (elevated ? groundY : 0) + 0.12;
 
       const ring = new THREE.Mesh(
-        new THREE.RingGeometry(2.15, 2.9, 28),
+        RING_GEO,
         new THREE.MeshBasicMaterial({
           color: sideColor,
           transparent: true,
@@ -700,7 +1129,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
       g.add(ring);
 
       const fill = new THREE.Mesh(
-        new THREE.CircleGeometry(2.15, 20),
+        FILL_GEO,
         new THREE.MeshBasicMaterial({
           color: sideColor,
           transparent: true,
@@ -734,14 +1163,51 @@ export function Scene3D({ world }: { world: WorldModel }) {
     scene.add(root);
     entriesRef.current = entries;
 
+    // The pin roster React mounts. Built here, once per asset-set change —
+    // NOT per frame. Everything that varies per frame (position, z-order,
+    // whether the label is drawn at all) is written straight to these nodes
+    // by the render loop, which is what took ~90 React re-renders a second
+    // down to zero.
+    setPins(
+      entries.map((e) => {
+        const node = e.node;
+        const side = nodeSide(node);
+        const domain = nodeDomain(node);
+        return node.kind === "asset"
+          ? {
+              id: e.id,
+              name: swapNamesRef.current.get(node.asset.id) ?? node.asset.name,
+              km: node.asset.distance_km_from_zero,
+              side,
+              domain,
+              accent: DOMAIN_ACCENT[domain] ?? "#8b93a3",
+              sideColor: SIDE_ACCENT[side].base,
+              isStub: false,
+            }
+          : {
+              id: e.id,
+              name: node.stub.label,
+              km: node.stub.distance_km_from_zero,
+              side,
+              domain,
+              accent: DOMAIN_ACCENT[domain] ?? "#8b93a3",
+              sideColor: SIDE_ACCENT[side].base,
+              isStub: true,
+            };
+      }),
+    );
+    layoutDirtyRef.current++;
+
     return () => {
       scene.remove(root);
       root.traverse((o) => {
         if (o instanceof THREE.Mesh || o instanceof THREE.Line) {
-          o.geometry.dispose();
+          // Shared geometry outlives this effect by design — disposing it on
+          // the first rebuild would blank every marker in the scene.
+          if (!o.geometry.userData.shared) o.geometry.dispose();
           const m = o.material;
-          if (Array.isArray(m)) m.forEach((x) => x.dispose());
-          else m.dispose();
+          if (Array.isArray(m)) m.forEach((x) => !x.userData.shared && x.dispose());
+          else if (!m.userData.shared) m.dispose();
         }
       });
       entriesRef.current = [];
@@ -750,15 +1216,21 @@ export function Scene3D({ world }: { world: WorldModel }) {
 
   // Selection/hover are read by the render loop from refs so that hovering a
   // node does not re-run the scene-building effects above.
+  // Each also invalidates the label layout, which is otherwise skipped
+  // entirely on a still camera — without the bump, selecting something with
+  // the camera at rest would not repaint its label until you nudged the view.
   useEffect(() => {
     selectedRef.current = view.selectedId;
+    layoutDirtyRef.current++;
   }, [view.selectedId]);
   useEffect(() => {
     hoveredRef.current = view.hoveredId;
+    layoutDirtyRef.current++;
   }, [view.hoveredId]);
   useEffect(() => {
     const ids = view.focusRequest?.assetIds;
     focusSetRef.current = ids && ids.length > 0 ? new Set(ids) : null;
+    layoutDirtyRef.current++;
   }, [view.focusRequest]);
 
   /** Eases the camera to frame a set of assets. */
@@ -831,10 +1303,21 @@ export function Scene3D({ world }: { world: WorldModel }) {
     (e: PointerEvent) => {
       const drag = dragRef.current;
       const camera = cameraRef.current;
-      if (!drag || !camera) return;
-      if (!drag.moved) {
-        if (Math.hypot(e.clientX - drag.startClientX, e.clientY - drag.startClientY) < 4) return;
-        drag.moved = true;
+      if (!drag || !camera || e.pointerId !== drag.pointerId) return;
+      // ── the discriminator ────────────────────────────────────────────
+      // Until the pointer travels further than TAP_SLOP_PX this gesture is
+      // still potentially a tap, and nothing moves. Past it, the gesture has
+      // committed to being a drag and can never become a tap again — which
+      // is what stops "I meant to drag it" ending in an opened detail panel.
+      if (!drag.dragging) {
+        if (Math.hypot(e.clientX - drag.startClientX, e.clientY - drag.startClientY) < TAP_SLOP_PX) {
+          return;
+        }
+        drag.dragging = true;
+        // Once committed, swallow the click the browser will synthesise on
+        // release. Refreshed again on pointerup, since a long drag would
+        // otherwise outlive this window.
+        swallowClickUntilRef.current = performance.now() + CLICK_SWALLOW_MS;
       }
       const entry = entriesRef.current.find((x) => x.id === drag.id);
       if (!entry) return;
@@ -854,44 +1337,82 @@ export function Scene3D({ world }: { world: WorldModel }) {
       entry.group.position.set(next.x, next.y, next.z);
       const markerY = entry.grounded ? 1.4 : 7.5;
       entry.anchor.set(next.x, next.y + markerY, next.z);
+      // The asset moved without the camera moving, so the layout pass would
+      // otherwise skip and the label would sit on the marker's old point.
+      layoutDirtyRef.current++;
     },
     [ndcFromClient],
   );
 
-  const onPinDragEnd = useCallback(() => {
-    window.removeEventListener("pointermove", onPinDragMove);
-    window.removeEventListener("pointerup", onPinDragEnd);
-    const controls = controlsRef.current;
-    if (controls) controls.enabled = true;
-    const drag = dragRef.current;
-    dragRef.current = null;
-    if (!drag || !drag.moved) return;
-    const entry = entriesRef.current.find((x) => x.id === drag.id);
-    if (!entry) return;
-    const side = nodeSide(entry.node);
-    const km = worldXToKm(side, entry.group.position.x, projRef.current);
-    // Committed to the SAME overrides store every other edit in this app
-    // uses (src/state/overridesState.tsx) — a dropped asset is a placement
-    // edit, not a new kind of state. This is what makes the drop survive the
-    // full rebuild the next render triggers (the "asset objects" effect
-    // above), what the detail panel's "edited locally" tag picks up, and
-    // what Export/the sync worker carry along with everything else.
-    overrides.setAssetOverride(entry.id, {
-      distance_km_from_zero: Math.max(0, Math.round(km * 10) / 10),
-      lateral_offset_world: Math.round(entry.group.position.z * 100) / 100,
-    });
-    // Selecting the dropped asset is the drop's confirmation — the detail
-    // panel opens showing its new distance rather than leaving the only
-    // feedback to whatever the marker looks like from the current camera.
-    view.select(entry.id);
-    // Depend on view.select specifically, not `view` — `view` gets a new
-    // identity on every hover, and this function's reference has to stay
-    // stable across a drag: the cleanup effect just below tears down the
-    // listeners whenever THIS reference changes, and if a hover fired mid-
-    // drag and swapped it out, the pointerup that ends the drag would never
-    // reach it. That was a real bug here, caught by testing an actual drag
-    // rather than just reading the handler code.
-  }, [onPinDragMove, overrides.setAssetOverride, view.select]);
+  const onPinDragEnd = useCallback(
+    (e: PointerEvent) => {
+      const drag = dragRef.current;
+      if (drag && e.pointerId !== drag.pointerId) return;
+      window.removeEventListener("pointermove", onPinDragMove);
+      window.removeEventListener("pointerup", onPinDragEnd);
+      window.removeEventListener("pointercancel", onPinDragEnd);
+      const controls = controlsRef.current;
+      if (controls) controls.enabled = true;
+      dragRef.current = null;
+      if (!drag) return;
+      if (drag.target && drag.target.hasPointerCapture?.(drag.pointerId)) {
+        drag.target.releasePointerCapture(drag.pointerId);
+      }
+
+      const heldMs = performance.now() - drag.startedAt;
+      const travelled = Math.hypot(e.clientX - drag.startClientX, e.clientY - drag.startClientY);
+
+      if (!drag.dragging) {
+        // Neither threshold crossed → this was a tap, and a tap selects.
+        // Crossing EITHER (a long stationary press, or movement) means it was
+        // not a tap and nothing is selected — a press-and-wiggle that ends
+        // where it began no longer opens a panel the user didn't ask for.
+        if (travelled < TAP_SLOP_PX && heldMs <= TAP_MAX_MS) {
+          view.select(drag.id);
+        }
+        // Either way the pointer path has resolved this gesture; the click
+        // the browser is about to synthesise must not resolve it a second
+        // time (see the onClick handler, which only serves the keyboard).
+        swallowClickUntilRef.current = performance.now() + CLICK_SWALLOW_MS;
+        return;
+      }
+
+      // A committed drag. Re-arm the swallow window from the release, not
+      // from where the drag committed.
+      swallowClickUntilRef.current = performance.now() + CLICK_SWALLOW_MS;
+      const entry = entriesRef.current.find((x) => x.id === drag.id);
+      if (!entry) return;
+      const side = nodeSide(entry.node);
+      const km = Math.max(0, Math.round(worldXToKm(side, entry.group.position.x, projRef.current) * 10) / 10);
+      // Committed to the SAME overrides store every other edit in this app
+      // uses (src/state/overridesState.tsx) — a dropped asset is a placement
+      // edit, not a new kind of state. This is what makes the drop survive the
+      // full rebuild the next render triggers (the "asset objects" effect
+      // above), what the detail panel's "edited locally" tag picks up, and
+      // what Export/the sync worker carry along with everything else.
+      overrides.setAssetOverride(entry.id, {
+        distance_km_from_zero: km,
+        lateral_offset_world: Math.round(entry.group.position.z * 100) / 100,
+      });
+      // A drop no longer SELECTS (Pass 16 item 4). Selecting opened the
+      // detail panel over the map at the end of every drag — the exact
+      // complaint — and it also fired flyTo(), so the camera lurched away
+      // from the position you had just chosen. The confirmation is now a
+      // transient line that names the new distance and gets out of the way.
+      const label = swapNamesRef.current.get(entry.id) ?? entry.id;
+      setDropNote(`${label} → ${km} km`);
+      window.clearTimeout(dropNoteTimerRef.current);
+      dropNoteTimerRef.current = window.setTimeout(() => setDropNote(null), 2200);
+      // Depend on view.select specifically, not `view` — `view` gets a new
+      // identity on every hover, and this function's reference has to stay
+      // stable across a drag: the cleanup effect just below tears down the
+      // listeners whenever THIS reference changes, and if a hover fired mid-
+      // drag and swapped it out, the pointerup that ends the drag would never
+      // reach it. That was a real bug here, caught by testing an actual drag
+      // rather than just reading the handler code.
+    },
+    [onPinDragMove, overrides.setAssetOverride, view.select],
+  );
 
   const onPinDragStart = useCallback(
     (id: string, e: React.PointerEvent) => {
@@ -901,9 +1422,28 @@ export function Scene3D({ world }: { world: WorldModel }) {
       const controls = controlsRef.current;
       if (controls) controls.enabled = false;
       dragPlaneRef.current.setFromNormalAndCoplanarPoint(new THREE.Vector3(0, 1, 0), entry.group.position);
-      dragRef.current = { id, startClientX: e.clientX, startClientY: e.clientY, moved: false };
+      const target = e.currentTarget as HTMLElement;
+      // Pointer capture keeps the gesture bound to the pin even though the
+      // pin moves out from under the pointer as the asset follows it — and
+      // it means a release outside the pin still reaches this handler rather
+      // than landing on the canvas as a deselecting click.
+      try {
+        target.setPointerCapture(e.pointerId);
+      } catch {
+        // Capture is best-effort; the window listeners below are the floor.
+      }
+      dragRef.current = {
+        id,
+        startClientX: e.clientX,
+        startClientY: e.clientY,
+        startedAt: performance.now(),
+        pointerId: e.pointerId,
+        dragging: false,
+        target,
+      };
       window.addEventListener("pointermove", onPinDragMove);
       window.addEventListener("pointerup", onPinDragEnd);
+      window.addEventListener("pointercancel", onPinDragEnd);
     },
     [onPinDragMove, onPinDragEnd],
   );
@@ -913,6 +1453,8 @@ export function Scene3D({ world }: { world: WorldModel }) {
     return () => {
       window.removeEventListener("pointermove", onPinDragMove);
       window.removeEventListener("pointerup", onPinDragEnd);
+      window.removeEventListener("pointercancel", onPinDragEnd);
+      window.clearTimeout(dropNoteTimerRef.current);
       dragRef.current = null;
     };
   }, [onPinDragMove, onPinDragEnd]);
@@ -920,6 +1462,10 @@ export function Scene3D({ world }: { world: WorldModel }) {
   // Raycast so the models themselves are clickable, not just their labels.
   const onCanvasClick = useCallback(
     (e: React.MouseEvent) => {
+      // A click landing here right after a drag is the browser's synthetic
+      // release click, not a new intent — acting on it deselected the asset
+      // the user had just repositioned.
+      if (performance.now() < swallowClickUntilRef.current) return;
       const camera = cameraRef.current;
       const renderer = rendererRef.current;
       if (!camera || !renderer) return;
@@ -945,7 +1491,35 @@ export function Scene3D({ world }: { world: WorldModel }) {
     [view],
   );
 
-  const focusSet = view.focusRequest?.assetIds ?? null;
+  /** Stores each pin's DOM node so the render loop can position it directly.
+   *  A ref callback rather than an effect: React hands the node over at the
+   *  moment it exists, which is what lets the loop treat the roster as
+   *  write-through rather than having to check for a node every frame. */
+  const setPinEl = useCallback((id: string) => {
+    return (el: HTMLButtonElement | null) => {
+      const map = pinDomRef.current;
+      if (el) map.set(id, { el, x: NaN, y: NaN, z: -1, cls: "", shown: false });
+      else map.delete(id);
+      // A newly attached node has never been positioned, and React commits
+      // it AFTER the layout pass that would have positioned it — so without
+      // this the very first frame's layout writes into an empty map and the
+      // idle-skip then keeps any later layout from running. The labels only
+      // appeared once you happened to move the camera. Attaching a node is
+      // itself a reason to lay out again.
+      layoutDirtyRef.current++;
+    };
+  }, []);
+
+  const setRulerEl = useCallback((key: string) => {
+    return (el: HTMLDivElement | null) => {
+      if (el) rulerElsRef.current.set(key, el);
+      else rulerElsRef.current.delete(key);
+    };
+  }, []);
+
+  // Left/right rear labels follow the camera, not the data (item 8).
+  const leftSide = view.axisFlipped ? "side_b" : "side_a";
+  const rightSide = view.axisFlipped ? "side_a" : "side_b";
 
   return (
     <div className="scene3d">
@@ -956,73 +1530,102 @@ export function Scene3D({ world }: { world: WorldModel }) {
           space, which is what keeps a nametag locked over its own icon at any
           camera pitch. They stay the accessible, keyboard-reachable
           representation of the scene — the canvas is the picture, this is the
-          interface. */}
+          interface.
+
+          Every asset gets a node, mounted once; the loop decides frame by
+          frame which of them are actually drawn (`is-off`). Mounting the full
+          roster and hiding most of it beats mounting and unmounting as the
+          camera moves: React does no work per frame, the fade in and out is a
+          plain CSS opacity transition, and a decluttered pin stays in the tab
+          order, so the keyboard path this layer exists for is unaffected. */}
       <div className="scene3d__labels">
-        {labels.map((l) => {
-          const isSel = view.selectedId === l.id;
-          const isHov = view.hoveredId === l.id;
-          // Selected/hovered overrides dimming — otherwise clicking on
-          // something outside the focus set to compare it against the
-          // highlighted scenario would render it as a nearly-invisible
-          // "selected" pin, which is the exact half-working state the brief
-          // called out.
-          const dimmed = focusSet ? !focusSet.includes(l.id) && !isSel && !isHov : false;
-          const focused = focusSet ? focusSet.includes(l.id) && !isSel && !isHov : false;
-          const isDot = l.tier === "dot";
-          return (
-            <button
-              key={l.id}
-              type="button"
-              className={[
-                "pin3d",
-                `pin3d--${l.side}`,
-                l.isStub ? "pin3d--stub" : "",
-                isSel ? "is-selected" : "",
-                isHov ? "is-hovered" : "",
-                dimmed ? "is-dimmed" : "",
-                focused ? "is-focused" : "",
-                isDot ? "is-collapsed" : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              style={{
-                // A dot stands in for the icon, so it centres ON the marker; a
-                // titled label hangs its bottom edge a fixed lift above it,
-                // with the leader stub spanning exactly that gap.
-                transform: isDot
-                  ? `translate(-50%, -50%) translate(${l.x}px, ${l.y}px)`
-                  : `translate(-50%, -100%) translate(${l.x}px, ${l.y - LABEL_LIFT_PX}px)`,
-                ["--accent" as string]: l.accent,
-                ["--side" as string]: l.sideColor,
-                ["--lift" as string]: `${LABEL_LIFT_PX}px`,
-                ["--fade" as string]: l.fade,
-                zIndex: Math.max(1, Math.round((1 - l.depth) * 1000)),
-              }}
-              title={isDot ? `${l.name} — ${l.isStub ? "pending" : `${l.km} km`}` : undefined}
-              onClick={(e) => {
-                e.stopPropagation();
-                view.select(l.id);
-              }}
-              onPointerDown={(e) => {
-                if (!l.isStub) onPinDragStart(l.id, e);
-              }}
-              onMouseEnter={() => view.hover(l.id)}
-              onMouseLeave={() => view.hover(null)}
-              onFocus={() => view.hover(l.id)}
-              onBlur={() => view.hover(null)}
-              aria-pressed={view.selectedId === l.id}
-            >
-              <span className="pin3d__name">{l.name}</span>
-              <span className="pin3d__km">{l.isStub ? "pending" : `${l.km} km`}</span>
-            </button>
-          );
-        })}
+        {pins.map((l) => (
+          <button
+            key={l.id}
+            ref={setPinEl(l.id)}
+            type="button"
+            className="pin3d is-off"
+            style={{
+              ["--accent" as string]: l.accent,
+              ["--side" as string]: l.sideColor,
+              ["--lift" as string]: `${LABEL_LIFT_PX}px`,
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              // Pointer gestures are resolved by the discriminator in
+              // onPinDragEnd, which sets a swallow window; what reaches here
+              // inside that window is the synthetic click that follows every
+              // release. `detail === 0` is the keyboard's synthetic click
+              // (Enter/Space), which has no pointer path and must still work.
+              if (e.detail !== 0 && performance.now() < swallowClickUntilRef.current) return;
+              view.select(l.id);
+            }}
+            onPointerDown={(e) => {
+              if (!l.isStub) onPinDragStart(l.id, e);
+            }}
+            onMouseEnter={() => view.hover(l.id)}
+            onMouseLeave={() => view.hover(null)}
+            onFocus={() => view.hover(l.id)}
+            onBlur={() => view.hover(null)}
+            aria-pressed={view.selectedId === l.id}
+          >
+            <span className="pin3d__name">{l.name}</span>
+            <span className="pin3d__km">{l.isStub ? "pending" : `${l.km} km`}</span>
+          </button>
+        ))}
       </div>
 
+      {/* Banded distance ruler (item 9). Each segment is positioned from the
+          real projected screen-X of its band's edges, so a band that the axis
+          compresses hard is visibly narrower than one it doesn't — the ruler
+          SHOWS the compression rather than papering over it with an even
+          scale that would be a lie. The per-band "km per 100px" readout is
+          the same fact stated numerically. */}
+      <div className="ruler3d" ref={rulerRootRef} data-readable="true" aria-hidden="true">
+        {(["side_a", "side_b"] as const).map((side) =>
+          proj.spans.map((span) => (
+            <div
+              key={`${side}:${span.band.id}`}
+              ref={setRulerEl(`${side}:${span.band.id}`)}
+              className={`ruler3d__band ruler3d__band--${side}`}
+              style={{ ["--side" as string]: SIDE_ACCENT[side].base }}
+              data-on="0"
+              data-roomy="0"
+            >
+              <span className="ruler3d__label">{span.band.label}</span>
+              <span className="ruler3d__scale" />
+            </div>
+          )),
+        )}
+        <span className="ruler3d__caption">
+          band scale — segments are equal in km only within a band
+        </span>
+      </div>
+
+      {/* Screen-reader equivalent of the ruler: the compression is a fact
+          about the data, not only about the picture. */}
+      <p className="sr-only">
+        The horizontal axis is compressed differently per distance band:{" "}
+        {proj.spans
+          .map((s) => `${s.band.label}, ${s.band.min_km} to ${s.displayMaxKm} km`)
+          .join("; ")}
+        .
+      </p>
+
       <div className="scene3d__legend">
-        <span className="scene3d__side scene3d__side--a">← {SIDE_LABELS.side_a.short} rear</span>
+        <span className={`scene3d__side scene3d__side--${leftSide === "side_a" ? "a" : "b"}`}>
+          ← {SIDE_LABELS[leftSide].short} rear
+        </span>
         <span className="scene3d__zero">zero line</span>
-        <span className="scene3d__side scene3d__side--b">{SIDE_LABELS.side_b.short} rear →</span>
+        <span className={`scene3d__side scene3d__side--${rightSide === "side_a" ? "a" : "b"}`}>
+          {SIDE_LABELS[rightSide].short} rear →
+        </span>
+      </div>
+
+      {/* Drag confirmation. Replaces the detail panel that used to open on
+          every drop (item 4) — it names what moved and where, then leaves. */}
+      <div className="scene3d__dropnote" role="status" aria-live="polite">
+        {dropNote ? <span>{dropNote}</span> : null}
       </div>
     </div>
   );

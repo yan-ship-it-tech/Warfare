@@ -80,8 +80,15 @@ export function Legend({ world }: { world: WorldModel }) {
           geography; distance along the axis is band-compressed exactly as in the schematic view.
         </p>
       )}
+      {/* Follows the camera, not the data (Pass 16 item 8). In the 3D view
+          the axis rotates with the orbit control, so a fixed "side_a is on
+          the left" was simply wrong half the time; view.axisFlipped is
+          published by Scene3D from the same projection the scene draws
+          through. The schematic view never flips, so this reads as it always
+          did there. */}
       <p className="legend__sides">
-        {SIDE_LABELS.side_a.short} rear is to the left, {SIDE_LABELS.side_b.short} rear to the right.
+        {SIDE_LABELS[view.axisFlipped ? "side_b" : "side_a"].short} rear is to the left,{" "}
+        {SIDE_LABELS[view.axisFlipped ? "side_a" : "side_b"].short} rear to the right.
       </p>
     </div>
   );

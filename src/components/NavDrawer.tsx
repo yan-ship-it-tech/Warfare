@@ -163,6 +163,15 @@ export function NavDrawer({ world }: { world: WorldModel }) {
             >
               Doctrine depths
             </button>
+            <button
+              type="button"
+              className={`chip${view.showPerfHud ? " is-on" : ""}`}
+              onClick={view.togglePerfHud}
+              title="Frame time, draw calls and label counts for the 3D view. Also reachable as ?perf=1 on the URL."
+              data-testid="perf-hud-toggle"
+            >
+              Performance HUD
+            </button>
           </div>
         </div>
 

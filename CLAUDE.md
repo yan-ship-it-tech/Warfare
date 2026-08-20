@@ -48,8 +48,9 @@ reading order for any session is `CLAUDE.md` → `DECISIONS.md` →
 | `src/data/loader.ts` | `loadWorld()` — assembles the `WorldModel` from the JSON above plus live overrides. Validates every asset via `src/data/validate.ts`, never throws on a bad file (degrades gracefully into a Data Health issue instead). |
 | `src/data/model.ts` | Loader-derived types sitting on top of the schema in `src/types.ts` (the actual `Asset` contract). |
 | `src/data/placement.ts` | **Engagement domain vs. platform domain** — resolves how high off the deck to draw an asset. Read the file header before touching altitude/tether logic in either renderer. |
-| `src/scene/labelGrid.ts` | The one label-collision index both renderers share (uniform grid, cost scales with local crowding rather than roster size). |
-| `src/three/` | The WebGL scene: `Scene3D.tsx` (main component — also owns drag-to-reposition, hung off each DOM pin's `onPointerDown`, see Pass 11), `worldMapping.ts` (world-unit conversion + `DOMAIN_ALTITUDE` + `worldXToKm`, the inverse a drag needs to turn a drop point back into a distance), `terrain3d.ts` (synthetic terrain), `models.ts` (`HERO_BUILDERS` — authored, not sourced, low-poly 3D models for a subset of assets), `scenery.ts` (decorative trench lines/obstacle belts/power plant/etc., not clickable), `props.ts` (instanced scatter — trees/craters). |
+| `src/scene/labelGrid.ts` | The one label-collision index both renderers share (uniform grid, cost scales with local crowding rather than roster size). `clear()` lets the 3D loop reuse one index per frame instead of allocating a new one. |
+| `src/three/perfMonitor.ts` + `src/components/PerfOverlay.tsx` | Pass 16's frame-time / draw-call readout — the performance budget made visible. Allocation-free sampling in the render loop; the overlay polls it 4×/second and never re-renders per frame. On in `npm run dev`; in production it's the nav drawer's "Performance HUD" switch or `?perf=1` (query param, not hash — the hash is the router's). **Record the numbers before and after any rendering change.** |
+| `src/three/` | The WebGL scene: `Scene3D.tsx` (main component — also owns drag-to-reposition and the tap/drag discriminator, hung off each DOM pin's `onPointerDown`, see Pass 11 and Pass 16), `worldMapping.ts` (world-unit conversion + `DOMAIN_ALTITUDE` + `worldXToKm`, the inverse a drag needs to turn a drop point back into a distance), `terrain3d.ts` (synthetic terrain), `models.ts` (`HERO_BUILDERS` — authored, not sourced, low-poly 3D models for a subset of assets), `scenery.ts` (decorative trench lines/obstacle belts/power plant/etc., not clickable), `props.ts` (instanced scatter — trees/craters). |
 | `src/state/overridesState.tsx` + `persistence.ts` | The live-edit layer: distance-band edits, per-asset placement/text/media overrides, and brand-new assets built in the Asset Editor all persist here — to `localStorage` by default, or a shared Cloudflare Worker if `VITE_SYNC_URL` is configured (see `docs/DEPLOY_SYNC_WORKER.md`). |
 | `src/components/` | `AppHeader` (hamburger + brand) + `NavDrawer` (every toggle/filter, plus nav links to the routed pages below — Pass 9 replaced the old stacked-button `Toolbar` with this), `PageShell` (chrome for a routed page), `DetailPanel` (per-asset view + inline edit controls + Duplicate), `AssetEditorPanel` (build a whole new asset from scratch, live; also opens directly into edit mode for a custom asset via `ViewState.editorTarget`), `BandsEditorPanel`, `Legend`, `SyncControls`, `CategoryFilterMenu`, `ScenarioFocusBanner` (Pass 11 — the visible entry/exit for `ViewState.focusRequest`'s scenario-focus mode). |
 | `src/pages/` | Routed pages — `registry.tsx` (the `PAGES` array `NavDrawer`/`App.tsx` read; add a page by adding one entry here plus a component, see Pass 9), `DataHealthPage`, `LessonsPage`, `AboutPage`, `AssetLibraryPage` (Pass 11 — browse/filter every asset by side and category, independent of where it sits on the map). |
@@ -110,6 +111,21 @@ headless Playwright smoke pass (Chromium is pre-installed at
   Coordinates are the deliberate exception (`data/osm/`): a named source
   under a license we can actually read, ODbL, whose price is a visible
   "© OpenStreetMap contributors" credit wherever the data is drawn.
+- **The 3D render loop must not touch React state per frame.** Pass 16's
+  biggest single win: label positions are written straight to the DOM nodes
+  by `Scene3D`'s tick, and React only ever mounts the *roster* of pins.
+  Reintroducing a `setState` in the loop puts ~90 component re-renders back
+  on every frame — that was 89% of the per-frame style/layout cost. The loop
+  also skips its whole layout pass when nothing moved, so anything that
+  invalidates label positions without moving the camera (selection, hover,
+  focus, a pin node mounting, a drag) must bump `layoutDirtyRef`.
+- **`npm run build` passing is not evidence that a rendering change works.**
+  Pass 16 shipped green builds twice with every label parked at the screen's
+  top-left corner, and then with labels that never appeared until the camera
+  moved. Both were found by taking a screenshot and looking at it. Drive the
+  real app (`npm run preview` + headless Chromium) and assert on real
+  geometry — `getBoundingClientRect()`, `elementFromPoint()` — not on class
+  names and counts, which passed happily in both broken states.
 - **A bad or incomplete asset file should degrade the tool, not break it.**
   `validateAsset()` is warning-based; almost nothing is a hard error. Match
   that philosophy in new validation code.

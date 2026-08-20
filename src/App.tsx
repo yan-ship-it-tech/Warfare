@@ -9,6 +9,7 @@ import { BandsEditorPanel } from "./components/BandsEditorPanel";
 import { AssetEditorPanel } from "./components/AssetEditorPanel";
 import { Legend } from "./components/Legend";
 import { ScenarioFocusBanner } from "./components/ScenarioFocusBanner";
+import { PerfOverlay } from "./components/PerfOverlay";
 import { ViewStateProvider, useViewState } from "./state/viewState";
 import { OverridesProvider, useOverrides } from "./state/overridesState";
 import { RouterProvider, useRouter } from "./state/router";
@@ -73,6 +74,11 @@ function AppInner() {
             ) : (
               <Scene world={world} replayNonce={replayNonce} />
             )}
+            {/* Pass 16 item 1 — instrument before optimizing. Mounted next to
+                the renderer rather than inside it so the numbers survive a
+                render-mode switch and so Scene3D never re-renders to update
+                them (PerfOverlay polls the monitor on its own interval). */}
+            {view.showPerfHud && view.renderMode === "terrain3d" ? <PerfOverlay /> : null}
             <Legend world={world} />
           </>
         )}

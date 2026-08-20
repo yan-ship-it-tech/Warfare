@@ -176,12 +176,50 @@ to the assets that demonstrate it and able to fly the 3D camera to them.
 Instanced scatter props (3 draw calls for ~1,900 objects), LOD on hero
 models, device-aware prop budget, `React.lazy` on the whole 3D module
 (main bundle 400 kB / 3D chunk 561 kB on demand), screen-space label
-declutter.
+declutter. **Extended in Pass 16** with the measurement that was missing —
+see `DECISIONS.md` Pass 16 for the frame-time instrument, the before/after
+numbers and the standing draw-call budget.
 
 ### 11. Real backend — seam done, endpoint outstanding
 `src/state/persistence.ts` makes storage pluggable and ships a real REST
 adapter plus export/import. What is *not* done is standing up an endpoint —
 see item 21 below, which is now the actual remaining work.
+
+---
+
+## Open after Pass 16 (performance and interaction)
+
+### Draw calls are the next ceiling — deferred to Pass 19 on purpose
+Pass 16 established the budget: **845 draw calls / 68,992 triangles / 513
+geometries** at the default framing (~468 draw calls zoomed in, frustum
+culling). Roughly 273 of those are the per-asset marker + side ring + fill
+trio. Instancing collapses that to ~3 — but `InstancedMesh` has no
+per-instance opacity without a custom shader, and scenario-focus dimming
+animates exactly that per asset, so it is not a drop-in. `PLANNING.md` gives
+instancing to **Pass 19** ("instancing is mandatory") alongside the shared
+material palette it depends on; doing it in Pass 16 would have meant
+reworking Pass 8's side-ring behaviour on the way past. Pass 16 took the
+free half — the three marker/ring/fill geometries are now shared singletons
+instead of 273 near-duplicate uploads.
+
+### Still no test suite
+Pass 16 leans harder on this than any pass so far: `npm run build` passed
+green while every label in the 3D view sat at the top-left corner, and again
+while labels never rendered at all until the camera was touched. Both were
+caught by looking at a screenshot, not by any check. The 23-assertion
+Playwright script written for this pass is not committed as a suite — it
+lives in the pass, same as every prior smoke pass. `PLANNING.md`'s
+cross-cutting section already calls for regression tests on the Pass 8
+invariants; add the Pass 16 ones (labels are positioned on first paint;
+a drag does not select) at the same time.
+
+### `?perf=1` / the HUD is a diagnostic, not a product surface
+The frame-time readout ships enabled in dev and reachable in production via
+the nav drawer or `?perf=1`. That is deliberate — a performance budget you
+cannot read on the deployed site is not a budget. It has had no design pass
+and overlaps the header legend on very narrow viewports (mitigated, not
+solved, by a max-width: 620px rule). Decide whether it stays visible to end
+users before the tool is briefed to an audience.
 
 ---
 

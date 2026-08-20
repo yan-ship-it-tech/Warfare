@@ -49,6 +49,17 @@ export class LabelGrid {
     return false;
   }
 
+  /** Empties the index for reuse on the next frame.
+   *
+   *  Pass 16: the 3D render loop used to construct a fresh LabelGrid every
+   *  frame, which meant a new Map plus one array per occupied cell 60 times a
+   *  second — steady garbage that showed up as periodic GC hitches in the
+   *  frame-time trace rather than as a slow average. Keeping the buckets and
+   *  clearing them costs nothing and allocates nothing. */
+  clear(): void {
+    for (const bucket of this.buckets.values()) bucket.length = 0;
+  }
+
   insert(box: LabelBox): void {
     const cx0 = Math.floor(box.x1 / this.cell);
     const cx1 = Math.floor(box.x2 / this.cell);

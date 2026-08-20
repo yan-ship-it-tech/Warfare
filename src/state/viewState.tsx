@@ -81,6 +81,24 @@ export interface ViewState {
   showDoctrineMarkers: boolean;
   toggleDoctrineMarkers: () => void;
 
+  /** Pass 16's frame-time / draw-call readout. On by default in dev, and in
+   *  a production build when the URL carries `?perf=1` — the query string,
+   *  not the hash, because the hash is the in-app router's (`#/health`) and
+   *  `#perf` would read as a route. Otherwise it is a nav-drawer switch, so
+   *  the number is obtainable on the deployed site without a rebuild. */
+  showPerfHud: boolean;
+  togglePerfHud: () => void;
+
+  /** True when the active renderer currently draws side_b on the LEFT of the
+   *  screen. Published by Scene3D from actual camera azimuth (Pass 16 item
+   *  8) and read by anything that states an orientation in words — the 3D
+   *  header legend and the Legend panel both used to assert "side_a rear is
+   *  to the left" as a constant, which stopped being true the moment the
+   *  user orbited past 90°. Always false in the schematic view, where the
+   *  axis genuinely cannot rotate. */
+  axisFlipped: boolean;
+  setAxisFlipped: (flipped: boolean) => void;
+
   visibleSides: Set<Side>;
   toggleSide: (s: Side) => void;
 
@@ -134,6 +152,10 @@ export function ViewStateProvider({ children }: { children: ReactNode }) {
   );
   const [showPending, setShowPending] = useState(true);
   const [showDoctrineMarkers, setShowDoctrineMarkers] = useState(true);
+  const [axisFlipped, setAxisFlipped] = useState(false);
+  const [showPerfHud, setShowPerfHud] = useState(
+    () => import.meta.env.DEV || new URLSearchParams(window.location.search).has("perf"),
+  );
   const [visibleSides, setVisibleSides] = useState<Set<Side>>(
     () => new Set<Side>(["side_a", "side_b"]),
   );
@@ -217,6 +239,10 @@ export function ViewStateProvider({ children }: { children: ReactNode }) {
       togglePending: () => setShowPending((v) => !v),
       showDoctrineMarkers,
       toggleDoctrineMarkers: () => setShowDoctrineMarkers((v) => !v),
+      showPerfHud,
+      togglePerfHud: () => setShowPerfHud((v) => !v),
+      axisFlipped,
+      setAxisFlipped,
       visibleSides,
       toggleSide,
       hiddenGroups,
@@ -244,6 +270,8 @@ export function ViewStateProvider({ children }: { children: ReactNode }) {
       toggleConnectionType,
       showPending,
       showDoctrineMarkers,
+      showPerfHud,
+      axisFlipped,
       visibleSides,
       toggleSide,
       hiddenGroups,
