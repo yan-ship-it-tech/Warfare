@@ -211,9 +211,15 @@ interface Entry {
   /** The marker's own world position. Labels project THIS and then offset in
    *  screen space — never a pre-lifted world point. */
   anchor: THREE.Vector3;
-  marker: THREE.Mesh;
-  ring: THREE.Mesh;
-  fill: THREE.Mesh;
+  /** Row index into the three shared marker/ring/fill InstancedMeshes (Pass
+   *  19) — `entries[k]`/`measured[k]`/instance row `k` are always the same
+   *  asset, by construction (see the creation loop). */
+  idx: number;
+  /** Local Y offset of the ring/fill pad above the group's own origin —
+   *  stored so a drag can recompute their world Y without re-deriving
+   *  `groundY`, matching what the old parent-child Mesh hierarchy did for
+   *  free. See onPinDragMove. */
+  padY: number;
   lod: THREE.LOD | null;
   /** Grounded assets can be hidden behind terrain; elevated ones effectively
    *  cannot, so they skip the occlusion probe entirely. */
@@ -223,6 +229,15 @@ interface Entry {
    *  re-reading it off the material each time. */
   baseColor: THREE.Color;
   sideColorHex: THREE.Color;
+}
+
+/** Handles to the three shared instanced meshes built by the asset-objects
+ *  effect — read by layout()/tick()/onCanvasClick()/onPinDragMove(), all of
+ *  which live outside that effect's closure. */
+interface InstancedHandles {
+  marker: THREE.InstancedMesh;
+  ring: THREE.InstancedMesh;
+  fill: THREE.InstancedMesh;
 }
 
 // ── shared geometry ──────────────────────────────────────────────────────
@@ -250,6 +265,116 @@ const LOD_PROXY_MAT = new THREE.MeshStandardMaterial({
   roughness: 0.9,
 });
 LOD_PROXY_MAT.userData.shared = true;
+
+// ── Pass 19: instanced marker/ring/fill, per-instance opacity ────────────
+// Pass 16 shared the GEOMETRY (3 singletons instead of ~270 uploads) but kept
+// per-entry MATERIALS, because colour, emissive intensity and opacity are
+// all animated per asset (selection, hover, scenario-focus dimming) and
+// InstancedMesh has none of that per-instance without a custom shader —
+// named explicitly as deferred work in docs/PLANNING.md. This is that
+// shader: onBeforeCompile injects a per-instance `instanceOpacity` float
+// attribute into `<color_fragment>`, and — marker only — a per-instance
+// `instanceEmissive` intensity scalar that combines with the free built-in
+// `instanceColor` tint (three's own instancing mixin already multiplies
+// diffuse by it; it does NOT touch emissive, which this adds).
+//
+// `INSTANCE_COUNT_MAX` bounds how many rows the three shared instance
+// buffers below are ever allocated for. The roster is 103 at last count and
+// grows only via Duplicate/roster-swap (a user clicking a button, not an
+// unbounded process) — 512 is a comfortable ceiling with room for a live
+// editing session, not a number picked to exactly fit today's roster.
+const INSTANCE_COUNT_MAX = 512;
+
+function withInstancedOpacity<T extends THREE.Material>(material: T, tintEmissive: boolean): T {
+  material.onBeforeCompile = (shader) => {
+    shader.vertexShader = shader.vertexShader
+      .replace(
+        "#include <common>",
+        "attribute float instanceOpacity;\nvarying float vInstanceOpacity;\n#include <common>",
+      )
+      .replace("#include <begin_vertex>", "#include <begin_vertex>\nvInstanceOpacity = instanceOpacity;");
+
+    let frag = shader.fragmentShader.replace(
+      "#include <common>",
+      "varying float vInstanceOpacity;\n#include <common>",
+    );
+    frag = frag.replace("#include <color_fragment>", "#include <color_fragment>\ndiffuseColor.a *= vInstanceOpacity;");
+    if (tintEmissive) {
+      // vColor is three's own instancing-colour varying — only declared when
+      // `mesh.instanceColor` is set, which every instanced mesh below does,
+      // so it's always available here. `instanceEmissive` is this file's own
+      // addition, the per-instance answer to `material.emissiveIntensity`.
+      shader.vertexShader = shader.vertexShader
+        .replace(
+          "#include <common>",
+          "attribute float instanceEmissive;\nvarying float vInstanceEmissive;\n#include <common>",
+        )
+        .replace("#include <begin_vertex>", "#include <begin_vertex>\nvInstanceEmissive = instanceEmissive;");
+      frag = frag
+        .replace("#include <common>", "varying float vInstanceEmissive;\n#include <common>")
+        .replace(
+          "#include <emissivemap_fragment>",
+          "#include <emissivemap_fragment>\n#ifdef USE_INSTANCING_COLOR\n  totalEmissiveRadiance *= vColor.rgb * vInstanceEmissive;\n#endif",
+        );
+    }
+    shader.fragmentShader = frag;
+    // Marker only: a slow shared spin, applied to the LOCAL vertex before the
+    // per-instance transform so every instance rotates identically regardless
+    // of its own position — replaces the old per-entry `mesh.rotation.y +=`
+    // (Pass 6-era) with one uniform update per frame instead of N per frame.
+    if (tintEmissive) {
+      shader.uniforms.uSpin = { value: 0 };
+      shader.vertexShader = shader.vertexShader
+        .replace("#include <common>", "uniform float uSpin;\n#include <common>")
+        .replace(
+          "#include <begin_vertex>",
+          "#include <begin_vertex>\n{\n  float c = cos(uSpin), s = sin(uSpin);\n  transformed.xz = mat2(c, -s, s, c) * transformed.xz;\n}",
+        );
+    }
+    material.userData.shader = shader;
+  };
+  material.customProgramCacheKey = () => `instanced-opacity-${tintEmissive ? "emissive-spin" : "flat"}`;
+  return material;
+}
+
+function instancedAttr(count: number, fill = 1): THREE.InstancedBufferAttribute {
+  return new THREE.InstancedBufferAttribute(new Float32Array(count).fill(fill), 1);
+}
+
+const MARKER_INSTANCED_MAT = withInstancedOpacity(
+  new THREE.MeshStandardMaterial({
+    flatShading: true,
+    roughness: 0.4,
+    emissive: "#ffffff",
+    emissiveIntensity: 1,
+    transparent: true,
+  }),
+  true,
+);
+MARKER_INSTANCED_MAT.userData.shared = true;
+
+const RING_INSTANCED_MAT = withInstancedOpacity(
+  new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, side: THREE.DoubleSide }),
+  false,
+);
+RING_INSTANCED_MAT.userData.shared = true;
+
+const FILL_INSTANCED_MAT = withInstancedOpacity(
+  new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false }),
+  false,
+);
+FILL_INSTANCED_MAT.userData.shared = true;
+
+function makeInstancedMesh(geo: THREE.BufferGeometry, mat: THREE.Material, name: string): THREE.InstancedMesh {
+  const mesh = new THREE.InstancedMesh(geo, mat, INSTANCE_COUNT_MAX);
+  mesh.count = 0; // grown to the live roster size as entries are written
+  mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(INSTANCE_COUNT_MAX * 3).fill(1), 3);
+  mesh.geometry.setAttribute("instanceOpacity", instancedAttr(INSTANCE_COUNT_MAX, 1));
+  if (mat === MARKER_INSTANCED_MAT) mesh.geometry.setAttribute("instanceEmissive", instancedAttr(INSTANCE_COUNT_MAX, 0.75));
+  mesh.name = name;
+  mesh.frustumCulled = false; // instances span the whole strip; per-instance culling isn't worth the complexity here
+  return mesh;
+}
 
 /**
  * Cheap ridge-occlusion probe: march the camera→target segment and report
@@ -313,6 +438,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const entriesRef = useRef<Entry[]>([]);
+  const instancedRef = useRef<InstancedHandles | null>(null);
   const selectedRef = useRef<string | null>(null);
   const hoveredRef = useRef<string | null>(null);
   // Read by the declutter pass so a lesson's assets outrank the rest of the
@@ -340,6 +466,15 @@ export function Scene3D({ world }: { world: WorldModel }) {
     target: HTMLElement | null;
   } | null>(null);
   const dragRaycasterRef = useRef(new THREE.Raycaster());
+  /** Scratch for repositioning the dragged asset's marker/ring/fill instance
+   *  rows — reused across every pointermove of a drag, same reasoning as
+   *  dragHitRef below: a drag can fire this dozens of times a second. */
+  const dragScratchRef = useRef({
+    matrix: new THREE.Matrix4(),
+    quat: new THREE.Quaternion(),
+    ringQuat: new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0)),
+    scale: new THREE.Vector3(1, 1, 1),
+  });
   const dragPlaneRef = useRef(new THREE.Plane());
   const dragHitRef = useRef(new THREE.Vector3());
   /** performance.now() before which a click is swallowed. Set when a drag
@@ -493,6 +628,16 @@ export function Scene3D({ world }: { world: WorldModel }) {
     let raf = 0;
     const projected = new THREE.Vector3();
     const axisProbe = new THREE.Vector3();
+    // Pass 19: scratch for writing into the instanced marker/ring/fill
+    // buffers below — same "allocate once, reuse every pass" discipline as
+    // the rest of this block, not a per-entry `new`.
+    const layoutScratchColor = new THREE.Color();
+    const layoutScratchMatrix = new THREE.Matrix4();
+    const layoutScratchQuat = new THREE.Quaternion();
+    const layoutScratchScale = new THREE.Vector3(1, 1, 1);
+    /** Set true whenever this pass wrote into an instanced buffer, so the
+     *  needsUpdate flush at the end of layout() runs once, not per entry. */
+    const instancedDirtyRef = { current: false };
 
     // ── per-frame scratch, allocated exactly once ───────────────────────
     // The old loop built a fresh array of ~90 measurement objects, sorted it
@@ -722,33 +867,47 @@ export function Scene3D({ world }: { world: WorldModel }) {
         const dimmed = inFocusMode && !inFocusSet && !pinned;
         const highlighted = inFocusMode && inFocusSet && !pinned;
 
-        const mat = entry.marker.material as THREE.MeshStandardMaterial;
-        const ringMat = entry.ring.material as THREE.MeshBasicMaterial;
-        const fillMat = entry.fill.material as THREE.MeshBasicMaterial;
-        if (dimmed) {
-          mat.color.copy(FOCUS_DIM_COLOR);
-          mat.emissive.copy(FOCUS_DIM_COLOR);
-          mat.emissiveIntensity = 0.2;
-          mat.opacity = (isStubEntry ? 0.55 : 1) * 0.22;
-          ringMat.color.copy(FOCUS_DIM_COLOR);
-          fillMat.color.copy(FOCUS_DIM_COLOR);
-          ringMat.opacity = 0.1;
-          fillMat.opacity = 0.04;
-        } else {
-          mat.color.copy(entry.baseColor);
-          mat.emissive.copy(entry.baseColor);
-          mat.emissiveIntensity = isSel ? 2.4 : isHov ? 1.5 : highlighted ? 1.05 : 0.75;
-          mat.opacity = isStubEntry ? 0.55 : 1;
-          ringMat.color.copy(entry.sideColorHex);
-          fillMat.color.copy(entry.sideColorHex);
-          // Side ring tracks selection too — the persistent cue gets brighter
-          // rather than being replaced by a different one. A scenario-focus
-          // member gets the same treatment one notch down, so the highlighted
-          // set reads as a group without every member looking selected.
-          ringMat.opacity = isSel ? 0.95 : isHov ? 0.7 : highlighted ? 0.62 : 0.42;
-          fillMat.opacity = isSel || isHov ? 0.13 : highlighted ? 0.2 : 0.13;
+        // Pass 19: marker/ring/fill are rows in three shared InstancedMeshes
+        // now, not per-entry Meshes with their own Material — every write
+        // below lands in a per-instance buffer at `entry.idx` instead of
+        // mutating an object. instancedRef is only null for a stray call
+        // before the asset-objects effect has run once, which layout()
+        // itself can't reach (it's built by the same mount effect that
+        // creates the ref) — the guard is defensive, not load-bearing.
+        const inst = instancedRef.current;
+        if (inst) {
+          const i = entry.idx;
+          const markerOpacity = inst.marker.geometry.getAttribute("instanceOpacity") as THREE.InstancedBufferAttribute;
+          const markerEmissive = inst.marker.geometry.getAttribute("instanceEmissive") as THREE.InstancedBufferAttribute;
+          const ringOpacity = inst.ring.geometry.getAttribute("instanceOpacity") as THREE.InstancedBufferAttribute;
+          const fillOpacity = inst.fill.geometry.getAttribute("instanceOpacity") as THREE.InstancedBufferAttribute;
+
+          if (dimmed) {
+            inst.marker.setColorAt(i, layoutScratchColor.copy(FOCUS_DIM_COLOR));
+            markerEmissive.setX(i, 0.2);
+            markerOpacity.setX(i, (isStubEntry ? 0.55 : 1) * 0.22);
+            inst.ring.setColorAt(i, layoutScratchColor.copy(FOCUS_DIM_COLOR));
+            inst.fill.setColorAt(i, layoutScratchColor.copy(FOCUS_DIM_COLOR));
+            ringOpacity.setX(i, 0.1);
+            fillOpacity.setX(i, 0.04);
+          } else {
+            inst.marker.setColorAt(i, layoutScratchColor.copy(entry.baseColor));
+            markerEmissive.setX(i, isSel ? 2.4 : isHov ? 1.5 : highlighted ? 1.05 : 0.75);
+            markerOpacity.setX(i, isStubEntry ? 0.55 : 1);
+            inst.ring.setColorAt(i, layoutScratchColor.copy(entry.sideColorHex));
+            inst.fill.setColorAt(i, layoutScratchColor.copy(entry.sideColorHex));
+            // Side ring tracks selection too — the persistent cue gets brighter
+            // rather than being replaced by a different one. A scenario-focus
+            // member gets the same treatment one notch down, so the highlighted
+            // set reads as a group without every member looking selected.
+            ringOpacity.setX(i, isSel ? 0.95 : isHov ? 0.7 : highlighted ? 0.62 : 0.42);
+            fillOpacity.setX(i, isSel || isHov ? 0.13 : highlighted ? 0.2 : 0.13);
+          }
+          layoutScratchScale.setScalar(isSel ? 1.6 : isHov ? 1.3 : 1);
+          layoutScratchMatrix.compose(entry.anchor, layoutScratchQuat.identity(), layoutScratchScale);
+          inst.marker.setMatrixAt(i, layoutScratchMatrix);
+          instancedDirtyRef.current = true;
         }
-        entry.marker.scale.setScalar(isSel ? 1.6 : isHov ? 1.3 : 1);
 
         // ── label tier ───────────────────────────────────────────────────
         // Two tiers now, not three. The old "dot" tier is gone (item 6): it
@@ -796,6 +955,25 @@ export function Scene3D({ world }: { world: WorldModel }) {
           (highlighted ? " is-focused" : "") +
           (show ? "" : " is-off");
         applyPin(entry.id, sx, sy, Math.max(1, Math.round((1 - sz) * 1000)), show, cls);
+      }
+
+      // One GPU upload per changed buffer per layout() call, not per entry —
+      // layout() itself already only runs when something is dirty (idle
+      // frames skip it entirely, see the tick loop below), so this is the
+      // same "batch, don't stream" discipline Pass 16 already established.
+      if (instancedDirtyRef.current) {
+        const inst = instancedRef.current;
+        if (inst) {
+          inst.marker.instanceMatrix.needsUpdate = true;
+          if (inst.marker.instanceColor) inst.marker.instanceColor.needsUpdate = true;
+          if (inst.ring.instanceColor) inst.ring.instanceColor.needsUpdate = true;
+          if (inst.fill.instanceColor) inst.fill.instanceColor.needsUpdate = true;
+          (inst.marker.geometry.getAttribute("instanceOpacity") as THREE.InstancedBufferAttribute).needsUpdate = true;
+          (inst.marker.geometry.getAttribute("instanceEmissive") as THREE.InstancedBufferAttribute).needsUpdate = true;
+          (inst.ring.geometry.getAttribute("instanceOpacity") as THREE.InstancedBufferAttribute).needsUpdate = true;
+          (inst.fill.geometry.getAttribute("instanceOpacity") as THREE.InstancedBufferAttribute).needsUpdate = true;
+        }
+        instancedDirtyRef.current = false;
       }
 
       perf.entries = entries.length;
@@ -849,10 +1027,13 @@ export function Scene3D({ world }: { world: WorldModel }) {
       controls.update();
 
       // The markers idle-spin. Kept out of the layout pass so it survives a
-      // skipped layout — it costs one float add and a matrix per marker,
-      // which is nothing next to projecting and ranking the whole field.
-      const entries = entriesRef.current;
-      for (let k = 0; k < entries.length; k++) entries[k].marker.rotation.y += 0.006;
+      // skipped layout. Pass 19: the marker mesh is now one shared
+      // InstancedMesh, so this used to be "one float add and a matrix per
+      // marker" is now one float add and one shader uniform, full stop —
+      // the rotation happens on the GPU (withInstancedOpacity's vertex
+      // shader), not via N per-frame matrix recomposes.
+      const shader = MARKER_INSTANCED_MAT.userData.shader as { uniforms: { uSpin: { value: number } } } | undefined;
+      if (shader) shader.uniforms.uSpin.value += 0.006;
 
       const w = mount.clientWidth;
       const h = mount.clientHeight;
@@ -1065,6 +1246,26 @@ export function Scene3D({ world }: { world: WorldModel }) {
       proj,
     );
 
+    // Pass 19: the marker/ring/fill trio for every asset — previously three
+    // individual Meshes per entry (Pass 16 shared their geometry; materials
+    // stayed per-entry because colour/opacity/emissive are animated) — are
+    // now three shared InstancedMesh draws for the WHOLE roster. See the
+    // withInstancedOpacity()/makeInstancedMesh() header comment above for why
+    // this needed a custom shader and couldn't just be `InstancedMesh` as
+    // shipped. `dummyMatrix`/`dummyColor` are scratch objects reused across
+    // every entry in the loop below — allocating one per entry was exactly
+    // the kind of steady per-rebuild garbage Pass 16 eliminated elsewhere.
+    const markerInstanced = makeInstancedMesh(MARKER_GEO, MARKER_INSTANCED_MAT, "markers");
+    const ringInstanced = makeInstancedMesh(RING_GEO, RING_INSTANCED_MAT, "rings");
+    const fillInstanced = makeInstancedMesh(FILL_GEO, FILL_INSTANCED_MAT, "fills");
+    root.add(markerInstanced, ringInstanced, fillInstanced);
+    const dummyMatrix = new THREE.Matrix4();
+    const dummyQuat = new THREE.Quaternion();
+    const dummyColor = new THREE.Color();
+    const ringQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0));
+    const ONE = new THREE.Vector3(1, 1, 1);
+
+    let idx = 0;
     for (const node of nodes) {
       const side = nodeSide(node);
       const domain = nodeDomain(node);
@@ -1111,23 +1312,24 @@ export function Scene3D({ world }: { world: WorldModel }) {
       // is already on the terrain surface (see worldPlacement()), so lifting
       // the marker on top of that put it floating over its own footprint.
       const elevated = (DOMAIN_ALTITUDE[platformDomain] ?? 0) > ELEVATED_ALTITUDE_THRESHOLD;
-      const markerMat = new THREE.MeshStandardMaterial({
-        color: isStub ? "#8b93a3" : accent,
-        emissive: isStub ? "#8b93a3" : accent,
-        emissiveIntensity: 0.75,
-        flatShading: true,
-        roughness: 0.4,
-        // Always transparent, not just for stubs — scenario-focus mode
-        // modulates opacity on every marker per frame (see the tick loop),
-        // and a material created opaque silently ignores opacity writes.
-        transparent: true,
-        opacity: isStub ? 0.55 : 1,
-      });
-      const marker = new THREE.Mesh(MARKER_GEO, markerMat);
+      const markerColorHex = isStub ? "#8b93a3" : accent;
       const markerY = elevated ? 7.5 : 1.4;
-      marker.position.y = markerY;
-      marker.userData.assetId = node.id;
-      g.add(marker);
+
+      const k = idx++;
+      dummyMatrix.compose(
+        new THREE.Vector3(pos.x, pos.y + markerY, pos.z),
+        dummyQuat.identity(),
+        ONE,
+      );
+      markerInstanced.setMatrixAt(k, dummyMatrix);
+      markerInstanced.setColorAt(k, dummyColor.set(markerColorHex));
+      (markerInstanced.geometry.getAttribute("instanceOpacity") as THREE.InstancedBufferAttribute).setX(
+        k,
+        isStub ? 0.55 : 1,
+      );
+      (markerInstanced.geometry.getAttribute("instanceEmissive") as THREE.InstancedBufferAttribute).setX(k, 0.75);
+      markerInstanced.userData.assetIds = markerInstanced.userData.assetIds ?? [];
+      markerInstanced.userData.assetIds[k] = node.id;
 
       // Tether from the marker down to the true ground point — only meaningful
       // when there IS a real gap to explain (air/space/mast tiers). Grounded
@@ -1155,32 +1357,15 @@ export function Scene3D({ world }: { world: WorldModel }) {
       // fill keeps the footprint readable when the ring is near edge-on.
       const padY = (elevated ? groundY : 0) + 0.12;
 
-      const ring = new THREE.Mesh(
-        RING_GEO,
-        new THREE.MeshBasicMaterial({
-          color: sideColor,
-          transparent: true,
-          opacity: 0.42,
-          depthWrite: false,
-          side: THREE.DoubleSide,
-        }),
-      );
-      ring.rotation.x = -Math.PI / 2;
-      ring.position.y = padY + 0.02;
-      g.add(ring);
+      dummyMatrix.compose(new THREE.Vector3(pos.x, pos.y + padY + 0.02, pos.z), ringQuat, ONE);
+      ringInstanced.setMatrixAt(k, dummyMatrix);
+      ringInstanced.setColorAt(k, dummyColor.set(sideColor));
+      (ringInstanced.geometry.getAttribute("instanceOpacity") as THREE.InstancedBufferAttribute).setX(k, 0.42);
 
-      const fill = new THREE.Mesh(
-        FILL_GEO,
-        new THREE.MeshBasicMaterial({
-          color: sideColor,
-          transparent: true,
-          opacity: 0.13,
-          depthWrite: false,
-        }),
-      );
-      fill.rotation.x = -Math.PI / 2;
-      fill.position.y = padY;
-      g.add(fill);
+      dummyMatrix.compose(new THREE.Vector3(pos.x, pos.y + padY, pos.z), ringQuat, ONE);
+      fillInstanced.setMatrixAt(k, dummyMatrix);
+      fillInstanced.setColorAt(k, dummyColor.set(sideColor));
+      (fillInstanced.geometry.getAttribute("instanceOpacity") as THREE.InstancedBufferAttribute).setX(k, 0.13);
 
       root.add(g);
       entries.push({
@@ -1191,18 +1376,31 @@ export function Scene3D({ world }: { world: WorldModel }) {
         // keeps a label clear of its icon is applied in screen space in the
         // render loop, which is what stops it drifting off under camera tilt.
         anchor: new THREE.Vector3(pos.x, pos.y + markerY, pos.z),
-        marker,
-        ring,
-        fill,
+        idx: k,
+        padY,
         lod,
         grounded: !elevated,
-        baseColor: new THREE.Color(isStub ? "#8b93a3" : accent),
+        baseColor: new THREE.Color(markerColorHex),
         sideColorHex: new THREE.Color(sideColor),
       });
     }
 
+    markerInstanced.count = ringInstanced.count = fillInstanced.count = idx;
+    markerInstanced.instanceMatrix.needsUpdate = true;
+    ringInstanced.instanceMatrix.needsUpdate = true;
+    fillInstanced.instanceMatrix.needsUpdate = true;
+    if (markerInstanced.instanceColor) markerInstanced.instanceColor.needsUpdate = true;
+    if (ringInstanced.instanceColor) ringInstanced.instanceColor.needsUpdate = true;
+    if (fillInstanced.instanceColor) fillInstanced.instanceColor.needsUpdate = true;
+    for (const m of [markerInstanced, ringInstanced, fillInstanced]) {
+      const op = m.geometry.getAttribute("instanceOpacity") as THREE.InstancedBufferAttribute;
+      op.needsUpdate = true;
+    }
+    (markerInstanced.geometry.getAttribute("instanceEmissive") as THREE.InstancedBufferAttribute).needsUpdate = true;
+
     scene.add(root);
     entriesRef.current = entries;
+    instancedRef.current = { marker: markerInstanced, ring: ringInstanced, fill: fillInstanced };
 
     // The pin roster React mounts. Built here, once per asset-set change —
     // NOT per frame. Everything that varies per frame (position, z-order,
@@ -1378,6 +1576,28 @@ export function Scene3D({ world }: { world: WorldModel }) {
       entry.group.position.set(next.x, next.y, next.z);
       const markerY = entry.grounded ? 1.4 : 7.5;
       entry.anchor.set(next.x, next.y + markerY, next.z);
+
+      // Pass 19: marker/ring/fill are shared InstancedMesh rows, not this
+      // entry's own children — moving `entry.group` (above) no longer moves
+      // them for free. layout() (triggered by the dirty bump below) will
+      // re-set the marker's matrix from `entry.anchor` on the next frame,
+      // but it never touches ring/fill (their matrices are static outside a
+      // drag), so this is the one place that has to move all three itself.
+      const inst = instancedRef.current;
+      if (inst) {
+        const s = dragScratchRef.current;
+        const i = entry.idx;
+        s.matrix.compose(entry.anchor, s.quat.identity(), s.scale.setScalar(1));
+        inst.marker.setMatrixAt(i, s.matrix);
+        s.matrix.compose(new THREE.Vector3(next.x, next.y + entry.padY + 0.02, next.z), s.ringQuat, s.scale);
+        inst.ring.setMatrixAt(i, s.matrix);
+        s.matrix.compose(new THREE.Vector3(next.x, next.y + entry.padY, next.z), s.ringQuat, s.scale);
+        inst.fill.setMatrixAt(i, s.matrix);
+        inst.marker.instanceMatrix.needsUpdate = true;
+        inst.ring.instanceMatrix.needsUpdate = true;
+        inst.fill.instanceMatrix.needsUpdate = true;
+      }
+
       // The asset moved without the camera moving, so the layout pass would
       // otherwise skip and the label would sit on the marker's old point.
       layoutDirtyRef.current++;
@@ -1517,13 +1737,28 @@ export function Scene3D({ world }: { world: WorldModel }) {
       );
       const ray = new THREE.Raycaster();
       ray.setFromCamera(ndc, camera);
-      const targets = entriesRef.current.map((x) => x.group);
+      // Pass 19: the marker/ring/fill trio is three shared InstancedMeshes
+      // now, not children of each entry's own group — they raycast
+      // separately, and a hit reports `instanceId` instead of an object to
+      // walk up from. Hero-model groups (LOD + tether only, post-Pass-19)
+      // still raycast the old way. Both go into one intersectObjects call so
+      // three.js sorts them together by distance — whichever is actually
+      // nearest the camera wins, same as before.
+      const inst = instancedRef.current;
+      const targets: THREE.Object3D[] = entriesRef.current.map((x) => x.group);
+      if (inst) targets.push(inst.marker, inst.ring, inst.fill);
       const hits = ray.intersectObjects(targets, true);
       if (hits.length === 0) {
         view.select(null);
         return;
       }
-      let o: THREE.Object3D | null = hits[0].object;
+      const hit = hits[0];
+      if (inst && (hit.object === inst.marker || hit.object === inst.ring || hit.object === inst.fill)) {
+        const entry = entriesRef.current[hit.instanceId ?? -1];
+        view.select(entry ? entry.id : null);
+        return;
+      }
+      let o: THREE.Object3D | null = hit.object;
       while (o && !entriesRef.current.some((x) => x.group === o)) o = o.parent;
       const entry = entriesRef.current.find((x) => x.group === o);
       if (entry) view.select(entry.id);
