@@ -35,6 +35,12 @@
   "gallery_images": [
     "/gallery/leleka-100-launch.jpg"
   ],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Leleka-100_UAV%2C_Kyiv_2021%2C_20.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Leleka-100_UAV%2C_Kyiv_2021%2C_20.jpg",
+    "license": "CC BY-SA 4.0",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 240000,
     "display": "~$240K per airframe (a two-drone + ground-station complex runs ~$480K)",

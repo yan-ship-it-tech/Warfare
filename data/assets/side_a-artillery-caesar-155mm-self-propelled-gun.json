@@ -25,6 +25,12 @@
   "representative_system": "Caesar 155mm Self-Propelled Gun — Self-propelled artillery (wheeled)",
   "icon_image": "/icons/caesar-155mm-self-propelled-gun.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/French_Army_CAESAR_155_mm_self-propelled_howitzer_prepares_to_fire%2C_2018.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:French_Army_CAESAR_155_mm_self-propelled_howitzer_prepares_to_fire%2C_2018.jpg",
+    "license": "CC BY 4.0",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Donated (no unit price disclosed)",

@@ -25,6 +25,13 @@
   "representative_system": "Generic brigade/divisional forward distribution point — composite, not a named facility",
   "icon_image": "/icons/logistics-hub.png",
   "gallery_images": [],
+  "image": {
+    "url": null,
+    "source_url": null,
+    "license": "n/a",
+    "kind": "conceptual",
+    "caption": "Represents a category or network, not a single physical system — shown as its map symbol rather than a specific unit's photo."
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Not a procured unit — a facility/throughput node, not something with a per-unit price",

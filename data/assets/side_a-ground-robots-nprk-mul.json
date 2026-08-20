@@ -21,6 +21,13 @@
   "representative_system": "NPRK \"Mul\" — Ground robot (logistics / evacuation)",
   "icon_image": "/icons/nprk-mul.png",
   "gallery_images": [],
+  "image": {
+    "url": null,
+    "source_url": null,
+    "license": "n/a",
+    "kind": "placeholder",
+    "caption": "No open-licensed photograph found for this specific system — showing its category symbol."
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Domestic production, unit cost not publicly disclosed",

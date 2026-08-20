@@ -25,6 +25,12 @@
   "representative_system": "T-80BVM — Main battle tank",
   "icon_image": "/icons/t-80bvm.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/T-80BVM.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:T-80BVM.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "No clean public unit price; produced via modernization of Soviet-era T-80 hulls",

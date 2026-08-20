@@ -31,6 +31,12 @@
   "gallery_images": [
     "/gallery/starlink-terminal-field.jpg"
   ],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/UA_Support_Forces_Starlink_01.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:UA_Support_Forces_Starlink_01.jpg",
+    "license": "CC BY 4.0",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 700,
     "display": "~$385–700 per terminal; ~$50–100/month subscription (over 150,000 terminals reportedly in use across Ukraine, front and rear)",

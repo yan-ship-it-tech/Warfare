@@ -32,6 +32,12 @@
   "gallery_images": [
     "https://commons.wikimedia.org/wiki/Special:FilePath/Flakpanzer_Gepard_SPAAG.JPG"
   ],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Flakpanzer_Gepard_(9394460358).jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Flakpanzer_Gepard_(9394460358).jpg",
+    "license": "CC BY 2.0",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 1960000,
     "display": "~$2M per refurbished unit in bulk batches (a 2013-era contract priced one at ~€350K; 35mm ammunition runs roughly €560/round)",

@@ -29,6 +29,12 @@
   "representative_system": "MANTAS T-12 — Uncrewed surface vessel (multi-role)",
   "icon_image": "/icons/mantas-t-12.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/MANTAS_T12.png",
+    "source_url": "https://commons.wikimedia.org/wiki/File:MANTAS_T12.png",
+    "license": "See Commons file page for license (US Navy/NAVCENT-credited photo, likely public domain per DVIDS sourcing)",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Donated (no unit price disclosed)",

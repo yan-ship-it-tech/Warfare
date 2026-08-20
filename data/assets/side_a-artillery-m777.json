@@ -31,6 +31,12 @@
   "gallery_images": [
     "https://commons.wikimedia.org/wiki/Special:FilePath/M777_Light_Towed_Howitzer_1.jpg"
   ],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/M777s_for_Ukraine_(1).jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:M777s_for_Ukraine_(1).jpg",
+    "license": "Public domain",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 3700000,
     "display": "~$3.7M per gun (estimates range $2.5–4.4M depending on whether life-cycle costs are included); a single M982 Excalibur precision round runs ~$100K",

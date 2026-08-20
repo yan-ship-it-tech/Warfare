@@ -25,6 +25,12 @@
   "representative_system": "2S19 Msta-S — Self-propelled artillery (tracked)",
   "icon_image": "/icons/2s19-msta-s.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/2S19_Msta-S_(28051832178).jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:2S19_Msta-S_(28051832178).jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "No current market price; Soviet/Russian design, 1989-present",

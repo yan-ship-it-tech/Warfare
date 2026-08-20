@@ -25,6 +25,12 @@
   "representative_system": "M1A1 Abrams — Main battle tank",
   "icon_image": "/icons/m1a1-abrams.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/M1A1_Abrams_Tank.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:M1A1_Abrams_Tank.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 5000000,
     "display": "Donated (US export/refurb cost historically ~$4-6M per unit class for M1A1 variants)",

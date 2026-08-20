@@ -25,6 +25,12 @@
   "representative_system": "T-62M (refurbished reserve stock) — Main battle tank (1960s-era, reactivated)",
   "icon_image": "/icons/t-62m-refurbished-reserve-stock.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/T62M_1.JPG",
+    "source_url": "https://commons.wikimedia.org/wiki/File:T62M_1.JPG",
+    "license": "Public domain",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "No meaningful current market value — reactivated from deep storage, not purchased",

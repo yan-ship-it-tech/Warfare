@@ -25,6 +25,12 @@
   "representative_system": "2S7 Pion / Malka — Self-propelled artillery (heavy, tracked)",
   "icon_image": "/icons/2s7-pion-malka.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Soviet_2S7_Pion.JPEG",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Soviet_2S7_Pion.JPEG",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "No current market price; Soviet-era design",

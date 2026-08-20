@@ -25,6 +25,12 @@
   "representative_system": "PzH 2000 — Self-propelled artillery (tracked)",
   "icon_image": "/icons/pzh-2000.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Panzerhaubitze_2000.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Panzerhaubitze_2000.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Donated (no unit price disclosed)",

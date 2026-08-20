@@ -25,6 +25,12 @@
   "representative_system": "2S22 Bohdana — Self-propelled artillery (wheeled, domestic)",
   "icon_image": "/icons/2s22-bohdana.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/2S22_Bohdana_SPH%2C_Kyiv_2018%2C_33.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:2S22_Bohdana_SPH%2C_Kyiv_2018%2C_33.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Domestic production, unit cost not publicly disclosed",

@@ -31,6 +31,12 @@
   "gallery_images": [
     "https://commons.wikimedia.org/wiki/Special:FilePath/M142_himars.jpg"
   ],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/HIMARS_-_missile_launched.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:HIMARS_-_missile_launched.jpg",
+    "license": "Public domain",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 5300000,
     "display": "~$3.5–5.3M per launcher (rising over production lots); a single GMLRS rocket runs ~$170K, ER GMLRS ~$434K, and an ATACMS missile over $1M",

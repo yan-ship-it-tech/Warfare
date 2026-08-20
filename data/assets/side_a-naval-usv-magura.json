@@ -35,6 +35,12 @@
   "gallery_images": [
     "/gallery/magura-v5.jpg"
   ],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Magura_-_drawings.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Magura_-_drawings.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 275000,
     "display": "~$250–300K per unit — against warships worth tens to hundreds of millions",

@@ -25,6 +25,12 @@
   "representative_system": "T-72AMT / upgraded T-72 — Main battle tank (Soviet-legacy, upgraded)",
   "icon_image": "/icons/t-72amt-upgraded-t-72.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/T-72AMT%2C_Kyiv_2021%2C_01.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:T-72AMT%2C_Kyiv_2021%2C_01.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Legacy stock + Czech/Polish donated T-72 variants; no clean unit price",
