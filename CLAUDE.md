@@ -32,7 +32,7 @@ with something an earlier pass learned. Treat it as required reading before
 making an architectural change, not optional history.
 
 **Then read `docs/PLANNING.md`** — the forward-looking brief for the next
-major push (Passes 13–18), with a sequencing/dependency order and a
+major push (Passes 16–21), with a sequencing/dependency order and a
 "decisions already made, do not re-litigate" table of its own. The stated
 reading order for any session is `CLAUDE.md` → `DECISIONS.md` →
 `PLANNING.md`.
@@ -59,9 +59,9 @@ reading order for any session is `CLAUDE.md` → `DECISIONS.md` →
 | `docs/CONTENT_PIPELINE.md` | **Read before adding or editing asset content.** Two-pass process: draft a category, then verify it in a *separate* sitting via `node scripts/audit-content.mjs --write`, which derives each asset's `verification` status from its `sources` array (never hand-authored). |
 | `docs/OSM_PIPELINE.md` | **Read before touching the OSM pipeline.** AOIs, queries, output schema, the ODbL obligation, and why real geography can't be laid over the band-compressed X axis unchanged. |
 | `docs/BACKLOG.md` | Everything flagged but not done — category gaps, deferred decisions, things explicitly decided against. Check here before assuming a gap was overlooked. |
-| `docs/PLANNING.md` | **The forward-looking brief.** What's coming next (currently Passes 13–18), a "do not re-litigate" table of decisions already made for that push, and an explicit dependency/sequencing order. Read after `DECISIONS.md`, before starting new work. |
-| `docs/CLAUDE_CODE_BRIEFS_PASS13-18.md` | The self-contained, paste-in brief text for each of Passes 13–18 — one section per pass, meant to be dropped into a fresh Claude Code session at the start of that pass. `docs/PLANNING.md` carries the background each brief compresses out; read that first. |
-| `docs/3d-model-sourcing-manifest.xlsx` | Pass 16's source list — 72 candidate 3D models (47 with a free sourced candidate, 8 flagged "Weak/Verify", 17 with no free source), with license/attribution info per row. Read before starting Pass 16. |
+| `docs/PLANNING.md` | **The forward-looking brief.** What's coming next (currently Passes 16–21), a "do not re-litigate" table of decisions already made for that push, and an explicit dependency/sequencing order. Read after `DECISIONS.md`, before starting new work. |
+| `docs/CLAUDE_CODE_BRIEFS_PASS16-21.md` | The self-contained, paste-in brief text for each of Passes 16–21 — one section per pass, meant to be dropped into a fresh Claude Code session at the start of that pass. `docs/PLANNING.md` carries the background each brief compresses out; read that first. |
+| `docs/3d-model-sourcing-manifest.xlsx` | Pass 19's source list — 72 candidate 3D models (47 with a free sourced candidate, 8 flagged "Weak/Verify", 17 with no free source), with license/attribution info per row. Read before starting Pass 19. |
 | `docs/DEPLOY_SYNC_WORKER.md` | Human walkthrough for deploying the Worker (one remaining manual step: `wrangler deploy` + two repo secrets). |
 | `docs/MODEL_STYLE_GUIDE.md` | **Read before adding or editing any 3D geometry** in `src/three/`. Proportions, poly budget, material/palette rules and silhouette conventions, measured off the hero tier (`models.ts`) and audited against `scenery.ts`/`props.ts`/`terrain3d.ts` — see Pass 12. |
 | `scripts/` | `audit-content.mjs` (verification), `fetch-osm-data.mjs` (Overpass → `data/osm/<aoi>.json`; two stages, and `--raw=` runs the second one with no network), `import-catalog.py` + `fill-sources.py` (spreadsheet → asset JSON, the repeatable path for the next ad hoc content drop). |

@@ -1,4 +1,4 @@
-# PLANNING — Next major push (Passes 13–18)
+# PLANNING — Next major push (Passes 16–21)
 
 Forward-looking brief. Companion to `docs/DECISIONS.md` (why past choices were made)
 and `docs/BACKLOG.md` (known gaps). This file holds what's coming next.
@@ -7,12 +7,20 @@ and `docs/BACKLOG.md` (known gaps). This file holds what's coming next.
 then transcribed here as a numbered brief before each Claude Code pass. Each pass
 gets its own section. Sessions read `CLAUDE.md` → `DECISIONS.md` → this file.
 
-**Per-pass paste-in briefs:** `docs/CLAUDE_CODE_BRIEFS_PASS13-18.md` holds the
-self-contained brief text for each of Passes 13–18 below, one section per pass, meant
+**Per-pass paste-in briefs:** `docs/CLAUDE_CODE_BRIEFS_PASS16-21.md` holds the
+self-contained brief text for each of Passes 16–21 below, one section per pass, meant
 to be pasted into a fresh Claude Code session at the start of that pass. It compresses
 out the background this file carries — read the relevant pass section here first. Pass
-16's source data (`docs/3d-model-sourcing-manifest.xlsx`) is committed alongside it so
+19's source data (`docs/3d-model-sourcing-manifest.xlsx`) is committed alongside it so
 that pass has something to work from without anything needing to be pasted in.
+
+> **Numbering note (resolved).** This file's passes were originally written as
+> 13–18, which collided with `docs/DECISIONS.md`'s *already-completed* Passes 13, 14
+> and 15 (the OSM fetch/reduce pipeline and the Pokrovsk extract). One session read
+> the collision as "this work is already done" and skipped it. The highest pass
+> actually logged in `DECISIONS.md` is **15**, so everything here was renumbered to
+> continue after it: 13→16, 14→17, 15→18, 16→19, 17→20, 18→21. When adding a new
+> pass here, check the last `# Pass N` heading in `DECISIONS.md` first.
 
 **Scope decision for this whole push:** work on the **3D WebGL view only**
 (`src/three/`). The 2D schematic view (`src/scene/`) is explicitly deferred — it's
@@ -31,7 +39,7 @@ cheap to bring back into line once the 3D view settles. Do not spend pass budget
 
 ---
 
-## Pass 13 — Performance and interaction (BLOCKING — do first)
+## Pass 16 — Performance and interaction (BLOCKING — do first)
 
 Nothing else in this push should start until this lands. The app currently
 stutters and freezes; every later pass adds load on top of that.
@@ -66,9 +74,9 @@ grounding, side rings). Verify with `git diff --stat` before committing.
 
 ---
 
-## Pass 14 — World and terrain
+## Pass 17 — World and terrain
 
-Depends on: Pass 13. Enables: Pass 15 (assets need terrain features to be placed *into*).
+Depends on: Pass 16. Enables: Pass 18 (assets need terrain features to be placed *into*).
 
 1. **Integrate `data/osm/pokrovsk.json`** per the metric-inset decision above. Extrude rail
    lines along their `xz` lists; instance tree props along `tree_row` features, respecting
@@ -96,9 +104,9 @@ Depends on: Pass 13. Enables: Pass 15 (assets need terrain features to be placed
 
 ---
 
-## Pass 15 — Tactical asset placement
+## Pass 18 — Tactical asset placement
 
-Depends on: Pass 14. This is the pass that most directly serves "capture the experience
+Depends on: Pass 17. This is the pass that most directly serves "capture the experience
 of war in Ukraine."
 
 1. **Review every asset's distance-from-front for doctrinal plausibility.** Current values
@@ -112,7 +120,7 @@ of war in Ukraine."
 3. **Tactically sensible siting** — assets should sit where they'd actually sit:
    Patriot near a high-value target it defends; artillery hidden in forest; drone team on
    an elevated treeline; logistics on a road/rail node; command post dispersed and rearward.
-   This requires Pass 14's terrain features to exist first.
+   This requires Pass 17's terrain features to exist first.
 4. **Not every asset should be on the map at once.** Build:
    - a **swap** mechanism (replace a placed asset with another of the same category),
    - **duplicate** (already exists from Pass 11 — reuse, don't rebuild),
@@ -127,16 +135,16 @@ of war in Ukraine."
 
 ---
 
-## Pass 16 — 3D model integration
+## Pass 19 — 3D model integration
 
-Depends on: Pass 13 (perf headroom). Source data: `docs/3d-model-sourcing-manifest.xlsx`
+Depends on: Pass 16 (perf headroom). Source data: `docs/3d-model-sourcing-manifest.xlsx`
 (72 assets — 47 sourced free, 8 need license verification, 17 have no free source).
 
 1. **License filter first.** Reject game-ripped models outright (real legal exposure for a
    public briefing tool). Log CC-BY attribution obligations. Check NoAI tags.
 2. **Normalization pipeline, applied to every model:**
    - decimate to a shared triangle budget (suggest ~2–8k for hero units, <500 for
-     background/instanced units — measure against the Pass 13 baseline)
+     background/instanced units — measure against the Pass 16 baseline)
    - retexture/recolor to a shared palette so 40 artists' work reads as one family
    - convert to glTF/GLB with Draco compression
    - generate LODs; swap to silhouette/billboard when zoomed out
@@ -146,7 +154,7 @@ Depends on: Pass 13 (perf headroom). Source data: `docs/3d-model-sourcing-manife
 4. **Instancing is mandatory** for anything repeated (trees, dragon's teeth, infantry,
    duplicated FPV teams).
 5. **Hide unmodeled assets whose category is otherwise represented**, still reachable via
-   the swap mechanism from Pass 15.
+   the swap mechanism from Pass 18.
    - **Watch out:** all five Russian UGVs have no free source model. Hiding them all
      leaves that category unrepresented on the Russian side. At least one needs a paid
      purchase or a custom low-poly model.
@@ -156,7 +164,7 @@ Depends on: Pass 13 (perf headroom). Source data: `docs/3d-model-sourcing-manife
 
 ---
 
-## Pass 17 — Detail page, imagery, symbology
+## Pass 20 — Detail page, imagery, symbology
 
 1. **Imagery — every asset needs 1–2 pictures.** This is a research workstream, not a code
    one, and it can start in parallel with earlier passes.
@@ -177,7 +185,7 @@ Depends on: Pass 13 (perf headroom). Source data: `docs/3d-model-sourcing-manife
 
 ---
 
-## Pass 18 — Scenario rework (Key Lessons)
+## Pass 21 — Scenario rework (Key Lessons)
 
 Scenarios currently pull in assets that don't serve the lesson. Example given: "The kill
 chain collapsed from hours to minutes" includes a Leleka, HIMARS, a howitzer (all Ukrainian)
@@ -199,12 +207,12 @@ chain collapsed from hours to minutes" includes a Leleka, HIMARS, a howitzer (al
   smoke pass. With the surface area growing this fast, at minimum add regression tests for
   the Pass 8 invariants (grounding, label collision, lateral spread) — those are the things
   repeatedly at risk.
-- **No performance budget.** Pass 13 establishes the measurement; it should become a
+- **No performance budget.** Pass 16 establishes the measurement; it should become a
   standing check in every later pass, not a one-off.
 - **Cloudflare Worker still undeployed** (code exists since Pass 7, needs a human with an
   account). Blocks shared editing. Decide whether it matters for this push or stays parked.
 - **`scenery.ts` material cleanup** — 19 ungoverned one-off materials flagged in Pass 12,
-  left as a recommendation. Fold into Pass 16's material-palette work rather than doing
+  left as a recommendation. Fold into Pass 19's material-palette work rather than doing
   it separately.
 
 ---
@@ -212,13 +220,13 @@ chain collapsed from hours to minutes" includes a Leleka, HIMARS, a howitzer (al
 ## Suggested sequencing
 
 ```
-13. Perf + interaction        ← blocking, do first
-14. World + terrain           ← needs 13; enables 15
-15. Tactical placement        ← needs 14
-16. Model integration         ← needs 13 for headroom
-17. Detail page + imagery     ← imagery research can start in parallel any time
-18. Scenario rework           ← content only, can slot anywhere after 13
+16. Perf + interaction        ← blocking, do first
+17. World + terrain           ← needs 16; enables 18
+18. Tactical placement        ← needs 17
+19. Model integration         ← needs 16 for headroom
+20. Detail page + imagery     ← imagery research can start in parallel any time
+21. Scenario rework           ← content only, can slot anywhere after 16
 ```
 
-Passes 13–15 are the critical path. 16 can run alongside 15 if you want two threads.
-17's research half has no dependencies at all — start collecting licensed imagery now.
+Passes 16–18 are the critical path. 19 can run alongside 18 if you want two threads.
+20's research half has no dependencies at all — start collecting licensed imagery now.

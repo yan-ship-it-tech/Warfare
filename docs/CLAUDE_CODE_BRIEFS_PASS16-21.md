@@ -1,4 +1,4 @@
-# Claude Code briefs — Passes 13–18
+# Claude Code briefs — Passes 16–21
 
 Each section below is self-contained and meant to be pasted into its own Claude Code
 session, one pass at a time, in order. Every brief assumes the session starts by reading
@@ -12,15 +12,15 @@ Standing instructions for every pass, not repeated per-brief:
 - Do not regress Pass 8 (grounding via `platform_domain`, label collision index, lateral
   spreading, side-ID ring). Check with `git diff --stat` before committing.
 - Validate with `npm run build` + a headless Playwright smoke pass, same as every prior
-  pass — no test suite exists yet (see Pass 13 item 1, which starts fixing that).
+  pass — no test suite exists yet (see Pass 16 item 1, which starts fixing that).
 - Update `CLAUDE.md` if file map or commands changed. Log the pass in `docs/DECISIONS.md`
   and close/update items in `docs/BACKLOG.md`.
 
 ---
 
-## Pass 13 brief — Performance and interaction (blocking)
+## Pass 16 brief — Performance and interaction (blocking)
 
-Read `docs/PLANNING.md` → "Pass 13" for full context. This pass blocks 14–16; nothing
+Read `docs/PLANNING.md` → "Pass 16" for full context. This pass blocks 17–19; nothing
 else in this push should start until it lands.
 
 1. Add a dev-only frame-time / draw-call overlay (toggle via a query param or key
@@ -57,9 +57,9 @@ else in this push should start until it lands.
 
 ---
 
-## Pass 14 brief — World and terrain
+## Pass 17 brief — World and terrain
 
-Depends on Pass 13 landing first. Read `docs/PLANNING.md` → "Pass 14", and
+Depends on Pass 16 landing first. Read `docs/PLANNING.md` → "Pass 17", and
 `docs/OSM_PIPELINE.md` before starting. OSM data now exists at `data/osm/pokrovsk.json`
 (fetched manually outside the sandbox — see `docs/OSM_HANDOFF.md` for the pipeline that
 produced it).
@@ -97,10 +97,10 @@ produced it).
 
 ---
 
-## Pass 15 brief — Tactical asset placement
+## Pass 18 brief — Tactical asset placement
 
-Depends on Pass 14 (terrain features must exist to place assets into). Read
-`docs/PLANNING.md` → "Pass 15".
+Depends on Pass 17 (terrain features must exist to place assets into). Read
+`docs/PLANNING.md` → "Pass 18".
 
 1. Review every asset's distance-from-front against real-world doctrine for that asset
    class. Flag and correct implausible placements — e.g. a medium-range SAM like NASAMS
@@ -111,7 +111,7 @@ Depends on Pass 14 (terrain features must exist to place assets into). Read
    `scripts/audit-content.mjs`). Run the audit script against the new field.
 2. Break assets out of the straight-line-per-distance layout into dispersed,
    terrain-driven positions.
-3. Site assets tactically, using Pass 14's terrain: air defense near the high-value asset
+3. Site assets tactically, using Pass 17's terrain: air defense near the high-value asset
    it plausibly defends; artillery hidden in forest patches; drone teams on elevated tree
    lines; logistics on road/rail nodes; command posts dispersed and rearward.
 4. Build an asset **swap** mechanism — replace a placed asset with another of the same
@@ -129,9 +129,9 @@ Depends on Pass 14 (terrain features must exist to place assets into). Read
 
 ---
 
-## Pass 16 brief — 3D model integration
+## Pass 19 brief — 3D model integration
 
-Depends on Pass 13 (needs the performance headroom). Read `docs/PLANNING.md` → "Pass 16".
+Depends on Pass 16 (needs the performance headroom). Read `docs/PLANNING.md` → "Pass 19".
 Source list: `3d-model-sourcing-manifest.xlsx` (uploaded separately to this session/repo
 — 72 assets: 47 with a free sourced candidate, 8 flagged "Weak/Verify", 17 with no free
 source found).
@@ -148,7 +148,7 @@ source found).
      before use; drop to the fallback noted in the manifest if verification fails.
 2. Build a normalization pipeline applied to every imported model:
    - Decimate to a shared triangle budget (start around 2–8k tris for hero/detail units,
-     under 500 for background or heavily-instanced units — tune against the Pass 13
+     under 500 for background or heavily-instanced units — tune against the Pass 16
      performance baseline, don't guess).
    - Retexture/recolor toward a shared material palette so ~40 different original artists'
      work reads as one consistent family rather than an asset flip.
@@ -159,9 +159,9 @@ source found).
    rule from Pass 12. Reuse Pass 12's audit method (measure with grep/scripted
    color-distance checks, don't eyeball) to verify compliance once done.
 4. Use instancing for anything repeated: trees, dragon's teeth, infantry, duplicated FPV
-   teams/Starlink terminals from Pass 15.
+   teams/Starlink terminals from Pass 18.
 5. For assets with no sourced model whose category is otherwise represented, hide them
-   from default map display but keep them reachable via the Pass 15 swap mechanism.
+   from default map display but keep them reachable via the Pass 18 swap mechanism.
    Exception: all five Russian UGVs (Kurier, Omich-2, Uran-6, Uran-9, Varan) in the
    manifest have no free source — hiding all five leaves that category fully unrepresented
    on the Russian side. At minimum source one via paid purchase or build one custom
@@ -176,10 +176,10 @@ source found).
 
 ---
 
-## Pass 17 brief — Detail page, imagery, symbology
+## Pass 20 brief — Detail page, imagery, symbology
 
-No hard dependency on 14–16; can run in parallel if you're running two threads. Read
-`docs/PLANNING.md` → "Pass 17".
+No hard dependency on 17–19; can run in parallel if you're running two threads. Read
+`docs/PLANNING.md` → "Pass 20".
 
 1. Source 1–2 images per asset (~90 assets). This is primarily a research task:
    - Acceptable sources: Wikimedia Commons (verify per-file license before use — not all
@@ -205,10 +205,10 @@ No hard dependency on 14–16; can run in parallel if you're running two threads
 
 ---
 
-## Pass 18 brief — Scenario (Key Lessons) rework
+## Pass 21 brief — Scenario (Key Lessons) rework
 
-Content-only pass, no hard dependency on 13–17 beyond Pass 13's general stability. Read
-`docs/PLANNING.md` → "Pass 18".
+Content-only pass, no hard dependency on 16–20 beyond Pass 16's general stability. Read
+`docs/PLANNING.md` → "Pass 21".
 
 1. Audit every existing Key Lessons scenario. Each scenario names one lesson; every asset
    included in that scenario's "show on map" view must directly demonstrate that lesson.
