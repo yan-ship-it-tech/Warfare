@@ -2822,6 +2822,16 @@ and a forest patch on the left bank, a built-up block and another forest patch o
 right — which is as close to "the whole pass, confirmed in one frame" as this kind of
 verification gets.
 
+**[Pass 24 remediation correction]** "an OSM building cluster" above is a misnomer this entry
+itself half-flags two lines into Pass 18 below ("`TERRAIN_FEATURES` in `src/three/scenery.ts`
+— not `osmTerrain.ts`, a brief imprecision worth flagging"). The committed OSM extract
+(`data/osm/pokrovsk.json`) carries `tree_row`/`rail_line`/`road`/`river` features only — zero
+buildings, confirmed by a direct count. What the screenshot actually shows next to the tree
+patch is `scenery.ts`'s hand-authored `built_up_block` dressing (`TERRAIN_FEATURES`,
+grey box geometry) — a real, still-rendering, entirely separate system from the OSM pipeline,
+not a regression. Re-confirmed rendering in the current build, screenshot
+`docs/screenshots/pass24r/built-up-block.png`.
+
 ---
 
 # Pass 18 — Tactical asset placement
@@ -2940,7 +2950,11 @@ closest rail point in the file to the inset's own anchor), converted through `un
 from where the rail ribbon itself draws). Confirmed by panning the camera to that band and
 screenshotting: the pin sits inside the same dense, organically-clustered tree/building patch Pass
 17's own verification already identified as visually distinct from the sparse battle-damage
-treeline elsewhere. No other side/band currently has committed real OSM geometry (`kramatorsk.json`
+treeline elsewhere. **[Pass 24 remediation correction]** "tree/building patch" — the tree half is
+real OSM `tree_row` geometry; the "building" half is `scenery.ts`'s separate `built_up_block`
+dressing sited nearby, not an OSM feature (the extract has none). See the correction at the Pass
+17 §Verification entry above for the full explanation. No other side/band currently has committed
+real OSM geometry (`kramatorsk.json`
 still doesn't exist — `docs/BACKLOG.md`), so the `side_b` ammo point uses the generic `built_up`
 affinity honestly rather than inventing a second, unbacked "real geometry" claim.
 
@@ -3037,7 +3051,10 @@ Chromium (`--use-gl=swiftshader --enable-unsafe-swiftshader --no-sandbox`) again
   artillery firing position sitting among real tree geometry, a forward ammunition point and
   tactical command post correctly set back from the line, no visible rank/row alignment); a panned
   view over the `side_a` 17 km band shows the new railhead ammunition point's pin sitting inside the
-  same dense OSM tree/building cluster Pass 17 identified, confirming the anchor-math reuse actually
+  same dense OSM tree/building cluster Pass 17 identified — **[Pass 24 remediation correction]**
+  "OSM ... building" is a misnomer carried over from the Pass 17 entry corrected above: the trees
+  are real OSM `tree_row` geometry, the buildings are `scenery.ts`'s separate `built_up_block`
+  dressing, not OSM data — confirming the anchor-math reuse actually
   lines up rather than merely type-checking; the roster swap flow was driven end to end (open T-90M
   → swap in T-80BVM → confirm three independent pins exist afterward, not two).
 - **Zero page errors** across the full run except one benign 404 for a new asset's placeholder

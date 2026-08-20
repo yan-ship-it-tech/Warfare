@@ -127,12 +127,14 @@ export function AboutPage({ world }: PageProps) {
       <p>
         The 3D scene has a single spatial rule, and it is worth stating plainly because everything
         else follows from it. {compressionSummary()} One world unit is one metre, so inside that
-        near band the terrain, the buildings and rivers from the OpenStreetMap patch below, the
-        size of a tank and the altitude of a drone are all physically correct against each other.
-        Past it, ground position compresses and <em>fidelity compresses with it</em> — the detail
-        fades as the geography stops being true, so the deep rear reads as an abstracted silhouette
-        rather than as a place you could navigate. That is deliberate: squashed 1:1 buildings at
-        200 km would be a worse lie than the empty void this replaced.
+        near band the terrain, the rail lines, tree rows and roads from the OpenStreetMap patch
+        below (it carries no building footprints — see "One real patch inside the synthetic
+        terrain" below for exactly what it does), the size of a tank and the altitude of a drone
+        are all physically correct against each other. Past it, ground position compresses and{" "}
+        <em>fidelity compresses with it</em> — the detail fades as the geography stops being true,
+        so the deep rear reads as an abstracted silhouette rather than as a place you could
+        navigate. That is deliberate: squashed 1:1 geometry at 200 km would be a worse lie than the
+        empty void this replaced.
       </p>
       <p>
         The camera's yaw is constrained to a limited arc about that depth axis rather than free
