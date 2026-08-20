@@ -81,17 +81,38 @@ const CAM_MAX_DISTANCE = 165_000;
  *  Pass 25's; this is the derivation the axis lock makes possible. */
 const FACING_Y: Record<string, number> = { side_a: 0, side_b: Math.PI };
 
-/** Marker/ring/fill hold a roughly constant SCREEN size instead of a constant
- *  world size. On an axis 140 km wide with 7 m vehicles on it there is no one
- *  world size that works, and these three are symbology rather than objects —
- *  the same reasoning that keeps the labels in DOM. `k` is derived from the
- *  camera: a marker of world radius `dist * k` subtends a constant angle. */
+/** Marker/ring/fill hold a roughly constant SCREEN size PAST TRUE_SCALE_DEPTH_KM
+ *  — the far register, where real geometry would be sub-pixel and these three
+ *  are symbology rather than objects, the same reasoning that keeps the labels
+ *  in DOM. `k` is derived from the camera: a marker of world radius `dist * k`
+ *  subtends a constant angle. Inside TRUE_SCALE_DEPTH_KM they instead hold
+ *  NEAR_REGISTER_MARKER_SCALE, a constant WORLD size — see that constant's own
+ *  comment for why a screen-constant marker doesn't belong there. */
 const MARKER_TARGET_PX = 7;
 const MARKER_GEO_RADIUS = 1.5;
 /** Ceiling so a marker can never swallow the screen at extreme zoom-out, and
- *  floor so it never disappears when the camera is right on top of an asset. */
+ *  floor so it never disappears when the camera is right on top of an asset.
+ *  Far register only — see MARKER_TARGET_PX. */
 const MARKER_SCALE_MIN = 0.6;
 const MARKER_SCALE_MAX = 4_000;
+/**
+ * Pass 24 remediation. Inside TRUE_SCALE_DEPTH_KM, depthAxis.ts already makes
+ * position, hero-model scale and altitude physically correct against the
+ * terrain — screen-constant marker sizing was the one piece of the near
+ * register still lying about scale, and at the shipped default framing it
+ * rendered a ~1.5 km symbol next to a 7.7 m tank (Leopard 2A6), reported as
+ * "badly broken" on the live site and confirmed from this exact code path.
+ *
+ * `1` is not a placeholder: MARKER_GEO_RADIUS(1.5m)/RING outer radius(2.9m)
+ * were already authored at roughly metre scale — the same coincidence
+ * depthAxis.ts's header describes for models.ts — so leaving the trio at its
+ * raw geometry size, with only the existing selection/hover emphasis on top,
+ * makes it read as a small anchor/click-target beside the model rather than a
+ * second, competing symbol. It is a constant WORLD size, not a constant
+ * SCREEN size: exactly what "true scale" means, and it shrinks with distance
+ * the same way the hero model beside it does.
+ */
+const NEAR_REGISTER_MARKER_SCALE = 1;
 
 /** Symbolic altitude ceiling for far-register assets, metres. A deep-strike
  *  UAV 4,300 km out sits where 1 world unit is ~1 km of real ground; drawing
@@ -278,6 +299,14 @@ interface Entry {
    *  to keep it screen-constant, and doing that from a local offset would
    *  mean re-deriving the group origin there too. */
   padWorldY: number;
+  /** True distance from the zero line, km. layout() reads this to decide
+   *  whether the marker/ring/fill trio is symbology (far register — screen-
+   *  constant, since real geometry is sub-pixel out there) or a small,
+   *  true-scale anchor sitting beside a true-scale hero model (near register
+   *  — see the Pass 24 remediation note by MARKER_TARGET_PX's usage below).
+   *  Fixes the incident where a screen-constant marker rendered ~1.5 km
+   *  across next to a 7 m tank. */
+  km: number;
   lod: THREE.LOD | null;
   /** Grounded assets can be hidden behind terrain; elevated ones effectively
    *  cannot, so they skip the occlusion probe entirely. */
@@ -1076,11 +1105,27 @@ export function Scene3D({ world }: { world: WorldModel }) {
             fillOpacity.setX(i, isSel || isHov ? 0.13 : highlighted ? 0.2 : 0.13);
           }
           const emphasis = isSel ? 1.6 : isHov ? 1.3 : 1;
-          const screenScale = THREE.MathUtils.clamp(
-            (dist * pxToWorld * MARKER_TARGET_PX) / MARKER_GEO_RADIUS,
-            MARKER_SCALE_MIN,
-            MARKER_SCALE_MAX,
-          );
+          // Pass 24 remediation. Screen-constant sizing is right where real
+          // geometry is sub-pixel (the far register) and wrong where it isn't
+          // (the near register, where depthAxis.ts already makes a hero model
+          // physically correct against the terrain under it). Applying the
+          // same dist-based formula everywhere is what put a ~1.5 km marker
+          // next to a 7.7 m tank at the shipped default framing — visible in
+          // this pass's own screenshots and reported as "badly broken" on the
+          // live site. Inside TRUE_SCALE_DEPTH_KM the trio now renders at its
+          // own true-scale geometry (NEAR_REGISTER_MARKER_SCALE = 1, i.e. a
+          // ~1.5 m marker / ~5.8 m ring — a small anchor beside the model, not
+          // a symbol competing with it) with only the existing selection/hover
+          // emphasis applied; past the boundary the screen-constant formula is
+          // unchanged, because a true-scale marker out there WOULD be sub-pixel.
+          const screenScale =
+            entry.km <= TRUE_SCALE_DEPTH_KM
+              ? NEAR_REGISTER_MARKER_SCALE
+              : THREE.MathUtils.clamp(
+                  (dist * pxToWorld * MARKER_TARGET_PX) / MARKER_GEO_RADIUS,
+                  MARKER_SCALE_MIN,
+                  MARKER_SCALE_MAX,
+                );
           layoutScratchScale.setScalar(emphasis * screenScale);
           layoutScratchMatrix.compose(entry.anchor, layoutScratchQuat.identity(), layoutScratchScale);
           inst.marker.setMatrixAt(i, layoutScratchMatrix);
@@ -1668,6 +1713,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
         anchor: new THREE.Vector3(pos.x, pos.y + markerY, pos.z),
         idx: k,
         padWorldY,
+        km,
         lod,
         altitudeM: drawAltitude,
         grounded: !elevated,
