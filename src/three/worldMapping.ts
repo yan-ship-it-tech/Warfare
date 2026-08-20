@@ -1,145 +1,73 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Battlefield → 3D world coordinates.
 //
-// Pass 24 changed the load-bearing rule in this file. It used to consume
-// `Projection.xFor()` — the 2D schematic view's per-band pixel allocation —
-// and only convert the result into world units. That coupling is gone: km →
-// world X now goes through `depthAxis.ts`, a pure two-register function with
-// no dependence on the live band set at all. Read that file's header first;
-// this one is downstream of it.
-//
-// What that costs, stated plainly because it is a real deviation from the
-// invariant CLAUDE.md records ("the 3D view reads the same underlying
-// projection so the two views can never disagree about where anything is"):
-// the two views no longer share one km→X function. What they still share —
-// and what that invariant was actually protecting — is the number itself.
-// Both draw an asset from `distance_km_from_zero`, both label it in true km,
-// and neither can move an asset without moving that field. What differs is
-// only how each *allocates screen depth* to a km, and it has to differ: the
-// 2D view is an explicitly schematic cross-section that gives each band a
-// legible slice, while a 3D scene with real terrain in it cannot claim two
-// scales at once. See docs/DECISIONS.md Pass 24.
-//
-// The other consequence, and it is an improvement: editing a band no longer
-// moves anything in the 3D scene. A band is an annotation on the axis now,
-// not the thing that defines it — which is what the stored-`band_id`-is-
-// informational rule already said about the data.
+// The contract that makes this safe: this module NEVER recomputes distance.
+// It consumes `Projection.xFor()` from src/scene/projection.ts — the exact
+// same per-band, non-linear screen allocation the 2D schematic view and the
+// ruler have always used — and only converts the result into world units.
+// Pass 5's finding stands unchanged: real geography cannot put a 0–5 km FPV
+// envelope and a 500 km deep-strike target on one legible axis, so the axis
+// stays band-compressed. What changed in Pass 6 is only how the ground under
+// that axis is *drawn*. See docs/DECISIONS.md Pass 6.
 //
 // Axes:
-//   X  distance from the zero line. Zero line at X = 0, side_a negative,
-//      side_b positive — same handedness as the 2D view. True scale (1 unit
-//      = 1 m) out to TRUE_SCALE_DEPTH_KM, logarithmically compressed past it.
-//   Y  altitude, in metres above mean ground. Genuinely above the ground
-//      plane, and — inside the near register — genuinely correct.
-//   Z  lateral position across the represented strip, in metres. The scene is
-//      a strip ~12 km wide and the full rear-to-rear depth; Z separates
-//      co-located assets and carries no distance claim of its own.
+//   X  distance from the zero line (band-compressed). Zero line at X = 0,
+//      side_a negative, side_b positive — same handedness as the 2D view.
+//   Y  altitude. This is the thing the 2D view could never express: air and
+//      space sit genuinely above the ground plane, not in a lane below it.
+//   Z  lateral position across a representative strip. The scene is a strip
+//      a few km wide and the full rear-to-rear depth, per explicit scope —
+//      Z separates ground domains from each other and spreads co-located
+//      assets, and carries no distance claim of its own.
 // ─────────────────────────────────────────────────────────────────────────
 import type { Domain, Side } from "../types";
-import {
-  UNITS_PER_KM,
-  depthUnitsFor,
-  kmForDepthUnits,
-  HALF_EXTENT_UNITS,
-  MAX_DEPTH_KM,
-} from "./depthAxis";
+import type { Projection } from "../scene/projection";
 
-/** Retained for the 2D schematic view's own scale note; the 3D axis no
- *  longer has a px-per-unit relationship to anything. */
+/** Scene pixels per world unit. Tuned so the full rear-to-rear span is a
+ *  comfortable camera distance rather than a number chosen for its own sake. */
 export const PX_PER_UNIT = 12;
 
-/**
- * Fallback altitude per PLATFORM domain, in METRES — i.e. keyed by where the
- * hardware physically sits, never by what it shoots at. Feeding this the
- * engagement domain is what left every SAM battery hovering; see
- * src/data/placement.ts.
+/** Altitude per PLATFORM domain, in world units — i.e. keyed by where the
+ *  hardware physically sits, never by what it shoots at. Feeding this the
+ *  engagement domain is what left every SAM battery hovering; see
+ *  src/data/placement.ts. Ground-level platforms share Y = 0 and are separated
+ *  on Z instead — stacking logistics above land would assert a height
+ *  difference that isn't real.
  *
- * Pass 24 turned these from arbitrary world offsets into real heights, and
- * demoted them to a *fallback*: an asset with its own `altitude_band_m`
- * (Pass 24's air-layer data) is drawn at its own altitude and never reaches
- * these. What is left here is what an asset with no band should do.
- *
- *  air       1,200 m — a generic "airborne, tactical" height, deliberately
- *                      between the fixed-wing recon band (800–2,000 m) and
- *                      the rotary/FPV deck. Anything that needs to be right
- *                      carries its own band.
- *  space    25,000 m — SYMBOLIC and flagged as such. A real LEO altitude is
- *                      ~400 km: fifty times the depth of the entire near
- *                      register, and drawing it true would put every space
- *                      asset off-scene. This is the one altitude in the file
- *                      that is not a physical claim.
- *  cyber_ew  3,000 m — airborne jammers only; every truck- and mast-mounted
- *  c2_comms  1,500 m   EW/C2 system in the dataset resolves to `land` and
- *                      sits at grade (src/data/placement.ts).
- *  sea          -3 m — waterline, not a hover.
- */
+ *  cyber_ew and c2_comms keep a nonzero altitude for the genuinely airborne or
+ *  orbital members of those domains; every ground-mounted jammer and command
+ *  post in the dataset now resolves to a `land` platform and sits at grade. */
 export const DOMAIN_ALTITUDE: Record<Domain, number> = {
-  space: 25_000,
-  air: 1_200,
-  cyber_ew: 3_000,
-  c2_comms: 1_500,
+  space: 96,
+  air: 32,
+  cyber_ew: 11,
+  c2_comms: 4,
   land: 0,
   logistics: 0,
   medical: 0,
-  sea: -3,
+  sea: -1.4,
 };
 
-/** Above this altitude (metres) a platform is genuinely off the deck and gets
- *  the tether treatment. 50 m clears the FPV band's own floor of 30 m, so a
- *  quadcopter at treetop height reads as flying rather than as parked. */
-export const ELEVATED_ALTITUDE_M = 50;
-
-/** Ordering of platform domains across the strip's breadth. A sort key, not
- *  an absolute Z: assets are spread across the full breadth by band cohort
- *  (see lateralLayout) and this only decides which end of that breadth a
- *  domain tends toward. Scaled to metres alongside everything else. */
+/** Ordering of platform domains across the strip's breadth. Pass 8 demoted
+ *  this from an absolute Z position to a sort key: assets are now spread
+ *  across the full breadth by band cohort (see lateralLayout), and this only
+ *  decides which end of that breadth a given domain tends toward — so sea
+ *  still gathers to one side and logistics to the other without every land
+ *  asset being pinned to a single crowded line down the middle. */
 export const STRIP_Z: Record<Domain, number> = {
   land: 0,
-  air: 200,
-  space: 600,
-  c2_comms: 1_500,
-  logistics: 3_000,
-  cyber_ew: -1_500,
-  medical: -3_000,
-  sea: -4_600,
+  air: 2,
+  space: 6,
+  c2_comms: 15,
+  logistics: 30,
+  cyber_ew: -15,
+  medical: -30,
+  sea: -46,
 };
 
-/**
- * Half-width of the represented strip, in METRES. 6 km either side of the
- * scene's centreline — a 12 km frontage, which is a plausible brigade-ish
- * sector and, not by coincidence, wide enough to hold most of the ±10 km OSM
- * extract at its own true scale (osmTerrain.ts clips the remainder).
- *
- * Terrain and dressing run considerably further — see the two constants
- * below — so the plate never ends on a visible cut.
- */
-export const STRIP_HALF_Z = 6_000;
-
-/**
- * Three lateral extents, not one — the fix for a scene that read as a floating
- * tile even after the depth axis was right.
- *
- *   STRIP_HALF_Z     6 km  the REPRESENTED sector. Assets live here, and only
- *                          here: it is what the lateral layout spreads across
- *                          and what "a strip 12 km wide" in the UI means.
- *   SCENERY_HALF_Z  12 km  how far the dressing runs — trenches, obstacles,
- *                          treelines. A trench line that stops dead at the
- *                          sector boundary announces the boundary; one that
- *                          runs on past it and fades says the sector is a cut
- *                          from something larger, which is the truth.
- *   TERRAIN_HALF_Z  32 km  how far the GROUND runs. With yaw locked the camera
- *                          looks across the axis, so the near and far edges of
- *                          the plate are the two edges most often in frame;
- *                          at 6 km they were a visible cut a few degrees from
- *                          the subject. At 32 km, with the lateral haze fully
- *                          engaged well before it, the ground simply recedes.
- *
- * The cost is terrain vertices, and it is paid with a graded Z sampling the
- * same way the depth axis is graded (buildTerrain) rather than by uniformly
- * spending them on 26 km of deliberately-hazed ground.
- */
-export const SCENERY_HALF_Z = 12_000;
-export const TERRAIN_HALF_Z = 32_000;
+/** Half-width of the represented strip, world units. Terrain is generated to
+ *  this extent plus a margin so the strip's edges fall outside the frame. */
+export const STRIP_HALF_Z = 62;
 
 /** Deterministic per-id hash — the same asset always lands in the same spot
  *  instead of reshuffling on every render. */
@@ -163,17 +91,16 @@ export interface WorldPlacement {
  *  the strip's cut edge. */
 const SPREAD_FILL = 0.86;
 
-/** Jitter as a fraction of the cohort's own slot pitch, so two neighbours
- *  always keep at least (1 − 2·JITTER_FRACTION) of their slot whatever the
- *  cohort size. */
+/** Jitter as a fraction of the cohort's own slot pitch. Fixed-magnitude jitter
+ *  was the first version and it was wrong: ±2.5 units against a pitch of ~5.4
+ *  can close a neighbouring pair to almost nothing. Scaling it to the pitch
+ *  means two neighbours always keep at least (1 − 2·JITTER_FRACTION) of their
+ *  slot, whatever the cohort size. */
 const JITTER_FRACTION = 0.15;
 
-/** Minimum ground-plane separation between any two same-side assets, in
- *  metres. 400 m is a real dispersal distance rather than a marker footprint:
- *  the markers are screen-constant symbols now (Scene3D), so this is about
- *  two systems not standing in each other's position, not about two discs
- *  overlapping. */
-const MIN_SEPARATION = 400;
+/** Minimum ground-plane separation between any two same-side assets, world
+ *  units — a bit over the marker/ring footprint so rings don't overlap. */
+const MIN_SEPARATION = 4.6;
 const RELAX_ITERATIONS = 6;
 
 /** One asset's input to the lateral layout. */
@@ -184,35 +111,35 @@ export interface LateralItem {
   platformDomain: Domain;
 }
 
-/** Cohort boundaries for the lateral spread, in km. Was "whichever band this
- *  km falls in", which tied the layout to the live band set; now a fixed
- *  ladder, for the same reason the axis itself no longer reads bands. The
- *  stops are the doctrine.md §2 depth structure the bands themselves follow,
- *  so the practical grouping is unchanged for the shipped band set. */
-const COHORT_STOPS_KM = [5, 30, 150, 500];
-
 /**
- * Lays every asset out across the strip's full breadth, by cohort.
+ * Lays every asset out across the strip's full breadth, by band cohort.
  *
- * Assets sharing a (side, cohort) are distributed evenly across the breadth.
- * Sorting by platform domain keeps sea at one end and logistics at the other
- * — the domain read survives — while sorting by km *within* a domain means
- * the assets most likely to collide in X are the ones pushed furthest apart
- * in Z, which is precisely the separation that was wanted.
+ * The old rule was `STRIP_Z[domain] + subRow * 8.5 + jitter`, which had two
+ * compounding problems at 87 assets: the domain lanes it keyed off are only
+ * ~2 units apart for the common cases (land 0, air 2), and `subRow` came from
+ * the 2D packer, which caps at VIEW.maxSubRows = 3. So the 42 land assets were
+ * competing for a band of Z barely 30 units wide inside a strip 124 wide, and
+ * everything piled up down the middle with the edges left empty.
+ *
+ * Now: assets sharing a (side, band) cohort are distributed evenly across the
+ * breadth. Sorting by platform domain keeps sea at one end and logistics at
+ * the other — the domain read survives — while sorting by km *within* a domain
+ * means the assets most likely to collide in X are the ones pushed furthest
+ * apart in Z, which is precisely the separation that was wanted.
  *
  * Deterministic: same cohort in, same layout out, no dependence on render
  * order or on how many frames have gone by.
  */
-export function lateralLayout(items: LateralItem[]): Map<string, number> {
+export function lateralLayout(items: LateralItem[], proj: Projection): Map<string, number> {
   const half = STRIP_HALF_Z * SPREAD_FILL;
-  const cohortFor = (km: number): number => {
-    const i = COHORT_STOPS_KM.findIndex((stop) => km <= stop);
-    return i === -1 ? COHORT_STOPS_KM.length : i;
+  const bandIndexFor = (km: number): number => {
+    const i = proj.spans.findIndex((s) => km <= s.band.max_km);
+    return i === -1 ? proj.spans.length : i;
   };
 
   const cohorts = new Map<string, LateralItem[]>();
   for (const item of items) {
-    const key = `${item.side}:${cohortFor(item.km)}`;
+    const key = `${item.side}:${bandIndexFor(item.km)}`;
     const list = cohorts.get(key);
     if (list) list.push(item);
     else cohorts.set(key, [item]);
@@ -238,10 +165,12 @@ export function lateralLayout(items: LateralItem[]): Map<string, number> {
   }
 
   // ── cross-cohort relaxation ────────────────────────────────────────────
-  // Spreading each cohort independently guarantees separation *within* a
-  // cohort and says nothing across them: two assets either side of a cohort
-  // boundary can sit metres apart in X and draw their Z from unrelated
-  // layouts. A few iterations of pairwise push-apart fix that directly.
+  // Spreading each cohort independently guarantees separation *within* a band
+  // and says nothing across bands: two assets either side of a band boundary
+  // sit only a couple of world units apart in X and draw their Z from
+  // unrelated layouts, so they could still land on top of each other. A few
+  // iterations of pairwise push-apart fix that directly rather than leaving it
+  // to luck.
   //
   // Only Z moves. X encodes the asset's actual distance from the zero line and
   // is the one number this whole view promises is true — the ruler, the 2D
@@ -249,7 +178,7 @@ export function lateralLayout(items: LateralItem[]): Map<string, number> {
   // nudged for layout's sake.
   const all = items.map((item) => ({
     item,
-    x: worldXFor(item.side, item.km),
+    x: (proj.xFor(item.side, item.km, 0) - proj.centerXPx) / PX_PER_UNIT,
     z: out.get(item.id) ?? 0,
   }));
   all.sort((a, b) => a.x - b.x || a.item.id.localeCompare(b.item.id));
@@ -273,8 +202,8 @@ export function lateralLayout(items: LateralItem[]): Map<string, number> {
         const push = (needZ - Math.abs(dz)) / 2;
         if (push <= 0) continue;
         const dir = dz === 0 ? (hashId(a.item.id) < hashId(b.item.id) ? -1 : 1) : Math.sign(dz);
-        a.z = clamp(a.z - dir * push, -STRIP_HALF_Z, STRIP_HALF_Z);
-        b.z = clamp(b.z + dir * push, -STRIP_HALF_Z, STRIP_HALF_Z);
+        a.z = THREE_CLAMP(a.z - dir * push, -STRIP_HALF_Z, STRIP_HALF_Z);
+        b.z = THREE_CLAMP(b.z + dir * push, -STRIP_HALF_Z, STRIP_HALF_Z);
         moved = true;
       }
     }
@@ -287,55 +216,64 @@ export function lateralLayout(items: LateralItem[]): Map<string, number> {
 
 /** Local clamp — this module stays free of a three.js import so it can be
  *  exercised by a plain node harness. */
-function clamp(v: number, lo: number, hi: number): number {
+function THREE_CLAMP(v: number, lo: number, hi: number): number {
   return v < lo ? lo : v > hi ? hi : v;
 }
 
 /**
  * Places one asset in the 3D world. `z` comes from lateralLayout() above;
- * `altitudeM` — a real height in metres, resolved by the caller from the
- * asset's own `altitude_band_m` or, failing that, DOMAIN_ALTITUDE keyed on
- * the PLATFORM domain, never the engagement domain.
+ * `platformDomain` — not the engagement domain — decides the altitude.
  */
 export function worldPlacement(opts: {
   side: Side;
+  platformDomain: Domain;
   km: number;
   z: number;
-  altitudeM: number;
+  proj: Projection;
   terrainHeightAt?: (x: number, z: number) => number;
 }): WorldPlacement {
-  const { side, km, z, altitudeM } = opts;
+  const { side, platformDomain, km, z, proj } = opts;
 
-  const x = worldXFor(side, km);
+  const x = (proj.xFor(side, km, 0) - proj.centerXPx) / PX_PER_UNIT;
 
+  const altitude = DOMAIN_ALTITUDE[platformDomain] ?? 0;
   // Ground-bound assets ride the terrain surface; airborne ones are measured
   // from mean ground so they don't bob with the hills underneath them.
-  const ground =
-    altitudeM <= ELEVATED_ALTITUDE_M && opts.terrainHeightAt ? opts.terrainHeightAt(x, z) : 0;
-  const y = altitudeM + ground;
+  const ground = altitude <= 4 && opts.terrainHeightAt ? opts.terrainHeightAt(x, z) : 0;
+  const y = altitude + ground;
 
   return { x, y, z };
 }
 
-/** World-unit X of a given distance/side — used by the ruler ticks, the
- *  scenery/feature tables and the zero-line marker, so everything stays
- *  locked to the same axis as the assets. */
-export function worldXFor(side: Side, km: number): number {
-  return (side === "side_a" ? -1 : 1) * depthUnitsFor(km);
+/** World-unit X of a given distance/side — used by the ruler ticks and the
+ *  zero-line marker so both stay locked to the same axis as the assets. */
+export function worldXFor(side: Side, km: number, proj: Projection): number {
+  return (proj.xFor(side, km, 0) - proj.centerXPx) / PX_PER_UNIT;
 }
 
 /** Inverse of worldXFor — world-unit X (magnitude, either side) back to km.
- *  Closed form as of Pass 24: the old binary search existed because
- *  `Projection.xFor()` folded in a lane-oblique term and a zero-line gutter
- *  that could not be inverted in closed form. depthAxis.ts has neither. */
-export function worldXToKm(_side: Side, worldX: number): number {
-  return Math.min(MAX_DEPTH_KM, kmForDepthUnits(Math.abs(worldX)));
+ *  Used by drag-to-reposition (Scene3D.tsx) to turn a drop point back into a
+ *  distance override. Binary search rather than a closed-form inverse: the
+ *  forward direction goes through `Projection.xFor()`, which folds in the
+ *  lane-oblique term and the zero-line gutter, and reproducing that algebra
+ *  here would have to stay in lockstep with projection.ts by hand. km→x is
+ *  monotonic (kmToOffsetPx never decreases), so this converges in a fixed
+ *  number of steps regardless of how many bands exist or how the piecewise
+ *  per-band scale is shaped. */
+export function worldXToKm(side: Side, worldX: number, proj: Projection): number {
+  const target = Math.abs(worldX);
+  const maxKm = proj.spans.length ? proj.spans[proj.spans.length - 1].displayMaxKm : 0;
+  let lo = 0;
+  let hi = maxKm;
+  for (let i = 0; i < 40; i++) {
+    const mid = (lo + hi) / 2;
+    if (Math.abs(worldXFor(side, mid, proj)) < target) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
 }
 
 /** Total half-extent of the world along X, world units. */
-export function worldHalfWidth(): number {
-  return HALF_EXTENT_UNITS;
+export function worldHalfWidth(proj: Projection): number {
+  return (proj.halfWidthPx + 70) / PX_PER_UNIT;
 }
-
-/** Convenience for callers that think in km-per-unit. */
-export const METRES_PER_KM = UNITS_PER_KM;

@@ -82,11 +82,5 @@
     "notes": [
       "Rests only on tertiary reference works; wants a primary or trade source."
     ]
-  },
-  "altitude_band_m": {
-    "min_m": 150,
-    "max_m": 500,
-    "basis": "estimated",
-    "note": "Class-typical man-portable loitering-munition band. No published operating altitude for this airframe was confirmed."
   }
 }

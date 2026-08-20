@@ -76,11 +76,5 @@
     "notes": [
       "Rests only on tertiary reference works; wants a primary or trade source."
     ]
-  },
-  "altitude_band_m": {
-    "min_m": 5500,
-    "max_m": 8200,
-    "basis": "sourced",
-    "note": "Service ceiling 8,239 m; a documented endurance flight held 5,486 m. Published figures for this airframe."
   }
 }

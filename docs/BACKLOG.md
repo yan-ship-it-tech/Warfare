@@ -6,42 +6,6 @@ gets listed here rather than silently dropped or silently worked around.
 
 ---
 
-## Open after Pass 24 remediation (marker/geometry-scale fix)
-
-### Far-register marker overlap — reduced, not eliminated
-Pass 24's spatial-contract rewrite made near-register (0–40 km) markers screen-constant,
-which put a ~1.5 km symbol next to a 7.7 m tank; the remediation pass fixed that (near-
-register markers now hold a constant *world* size, ~1.5–2.9 m, matching the hero-model
-scale beside them — see `PASS24_REMEDIATION_HANDOFF.md`). That leaves only the 19 of 103
-assets past 40 km still using the original screen-constant sizing, which is the right call
-there (real geometry would be sub-pixel that far out) — but at the single most
-zoomed-out framing, two or three regional clusters still show touching/overlapping rings:
-the Russia-rear S-400/S-300/IADS-network cluster (42/46/60 km) and the Ukraine-rear
-deep-strike UAV cluster (274/300/308/375/500/1050 km) both have same-side neighbours as
-close as ~130 world units apart against a ~2.9–3.6 km ring diameter at that camera
-distance. Zooming into either cluster resolves it (the screen-constant formula shrinks
-with camera proximity to that specific region) — this is a "maximum zoom-out" artifact,
-not a persistent one, and every marker stays individually clickable and distinguishable
-even where rings touch. Full resolution is label-declutter territory, already scoped to
-Pass 26; this entry exists so that pass's brief doesn't have to rediscover the specific
-clusters or numbers.
-
-### Small/low hero models — the near-register anchor can still compete with the model
-Two hero-model classes are genuinely improved by the remediation fix but not fully
-resolved: airborne small models (`side_b-uav-strike-lancet` — the marker sits directly at
-the model's position, since elevated assets get no vertical offset, and a ~3 m-diameter
-marker is comparable to or larger than a small loitering munition's own body) and
-ground-hugging fortification models (`side_a-infantry-position-dugout` and its `side_b`
-counterpart — low, flat geometry that a ~5.8 m ring can still visually dominate). Real
-model geometry is now visible in both cases (unlike the pre-fix ~1.5 km marker, which hid
-everything), but the anchor is not clearly subordinate to the model the way it is for a
-tank. Deliberately not chased further in the remediation pass — per-asset-class marker
-tuning risks scope creep into Pass 25/26 territory and wasn't asked for. If it's worth
-fixing, the likely shape is scaling the near-register anchor down further specifically
-where a hero model is present (it currently renders at the same size with or without one).
-
----
-
 ## Blocked / open — Pass 11 (OSM rail & tree-line pipeline)
 
 ### The Pokrovsk fetch — resolved (Pass 12); Kramatorsk still open

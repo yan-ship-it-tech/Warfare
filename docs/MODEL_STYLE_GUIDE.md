@@ -25,26 +25,16 @@ that constraint, not a reason to relax it.
 
 ## 1. Proportions & scale
 
-**Pass 24 update: one world unit is one metre, and the hero tier is now to
-scale.** This section previously said the opposite, quoting `models.ts`'s own
-"a to-scale tank on this compressed axis would be sub-pixel." That was true of
-the axis, not of the models: the hero tier had been authored at roughly metre
-scale all along — a tank hull ~7 units, a road wheel 0.72, a rifle 1.5, a
-house 2.6–3.8 wide — and `src/three/depthAxis.ts` simply gave it an axis that
-agrees. Nothing in `models.ts` was rescaled to achieve that.
-
-So the rule for new geometry is now stronger and simpler: **author in metres,
-against a real-world figure.** A 7 m hull is 7 units because a tank is 7 m
-long. If a dimension does not read as a plausible real measurement, it is
-wrong. Coherent *relative* proportion is still required and now follows for
-free from getting the absolute numbers right.
-
-Two disclosed exceptions, both in `scenery.ts` and both commented there: the
-four large industrial landmarks (power plant, fuel depot, port, ruined
-infrastructure) carry a group-level footprint scale of 3–5×, because they were
-authored as compact icons and read as garden sheds at true scale; and the
-marker/ring/fill trio in `Scene3D.tsx` is screen-constant symbology rather than
-world-scaled geometry, which is the same reasoning that keeps labels in DOM.
+World units are not to-scale. `models.ts` says it directly: *"a to-scale
+tank on this compressed axis would be sub-pixel."* A tank hull is drawn
+~7 world units long; a small house ~2.6–3.8 units wide; a power-plant
+cooling tower ~2.6–3.6 unit radius, 8 tall. Nothing in the scene is drawn to
+real-world proportion against anything else — proportion is legibility, not
+literalism, same as an icon on a map. What *is* consistent, and must stay
+that way: everything reads at a *coherent relative* scale — a house is
+smaller than an urban building, a tank is bigger than a wheel, a truck's cab
+is smaller than its cargo bed. Check relative proportion against nearby
+objects when adding something new, not against a real-world spec sheet.
 
 ## 2. Poly budget
 

@@ -28,10 +28,11 @@
 // "carries no distance claim of its own," moves here.
 // ─────────────────────────────────────────────────────────────────────────
 import type { Side } from "../types";
+import type { Projection } from "../scene/projection";
 import { TERRAIN_FEATURES, LANDMARKS, type TerrainFeature, type LandmarkSpec } from "./scenery";
 import { worldXFor, hashId } from "./worldMapping";
 import { isInWater } from "./terrain3d";
-import { unitsPerKm } from "./osmTerrain";
+import { unitsPerKmAt } from "./osmTerrain";
 
 /** One asset is deliberately sited at the OSM inset's real rail geometry
  *  rather than through the generic feature search below — see
@@ -89,29 +90,24 @@ const FEATURE_KIND_FOR: Partial<Record<SitingAffinity & string, TerrainFeature["
  *  infrastructure, not a village or a wreck marker. */
 const DEFENDED_LANDMARK_KINDS: LandmarkSpec["kind"][] = ["power_plant", "fuel_depot", "urban_cluster"];
 
-/** How far (world-X units, i.e. METRES in the near register as of Pass 24) a
- *  feature/landmark can be from the asset's own position before it no longer
- *  counts as "nearby." These are finally readable as real distances: 4 km for
- *  a firing position relative to the cover it uses, 22 km for a SAM battery
- *  relative to the infrastructure it covers — which is roughly what the old
- *  30/70 world units worked out to under the projection they were tuned
- *  against, so the behaviour is preserved rather than re-guessed. Note that
- *  in the compressed register the same threshold spans far more real km,
- *  which is correct: what matters is whether two things read as co-located in
- *  the picture, and out there they do. */
-const AFFINITY_SEARCH_RADIUS_WORLD = 4_000;
-const DEFENDED_SEARCH_RADIUS_WORLD = 22_000;
+/** How far (world-X units) a feature/landmark can be from the asset's own
+ *  position before it no longer counts as "nearby." World-X already
+ *  reflects the band compression every other distance comparison in this
+ *  codebase relies on (Pass 17's own OSM-inset anchor math works the same
+ *  way), so this is a spatial threshold, not a disguised km one. Wider for
+ *  "defended" since a rear SAM battery and the infrastructure it covers
+ *  legitimately sit tens of km apart in the real world. */
+const AFFINITY_SEARCH_RADIUS_WORLD = 30;
+const DEFENDED_SEARCH_RADIUS_WORLD = 70;
 
 /** Fraction of the way from lateralLayout's own Z toward the feature's Z.
  *  A full snap would put every artillery piece sharing a patch at one
  *  exact point; blending keeps the collision-safe spread as the floor. */
 const BLEND_TOWARD_FEATURE = 0.72;
 
-/** How far (metres) a "rearward" (c2/command) asset gets pushed toward
- *  whichever edge of its own cohort spread is less crowded. Scaled with the
- *  strip: 1.4 km of dispersal across a 12 km frontage is the same relative
- *  push the old 14 units gave across a 124-unit one. */
-const REARWARD_PUSH = 1_400;
+/** How far a "rearward" (c2/command) asset gets pushed toward whichever
+ *  edge of its own cohort spread is less crowded — see the note below. */
+const REARWARD_PUSH = 14;
 
 export interface SitedItem {
   id: string;
@@ -142,6 +138,7 @@ interface FeaturePoint {
 export function applyTacticalSiting(
   items: SitedItem[],
   zMap: Map<string, number>,
+  proj: Projection,
 ): Map<string, number> {
   const out = new Map(zMap);
   if (items.length === 0) return out;
@@ -149,13 +146,13 @@ export function applyTacticalSiting(
   const featuresByKind = new Map<TerrainFeature["kind"], FeaturePoint[]>();
   for (const f of TERRAIN_FEATURES) {
     const list = featuresByKind.get(f.kind) ?? [];
-    list.push({ x: worldXFor(f.side, f.km), z: f.z, radius: f.radius, side: f.side });
+    list.push({ x: worldXFor(f.side, f.km, proj), z: f.z, radius: f.radius, side: f.side });
     featuresByKind.set(f.kind, list);
   }
   const defended: FeaturePoint[] = LANDMARKS.filter((l) => DEFENDED_LANDMARK_KINDS.includes(l.kind)).map((l) => ({
-    x: worldXFor(l.side, l.km),
+    x: worldXFor(l.side, l.km, proj),
     z: l.z,
-    radius: 480,
+    radius: 10,
     side: l.side,
   }));
 
@@ -172,7 +169,7 @@ export function applyTacticalSiting(
 
   for (const item of items) {
     if (item.id === OSM_RAILHEAD_ASSET_ID) {
-      out.set(item.id, RAILHEAD_LOCAL_Z_KM * unitsPerKm());
+      out.set(item.id, RAILHEAD_LOCAL_Z_KM * unitsPerKmAt(proj));
       continue;
     }
 
@@ -204,7 +201,7 @@ export function applyTacticalSiting(
     // stack at its exact center — same pattern scenery.ts's own rejection-
     // sampled clusters use, applied here to real data-carrying assets.
     const angle = hashId(item.id) * Math.PI * 2 + n * 2.4;
-    const r = Math.max(40, Math.min(target.radius * 0.6, target.radius - 70) * (0.35 + 0.5 * hashId(`${item.id}:r`)));
+    const r = Math.max(0.8, Math.min(target.radius * 0.6, target.radius - 1.5) * (0.35 + 0.5 * hashId(`${item.id}:r`)));
     const proposedZ = target.z + Math.sin(angle) * r;
 
     const current = out.get(item.id) ?? 0;

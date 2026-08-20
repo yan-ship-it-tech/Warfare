@@ -87,11 +87,5 @@
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]
-  },
-  "altitude_band_m": {
-    "min_m": 60,
-    "max_m": 2000,
-    "basis": "estimated",
-    "note": "Flown as a Shahed-class decoy/strike airframe, so the Geran-2 envelope is the closest defensible band. Not a published figure for this airframe."
   }
 }
