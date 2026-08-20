@@ -3,24 +3,20 @@
 Forward-looking brief. Companion to `docs/DECISIONS.md` (why past choices were made)
 and `docs/BACKLOG.md` (known gaps). This file holds what's coming next.
 
+**Renumbered twice now.** An earlier draft used 13–18; that collided with
+`docs/DECISIONS.md`'s own Pass 13/14 (OSM fetch/reduce, `pokrovsk.json`). The corrected
+draft checked `DECISIONS.md` directly, found its highest logged pass was **15**, and
+shifted everything to start at **16**: 13→16, 14→17, 15→18, 16→19, 17→20, 18→21.
+`CLAUDE_CODE_BRIEFS_PASS13-18.md` is now `PASS16-21.md`. References to genuinely older,
+completed passes (5, 7, 8, 11, 12) and to `DECISIONS.md`'s own Pass 13 were left alone —
+those are real history, not part of the collision. **Before starting Pass 17, it's still
+worth a fast `grep -n "^## Pass" docs/DECISIONS.md` to confirm 16 didn't collide with
+anything logged after this document was written** — cheap insurance against a third
+renumbering.
+
 **Convention:** raw feedback gets captured wherever convenient (phone notes, etc.),
 then transcribed here as a numbered brief before each Claude Code pass. Each pass
 gets its own section. Sessions read `CLAUDE.md` → `DECISIONS.md` → this file.
-
-**Per-pass paste-in briefs:** `docs/CLAUDE_CODE_BRIEFS_PASS16-21.md` holds the
-self-contained brief text for each of Passes 16–21 below, one section per pass, meant
-to be pasted into a fresh Claude Code session at the start of that pass. It compresses
-out the background this file carries — read the relevant pass section here first. Pass
-19's source data (`docs/3d-model-sourcing-manifest.xlsx`) is committed alongside it so
-that pass has something to work from without anything needing to be pasted in.
-
-> **Numbering note (resolved).** This file's passes were originally written as
-> 13–18, which collided with `docs/DECISIONS.md`'s *already-completed* Passes 13, 14
-> and 15 (the OSM fetch/reduce pipeline and the Pokrovsk extract). One session read
-> the collision as "this work is already done" and skipped it. The highest pass
-> actually logged in `DECISIONS.md` is **15**, so everything here was renumbered to
-> continue after it: 13→16, 14→17, 15→18, 16→19, 17→20, 18→21. When adding a new
-> pass here, check the last `# Pass N` heading in `DECISIONS.md` first.
 
 **Scope decision for this whole push:** work on the **3D WebGL view only**
 (`src/three/`). The 2D schematic view (`src/scene/`) is explicitly deferred — it's
@@ -36,52 +32,57 @@ cheap to bring back into line once the 3D view settles. Do not spend pass budget
 | Visual style direction | Evolve toward **consistent stylized realism** — detailed silhouettes, shared material palette. Not photoreal, not primitive boxes. `MODEL_STYLE_GUIDE.md` gets revised, not discarded. |
 | Renderer | Real 3D geometry (`src/three/`). Confirmed — no 2.5D sprite path. |
 | ODbL attribution | Required and non-optional once OSM data renders. "© OpenStreetMap contributors" visible in the 3D view and/or About page. |
+| Marker/ring/fill instancing | **Deferred to Pass 19**, deliberately. `InstancedMesh` has no per-instance opacity without a custom shader, and scenario-focus dimming needs exactly that. Pass 16 took the free half (3 shared geometries instead of 273 near-duplicate uploads) and logged the rest in `BACKLOG.md`. Don't re-litigate — build the shader in Pass 19 alongside the material-palette work it depends on. |
+| Drop no longer selects | Pass 16 reversed a Pass 11 decision here (drop selects → drop just drops; tap still selects). Logged in `DECISIONS.md`'s "Where the brief and prior passes disagree" section. If any later pass's UX assumes drop-selects, it's wrong — check against current behavior, not the old brief. |
 
 ---
 
-## Pass 16 — Performance and interaction (BLOCKING — do first)
+## ✅ Pass 16 — Performance and interaction — DONE
 
-Nothing else in this push should start until this lands. The app currently
-stutters and freezes; every later pass adds load on top of that.
+**Landed at `bd04cba`.** Full detail in `DECISIONS.md`; summary for context on later passes:
 
-1. **Instrument before optimizing.** Add a dev-only frame-time / draw-call readout.
-   "Sluggish" must become a number before and after, or there's no way to know if
-   a fix worked. Record baseline in `DECISIONS.md`.
-2. **Fix pan/zoom stutter and freezing.** Investigate: per-frame allocations in the
-   render loop, label DOM thrash, raycasting every frame, unthrottled pointer handlers.
-3. **Two-finger horizontal pan is far too slow on mobile.** Retune; make sure it's
-   consistent with the pan-sensitivity damping added in Pass 7 rather than fighting it.
-4. **Drag-and-drop is clumsy** — drags frequently fail or open the detail panel instead.
-   Needs a proper gesture discriminator (movement threshold + time threshold before a
-   drag commits; tap only fires if neither exceeded). Note Pass 11 already hit two real
-   bugs here that only surfaced under an actual Playwright drag — test the same way.
-5. **Labels: don't render all of them all the time.** Show on hover/selection/proximity,
-   cap the visible count, and smooth the transitions. Reuse `src/scene/labelGrid.ts`
-   rather than inventing a second system — Pass 8 built that deliberately.
-6. **Kill the jumping blue/red dots.** These lag behind their asset during pan/zoom and
-   then snap back. User considers them unnecessary — remove them (confirm what they were
-   for first; if they encode side, the side-ID ring from Pass 8 already covers it).
-7. **Detail panel z-order:** selected asset's marker currently draws through the open panel.
-8. **Orientation bug:** rotating the map 180° still labels Ukraine left / Russia right in
-   the header. The header labels must follow camera azimuth.
-9. **Restore a distance scale/ruler.** Users can't currently gauge that the X axis is
-   non-linear. This is important — the band compression is a *feature*, but only if it's
-   legible. Consider a banded ruler that visibly shows the compression rather than a
-   linear one that lies.
-
-**Regression guard:** do not undo Pass 8 (label collision, lateral spreading, platform_domain
-grounding, side rings). Verify with `git diff --stat` before committing.
+- Style+layout per pan: **11.07ms → 1.67ms (−85%)**. JS heap after a pan: 33.3MB → 14.0MB
+  (−58%). DOM nodes: 4083 → 1050 (−74%). Root cause was ~90 label buttons being reconciled
+  through React state at 60Hz; labels are now direct DOM writes, layout skips when nothing
+  moved (80–96% of idle frames), occlusion probing capped at 28/layout (was ~500/frame).
+- Gesture discriminator, z-order, camera-azimuth header/legend, distance ruler, jumping
+  dots — all done. Legend.tsx's hardcoded orientation was fixed too (not in the original
+  brief, logged as a deviation).
+- **New performance ceiling identified: 845 draw calls**, of which ~273 are the per-asset
+  marker/ring/fill trio — see the instancing decision above.
+- **Testing pattern established, and it matters for every pass after this one:** a green
+  build passed twice while the feature was fully broken (labels pinned to the corner from
+  an uninitialized-pin NaN comparison; labels invisible until first camera move from a
+  commit-order race). Both were only caught by actually looking at a screenshot. Tests now
+  assert real `getBoundingClientRect()` geometry on first paint, not just class names or
+  counts. **Every remaining pass should verify the same way** — build passing is not
+  evidence, take a screenshot.
+- **Not confirmed fixed:** the border/seam artifact. Pass 16 addressed the *interaction*
+  layer (z-order, jumping dots); if the seam is a terrain-layer rendering artifact rather
+  than an interaction one, it's still open — **first thing to check in Pass 17.**
 
 ---
 
 ## Pass 17 — World and terrain
 
-Depends on: Pass 16. Enables: Pass 18 (assets need terrain features to be placed *into*).
+**Model: Sonnet 5, High effort.**
 
+Depends on: Pass 16 (done). Enables: Pass 18 (assets need terrain features to be placed
+*into*). `data/osm/pokrovsk.json` exists in the repo (115k lines, already committed) but is
+not imported or consumed anywhere in `src/three/` — this pass starts from zero on the
+integration itself, the data is just sitting there ready to use.
+
+0. **First: check whether the border/seam artifact is still present.** Pass 16 fixed the
+   interaction-layer version of several similar-sounding bugs but didn't confirm this one.
+   If it's a terrain rendering seam, it belongs here — item 6 below was already going to
+   touch this area, just make sure it's actually resolved and verified with a screenshot,
+   not assumed fixed because Pass 16 touched something adjacent.
 1. **Integrate `data/osm/pokrovsk.json`** per the metric-inset decision above. Extrude rail
    lines along their `xz` lists; instance tree props along `tree_row` features, respecting
    the `closed` flag (closed ring = wood to fill, open line = windbreak to follow).
-   Read `docs/OSM_PIPELINE.md` first.
+   Read `docs/OSM_PIPELINE.md` first. **Watch the draw-call budget while doing this** —
+   Pass 16 got the ceiling to 845 with real measurement discipline; tree/rail instancing
+   done carelessly here could blow past it. Instance from the start, don't retrofit.
 2. **Add the ODbL credit.** Non-optional.
 3. **Derive procedural dressing patterns** from the OSM data (tree-row spacing and
    orientation, field block size) and apply across the wider map so the whole terrain
@@ -96,15 +97,21 @@ Depends on: Pass 16. Enables: Pass 18 (assets need terrain features to be placed
 5. **Add a bridge** (user request). If the river option above is taken, a *destroyed*
    bridge plus a pontoon crossing tells the story better than an intact one.
 6. **Make the zero line not empty.** Currently: no assets cross, nothing burning, no
-   infantry, and a visible hard seam/border artifact.
+   infantry, and a visible hard seam/border artifact (see item 0).
    - Remove the visible seam — it reads as a rendering bug.
    - Add contested-zone dressing: craters, burnt vehicle hulks, smoke, damaged treelines.
    - Terrain features that later passes can place assets into: forest patches (artillery
      cover), elevated treelines (drone positions), built-up blocks.
 
+**Verification standard (per Pass 16):** don't trust `npm run build`. Screenshot the
+result — seam, water, bridge, dressing should all be visually confirmable, not just
+present in the scene graph.
+
 ---
 
 ## Pass 18 — Tactical asset placement
+
+**Model: Sonnet 5, High effort.**
 
 Depends on: Pass 17. This is the pass that most directly serves "capture the experience
 of war in Ukraine."
@@ -132,48 +139,68 @@ of war in Ukraine."
    artillery firing position, command post, observation post, ammo point.
    Note: `BACKLOG.md` already records infantry and engineering as known category gaps —
    this closes part of that.
+7. **Selection behavior changed in Pass 16** (drop no longer selects; tap does). If any
+   placement/swap UI here assumes the old drop-selects behavior, it's wrong — build against
+   current behavior.
 
 ---
 
 ## Pass 19 — 3D model integration
 
-Depends on: Pass 16 (perf headroom). Source data: `docs/3d-model-sourcing-manifest.xlsx`
+**Model: Sonnet 5, High effort.**
+
+Depends on: Pass 16 (perf headroom — done). Source data: `docs/3d-model-sourcing-manifest.xlsx`
 (72 assets — 47 sourced free, 8 need license verification, 17 have no free source).
 
 1. **License filter first.** Reject game-ripped models outright (real legal exposure for a
    public briefing tool). Log CC-BY attribution obligations. Check NoAI tags.
-2. **Normalization pipeline, applied to every model:**
+2. **Build the per-instance-opacity shader Pass 16 deferred.** `InstancedMesh` has no
+   per-instance opacity out of the box; scenario-focus dimming needs it. This is what turns
+   the marker/ring/fill trio (~273 of the 845 draw calls) into ~3. Do this alongside the
+   material-palette work below — they're the same shader-authoring effort.
+3. **Normalization pipeline, applied to every model:**
    - decimate to a shared triangle budget (suggest ~2–8k for hero units, <500 for
-     background/instanced units — measure against the Pass 16 baseline)
+     background/instanced units — measure against the Pass 16 baseline: 845 draw calls,
+     11.07ms style+layout pre-fix)
    - retexture/recolor to a shared palette so 40 artists' work reads as one family
    - convert to glTF/GLB with Draco compression
    - generate LODs; swap to silhouette/billboard when zoomed out
-3. **Revise `MODEL_STYLE_GUIDE.md`** to define the new target (detailed silhouette,
+4. **Revise `MODEL_STYLE_GUIDE.md`** to define the new target (detailed silhouette,
    shared materials) rather than the current box+cylinder rule. Pass 12's audit method
    — measure, don't eyeball — should be reused.
-4. **Instancing is mandatory** for anything repeated (trees, dragon's teeth, infantry,
-   duplicated FPV teams).
-5. **Hide unmodeled assets whose category is otherwise represented**, still reachable via
+5. **Instancing is mandatory** for anything else repeated (trees, dragon's teeth, infantry,
+   duplicated FPV teams), on top of the marker/ring/fill work above.
+6. **Hide unmodeled assets whose category is otherwise represented**, still reachable via
    the swap mechanism from Pass 18.
    - **Watch out:** all five Russian UGVs have no free source model. Hiding them all
      leaves that category unrepresented on the Russian side. At least one needs a paid
      purchase or a custom low-poly model.
-6. **Still-missing fortification geometry:** trenches, dragon's teeth, sandbag positions.
+7. **Still-missing fortification geometry:** trenches, dragon's teeth, sandbag positions.
    These are procedural (spline + instancing), not sourced — highest realism-per-effort
    item on the whole list, and they define what a Ukrainian front line looks like.
+
+**Verify with real numbers, per Pass 16's standard:** measure draw calls before/after the
+instancing work lands, the same way Pass 16 measured style+layout time. A claim of "845 →
+X draw calls" needs the same rigor as "11.07ms → 1.67ms" did.
 
 ---
 
 ## Pass 20 — Detail page, imagery, symbology
 
-1. **Imagery — every asset needs 1–2 pictures.** This is a research workstream, not a code
-   one, and it can start in parallel with earlier passes.
-   - **Licensing is the hard part.** Most military photography is copyrighted. Safe sources:
-     Wikimedia Commons (check per-file license), Ukrainian MoD releases (often CC BY 4.0),
-     US DoD imagery (public domain). Track license + attribution per image the same way
-     asset citations are tracked.
-   - Do **not** bulk-scrape image search results — that's the one shortcut that would
-     undermine the project's sourcing standard.
+**Model: Sonnet 5, Medium effort.**
+
+**Imagery research is already done — use it, don't redo it.** `imagery-sourcing-ledger.xlsx`
+covers all 89 assets: 65 confirmed Wikimedia Commons sources with verified licenses, 13
+confirmed to have no free source (use a placeholder/generic silhouette for these), 8
+conceptual entries flagged for representative (not unit-specific) imagery, 2
+casualty-related entries flagged sensitive (non-graphic representative image or leave
+blank), and 1 (MANTAS T-12) worth a quick DVIDS check to close out. Import directly from
+the ledger rather than re-searching.
+
+1. **Wire up imagery from the ledger.** Track license + attribution per image the same way
+   asset citations are tracked. Do **not** bulk-scrape image search results for anything
+   not already in the ledger — that's the one shortcut that would undermine the project's
+   sourcing standard.
 2. **Rework detail page layout.** Goal per user: understand *how it looks*, *key data*,
    *how and where it's used in this war*, and *how its role changed*.
    - Picture directly under the asset name.
@@ -187,6 +214,8 @@ Depends on: Pass 16 (perf headroom). Source data: `docs/3d-model-sourcing-manife
 
 ## Pass 21 — Scenario rework (Key Lessons)
 
+**Model: Sonnet 5, Medium effort.**
+
 Scenarios currently pull in assets that don't serve the lesson. Example given: "The kill
 chain collapsed from hours to minutes" includes a Leleka, HIMARS, a howitzer (all Ukrainian)
 *and* a Russian Lancet — the Lancet doesn't illustrate that lesson and muddies it.
@@ -197,18 +226,23 @@ chain collapsed from hours to minutes" includes a Leleka, HIMARS, a howitzer (al
    opposing asset's role explicit in the narration rather than leaving it as an unexplained
    extra marker.
 3. Scenario focus mode itself works (fixed in Pass 11) — this is a *content* pass, not a
-   mechanism pass.
+   mechanism pass. Note scenario-focus dimming is what's driving the instancing work in
+   Pass 19 — if that hasn't landed yet, dimming behavior on instanced markers may look
+   different than before; check it still reads correctly.
 
 ---
 
 ## Cross-cutting gaps worth fixing
 
-- **No test suite exists.** Every pass so far validated via `npm run build` + a Playwright
-  smoke pass. With the surface area growing this fast, at minimum add regression tests for
-  the Pass 8 invariants (grounding, label collision, lateral spread) — those are the things
-  repeatedly at risk.
-- **No performance budget.** Pass 16 establishes the measurement; it should become a
-  standing check in every later pass, not a one-off.
+- **Test suite: partially addressed by Pass 16.** It established the right pattern (assert
+  real `getBoundingClientRect()` geometry, screenshot before declaring done) after two bugs
+  slipped past class-name/count assertions twice. Every remaining pass should follow that
+  pattern, not just Pass 16. Still worth formalizing as a standing regression suite for the
+  Pass 8 invariants (grounding, label collision, lateral spread) rather than re-proving them
+  ad hoc each time.
+- **Performance budget: established by Pass 16.** Baseline is now real: 845 draw calls,
+  1.67ms style+layout per pan, 14.0MB heap. Every later pass touching `src/three/` should
+  measure against this, the same way Pass 16 did — not just "feels smoother."
 - **Cloudflare Worker still undeployed** (code exists since Pass 7, needs a human with an
   account). Blocks shared editing. Decide whether it matters for this push or stays parked.
 - **`scenery.ts` material cleanup** — 19 ungoverned one-off materials flagged in Pass 12,
@@ -220,13 +254,16 @@ chain collapsed from hours to minutes" includes a Leleka, HIMARS, a howitzer (al
 ## Suggested sequencing
 
 ```
-16. Perf + interaction        ← blocking, do first
-17. World + terrain           ← needs 16; enables 18
-18. Tactical placement        ← needs 17
-19. Model integration         ← needs 16 for headroom
-20. Detail page + imagery     ← imagery research can start in parallel any time
-21. Scenario rework           ← content only, can slot anywhere after 16
+16. Perf + interaction        ← DONE (bd04cba)             (Opus 4.8, High)
+17. World + terrain           ← needs 16 (done); enables 18 (Sonnet 5, High)
+18. Tactical placement        ← needs 17                    (Sonnet 5, High)
+19. Model integration         ← needs 16 for headroom       (Sonnet 5, High)
+20. Detail page + imagery     ← imagery already sourced      (Sonnet 5, Medium)
+21. Scenario rework           ← content only, after 16       (Sonnet 5, Medium)
 ```
 
-Passes 16–18 are the critical path. 19 can run alongside 18 if you want two threads.
-20's research half has no dependencies at all — start collecting licensed imagery now.
+Passes 17–18 are the critical path now. 19 can run alongside 18 if you want two threads.
+20 has no remaining research dependency — the ledger is done.
+
+**Paste-in order:** Pass 17 next. **After each pass:** screenshot-verify per Pass 16's
+standard before moving on — a green build is not evidence.
