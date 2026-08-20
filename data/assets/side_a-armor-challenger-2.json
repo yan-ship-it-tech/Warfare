@@ -25,6 +25,12 @@
   "representative_system": "Challenger 2 — Main battle tank",
   "icon_image": "/icons/challenger-2.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Ukrainian_personnel_standing_atop_a_Challenger_2_tank.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Ukrainian_personnel_standing_atop_a_Challenger_2_tank.jpg",
+    "license": "UK OGL v1.0 (attribution required)",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 6500000,
     "display": "Donated (UK MoD did not publish a unit price; broadly estimated $5-8M class)",

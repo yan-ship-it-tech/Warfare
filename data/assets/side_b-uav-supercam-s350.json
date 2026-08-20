@@ -25,6 +25,12 @@
   "representative_system": "Supercam S350 — Reconnaissance UAV",
   "icon_image": "/icons/supercam-s350.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Supercam_S350.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Supercam_S350.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 145000,
     "display": "~$145,000 (per user-supplied catalog)",

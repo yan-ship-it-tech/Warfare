@@ -35,6 +35,12 @@
   "gallery_images": [
     "https://commons.wikimedia.org/wiki/Special:FilePath/UAV_Orlan-10.JPG"
   ],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/UAV_Orlan-10.JPG",
+    "source_url": "https://commons.wikimedia.org/wiki/File:UAV_Orlan-10.JPG",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 100000,
     "display": "~$87–120K per aircraft (open-source estimate); a full system — 2 aircraft plus ground control station — runs closer to $150K",

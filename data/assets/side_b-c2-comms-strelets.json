@@ -29,6 +29,12 @@
   "representative_system": "Sozvezdie-M2 'Strelets' automated reconnaissance and fire-control terminal",
   "icon_image": "/icons/strelets-terminal.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Strelets_Recce.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Strelets_Recce.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Not publicly disclosed — a soldier-portable terminal, not a major platform, so pricing is not broken out in open reporting",

@@ -8,13 +8,18 @@
 // For a pending stub it explains why the node exists, which parts of its
 // position were inferred rather than authored, and hands over a ready-made
 // JSON skeleton so building the real asset is a copy-paste away.
-import { useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useMemo, useRef, useState } from "react";
 import type { Asset } from "../types";
 import type { PendingStub, ResolvedConnection, WorldModel } from "../data/model";
 import { resolveBand } from "../data/model";
 import { CONNECTION_STYLE, DOMAIN_ACCENT, SIDE_ACCENT, SIDE_LABELS } from "../config/ui";
-import { resolveIcon } from "../icons/registry";
 import { resolveVignette } from "../scene/vignettes";
+import { resolveSidc, resolveStubSidc } from "../symbology/sidc";
+// milsymbol.js itself is ~750 kB uncompressed (see MilSymbol.tsx's own header
+// comment) — code-split it, same convention Pass 6 used for the 3D engine, so
+// it's fetched only once a detail panel actually renders, never on first
+// paint. sidc.ts (small, pure data/string logic) stays a normal import.
+const MilSymbol = lazy(() => import("../symbology/MilSymbol"));
 import { useViewState } from "../state/viewState";
 import { useOverrides, type CustomMedia } from "../state/overridesState";
 import { catalogSiblings, findCatalogEntry, resolveAssetDisplay } from "../data/catalog";
@@ -158,7 +163,12 @@ function AssetDetail({
   edges: { out: ResolvedConnection[]; in: ResolvedConnection[] };
   onReplay: () => void;
 }) {
-  const Icon = resolveIcon({ group: asset.group, category: asset.category, id: asset.id, domain: asset.domain });
+  const { sidc, meaning } = resolveSidc({
+    side: asset.side,
+    group: asset.group,
+    category: asset.category,
+    domain: asset.domain,
+  });
   const group = world.groupsById.get(asset.group);
   const band = resolveBand(asset.distance_km_from_zero, world.bands);
   const domain = world.domains.find((d) => d.id === asset.domain);
@@ -201,8 +211,10 @@ function AssetDetail({
   return (
     <div className="detail__body">
       <header className="detail__header" style={{ ["--accent" as string]: accent }}>
-        <div className="detail__icon" style={{ color: accent }}>
-          <Icon />
+        <div className="detail__icon">
+          <Suspense fallback={null}>
+            <MilSymbol sidc={sidc} meaning={meaning} />
+          </Suspense>
         </div>
         <div>
           <p className="detail__eyebrow">
@@ -232,6 +244,8 @@ function AssetDetail({
           ⧉ Duplicate
         </button>
       </header>
+
+      <HeroImage image={asset.image} sidc={sidc} meaning={meaning} />
 
       <SwapPicker asset={asset} />
       <RosterSwapPicker asset={asset} world={world} />
@@ -437,6 +451,56 @@ function AssetDetail({
           </p>
         )}
       </section>
+    </div>
+  );
+}
+
+/**
+ * The detail page's hero photo — "picture directly under the asset name"
+ * (Pass 20). Driven by `asset.image`, sourced from
+ * docs/imagery-sourcing-ledger.xlsx (see types.ts's doc comment on the
+ * field for the full provenance story). A real photo (`kind: "photo"`)
+ * renders with its license and a link back to the Commons file page for
+ * full attribution — the same "always show sourcing" standard `sources`
+ * gets elsewhere in this panel. Anything else (`conceptual`/`placeholder`,
+ * or a photo whose URL 404s — Commons files do get renamed/deleted) falls
+ * back to the asset's own MIL-STD-2525 symbol at a larger size, with a
+ * caption explaining why there's no photo, rather than a blank gap.
+ */
+function HeroImage({ image, sidc, meaning }: { image: Asset["image"]; sidc: string; meaning: string }) {
+  const [failed, setFailed] = useState(false);
+  const showPhoto = image?.kind === "photo" && image.url && !failed;
+
+  if (showPhoto) {
+    return (
+      <figure className="hero-image">
+        <img className="hero-image__photo" src={image.url!} alt="" onError={() => setFailed(true)} loading="lazy" />
+        <figcaption className="hero-image__caption">
+          <span>{image.license}</span>
+          {image.source_url && (
+            <a href={image.source_url} target="_blank" rel="noreferrer noopener">
+              Wikimedia Commons ↗
+            </a>
+          )}
+        </figcaption>
+      </figure>
+    );
+  }
+
+  const caption =
+    image?.caption ??
+    (failed
+      ? "The sourced photo could not be loaded — showing this system's category symbol instead."
+      : "No photograph on file for this asset yet.");
+
+  return (
+    <div className="hero-image hero-image--empty">
+      <span className="mil-symbol">
+        <Suspense fallback={null}>
+          <MilSymbol sidc={sidc} meaning={meaning} size={90} />
+        </Suspense>
+      </span>
+      <p>{caption}</p>
     </div>
   );
 }
@@ -1035,7 +1099,7 @@ function StubDetail({
   edges: { out: ResolvedConnection[]; in: ResolvedConnection[] };
 }) {
   const [copied, setCopied] = useState(false);
-  const Icon = resolveIcon({ id: stub.id, domain: stub.domain });
+  const { sidc, meaning } = resolveStubSidc({ side: stub.side, domain: stub.domain });
   const accent = DOMAIN_ACCENT[stub.domain] ?? "#8b93a3";
   const band = resolveBand(stub.distance_km_from_zero, world.bands);
 
@@ -1085,8 +1149,10 @@ function StubDetail({
   return (
     <div className="detail__body">
       <header className="detail__header detail__header--stub" style={{ ["--accent" as string]: accent }}>
-        <div className="detail__icon detail__icon--stub" style={{ color: accent }}>
-          <Icon />
+        <div className="detail__icon detail__icon--stub">
+          <Suspense fallback={null}>
+            <MilSymbol sidc={sidc} meaning={meaning} />
+          </Suspense>
         </div>
         <div>
           <p className="detail__eyebrow">

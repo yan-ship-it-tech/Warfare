@@ -29,6 +29,12 @@
   "representative_system": "AN-196 Lyutyy — One-way attack drone (large, deep strike)",
   "icon_image": "/icons/an-196-lyutyy.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Antonov_An-196_Liutyi_in_Kouvola.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Antonov_An-196_Liutyi_in_Kouvola.jpg",
+    "license": "Public domain",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Not publicly disclosed; light-aircraft-like construction suggests higher unit cost than smaller types",

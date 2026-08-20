@@ -29,6 +29,13 @@
   "representative_system": "Forward casualty collection point (point-of-injury care) — composite, not a specific unit",
   "icon_image": "/icons/medical-point.png",
   "gallery_images": [],
+  "image": {
+    "url": null,
+    "source_url": null,
+    "license": "n/a",
+    "kind": "conceptual",
+    "caption": "Casualty/CASEVAC-adjacent subject — deliberately left without imagery rather than risk a graphic or misleading representative photo."
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Not a procurement item — a staffed position, not equipment",

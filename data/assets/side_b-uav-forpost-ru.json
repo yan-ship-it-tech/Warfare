@@ -29,6 +29,12 @@
   "representative_system": "Forpost-RU — Strike-reconnaissance UAV (Israeli-derived, license-built)",
   "icon_image": "/icons/forpost-ru.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Forpost_UAV_InnovationDay2013part2-02.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Forpost_UAV_InnovationDay2013part2-02.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 3500000,
     "display": "$3,500,000 (per user-supplied catalog)",

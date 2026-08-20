@@ -36,6 +36,12 @@
   "gallery_images": [
     "https://commons.wikimedia.org/wiki/Special:FilePath/MIM-104_Patriot.JPG"
   ],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Patriot_PAC-3_MSE_SIAF-2022.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Patriot_PAC-3_MSE_SIAF-2022.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 4000000,
     "display": "~$4M per PAC-3 MSE interceptor round (reported range $3.9–5.3M); a full battery (radar, control station, launchers) runs roughly $1.1B",

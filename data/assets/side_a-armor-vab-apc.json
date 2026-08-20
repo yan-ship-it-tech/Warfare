@@ -25,6 +25,12 @@
   "representative_system": "VAB APC — Wheeled armored personnel carrier",
   "icon_image": "/icons/vab-apc.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/VAB_near_Pokrovsk_155th_brigade.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:VAB_near_Pokrovsk_155th_brigade.jpg",
+    "license": "CC BY 4.0",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Donated (no unit price disclosed)",

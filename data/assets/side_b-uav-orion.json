@@ -29,6 +29,12 @@
   "representative_system": "Orion — Medium-altitude long-endurance UAV",
   "icon_image": "/icons/orion.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Orion_UAV_Army-2022_2022-08-20_2417.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Orion_UAV_Army-2022_2022-08-20_2417.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 1500000,
     "display": "$1,500,000 (per user-supplied catalog)",

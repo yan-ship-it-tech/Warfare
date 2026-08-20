@@ -31,6 +31,12 @@
   "gallery_images": [
     "https://commons.wikimedia.org/wiki/Special:FilePath/1_multiple_rocket_launcher_BM-21_Grad.JPG"
   ],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/1_multiple_rocket_launcher_BM-21_Grad.JPG",
+    "source_url": "https://commons.wikimedia.org/wiki/File:1_multiple_rocket_launcher_BM-21_Grad.JPG",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 750000,
     "display": "~$500K–1M per launcher vehicle (open-source estimate, wide range reflects Soviet-stock reactivation vs. newer-build pricing); each 122mm rocket costs roughly $3,000",

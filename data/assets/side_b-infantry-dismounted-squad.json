@@ -26,6 +26,13 @@
   "representative_system": "Generic mechanized/motorized rifle squad — composite, not a named unit",
   "icon_image": "/icons/infantry-squad.png",
   "gallery_images": [],
+  "image": {
+    "url": null,
+    "source_url": null,
+    "license": "n/a",
+    "kind": "conceptual",
+    "caption": "Represents a generic dismounted infantry formation, not a single sourced physical system — shown as its map symbol rather than a specific unit's photo."
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Not a procurement line item — represents personnel, not equipment",

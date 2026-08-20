@@ -25,6 +25,12 @@
   "representative_system": "T-64BV / T-64BM Bulat — Main battle tank (Soviet-legacy, Ukrainian-upgraded)",
   "icon_image": "/icons/t-64bv-t-64bm-bulat.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/UA_T-64BV_mod_2022_02.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:UA_T-64BV_mod_2022_02.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Legacy Soviet stock, not purchased; Bulat upgrade program cost not publicly itemized per unit",

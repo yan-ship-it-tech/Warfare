@@ -149,7 +149,31 @@ cheap to bring back into line once the 3D view settles. Do not spend pass budget
 
 ---
 
-## Pass 20 — Detail page, imagery, symbology
+## ✅ Pass 20 — Detail page, imagery, symbology — DONE
+
+**Ran out of order** (17/18/19 hadn't landed yet — this pass had no
+dependency on them and was explicitly requested next). Full writeup in
+`docs/DECISIONS.md`. Summary for later passes:
+
+- All 3 items shipped: 64/66 GREEN+AMBER assets now carry a real, spot-
+  checked Commons photo with license/attribution (`Asset.image`, additive);
+  the picture sits directly under the asset name; the key-facts grid's
+  permanently-empty 4th cell (3 facts in a 2-column grid) is fixed; every
+  asset's detail-panel symbol is now a real MIL-STD-2525C SIDC via
+  milsymbol.js, lazy-loaded so it doesn't touch the main bundle.
+- **Scope boundary, worth knowing before extending it:** the symbol swap is
+  detail-panel only. The map markers (`src/three/`, `src/scene/AssetNode.tsx`)
+  and `AssetLibraryPage`'s list icons still use the old hand-drawn
+  `resolveIcon()` set — swapping those is a real integration project (Pass
+  16's "never touch React state per frame" constraint applies), not a
+  follow-on line item. Logged in `docs/BACKLOG.md`.
+- 2 assets (`side_b-naval-admiral-grigorovich`, `side_b-uav-kub-1`) couldn't
+  be pinned to one specific still image even though the ledger lists them
+  GREEN — left on the honest placeholder treatment rather than guessed.
+
+---
+
+## Pass 20 (original brief, for reference)
 
 **Model: Sonnet 5, Medium effort.**
 
@@ -223,15 +247,19 @@ chain collapsed from hours to minutes" includes a Leleka, HIMARS, a howitzer (al
 16. Perf + interaction        ← DONE (bd04cba)             (Opus 4.8, High)
 17. World + terrain           ← DONE (8d0afe0)              (Sonnet 5, High)
 18. Tactical placement        ← DONE (4aed067)              (Sonnet 5, High)
-19. Model integration         ← DONE (this pass)            (Sonnet 5, High)
-20. Detail page + imagery     ← imagery already sourced      (Sonnet 5, Medium)
+19. Model integration         ← DONE (e3dc40a)              (Sonnet 5, High)
+20. Detail page + imagery     ← DONE, ran out of order — merged after 17-19  (Sonnet 5, Medium)
 21. Scenario rework           ← content only, after 16       (Sonnet 5, Medium)
 ```
 
-20 is next. Its draw-call ceiling to measure against is now **767** (Pass 19's number). No
-scenario-focus-dimming risk to re-check against instancing this time — Pass 19's shader already
-handles per-instance opacity for the marker/ring/fill trio, so Pass 21's own note about that stays
-resolved. 20 has no remaining research dependency — the ledger is done.
+20 ran out of the suggested order (its own branch diverged before 17/18/19 landed — no
+remaining research dependency, the imagery ledger was already done). Reconciled and
+merged into the deploy branch after the fact; see `DECISIONS.md`'s Pass 20 section and
+the merge note appended there for what that reconciliation covered, including the 14
+Pass 18 positional assets (dismounted squad, dugout, observation post, command post,
+casualty point, ammo point, artillery firing position — ×2 sides) that didn't exist yet
+when Pass 20's branch was cut and so needed the same image-fallback/SIDC treatment
+applied after the merge, not during Pass 20 itself.
 
-**Paste-in order:** Pass 20 next. **After each pass:** screenshot-verify per Pass 16's
+**Paste-in order:** Pass 21 next. **After each pass:** screenshot-verify per Pass 16's
 standard before moving on — a green build is not evidence.

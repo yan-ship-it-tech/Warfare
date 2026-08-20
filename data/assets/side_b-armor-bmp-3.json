@@ -25,6 +25,12 @@
   "representative_system": "BMP-3 — Infantry fighting vehicle",
   "icon_image": "/icons/bmp-3.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/BMP-3_with_B05Ya01_Berezhok_10.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:BMP-3_with_B05Ya01_Berezhok_10.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Legacy/continuing production, 2,000+ built - no clean current unit price",

@@ -25,6 +25,12 @@
   "representative_system": "BMP-2 — Infantry fighting vehicle",
   "icon_image": "/icons/bmp-2.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/BMP-2_NVA.JPG",
+    "source_url": "https://commons.wikimedia.org/wiki/File:BMP-2_NVA.JPG",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Legacy Soviet stock, 20,000+ built historically - no current market price",

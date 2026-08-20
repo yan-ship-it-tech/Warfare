@@ -31,6 +31,13 @@
   "gallery_images": [
     "https://commons.wikimedia.org/wiki/Special:FilePath/Russian_cruiser_Moskva.jpg"
   ],
+  "image": {
+    "url": null,
+    "source_url": null,
+    "license": "n/a",
+    "kind": "conceptual",
+    "caption": "Represents a category or network, not a single physical system — shown as its map symbol rather than a specific unit's photo."
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "A fleet presence, not a single procured unit — individual frigates of this class run in the hundreds of millions of dollars each",

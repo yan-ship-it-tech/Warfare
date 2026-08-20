@@ -22,6 +22,13 @@
   "representative_system": "Manned observation post — composite, not a specific site",
   "icon_image": "/icons/observation-post.png",
   "gallery_images": [],
+  "image": {
+    "url": null,
+    "source_url": null,
+    "license": "n/a",
+    "kind": "conceptual",
+    "caption": "Represents a generic observation post, not a single sourced physical system — shown as its map symbol rather than a specific photo."
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Not a procurement item — a staffed position, not equipment",

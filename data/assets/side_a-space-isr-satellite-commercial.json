@@ -29,6 +29,13 @@
   "representative_system": "Composite: ICEYE SAR constellation + Maxar/Planet/BlackSky optical imagery",
   "icon_image": "/icons/isr-satellite.png",
   "gallery_images": [],
+  "image": {
+    "url": null,
+    "source_url": null,
+    "license": "n/a",
+    "kind": "conceptual",
+    "caption": "Represents a category or network, not a single physical system — shown as its map symbol rather than a specific unit's photo."
+  },
   "cost": {
     "unit_cost_usd": 17000000,
     "display": "~$17M crowdfunded to buy Ukraine dedicated access to an ICEYE satellite; commercial tasking/subscription access runs separately (the US alone pays Maxar ~$300M/year for archive + tasking access)",

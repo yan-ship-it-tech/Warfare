@@ -26,6 +26,12 @@
   "representative_system": "S-400 'Triumf' — Long-range SAM / ABM",
   "icon_image": "/icons/s-400-triumf.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/51P6_launcher_S-400_Triumf_Army-2022_2022-08-20_2416.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:51P6_launcher_S-400_Triumf_Army-2022_2022-08-20_2416.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 500000000,
     "display": "~$500M domestic / $1-1.25B export per battery incl. reserve missiles (2021 figures)",

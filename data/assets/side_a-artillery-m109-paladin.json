@@ -25,6 +25,12 @@
   "representative_system": "M109 Paladin — Self-propelled artillery (tracked)",
   "icon_image": "/icons/m109-paladin.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/UA_72nd_bde_M109A3GN_01.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:UA_72nd_bde_M109A3GN_01.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Donated (no unit price disclosed)",

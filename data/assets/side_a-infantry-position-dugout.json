@@ -26,6 +26,13 @@
   "representative_system": "Dug-in fighting position with overhead cover — composite, not a specific site",
   "icon_image": "/icons/dugout.png",
   "gallery_images": [],
+  "image": {
+    "url": null,
+    "source_url": null,
+    "license": "n/a",
+    "kind": "conceptual",
+    "caption": "Represents a generic field fighting position, not a single sourced physical system — shown as its map symbol rather than a specific photo."
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Not a procurement item — field-engineered with hand tools/excavators and local materials",

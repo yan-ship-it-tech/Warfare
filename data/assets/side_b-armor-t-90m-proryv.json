@@ -25,6 +25,12 @@
   "representative_system": "T-90M 'Proryv' — Main battle tank",
   "icon_image": "/icons/t-90m-proryv.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/T-90M.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:T-90M.jpg",
+    "license": "CC BY 4.0",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 4500000,
     "display": "~$4.5M per unit (destroyed-unit valuation reported by Euromaidan Press)",

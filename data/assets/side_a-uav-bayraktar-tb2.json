@@ -25,6 +25,12 @@
   "representative_system": "Bayraktar TB2 — Medium-altitude strike/reconnaissance UAV",
   "icon_image": "/icons/bayraktar-tb2.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Bayraktar_TB2_of_UAF%2C_2019%2C_02.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Bayraktar_TB2_of_UAF%2C_2019%2C_02.jpg",
+    "license": "CC BY 4.0",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 1500000,
     "display": "~$1-2M per system component (widely cited estimate, not officially disclosed)",

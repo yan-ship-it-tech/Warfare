@@ -3266,3 +3266,343 @@ preview`:
   errors across every headless pass this pass ran, which is real evidence, not an assumption.
 - **Zero page errors** across every run except one benign, pre-existing 404 (a new asset's
   placeholder `icon_image` path — never read for the map glyph, unchanged convention since Pass 5).
+
+---
+
+# Pass 20 — detail page, imagery, symbology
+
+Run out of `PLANNING.md`'s suggested order (17/18/19 — world/terrain, tactical
+placement, model integration — have not landed yet). `PLANNING.md` itself
+flags Pass 20 as having "no remaining research dependency," and this pass's
+own brief explicitly named it as the next one to run, so it proceeded rather
+than blocking on unrelated 3D-view work. Nothing here touches `src/three/`.
+
+`docs/imagery-sourcing-ledger.xlsx` was confirmed present before anything
+else, per the brief's stop-first instruction — 89 rows, `Imagery Sourcing` +
+`Summary` sheets, matching the numbers the brief quoted (65 GREEN, 13 RED, 8
+CONCEPTUAL, 2 CONCEPTUAL-SENSITIVE, 1 AMBER).
+
+## 1. Wiring imagery from the ledger
+
+**The real constraint, re-confirmed rather than assumed.** CLAUDE.md already
+says this environment's egress proxy blocks binary fetches; this pass found
+that it now also blocks `commons.wikimedia.org` at the `WebFetch`/`curl`
+level entirely (`gateway answered 403 to CONNECT`) — not just image bytes,
+page *text* too. `WebSearch` is a separate path (a search index, not a fetch
+to the host) and still works, which matches exactly how Pass 4 originally
+solved this: a search result naming a real filename is text, not a binary
+transfer, and the URL built from it is only ever resolved by the *visitor's*
+browser once deployed, never by this session. That's the mechanism this pass
+used throughout — nothing new, just re-verified against the current proxy
+state before relying on it.
+
+**What "wire up imagery" actually required, beyond copying the ledger's own
+columns.** The ledger records confirmed *categories* for most GREEN rows
+(`Category:T-80BVM`, `Category:2S19_Msta-S_in_Russian_service`, ...), not
+individual files — a category isn't a renderable image, so the app needs one
+specific file per asset. Resolving 50 categories to a specific filename via
+one targeted `WebSearch` each (never inventing a name — only a filename that
+literally appeared in a search result) is a continuation of the ledger's own
+already-verified sourcing, not the "bulk-scrape image search for anything not
+already in the ledger" the brief warned against: every category resolved
+against was already a real, ledger-confirmed source for that asset. This was
+fanned out to 5 parallel agents (10 categories each, Haiku — cheap, bounded,
+mechanical lookups) plus one for the AMBER row's DVIDS check the brief
+specifically asked for. 48/50 resolved; the other 2 fall back to the
+placeholder treatment rather than guess (see below).
+
+**Spot-checked, not blindly trusted.** Per this repo's own standard (Pass
+7's self-caught generation bugs, `CONTENT_PIPELINE.md`'s two-pass rule), a
+sample of the agents' resolutions were re-verified directly: MANTAS T-12's
+AMBER→GREEN upgrade (`File:MANTAS_T12.png` — real), the Shahed-136/Geran-2
+DIA drawing, the Punisher drone file, and the Varan UGV file all checked out
+exactly as reported. One did not: the agent-found 2S19 Msta-S file was
+titled *"Ukrainian* 2S19 Msta-S..." for a *side_b* (Russia) asset — plausible
+(2S19 is Soviet-legacy and fielded by both sides; Commons does credit
+captured-equipment photos this way) but a real risk of implying the wrong
+side, so it was swapped by hand for an unambiguous file
+(`File:2S19_Msta-S_(28051832178).jpg`) found via the same re-check. One
+resolved match (`side_b-uav-kub-1`) was a `.webm` video, not a still image —
+discarded rather than treated as a photo, since the detail page's hero slot
+is a picture. `side_b-naval-admiral-grigorovich` (GREEN in the ledger, at the
+category level) could not be pinned to one specific file even after a direct
+re-check — left as a placeholder rather than guessed. **64 of 66
+GREEN/AMBER-upgraded assets ended up with a real, checked photo; 2 fall back
+honestly.**
+
+**License/attribution tracking.** `Asset.image` (new, optional field —
+additive, see `types.ts`'s doc comment) carries `url` (a stable
+`Special:FilePath` resolution — same mechanism and same "the visitor's
+browser fetches it, this session never does" reasoning as Pass 4's original
+real-photo decision), `source_url` (the Commons file page itself, for full
+license/author detail this app doesn't try to duplicate), `license` (parsed
+from the ledger's own notes where stated — e.g. "CC BY-SA 4.0", "Public
+domain (US DoD)" — else an honest "See Commons file page for license"
+rather than a guessed tag), and `kind` (`photo` / `conceptual` /
+`placeholder`, decided from the ledger's own status column). This is the
+same "always show sourcing, including its absence" standard `sources`
+already gets — `validate.ts` now flags a `kind: "photo"` entry missing a
+url or license the same info/warning way a missing citation already does.
+
+**The 13 RED, 8 CONCEPTUAL, 2 CONCEPTUAL-SENSITIVE rows** — per the ledger's
+own categorization, none of which named a specific source to import. The
+brief's "do not invent placeholder image data to fill the gap" is read
+strictly: no new photo search was run for these (the ledger not naming a
+source for them is itself the research finding, not a gap to fill in this
+pass), and no synthetic "photo" was fabricated. Instead every one of them
+falls back to the same treatment — this asset's own MIL-STD-2525 symbol
+(§3) shown large, with a caption stating plainly why there's no photo
+("no open-licensed photograph found," "represents a category, not a single
+system," or, for the 2 sensitive rows, "deliberately left without imagery
+rather than risk a graphic or misleading representative photo" — the safer
+of the ledger's own two sanctioned options for those, since no non-graphic
+image had already been sourced for them either). One migration script
+(`apply_images.mjs`, run once, not checked in) wrote all 89 records in one
+pass so every asset's treatment is traceable to the same logic rather than
+89 hand edits.
+
+## 2. Detail page rework
+
+**Picture directly under the asset name.** New `HeroImage` component,
+inserted right after the header block (name/eyebrow/category), before the
+key-facts grid — literally the first thing under the name. Renders the
+sourced photo with its license and a link to the Commons file page when
+`asset.image.kind === "photo"` and the `<img>` doesn't 404; falls back to
+the enlarged MIL-STD-2525 symbol + explanatory caption otherwise, including
+when a previously-good Commons URL breaks (files do get renamed/deleted)
+— the same graceful-degradation contract `GalleryTile` already had for the
+gallery, extended to the new hero slot.
+
+**The persistently empty key-characteristics field — root cause found, not
+guessed at.** Screenshotting the *live* app before touching anything (per
+`PLANNING.md`'s own standing instruction: a code read is not evidence)
+showed the bug immediately: the "key facts" tile row
+(`.key-facts`, cost tile + 3 per-asset facts) is a 2-column CSS grid. The
+cost tile spans both columns via `grid-column: 1 / -1`; the 3 fact tiles
+then fill row 2 col 1, row 2 col 2, row 3 col 1 — leaving row 3 col 2
+**structurally, permanently empty**, on *every* asset, because 3 doesn't
+divide evenly into 2. Every one of the 89 shipped assets carries exactly 3
+`key_facts` (checked directly, not assumed) — the schema's own "exactly 3
+... for cross-asset comparability" convention — so this wasn't a data
+problem or a per-asset content gap at all, just a grid arithmetic mismatch
+against a convention the CSS predated. Fix: `.key-facts` is now a 3-column
+grid, so 3 facts fill the row exactly. One line, screenshot-confirmed on
+both the Hero and Icon-tier test assets (§4) — no dangling cell in either.
+(The *bulleted* "Key characteristics" list below it — a different section,
+same name-ish — was never actually empty; every asset has real bullets
+there. The brief's wording pointed at the visual symptom, which turned out
+to live in the tile grid above it, not the list.)
+
+**"What changed vs. traditional warfare" is untouched** — same component,
+same position in the flow, same content — per the brief's explicit "keep
+as-is." The only reordering this pass made was inserting the picture at the
+top; everything from the key-facts grid down kept its existing order.
+
+## 3. NATO/APP-6 (MIL-STD-2525) symbology via milsymbol.js
+
+Replaces the hand-drawn glyph (`src/icons/registry.tsx`'s `resolveIcon()`)
+**in the detail panel only** — both the small header badge and the enlarged
+hero-image fallback. `resolveIcon()` itself is untouched and still drives
+every other consumer (the 3D/2D map markers, `AssetLibraryPage`'s list
+icons) — see "where the brief and prior passes disagreed" below for why
+that boundary was drawn where it was.
+
+`src/symbology/sidc.ts` builds a real 15-character MIL-STD-2525C SIDC per
+asset: scheme + affiliation (`Friend`/`Hostile`, from `side` — config-layer
+only, same pattern `SIDE_ACCENT` already uses, the data layer still only
+ever knows `side_a`/`side_b`) + battle dimension + status (`Present`,
+always — every asset here is a real fielded system) + a 6-character
+function ID. Every function ID is copied verbatim from milsymbol's own
+2525C ground/air/sea/subsurface/space/installation tables
+(`node_modules/milsymbol/src/lettersidc/sidc/*.js`) — resolved per
+`category` first (precise: SAM range tier, tank vs. IFV vs. APC, frigate vs.
+submarine vs. USV, ...), falling back to `group` then `domain`, mirroring
+`resolveIcon()`'s own fallback chain. Where 2525C genuinely has no matching
+symbol — it predates common unmanned-ground-vehicle categorization — the
+closest real functional equivalent is used and called out inline in the
+code (a mine-clearing UGV gets "Mine clearing equipment," a logistics UGV
+gets "Utility vehicle"), never an invented code.
+
+`src/symbology/MilSymbol.tsx` renders the SIDC via milsymbol's `asSVG()`.
+`milsymbol.js` is MIT-licensed as the brief specified — verified directly
+(`npm view milsymbol license` → `MIT`), not assumed.
+
+## Where the brief and prior passes disagreed
+
+- **The symbol swap is scoped to the detail panel, not "everywhere the old
+  icon set appears."** The brief named one thing: "the top-left symbol" on
+  the detail page. `AssetLibraryPage`'s list icons and both map renderers
+  (`src/scene/AssetNode.tsx`, `src/three/`) still use `resolveIcon()`.
+  Extending the swap to the map markers is a materially bigger job — Pass
+  16's explicit warning that the 3D render loop must never touch React
+  state per frame, and that per-frame DOM writes are the entire performance
+  budget, makes swapping ~89 WebGL/DOM markers to server-rendered SVG a
+  real integration project, not a drop-in — and it's out of scope for a
+  Medium-effort pass that didn't ask for it. Left for a future pass;
+  logged in `docs/BACKLOG.md`.
+- **milsymbol is lazy-loaded, not statically imported.** Not asked for
+  explicitly, but this repo has an established, explicit performance
+  discipline (`CLAUDE.md`, `docs/DECISIONS.md` Pass 16) that would flag a
+  silent +787 kB to the main bundle. milsymbol's `package.json` `exports`
+  field only exposes the bare specifier (no documented way to import just
+  the 2525C table and skip 2525B/APP-6B/APP-6D/2525D), so the whole library
+  loads regardless of which standard's codes actually get used. Fix is the
+  exact pattern Pass 6 already established for the 3D engine:
+  `React.lazy()` + `Suspense`, so the cost lands only on a visitor who
+  opens a detail panel, never on first paint. Main bundle: 649 kB → 654 kB
+  (+5 kB, the new `sidc.ts`/`types.ts` additions); milsymbol is its own
+  781 kB chunk (175 kB gzipped), fetched once, on demand.
+- **The SIDC's echelon/size modifier is deliberately left blank.** MIL-STD-
+  2525's echelon slot (squad/platoon/company/.../army) is a real
+  organizational-size field. `Asset.echelon` in this schema means something
+  different — how far back in the battlespace an asset sits
+  (tactical/operational/strategic), a distance classification predating
+  this pass by several. Filling the SIDC's echelon slot from that field
+  would have been a *wrong* claim wearing "correct symbology" as a costume
+  — exactly the kind of mistake replacing the arbitrary icon was supposed
+  to fix. Left blank rather than guessed; documented inline in `sidc.ts`.
+
+## Verification
+
+`npm run typecheck` and `npm run build` clean throughout — and, per Pass
+16's standing rule, treated as necessary, not sufficient. Headless
+Playwright (`--use-gl=swiftshader`, against `npm run preview`) drove the
+real app for every claim above:
+
+- **Hero-tier asset (Leopard 2A6)** and **Icon-tier asset (IRIS-T SLM)**
+  screenshotted before and after. Before: `.key-facts` shows a visible
+  empty 4th cell on both; the header icon is the old hand-drawn tank/SAM
+  glyph. After: the key-facts grid fills exactly (verified by reading each
+  tile's actual text, not just counting elements); the header shows a real,
+  distinct MIL-STD-2525 symbol per asset (a tank glyph for the Leopard, a
+  SAM-launcher glyph for the IRIS-T); the hero-image slot renders under the
+  name.
+- **The positive photo-render path was verified for real, not assumed.**
+  This sandbox can't reach `commons.wikimedia.org` (confirmed above), so a
+  live photo can't load here even though it will on the deployed site —
+  `page.route()` intercepted the `Special:FilePath` request and fulfilled
+  it with a local test image, proving the actual rendering path (full-width
+  photo, license + Commons-link caption) rather than trusting the code by
+  inspection.
+- **The graceful-fallback path was also verified for real, un-intercepted**
+  — with the network genuinely unreachable, both test assets correctly
+  showed the enlarged symbol + "the sourced photo could not be loaded"
+  caption, confirming `onError` actually fires rather than assuming it
+  would.
+- **A CONCEPTUAL-SENSITIVE asset** (`side_a-medical-casevac-chain`) and a
+  **RED asset** (`side_a-uav-fp-1-fp-2`) were also opened and screenshotted,
+  each showing its own distinct, correct caption — confirming the fallback
+  branches are wired to the right ledger status, not just that *a*
+  fallback fires.
+- **Data Health** re-checked after the `validate.ts` addition: 0 errors, 3
+  warnings, 34 info — identical counts to before this pass except for the
+  new `image`-completeness checks, which raised nothing (every one of the
+  89 migrated records is complete), confirming the migration script didn't
+  silently ship a half-filled record.
+- No new console/page errors beyond the expected, already-understood
+  `commons.wikimedia.org` network failures in this sandbox.
+
+---
+
+## Pass 20 merge — reconciliation, and the 14-asset gap Pass 20 couldn't have known about
+
+Pass 20's branch (`claude/detail-page-imagery-symbology-vlnlic`, tip `441196c`) was cut
+from `5b45d6e`, before Passes 17–19 landed on the deploy branch
+(`claude/warfare-digital-twin-scaffold-19u7kt`). It sat unmerged through all three of
+those passes — confirmed by a prior diagnostic pass (`RECONCILIATION_DIAGNOSTIC.md`,
+commit `f267bfa`) that found the divergence and stopped short of resolving it. This entry
+covers that resolution.
+
+**The merge itself was clean.** `git merge --no-ff origin/claude/detail-page-imagery-symbology-vlnlic`
+against deploy-branch tip `e3dc40a` produced exactly two conflicts, both prose docs:
+`docs/DECISIONS.md` (this file — two independent chronological additions, resolved by
+keeping both in order: Pass 17–19's entries then Pass 20's, separated by the same `---`
+rule every other pass boundary uses) and `docs/PLANNING.md` (two versions of the same
+"suggested sequencing" status table — HEAD's said 20 was next, incoming's said 17–18 were
+the critical path; resolved by writing the table fresh to reflect what's actually true
+post-merge: 17/18/19/20 all done, 21 next). Every `data/assets/*.json` file — including
+all 89 files Pass 20 touched to add `image`, and the 14 Pass 18 added that Pass 20's
+branch never saw — merged with **zero conflicts**: git's line-level merge cleanly
+interleaved Pass 20's inserted `"image": {...}` blocks with Pass 18's separately-added
+fields because they touched different lines. `src/types.ts`, `src/data/validate.ts`,
+`src/components/DetailPanel.tsx`, `src/styles.css`, and `CLAUDE.md` all auto-merged too —
+Pass 17–19 never touched the detail panel or the `Asset.image` schema, so there was no
+real overlap to resolve, only textually-adjacent changes.
+
+**The gap:** Pass 20's image-wiring script ran against its own branch's data, which
+predates Pass 18's 14 first-class human/positional assets (dismounted squad, dugout,
+observation post, forward casualty collection point, command post, artillery firing
+position, ammunition point — ×2 sides). Post-merge, all 89 of Pass 20's original assets
+had an `image` field; those 14 had none — not a null value, an absent key, which is
+exactly the kind of silent gap this app's conventions (`CLAUDE.md`: "costs and confidence
+are always shown, never omitted") exist to catch.
+
+Closed by hand-applying Pass 20's own two fallback conventions, chosen per asset per the
+same reasoning Pass 20 used for its RED/CONCEPTUAL/CONCEPTUAL-SENSITIVE ledger rows:
+- The 2 casualty-adjacent assets (`medical-point-forward`, ×2 sides — a forward
+  point-of-injury/casualty-collection position, the same subject matter as the existing
+  `medical-casevac-chain` asset) got the identical CONCEPTUAL-SENSITIVE treatment already
+  shipped for `medical-casevac-chain`: `kind: "conceptual"`, `url: null`, and the same
+  caption verbatim ("Casualty/CASEVAC-adjacent subject — deliberately left without
+  imagery rather than risk a graphic or misleading representative photo.") — not a new
+  caption, the *same* one, since it's the same editorial call for the same reason.
+- The other 12 (dismounted squad, dugout, observation post, command post, ammo point,
+  artillery firing position — ×2 sides) got `kind: "conceptual"` with a per-category
+  caption on the same template Pass 20 used for its other composite/non-procured nodes
+  (`logistics-hub`, `strategic-infrastructure-target`): "Represents a generic
+  \<thing\>, not a single sourced physical system — shown as its map symbol rather than
+  a specific photo." `"conceptual"` over `"placeholder"` because these aren't a specific
+  fieldable system with a photo search that came up empty (what `"placeholder"` means) —
+  they're generic tactical constructs, the same category of thing as the composite nodes
+  Pass 20 already called conceptual, never a single sourced unit to begin with.
+
+All 103 assets carry an `image` field now (was 89/103 immediately post-merge).
+
+**SIDC symbology for the same 14** was checked separately, since a dismounted squad or an
+observation post isn't a vehicle/weapon system 2525C's Unit scheme was built around.
+`resolveSpec()`'s existing group-level fallback (`BY_GROUP.infantry` → `UCI---` Infantry,
+`BY_GROUP.c2` → `UUS---` Signal, `BY_GROUP.logistics` → `USS---` Supply, `BY_GROUP.medical`
+→ `USM---` Medical, `BY_GROUP.artillery` → `EWH---` Howitzer) already produced a symbol for
+all 14 with zero code changes — nothing was unrendered. But two of those group fallbacks
+were checked against milsymbol's own tables (`node_modules/milsymbol/src/lettersidc/sidc/
+ground.js`) and a closer real code existed for the win: `UH1---` "Headquarters or
+headquarters element" for `c2-position-command-post` (a command post is not generically
+"Signal"), and `USS5--` "Supply, Class V (ammunition)" for `logistics-ammo-point` (an ammo
+point is a specific, real, dedicated 2525C class-of-supply code, not generic "Supply").
+Both added to `BY_CATEGORY` in `src/symbology/sidc.ts`. The remaining 5 categories
+(dismounted squad, dugout, observation post, artillery firing position — the position-type
+ones) were also checked against milsymbol's tables and confirmed to have **no** dedicated
+code in the Unit/Warfighting ("S") scheme this app's SIDC builder uses — 2525C's real
+Observation Post / Command Post / Fighting Position codes (`TACGRP.C2GM.DEF.PNT.OBSPST`
+etc., found in `node_modules/milsymbol/src/lettersidc/sidc/tactical-points-2525.js`) exist
+only in the **Tactical Graphics** coding scheme ("G", point/graphic symbols with a
+different SIDC anatomy entirely — no battle-dimension letter, no "Present" status slot),
+which nothing else in this app uses; mixing it in for 5 categories out of 30-odd would be
+a one-off inconsistency, not a real second scheme. Explicit `BY_CATEGORY` entries were
+added for these 5 anyway (all still resolving to the same functionId the group fallback
+already gave), purely so the choice and its reasoning live next to the code instead of
+being implicit in a fallback chain — see the inline comment in `sidc.ts`.
+
+**Verified, full regression, not just this merge's own deliverables** (headless Chromium,
+`npm run preview` + `?perf=1`, 1440×900, per the standard every pass since 16 has used):
+- Pass 17: terrain, river, and the OSM metric inset render correctly; "© OpenStreetMap
+  contributors" credit visible bottom-left.
+- Pass 18: bottom-right roster counter reads **"103 assets · 45 links"** — all 103
+  present, `tacticalSiting.ts` placements visually unchanged from Pass 19's own
+  screenshots (positional assets sit where Pass 18 sited them, e.g. Forward Casualty
+  Collection Point and Tactical Command Post both rendering near their sourced
+  `distance_km_from_zero`).
+- Pass 19: perf HUD read **767 draw calls** fresh off this merged tree — identical to
+  Pass 19's own number, confirming the merge didn't regress instancing.
+- Pass 20: opened three detail panels — a Hero-tier asset (`Kurier`, a Pass 19 UGV model,
+  showing the RED/placeholder fallback + its category symbol), an Icon-tier asset
+  (`T-14 Armata`, showing the "sourced photo could not be loaded" runtime-fallback path +
+  its own SIDC), and one of the 14 newly-covered positional assets (`Point of Injury /
+  Casualty Collection Point`, showing the CONCEPTUAL-SENSITIVE no-imagery caption and the
+  Medical SIDC; `Tactical Command Post` also opened, showing the new `UH1---` Headquarters
+  SIDC rendering distinctly from the generic Signal icon). All three showed a picture (or
+  its fallback) under the asset name, a real MIL-STD-2525C icon top-left, and a 3-column
+  key-facts grid.
+- One pre-existing, already-understood benign console 404 (the same `icon_image`
+  placeholder-path 404 logged in Pass 19's own entry above); no new console or page
+  errors from the merge or the gap-closing edits.

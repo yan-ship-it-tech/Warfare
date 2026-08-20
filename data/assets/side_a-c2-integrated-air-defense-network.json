@@ -26,6 +26,13 @@
   "representative_system": "IBCS-style integrated air/missile defense battle command (Northrop Grumman IBCS pattern)",
   "icon_image": "/icons/iads-c2.png",
   "gallery_images": [],
+  "image": {
+    "url": null,
+    "source_url": null,
+    "license": "n/a",
+    "kind": "conceptual",
+    "caption": "Represents a category or network, not a single physical system — shown as its map symbol rather than a specific unit's photo."
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Program-level cost, not a per-unit price — the US IBCS program has run well into the billions across development and fielding",

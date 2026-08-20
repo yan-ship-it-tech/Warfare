@@ -29,6 +29,12 @@
   "representative_system": "Gerbera — Low-cost decoy / multifunctional drone",
   "icon_image": "/icons/gerbera.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Russian_drone_Gerbera%2C_downed_in_Ukraine_(2025-01-05).jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Russian_drone_Gerbera%2C_downed_in_Ukraine_(2025-01-05).jpg",
+    "license": "CC BY 4.0",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 10000,
     "display": "~$10,000 (Wikipedia); $5,000-100,000 range cited in user-supplied catalog depending on configuration",
