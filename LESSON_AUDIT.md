@@ -18,66 +18,108 @@ Pass 21 and descended from it.
 
 ---
 
+## 0. Correction — the Ukrainian reference was replaced after this report first shipped
+
+**This report originally scored the corpus against a wrong document.** The Ukrainian-side input
+first supplied was, on inspection, a source catalog rather than a finished synthesis (original
+§1.2, preserved below in §1.2 for the record) — no cross-cutting-lessons section, structured around
+*what Ukrainian material exists* rather than *what it says*. The user has since confirmed this was
+a mistake on their end and supplied the correct file: a genuine synthesis, same method and the same
+§3.1–§3.7 cross-cutting-lessons structure as its Russian and Western companions, explicitly written
+as a third pass specifically to fix the first draft's catalog problem (its own §1: *"It replaces two
+earlier passes: a first draft that was a source catalog rather than a synthesis, and a second draft
+that synthesized but organized itself around Ukraine's institutional process for learning rather
+than around what Ukraine actually learned about fighting."*).
+
+**This changes real conclusions, not just sourcing hygiene.** Re-running the convergence check
+against the corrected three-document corpus:
+
+| Finding | Was | Now | Why |
+|---|---|---|---|
+| `ew-invisible-battlefield` (lesson 5) | CONVERGENT-2, `UKRAINIAN-SIDE PARTIAL` | **CONVERGENT-3** | Ukrainian §3.4's EW-arms-race findings and §3.2's PACE/analog-fallback design baseline are independent, substantive matches — see §3.5 below |
+| `fiber-optic-immunity` (lesson 6) | CONVERGENT-2, `UKRAINIAN-SIDE UNVERIFIED` | **CONVERGENT-3**, and materially strengthened | Ukrainian §3.4 supplies the piece the lesson was missing — a concrete ~6-month replication timeline and Ukraine's own domestic fiber-optic certification program — see §3.6 below |
+| Missing lesson 4.2, detectability-not-distance | CONVERGENT-2 | **CONVERGENT-3** | Ukrainian §3.2 states, in its own words, that its C2-dispersal finding is *"the same conclusion the Western-side document reaches... independently arrived at from a different Ukrainian source line"* — a document naming its own convergence with a companion is about as strong as evidence gets |
+| Missing lesson 4.4, logistics-is-counter-uas | CONVERGENT-2 | **CONVERGENT-3** | Ukrainian §3.3 explicitly parallels Russian §3.3's finding, and Western §3.3 already independently matched it |
+| Missing lesson 4.6, counter-uas-integration | CONVERGENT-2 | **CONVERGENT-3** | Ukrainian §3.5 calls this itself *"one of the stronger three-document convergences in the whole corpus"* and Russian §4 independently names the same gap |
+| §4.9(a), training-flow reversal (JATEC / DELTA-into-NATO) | Reported as CONVERGENT-2, Ukrainian-side load-bearing | **Downgraded to Western-only, SINGLE-SOURCE** | The genuine Ukrainian synthesis contains no mention of JATEC, DELTA, or training exported into NATO exercises — that content came from the wrong document and does not survive the correction |
+| §4.9(b), adaptation-cycle-is-the-capability | CONVERGENT-2, Ukrainian-primary | **Unchanged, better sourced** | The real document's §3.6 makes the same point more precisely, with its own explicit caveat about self-reported figures |
+
+The net effect: **the corpus is stronger, not weaker, than the original report assumed** — five
+findings move to genuine three-document convergence, the strongest evidentiary category this audit
+uses. One claim (§4.9a) had to be walked back because it depended entirely on the wrong document. No
+other section's substance changed; §1.1's roster-count and `docs/references/` findings still hold,
+and every lesson not listed above (`kill-chain-compression`, `drone-attrition-share`,
+`lower-sky-control`, `pattern-of-life-detection`, `distributed-kill-chains`,
+`deep-rear-is-reachable`, `attrition-economics`, `drone-dense-corridor`, and missing-lesson
+candidates 4.1, 4.3, 4.7, 4.8) was re-checked against the real Ukrainian document and its verdict
+did not move.
+
+The corrected updates are made in place throughout the sections below, each marked
+**`[CORRECTED]`** at the point of change. §1.2 is left as originally written, retitled to make clear
+it now describes a **superseded** document — the wrong-document finding is real project history
+(it is exactly the failure mode the brief's own §2 anticipated and asked this audit to catch), and
+erasing it would hide that the substitution happened and why.
+
+---
+
 ## 1. Corpus statement
 
 ### 1.1 Where the documents actually were
 
-The brief says four documents "are being placed in the repo" in `docs/references/`. **That
-directory does not exist on this branch** (`ls docs/references/` → `No such file or directory`).
-All four arrived as session attachments instead. This is a bookkeeping note, not a blocker — I
-read all four in full — but if a later pass expects to re-derive these citations from the repo,
-the files still need committing. Filenames as received:
+The brief says four documents "are being placed in the repo" in `docs/references/`. At the time
+this audit was first run, **that directory did not exist on the branch.** All four arrived as
+session attachments instead. **`[CORRECTED]`** — `docs/references/` has since been created and now
+holds the three lessons-learned references (Russian, Western, and the corrected Ukrainian
+document); `docs/doctrine.md` already existed in the repo and needed no action. Filenames as
+committed:
 
-| Received filename | Role in this audit |
+| Committed filename | Role in this audit |
 |---|---|
-| `RussianSide_Lessons_Learned_Reference.md` | Convergence corpus, leg 1 |
-| `WesternSide_Lessons_Learned_Reference.md` | Convergence corpus, leg 2 |
-| `Ukrainian_Side_Lessons_Learned_Reference.md` | Convergence corpus, leg 3 — **see §1.2** |
-| `doctrine.md` | **Not** scored. Read for asset-mapping context per brief §2. |
+| `docs/references/Russian-Side_Lessons_Learned_Reference.md` | Convergence corpus, leg 1 |
+| `docs/references/Western-Side_Lessons_Learned_Reference.md` | Convergence corpus, leg 2 |
+| `docs/references/Ukrainian-Side_Lessons_Learned_Reference.md` | Convergence corpus, leg 3 — genuine synthesis as of the §0 correction; **see §1.2** for the superseded first attempt |
+| `docs/doctrine.md` (pre-existing) | **Not** scored. Read for asset-mapping context per brief §2. |
 
 Citations below use `Russian §x.y`, `Western §x.y`, `Ukrainian §x`. Every one is accompanied by
 the quoted sentence it rests on, per brief §7.
 
-### 1.2 The Ukrainian leg is a source catalog, not a finished synthesis — the corpus is effectively two documents
+### 1.2 [SUPERSEDED — see §0] The first Ukrainian document supplied was a source catalog, not a finished synthesis
 
-**This is the most consequential finding about the audit itself, and it changes what every score
-below can honestly mean.**
+**This subsection describes the document that was replaced. It no longer describes the corpus this
+audit scores against — see §0 for the correction and its effects.** Left in place because it is
+real project history: this is exactly the "catalog masquerading as synthesis" failure mode brief §2
+asked this audit to catch, and this audit did catch it correctly at the time. It was superseded by
+user correction, not by a flaw in the check.
 
-The Ukrainian document is *titled* "Ukrainian-Side Lessons-Learned Reference" and is not named
-`Ukrainian_Side_Source_Catalog.md`, so it does not trip the brief's filename test. But the brief's
-test was on substance ("a *sourcing catalog* mapping what primary Ukrainian material exists, not a
-finished synthesis"), and on substance **this document is a sourcing catalog.** The evidence:
+The first Ukrainian document supplied was *titled* "Ukrainian-Side Lessons-Learned Reference" and
+was not named `Ukrainian_Side_Source_Catalog.md`, so it did not trip the brief's filename test. But
+the brief's test was on substance ("a *sourcing catalog* mapping what primary Ukrainian material
+exists, not a finished synthesis"), and on substance **that document was a sourcing catalog.** The
+evidence, as found at the time:
 
-- **It has no cross-cutting-lessons section at all.** The Russian document's §3 is
+- **It had no cross-cutting-lessons section at all.** The Russian document's §3 is
   "Cross-cutting lessons" (3.1–3.6); the Western document's §3 is "Cross-cutting lessons"
-  (3.1–3.7). The Ukrainian document's sections are: §1 "The anchor find: Ukraine's own doctrine on
+  (3.1–3.7). That Ukrainian document's sections were: §1 "The anchor find: Ukraine's own doctrine on
   how it captures lessons", §2 journals, §3 field manuals, §4 defense-tech ecosystem, §5 think
-  tanks, §6 senior officers, §7 how it fits with existing material, §8 translation notes. There is
+  tanks, §6 senior officers, §7 how it fits with existing material, §8 translation notes. There was
   no equivalent §3 to score against.
-- **It says so itself.** Its §0: *"This document tries to do for Ukraine what the Russian-side
+- **It said so itself.** Its §0: *"This document tries to do for Ukraine what the Russian-side
   document did for Russia: **prioritize documents Ukraine produces about itself** — General Staff
   doctrine, service academy journals, unit-facing manuals, state defense-tech institutions,
   Ukrainian think tanks, and on-the-record senior officers — over Western analysts' summaries of
   Ukrainian practice."* That is a description of source selection, not of findings.
-- Its §7 positions itself explicitly as one level up from content: *"This document doesn't attempt
+- Its §7 positioned itself explicitly as one level up from content: *"This document doesn't attempt
   to close that list — it operates one level up, at the institutional/doctrinal/ecosystem level."*
-- Its own §0 records that it was written **without** the other two references in hand: *"you
+- Its own §0 recorded that it was written **without** the other two references in hand: *"you
   mentioned attaching both existing references, but nothing came through on my end this time... I
   haven't been able to check this new document against either existing file line-by-line."* So it
-  was never cross-checked against the corpus it is supposed to be the third leg of.
+  was never cross-checked against the corpus it was supposed to be the third leg of.
 
-**Consequence, applied consistently below:** `CONVERGENT-3` is structurally almost unreachable for
-any tactical or technological lesson, because the third document contains almost no tactical
-claims to converge with. I have **not** inflated scores to disguise this. Every lesson whose
-Ukrainian-side check could not be performed carries the flag **`UKRAINIAN-SIDE UNVERIFIED`**, per
-brief §2. Two lessons and two proposed new lessons draw genuine substance from the Ukrainian
-document — its §1 (OP 7-162), §4 (Brave1 / Army of Drones / Unmanned Systems Forces) and §6
-(Zaluzhnyi, Syrskyi) do carry real, quotable claims — and those are marked as such rather than
-being treated as a whole third leg.
-
-**The honest reading of this audit is that it scored 10 lessons against a two-document corpus with
-a partial third.** Anywhere a score below says `CONVERGENT-2`, read it as "supported by both
-documents that were in a position to support it," not "one short of three."
+The real document that replaced it says the same thing about its own predecessor, from the
+publisher's side: its own §1 describes replacing *"a first draft that was a source catalog rather
+than a synthesis, and a second draft that synthesized but organized itself around Ukraine's
+institutional process for learning rather than around what Ukraine actually learned about
+fighting."* The catalog audited here was that first draft.
 
 ### 1.3 Known limitations carried forward from the sources themselves
 
@@ -114,18 +156,24 @@ Convergence scores are stated for the lesson **as written**. Where a lesson bund
 well-supported mechanism with an unsupported number, both are scored — collapsing them to one
 label would hide the finding.
 
+**`[CORRECTED]`** — the `UKRAINIAN-SIDE` flag in every row below now reflects a check against the
+real, corrected Ukrainian document (§0), not the superseded catalog. Two rows (5, 6) moved to
+`CONVERGENT-3`; the rest were re-checked and kept their original score — the flag wording changes
+from "UNVERIFIED" (couldn't be checked) to "no match found" (was checked, nothing there) where that
+is the honest state.
+
 | # | ID | Current title | Convergence | Key citations | Wording verdict | Asset-mapping verdict |
 |---|---|---|---|---|---|---|
-| 1 | `kill-chain-compression` | The kill chain collapsed from hours to minutes | **Mechanism: CONVERGENT-2** / **Headline timing figure: UNSUPPORTED** · `UKRAINIAN-SIDE UNVERIFIED` | Russian §3.1; Western §3.1, §3.7 | **Overstates** — the corpus supports fusion, not the clock | **Weak** — HIMARS is the wrong artillery; declares a `fires_support` edge that does not exist |
-| 2 | `drone-attrition-share` | Drones cause 60–70% of equipment losses | **CONTRADICTED** · `UKRAINIAN-SIDE UNVERIFIED` | Western §3.6, §2 reading notes; Russian §2 reading notes | **Distorts** — states as flat fact the exact claim class the corpus warns against | **Illustrative only** — a cost-tile pair cannot demonstrate an attribution statistic |
-| 3 | `lower-sky-control` | Control of the lower sky sets how close you can stand | **Principle: CONVERGENT-2** / **the 1–1.5 km vs 7 km figures: SINGLE-SOURCE** · `UKRAINIAN-SIDE PARTIAL` | Western §3.2; Ukrainian §6 (Zaluzhnyi) | **Overstates confidence** in unreplicated numbers | **Broken demonstration** — neither tank sits at either quoted depth |
-| 4 | `pattern-of-life-detection` | Detection is a multi-day pattern, not an event | **Multi-day mechanism: UNSUPPORTED** / **defensive consequence: CONVERGENT-2** · `UKRAINIAN-SIDE UNVERIFIED` | Western §3.2; Russian §4 (soldiers) | **Understates** — omits the corpus's sharper, minutes-scale emissions finding | **Weak** — satellite is the wrong mechanism; zero internal edges despite declaring `data_c2` |
-| 5 | `ew-invisible-battlefield` | EW is the invisible battlefield everything else depends on | **CONVERGENT-2** · `UKRAINIAN-SIDE PARTIAL` | Russian §3.4, §3.5; Western §3.4; Ukrainian §6 | **Mostly sound**; one unreplicated number (5–20 m) | **Incomplete** — the corpus's sharpest EW datapoint (guided artillery degradation) has no asset here; zero internal edges |
-| 6 | `fiber-optic-immunity` | Fibre-optic control links took jamming off the table | **CONVERGENT-2 (strongest in the set)** · `UKRAINIAN-SIDE UNVERIFIED` | Russian §3.4; Western §3.4 | **Misses the actual finding** — both refs say the *convergence* is the signal; the lesson says it's a trade-off | **Known gap, honestly flagged** (Pass 21); one range tension to resolve |
-| 7 | `distributed-kill-chains` | Kill chains pushed down to squad level | **CONVERGENT-2** · `UKRAINIAN-SIDE PARTIAL` | Russian §3.2; Western §4 (soldiers); Ukrainian §6 (Syrskyi) | **Overstates** — drops the friction half both refs insist on | **Incoherent** — mixes two sides' assets into one kill chain; declared `fires_support` edge absent |
-| 8 | `deep-rear-is-reachable` | The deep rear stopped being a sanctuary | **UNSUPPORTED** · `UKRAINIAN-SIDE UNVERIFIED` | none in corpus | **Sound in itself**, but rests on `doctrine.md`'s weakest tag (bare `[web]`) | **Known gap, honestly flagged** (Pass 21) — 80 km hub standing in for 200+ km |
-| 9 | `attrition-economics` | Consumption rates, not inventories, decide sustainment | **CONVERGENT-2** · **Ukrainian leg genuinely load-bearing** | Russian §4 (policymakers); Ukrainian §4 | **Clean — best-worded lesson in the set** | **Mostly sound**; declares a `maintenance` edge that does not exist |
-| 10 | `drone-dense-corridor` | A ~30 km drone-dense corridor either side of the line | **Consequence: CONVERGENT-2** / **the 30 km figure: UNSUPPORTED** · `UKRAINIAN-SIDE UNVERIFIED` | Russian §3.3; Western §3.2 | **Sound on consequence**, unreplicated on the number | **Clearest miss in the audit** — the corpus's named adaptation (UGV resupply/casevac) is absent though 5 such assets exist |
+| 1 | `kill-chain-compression` | The kill chain collapsed from hours to minutes | **Mechanism: CONVERGENT-2** / **Headline timing figure: UNSUPPORTED** · Ukrainian §3.1 checked, no timing/fusion match | Russian §3.1; Western §3.1, §3.7 | **Overstates** — the corpus supports fusion, not the clock | **Weak** — HIMARS is the wrong artillery; declares a `fires_support` edge that does not exist |
+| 2 | `drone-attrition-share` | Drones cause 60–70% of equipment losses | **CONTRADICTED** · Ukrainian document checked, no match | Western §3.6, §2 reading notes; Russian §2 reading notes | **Distorts** — states as flat fact the exact claim class the corpus warns against | **Illustrative only** — a cost-tile pair cannot demonstrate an attribution statistic |
+| 3 | `lower-sky-control` | Control of the lower sky sets how close you can stand | **Principle: CONVERGENT-2** / **the 1–1.5 km vs 7 km figures: SINGLE-SOURCE** · `UKRAINIAN-SIDE PARTIAL` | Western §3.2; Ukrainian §2 (Zaluzhnyi, source 7) | **Overstates confidence** in unreplicated numbers | **Broken demonstration** — neither tank sits at either quoted depth |
+| 4 | `pattern-of-life-detection` | Detection is a multi-day pattern, not an event | **Multi-day mechanism: UNSUPPORTED** / **defensive consequence: CONVERGENT-2** · Ukrainian §3.2 checked — supports the *replacement* lesson (§4.2), not this one as worded | Western §3.2; Russian §4 (soldiers) | **Understates** — omits the corpus's sharper, minutes-scale emissions finding | **Weak** — satellite is the wrong mechanism; zero internal edges despite declaring `data_c2` |
+| 5 | `ew-invisible-battlefield` | EW is the invisible battlefield everything else depends on | **`[CORRECTED]` CONVERGENT-3** (was CONVERGENT-2) | Russian §3.4, §3.5; Western §3.4; Ukrainian §3.2, §3.4 | **Mostly sound**; one unreplicated number (5–20 m) | **Incomplete** — the corpus's sharpest EW datapoint (guided artillery degradation) has no asset here; zero internal edges |
+| 6 | `fiber-optic-immunity` | Fibre-optic control links took jamming off the table | **`[CORRECTED]` CONVERGENT-3** (was CONVERGENT-2), and now the best-evidenced lesson in the set | Russian §3.4; Western §3.4; Ukrainian §3.4 | **Misses the actual finding** — the refs say the *convergence itself, and its speed,* is the signal; the lesson says it's a trade-off | **Known gap, honestly flagged** (Pass 21); one range tension to resolve |
+| 7 | `distributed-kill-chains` | Kill chains pushed down to squad level | **CONVERGENT-2** · `UKRAINIAN-SIDE PARTIAL` | Russian §3.2; Western §4 (soldiers); Ukrainian §2 (Syrskyi, source 8) | **Overstates** — drops the friction half both refs insist on | **Incoherent** — mixes two sides' assets into one kill chain; declared `fires_support` edge absent |
+| 8 | `deep-rear-is-reachable` | The deep rear stopped being a sanctuary | **UNSUPPORTED** · Ukrainian document checked, no match | none in corpus | **Sound in itself**, but rests on `doctrine.md`'s weakest tag (bare `[web]`) | **Known gap, honestly flagged** (Pass 21) — 80 km hub standing in for 200+ km |
+| 9 | `attrition-economics` | Consumption rates, not inventories, decide sustainment | **CONVERGENT-2** · **Ukrainian leg genuinely load-bearing** | Russian §4 (policymakers); Ukrainian §3.6 | **Clean — best-worded lesson in the set** | **Mostly sound**; declares a `maintenance` edge that does not exist |
+| 10 | `drone-dense-corridor` | A ~30 km drone-dense corridor either side of the line | **Consequence: CONVERGENT-2** / **the 30 km figure: UNSUPPORTED** · Ukrainian §3.3 checked — supports the *merge target* (§4.4), not the literal 30 km figure | Russian §3.3; Western §3.2 | **Sound on consequence**, unreplicated on the number | **Clearest miss in the audit** — the corpus's named adaptation (UGV resupply/casevac) is absent though 5 such assets exist |
 
 ### 2.1 A structural finding that cuts across the table: half the lessons promise edges the map cannot draw
 
@@ -257,11 +305,12 @@ convergent:
 - Western §3.2: *"The consistent through-line across this and the RUSI series is that
   **detectability, not distance, is now the primary determinant of survivability** for command and
   control nodes."*
-- Ukrainian §6, on Zaluzhnyi's Nov 2023 essay: *"his own extended essay... on why the war became
-  positional and what Ukraine needs to break out of it: air superiority, deep minefield-breaching
-  capability, counter-battery effectiveness, reserve generation, and EW capacity."* Air superiority
-  listed first, as the governing variable — genuine, if thin, third-leg support for the principle.
-  Marked `UKRAINIAN-SIDE PARTIAL` rather than counted as a full third leg.
+- **`[CORRECTED]`** Ukrainian §2 (source corpus table), on Zaluzhnyi's Nov 2023 essay:
+  *"Air/EW/reserves/minefield levers (2023)."* Thinner than the withdrawn citation to the superseded
+  document (§0), but it is the real document's own summary of the same essay and corroborates the
+  same substance — air power and EW named as governing levers for breaking positional deadlock,
+  alongside reserves and minefield-breaching. Still marked `UKRAINIAN-SIDE PARTIAL`: a source-table
+  paraphrase, not a worked argument the way Western §3.2 is.
 
 **Unsupported numbers.** The 1–1.5 km / ~7 km pair appears in no reference. It traces to
 `doctrine.md` §2 (`[Combat Exp. RU, Report context ~line 4290]`) — i.e., to Markin's notebook,
@@ -335,9 +384,10 @@ buys about fifteen minutes.
 
 ---
 
-### 3.5 `ew-invisible-battlefield` — CONVERGENT-2
+### 3.5 `ew-invisible-battlefield` — **`[CORRECTED]`** CONVERGENT-3 (was CONVERGENT-2)
 
-The best-supported of the currently-shipped lessons after `fiber-optic-immunity`.
+The best-supported of the currently-shipped lessons after `fiber-optic-immunity` — and, following
+the §0 correction, a genuine three-document convergence rather than two-plus-a-thin-Zaluzhnyi-line.
 
 - Russian §3.4: *"Fiber-optic-controlled FPV drones (immune to RF jamming) appear independently in
   the FPV tactics guide (source 3), the MADI curriculum (source 5, listed as a 'promising area'),
@@ -350,8 +400,23 @@ The best-supported of the currently-shipped lessons after `fiber-optic-immunity`
   Excalibur 155mm GPS-guided rounds have suffered accuracy degradation from Russian EW jamming,
   forcing reliance on non-GPS-guided fires or renewed emphasis on jam-resistant guidance in
   follow-on procurement."*
-- Ukrainian §6: Zaluzhnyi's five requirements include *"EW capacity."* Thin; marked
-  `UKRAINIAN-SIDE PARTIAL`.
+- **`[CORRECTED]`** Ukrainian §3.4, from the real document: *"Underneath both approaches, the AFU
+  UAV-crew manual (source 2) treats analog/mechanical fallback — dual GPS/GLONASS cross-checking,
+  mandatory compass/sun/star navigation skill, a scripted lost-signal algorithm — as the **default**
+  design baseline, not a contingency: Ukrainian doctrine assumes the primary electromagnetic system
+  will be denied."* This is independent, substantive, and stronger than the Western Excalibur
+  datapoint in one respect: it's not a single degraded munition, it's a design philosophy assuming
+  EW denial as the normal case.
+- **`[CORRECTED]`** Ukrainian §3.2 adds the PACE-discipline half: *"PACE comms planning explicitly
+  ranks assets by reliability under contact rather than theoretical bandwidth — tactical radio →
+  relay → satellite directional → satellite omnidirectional, with the highest-bandwidth option
+  ranked last on purpose."* Directly relevant to this lesson's Starlink/Strelets pairing — the
+  highest-bandwidth option in that pairing (satellite) is exactly the one Ukrainian doctrine ranks
+  last for reliability under EW contact, a tension the lesson currently doesn't surface.
+
+The original citation to "Ukrainian §6: Zaluzhnyi's five requirements include 'EW capacity'" came
+from the wrong document and is withdrawn — the real document's Zaluzhnyi citation (its §2, source 7)
+doesn't repeat that line-item list. The two Ukrainian citations above replace it and are stronger.
 
 **Wording verdict: mostly sound, one unreplicated number.** "Passive RF triangulation (5–20 m
 accuracy)" appears in no reference; it traces to `doctrine.md` §4 `[DW]`. It should carry its
@@ -373,10 +438,11 @@ dependency links, which is what a `data_c2` edge would draw.
 
 ---
 
-### 3.6 `fiber-optic-immunity` — CONVERGENT-2, and the clearest case of a lesson missing its own point
+### 3.6 `fiber-optic-immunity` — **`[CORRECTED]`** CONVERGENT-3 (was CONVERGENT-2), and the clearest case of a lesson missing its own point
 
-Both finished references carry this independently, and **both flag the independence itself as the
-finding**:
+All three references now carry this independently, and the Western and Russian documents both flag
+the independence itself as the finding — a claim the corrected Ukrainian document turns out to make
+*true* rather than merely *asserted*, by supplying the actual Ukrainian-side half of the story:
 
 - Russian §3.4: *"This is a case where a single technical fix (a physical control line instead of
   radio) has forced a doctrinal response across multiple institutions simultaneously — **a useful
@@ -385,6 +451,27 @@ finding**:
   independently as an adaptation across Western, Ukrainian, and Russian sources, **which is a
   strong signal that this is a structural response to the EW environment rather than a one-sided
   innovation.**"*
+- **`[CORRECTED]`** Ukrainian §3.4, from the real document, is the strongest single citation this
+  audit has found for the "independent convergence" claim, because it supplies what the other two
+  documents could only assert about Ukraine from outside: *"Russia fielded fiber-optic-controlled
+  FPV drones first, in the Kursk region from around August 2024, specifically to defeat Ukrainian RF
+  jamming. Ukraine's own Ministry of Defence began certifying domestic fiber-optic models within
+  months — Brave1 ran its first fiber-optic test flights in late March 2025, and the Ministry had
+  certified roughly 40 models by that April."* And its own stated implication: *"a single technical
+  fix, adopted by one side under pressure, was replicated by the other side inside about six
+  months, which is a useful marker for how fast a genuinely effective adaptation propagates across
+  a contested front, regardless of who invents it."*
+- **`[CORRECTED]`** The real document also documents a second Ukrainian EW-immunity approach the
+  lesson doesn't currently mention at all: *"Ukraine has also been pursuing a second, distinct route
+  to the same jamming-immunity goal — FPV drones guided by onboard machine vision rather than a
+  physical tether — described in industry reporting as immature but active, alongside fiber optic
+  rather than as a replacement for it."*
+
+This upgrades the lesson from "two documents independently observe the same adaptation" to "all
+three, one of them supplying the concrete replication timeline the other two only gestured at."
+**~6 months from first Russian fielding to ~40 Ukrainian-certified models is now the single most
+citable number in this lesson** — better sourced than anything else currently in it, and it should
+replace or sit alongside the current capability-tradeoff framing.
 
 **Wording verdict: misses the actual finding.** Side by side:
 
@@ -416,6 +503,10 @@ the lesson should not silently contradict a cited source. Name the disagreement.
 `side_a-uav-reconnaissance-tactical` — and none is an FPV strike aircraft. The current substitution
 is the best available and the lesson text says so. **This is the roster's single highest-value
 content gap** (§7), because it is the only gap blocking the corpus's best-supported lesson.
+**`[CORRECTED]`** — the real document's machine-vision-guided FPV finding (above) is a second,
+independent reason a genuine FPV strike-drone asset would strengthen this lesson: a wired-FPV build
+could carry both approaches (tether vs. onboard vision) as documented alternatives rather than
+treating fibre-optic as the only fix.
 
 ---
 
@@ -431,9 +522,13 @@ content gap** (§7), because it is the only gap blocking the corpus's best-suppo
   even company level rather than the division/corps level earlier doctrine assumed — small-unit
   leaders should expect to carry more independent decision authority than legacy training pipelines
   assume."*
-- Ukrainian §6, on Syrskyi: *"the AFU's corps reform (16 corps formed), the expansion of the drone
-  component into a full Unmanned Systems Forces branch."* Organizational rather than tactical;
-  marked `UKRAINIAN-SIDE PARTIAL`.
+- **`[CORRECTED]`** Ukrainian §3.7, on the Assault Troops branch: *"a distinct Assault Troops branch
+  (created, per Syrskyi's own account, specifically because Assault Troops' rapid-response
+  no-fixed-line role didn't fit inside Air Assault Troops' fixed-defense-line doctrine)."*
+  Organizational rather than a direct statement about kill-chain authority, and thinner than the
+  withdrawn citation to the superseded document — a new branch built for rapid, no-fixed-line
+  response is adjacent evidence for decentralised authority, not a direct match. Still marked
+  `UKRAINIAN-SIDE PARTIAL`.
 
 **Wording verdict: overstates — this is the audit's second-largest wording finding.** Both
 references pair the decentralisation finding with an insistence that it is *not going well*, and
@@ -483,10 +578,10 @@ carry the "decentralising unevenly" point structurally rather than only in prose
 **No support anywhere in the corpus.** None of the three references mentions Operation Spiderweb,
 truck-smuggled FPV launch, or strategic-depth strike by short-range systems. The Western document
 covers the industrial base (§3.5) and command-post depth (§3.2) but never the strategic rear as a
-target set. The Russian document does not raise it. The Ukrainian document's nearest adjacent
-content is §6's summary of Zaluzhnyi's April 2025 essay — *"naval drones displacing surface
-fleets, the compressed 'science–production–application' innovation cycle"* — which is about
-displacement of platform classes, not about depth ceasing to protect.
+target set. The Russian document does not raise it. **`[CORRECTED]`** The Ukrainian document's
+nearest adjacent content is its §3.7, on Zaluzhnyi's April 2025 essay: *"his description of naval
+drones displacing surface-fleet functions"* — which is about displacement of platform classes, not
+about depth ceasing to protect.
 
 The lesson rests entirely on `doctrine.md` §2's bare `[web]` tag — the weakest sourcing tag in that
 file, with no named outlet, unlike `[web: Small Wars Journal]` or `[web: US Army TDF lessons]`
@@ -521,12 +616,14 @@ until the strategic-rear hub exists would make the lesson *stronger*, not weaker
   industrial-base questions are now inseparable from tactical questions — a battlefield technology
   with a consumer-electronics supply chain changes acquisition timelines in ways traditional
   defense procurement cycles aren't built for."*
-- Ukrainian §4 — **and this is one of only two places the Ukrainian document is genuinely
-  load-bearing**: *"The Brave1 Market (launched 2025) lets ~400+ combat units order directly from
-  ~800 certified manufacturers using an e-Points currency earned through battlefield performance
-  (the 'Army of Drones Bonus' program) — a direct, quantified battlefield-feedback loop rather than
-  a written lessons-learned report."* And: *"instead of a manual, the 'lesson' is metabolized
-  directly into procurement weighting within weeks."*
+- **`[CORRECTED]`** Ukrainian §3.6 — **and this is one of the places the Ukrainian document is
+  genuinely load-bearing**: *"Brave1's e-Points/marketplace system (source 4) converts battlefield
+  performance directly into equipment allocation within weeks: units earn points for verified kills
+  and re-spend them on whichever certified system is currently working, and manufacturers see
+  unit-level performance data directly. This is functionally a lessons-learned process that skips
+  the written report entirely and acts on the data."* (The previous version of this citation
+  included a figure — "~800 certified manufacturers" — that does not appear in the corrected
+  document; dropped rather than re-asserted.)
 
 **Wording verdict: clean. The best-worded lesson in the set, and the only one with no finding
 against its prose.** It states its figures and then immediately states their provenance and limit:
@@ -607,10 +704,19 @@ platform does not teach.
 - Western §3.7: *"this is worth noting because it means multi-domain integration is not a
   future-force aspiration in the current literature but a description of how both sides are already
   fighting."*
-- Ukrainian §6, Syrskyi: *"the expansion of the drone component into a full Unmanned Systems Forces
-  branch, and stand-up of a dedicated Unmanned Air Defense Forces within the Air Force."* A state
-  reorganising its order of battle around the drone layer is the structural form of the same
-  finding — this is a real third leg, not a stretch.
+- **`[CORRECTED]`** Ukrainian §3.1, from the real document: *"Institutionally, Ukraine registered
+  this by standing up the Unmanned Systems Forces as an independent branch in February 2024 and an
+  Unmanned Air Defense Forces element inside the Air Force. But Ukraine's own peer-reviewed
+  technical journals (source 5) were still publishing foundational-level papers on swarm-UAV C2
+  effectiveness and Class-1 UAS tactical employment as recently as 2024–2026 — the doctrine and the
+  science are still being written after units had already been fighting this way for two-plus
+  years."* A state reorganising its order of battle around the drone layer, while its own academic
+  literature is still catching up — the structural form of the same finding, and the real document
+  states outright that the parallel to the other two references is deliberate: *"The same lag the
+  Western-side document names for NATO (its 3.1) shows up inside Ukraine's own institutions, just
+  running faster."* This is a real third leg, not a stretch — and better evidence than the withdrawn
+  citation, because the document explicitly cross-references its own companions rather than being
+  read as parallel from outside.
 
 **Worth stating plainly: the Russian document's implication reads as a direct critique of this
 platform's own information architecture.** The roster files drones as `uav-reconnaissance`,
@@ -623,7 +729,7 @@ out loud in a lesson**, which is cheap, honest, and turns the tension into teach
 
 > Drones are not a category on this map — they are the layer every other category now runs through. One cheap airframe type does reconnaissance, precision strike, electronic warfare, resupply, casualty evacuation, psychological operations and air-to-air intercept. Every institutional source in this corpus, on every side, has stopped treating 'drone' as a subtopic under ISR or fires; two of them have reorganised their force structure around it. If you learn one thing from this map, learn that the drone layer is the connective tissue, and that the categories in the filter menu — including this map's own — are a legacy of a battlefield that no longer exists.
 
-### 4.2 Detectability, not distance, determines survivability — **CONVERGENT-2**
+### 4.2 Detectability, not distance, determines survivability — **`[CORRECTED]` CONVERGENT-3** (was CONVERGENT-2)
 
 - Western §3.2: *"The consistent through-line across this and the RUSI series is that
   **detectability, not distance, is now the primary determinant of survivability** for command and
@@ -634,7 +740,21 @@ out loud in a lesson**, which is cheap, honest, and turns the tension into teach
   minutes... deception (decoy antennas, simulated vehicle parks, staged signs of habitation) is used
   deliberately to force the enemy to expend precision munitions on false positions."*
 - Russian §3.2: *"massed formations are now visible and targetable almost immediately."*
-- Ukrainian: no support located. `UKRAINIAN-SIDE UNVERIFIED`.
+- **`[CORRECTED]`** Ukrainian §3.2, from the real document, is the strongest single citation in this
+  entire audit for a claimed cross-document convergence, because the document names the convergence
+  itself rather than leaving it for a reader to infer: *"a small HQ or a single UAV crew's C2 setup
+  that works at small scale breaks down as scope grows. The AFU's UAV C2 software addresses this by
+  splitting commander, operator, and administrator functions across separate workstations feeding a
+  shared field server, rather than concentrating everything on one operator. PACE comms planning
+  explicitly ranks assets by reliability under contact rather than theoretical bandwidth — tactical
+  radio → relay → satellite directional → satellite omnidirectional, with the highest-bandwidth
+  option ranked last on purpose... **This is the same conclusion the Western-side document reaches
+  from the CALL/TDF manual (its 3.2, 'detectability, not distance'): independently arrived at from a
+  different Ukrainian source line.**"* A document stating its own independent convergence with a
+  named section of a companion document — this is the corrected document's own explicit
+  cross-checking against its companions (its §0 says it applies "the same method as its companion
+  volumes" and is built around "the same topic spine... so the three documents read as one
+  comparable set") — is close to the strongest form of evidence this audit's method can produce.
 
 **This lesson matters disproportionately for this platform specifically, because the platform's
 entire X axis is distance.** A tool that renders the war as a depth ruler owes its users the
@@ -658,15 +778,25 @@ the corpus actually documents.
   dispersed logistics task forces that trade some efficiency for survivability against UAS,
   long-range fires, and EW — directly paralleling CSIS's 'disaggregate to survive, reaggregate when
   necessary' framing and, independently, Markin's ground-level observations on the Russian side."*
-- Ukrainian §6, Syrskyi on the Assault Troops branch, is adjacent structural evidence.
-  `UKRAINIAN-SIDE PARTIAL`.
+- **`[CORRECTED]`** Ukrainian §3.3, from the real document, is a direct, explicit match rather than
+  adjacent evidence: *"units systematically underestimate the time needed to reset between missions
+  — refuel, rearm, re-establish comms — and the documented fix is pre-staging fuel, ammunition, and
+  comms equipment at the home base rather than simply 'planning tighter.' This parallels the
+  Russian-side document's finding (its 3.3) that robotic ground platforms and resupply drones are
+  absorbing logistics risk specifically because manned logistics runs are now among the
+  highest-casualty activities — the same structural pressure, addressed on the Ukrainian side
+  through pre-staging discipline rather than robotic substitution as the first-line fix."* This
+  upgrades the citation from "adjacent" to a document explicitly naming its own parallel with the
+  Russian side — closer to `CONVERGENT-3` for the sustainment half of this finding specifically than
+  the original `CONVERGENT-2` label captured; command-culture friction (Russian §3.2) remains the
+  half without a Ukrainian-side match.
 
 The "disaggregate to survive, reaggregate when necessary" formulation is portable, memorable, and
 absent from the platform. **Recommendation: do not add this as a standalone lesson — fold it into
 `distributed-kill-chains` as the missing friction half (§3.7) and into the new sustainment lesson at
 4.4.** Adding a third lesson about decentralisation would fragment one finding across three cards.
 
-### 4.4 Logistics risk has become a subset of counter-UAS risk — **CONVERGENT-2**
+### 4.4 Logistics risk has become a subset of counter-UAS risk — **`[CORRECTED]` CONVERGENT-3** (was CONVERGENT-2)
 
 - Russian §3.3: *"logistics risk is now largely a subset of counter-UAV risk, not a separate
   problem."* (full quote at §3.10)
@@ -675,7 +805,10 @@ absent from the platform. **Recommendation: do not add this as a standalone less
   fielding several NATO-standard and legacy Soviet-standard platforms cannot be treated as fungible
   with a unit fielding only one type — a planning factor with direct implications for any coalition
   force generation."*
-- Ukrainian: no support located. `UKRAINIAN-SIDE UNVERIFIED`.
+- **`[CORRECTED]`** Ukrainian §3.3 (quoted in full at §4.3 above) explicitly parallels Russian §3.3
+  by name, and independently matches Western §3.3's dispersal finding via its own pre-staging fix.
+  Three references, three independent statements of the same structural coupling — genuine
+  `CONVERGENT-3`.
 
 This is currently gestured at inside `drone-dense-corridor` but never stated as the finding it is.
 **Recommendation: promote it to a lesson in its own right and merge `drone-dense-corridor` into
@@ -691,7 +824,7 @@ becomes the setting; the coupling becomes the lesson.
 Not a missing lesson; a rewrite of `fiber-optic-immunity` (§3.6). The missing *content* is the
 epistemic point — independent convergence as the test for whether an adaptation is structural.
 
-### 4.6 Counter-UAS is an integration and accountability problem, not a hardware problem — **CONVERGENT-2**
+### 4.6 Counter-UAS is an integration and accountability problem, not a hardware problem — **`[CORRECTED]` CONVERGENT-3** (was CONVERGENT-2), and now the strongest three-way convergence in the whole corpus by the corpus's own account
 
 - Western §3.1: *"CEPA identifies limited interoperability between allied C-UAS systems, incomplete
   capability coverage across the threat spectrum, weak platform survivability, and gaps in personnel
@@ -710,13 +843,23 @@ epistemic point — independent convergence as the test for whether an adaptatio
   and the one most consistently self-reported by the practitioner sources."*
 - Russian §3.5 adds the organisational template: *"the National Guard manual solves institutionally
   by designating non-staff UAV-countermeasure crews with dedicated training time."*
-- Ukrainian: no support located. `UKRAINIAN-SIDE UNVERIFIED`.
+- **`[CORRECTED]`** Ukrainian §3.5, from the real document, closes the loop and says so in its own
+  words: *"Ukrainian peer-reviewed military-technical journals (source 5) are still treating
+  swarm-UAV C2 effectiveness and coordinated counter-drone response as open research questions
+  rather than settled doctrine. This matches the Western-side document's finding (its 3.1, citing a
+  Modern War Institute analysis) that Ukraine's own counter-drone effort 'lacks a single point of
+  mission accountability and is fragmented across services.' An independent Western institutional
+  read and Ukraine's own academic press arrive at the same gap from two different directions —
+  **this is one of the stronger three-document convergences in the whole corpus, because none of the
+  three sources involved were checking the others' work.**"*
 
-**Both finished references independently name counter-UAS as the clearest capability gap, and the
-Western document calls it the single most actionable curriculum fix in its corpus. The platform has
-no lesson about it at all** — despite carrying Gepard, Bukovel, Pantsir, Tor-M2, Stinger and the
+**All three references independently name counter-UAS integration as the clearest capability gap,
+one of them explicitly flagging it as one of the corpus's strongest convergences, and the Western
+document separately calls it the single most actionable curriculum fix in its corpus. The platform
+has no lesson about it at all** — despite carrying Gepard, Bukovel, Pantsir, Tor-M2, Stinger and the
 integrated air-defence network. This is the largest gap between "assets the map already has" and
-"lessons the map teaches."
+"lessons the map teaches," and, following the correction, the best-evidenced missing lesson in this
+entire report.
 
 **Proposed statement** (my drafting, not a source quotation):
 
@@ -735,8 +878,10 @@ appears in the Russian document only:
 
 The Western document's training section (§3.6) is about *NATO's own* gaps — role reversal in
 training flow, CALL's staffing, visibility bias — and contains nothing about holding versus
-assaulting. The Ukrainian document's nearest content is §6's note that Syrskyi created Assault
-Troops as a distinct branch, which is adjacent at best and arguably points the other way.
+assaulting. **`[CORRECTED]`** The corrected Ukrainian document's nearest content is its §3.7 note
+that Syrskyi created Assault Troops as a distinct branch specifically for a "rapid-response
+no-fixed-line role," which is adjacent at best and, if anything, points toward assaulting/manoeuvre
+being the emphasis rather than confirming a holding-ground training gap.
 
 It is also, per Russian §2's own reliability note, sourced to practitioner testimony with
 *"morale-building intent"* — one of the two source classes that document says to treat as
@@ -764,9 +909,17 @@ the failure mode this pass exists to prevent.
 - Russian: nothing, and **this is structural rather than an oversight** — a single-nation
   producer has no coalition standardisation problem, so this finding cannot be convergent by
   construction.
-- Ukrainian §4 documents the opposite model — *"~800 certified manufacturers"* under Brave1, and
-  Fedorov's *"~95% domestic-origin drones in some public remarks, with components still partly
-  imported"* — a domestic-production ecosystem where the constraint is different in kind.
+- **`[CORRECTED]`** Ukrainian §3.6 documents a different model, not the same kind of standardisation
+  problem: *"Brave1's e-Points/marketplace system... converts battlefield performance directly into
+  equipment allocation within weeks: units earn points for verified kills and re-spend them on
+  whichever certified system is currently working."* This is a domestic single-nation procurement
+  loop rather than a multi-national interoperability problem — the two withdrawn figures ("~800
+  certified manufacturers," Fedorov's "~95% domestic-origin" claim) came from the superseded
+  document and are dropped; the real document's own figures (400+ units with direct Brave1 ordering
+  access, 500+ grants issued) carry the point just as well and come with the document's own audit
+  caveat: *"the specific figures... are self-reported by Brave1 and the ministries involved, not
+  independently audited — the mechanism is the well-supported claim here, not the precise
+  numbers."*
 
 **Recommendation: include it anyway, explicitly labelled as a Western-coalition-specific
 finding.** It is the corpus's clearest policy-actionable lesson and the platform has a
@@ -776,46 +929,60 @@ domestic ecosystem is the counter-case makes it a better lesson, not a weaker on
 
 ### 4.9 Additional convergent findings not in the brief's list
 
-Two findings I judged central to the corpus that the brief did not flag:
+**`[CORRECTED]`** Both (a) and (b) below were originally sourced substantially to the superseded
+Ukrainian document. (a)'s Ukrainian support does not survive the correction and the finding is
+downgraded. (b)'s core claim does survive — the real document makes the same point, independently —
+but every quote supporting it has been replaced with real text, and one figure (a Brave1 grant total
+in UAH) is dropped because it does not appear in the corrected document.
 
-**(a) The training and knowledge flow reversed — CONVERGENT-2, with the Ukrainian document
-genuinely load-bearing.**
+**(a) The training and knowledge flow reversed — `[CORRECTED]` downgraded to SINGLE-SOURCE
+(Western only).**
 - Western §3.6: *"As of 2026, Ukraine has scaled back its reliance on NATO-hosted basic training and
   is instead exporting drone-warfare, C-UAS, and EW expertise into NATO's own exercises — Ukraine's
   DELTA battlefield-management system has been incorporated into NATO training events. Several
   sources treat this as evidence that battlefield-tested tactical knowledge is now flowing in the
   opposite direction from the traditional pattern."*
-- Ukrainian §4: *"**Test in Ukraine** (2025) extends the same feedback loop to foreign
-  manufacturers, embedding their prototypes with combat-experienced Ukrainian units for structured
-  trials."*
-- Ukrainian §1: *"a standing **Ukraine-NATO Joint Analysis, Training and Education Center (JATEC)**
-  as the interoperability bridge to NATO's own process."*
+- The corrected Ukrainian document contains no mention of DELTA, JATEC, or Ukrainian expertise being
+  exported into NATO training events — a direct search of its text for each term returns nothing.
+  The "Test in Ukraine" and "JATEC" citations that previously supported this finding came from the
+  superseded document and do not carry over. This finding drops out of the "additional convergent
+  findings" category entirely: it is real (Western §3.6 states it plainly) but it is not convergent,
+  and should not be represented as such. **Recommendation: still worth a mention inside a training
+  lesson, explicitly labelled Western-only, the same treatment §4.8 gives the ammunition-
+  standardisation finding.**
 
-This is one of only two places where the Ukrainian document does the work a third leg is supposed to
-do. Worth noting for its own sake: where the Ukrainian document *is* substantive, it is substantive
-about institutions and feedback loops, not about tactics — which is a fact about the corpus the
-platform should reflect rather than paper over.
+**(b) The adaptation cycle is itself the capability — CONVERGENT-2, Ukrainian-primary. Core claim
+unchanged by the correction; every citation replaced with real text.**
+- **`[CORRECTED]`** Ukrainian §3.6: *"Brave1's e-Points/marketplace system (source 4) converts
+  battlefield performance directly into equipment allocation within weeks: units earn points for
+  verified kills and re-spend them on whichever certified system is currently working, and
+  manufacturers see unit-level performance data directly. This is functionally a lessons-learned
+  process that skips the written report entirely and acts on the data."* With the document's own
+  caveat, which should travel with the claim: *"the specific figures (400+ units with direct
+  ordering access, 500+ grants issued) are self-reported by Brave1 and the ministries involved, not
+  independently audited — the mechanism is the well-supported claim here, not the precise numbers."*
+  (The previous version of this citation included a "~UAH 2 billion" grant-value figure; it does not
+  appear in the corrected document and is dropped rather than re-asserted.)
+- **`[CORRECTED]`** Ukrainian §4 (instructors' implications), on OP 7-162: *"OP 7-162's
+  structured-AAR requirement (source 6) is worth noting for methodology: it standardizes an
+  after-action format both source 1 and source 2 were already using independently before the
+  doctrine existed, which is itself a teaching point about how fast bottom-up practice can outpace
+  top-down doctrine."* This replaces the previous "identified lesson / implemented lesson" citation,
+  which does not appear anywhere in the corrected document's text.
+- **`[CORRECTED]`** Ukrainian §3.7, on Zaluzhnyi's April 2025 essay: *"Zaluzhnyi's argument (source
+  7, Apr 2025) that doctrine needs continuous revision rather than periodic replacement, and his
+  description of naval drones displacing surface-fleet functions, both describe the same pattern."*
+  This is a closer, better-supported match than the withdrawn "compressed innovation cycle" phrase
+  and comes from the document's own §3.7 rather than a source-table paraphrase.
+- Russian §4 (policymakers), unchanged: *"a battlefield technology with a consumer-electronics
+  supply chain changes acquisition timelines in ways traditional defense procurement cycles aren't
+  built for."*
 
-**(b) The adaptation cycle is itself the capability — CONVERGENT-2, Ukrainian-primary.**
-- Ukrainian §4: *"instead of a manual, the 'lesson' is metabolized directly into procurement
-  weighting within weeks."* And: *"Brave1 has issued 500+ grants (~UAH 2 billion+ over its first two
-  years) and added analytics dashboards letting manufacturers see exactly which units used their
-  equipment, what it destroyed, and from what range."*
-- Ukrainian §1, on OP 7-162: it *"Distinguishes 'identified lesson' (a validated conclusion with
-  proposed corrective action) from 'implemented lesson' (a corrective action that has been executed
-  and confirmed effective) — a two-step bar that's stricter than just writing something down."*
-- Ukrainian §6, on Zaluzhnyi's April 2025 essay: *"the compressed 'science–production–application'
-  innovation cycle, and the case that doctrine itself needs continuous revision rather than periodic
-  replacement."*
-- Russian §4 (policymakers): *"a battlefield technology with a consumer-electronics supply chain
-  changes acquisition timelines in ways traditional defense procurement cycles aren't built for."*
-
-**Strong recommendation to add.** Beyond its merits, this is the honest structural fix for the
-corpus imbalance identified in §1.2: it is the one lesson where the Ukrainian document is the
-*primary* source rather than a flag on a missing check. A platform whose Ukrainian leg is a source
-catalog should at minimum teach the thing that source catalog is actually about — how Ukraine
-institutionalises learning. And it is directly self-referential for a *learning platform*, which
-makes it the natural closing lesson.
+**Strong recommendation to add, and the recommendation strengthens after the correction rather than
+weakening.** This is the one lesson where the Ukrainian document is the genuine *primary* source
+rather than a flag on a missing check — and now that the document is a real synthesis rather than a
+catalog, that primacy is earned rather than assumed. It is directly self-referential for a
+*learning platform*, which makes it the natural closing lesson.
 
 ---
 
@@ -855,7 +1022,7 @@ platform's own. It should be a card.
 | The platform's own lesson 2 headline (drones as cause of 60–70% of equipment losses) | Western §3.6 applied to `drone-attrition-share` | **`contested: true` on the recast cost-asymmetry lesson**, naming itself as the worked example |
 | Treating Ukraine's counter-drone model as solved and copyable | Western §3.1: *"this gap is not fully closed even on the Ukrainian side... a genuinely new organizational problem rather than a solved one being exported wholesale."* | **`contested: true`** on the new counter-UAS lesson (§4.6) |
 | **Practitioner-testimony numbers read as statistics** — the 7,200/month, 1–1.5 km/7 km, 2–7 days figures | Russian §2: *"treat specific numbers as illustrative, not statistical"*; also *"morale-building intent"* | **`contested: true`** on `lower-sky-control`; already handled correctly in `attrition-economics` |
-| Treating force mass as obsolete | Western §3.7 lists *"reduced importance of force mass"* as a curriculum lesson — but Ukrainian §6 records Zaluzhnyi naming *"deep minefield-breaching capability... reserve generation"* as unsolved requirements, i.e. the breakthrough problem is open, not that mass stopped mattering | **`contested: true`** wherever the platform implies it; **weaker candidate than the others** — I am inferring the tension from two documents rather than quoting a source that states it, and it should not be presented as a corpus finding |
+| Treating force mass as obsolete | Western §3.7 lists *"reduced importance of force mass"* as a curriculum lesson — but the Ukrainian document's own source-table paraphrase of Zaluzhnyi's essay (`[CORRECTED]` Ukrainian §2: *"Air/EW/reserves/minefield levers (2023)"*) names reserve generation and minefield-breaching as unsolved requirements, i.e. the breakthrough problem is open, not that mass stopped mattering | **`contested: true`** wherever the platform implies it; **weaker candidate than the others** — I am inferring the tension from two documents rather than quoting a source that states it, and it should not be presented as a corpus finding |
 
 The self-implicating candidate (the platform's own 60–70% claim) is the one I would push hardest
 for. A tool that flags its own most-quotable number as the example of the bias it warns about earns
@@ -870,15 +1037,15 @@ Ordering is pedagogical: the two framing lessons first, mechanism in the middle,
 
 | # | ID | Title | Status | Score | One-line rationale |
 |---|---|---|---|---|---|
-| 1 | `drone-layer-connective-tissue` | Drones are the connective tissue, not a category | **NEW** | CONVERGENT-3 | The only three-leg finding in the corpus and the one the platform's own taxonomy contradicts (§4.1) |
-| 2 | `detectability-not-distance` | Detectability, not distance, decides survivability | **NEW** (absorbs `pattern-of-life-detection`) | CONVERGENT-2 | The corpus's most direct challenge to this map's organising metaphor (§4.2) |
+| 1 | `drone-layer-connective-tissue` | Drones are the connective tissue, not a category | **NEW** | CONVERGENT-3 | The one finding named as its own three-leg convergence and the one the platform's own taxonomy contradicts (§4.1) |
+| 2 | `detectability-not-distance` | Detectability, not distance, decides survivability | **NEW** (absorbs `pattern-of-life-detection`) | **`[CORRECTED]` CONVERGENT-3** | Ukrainian §3.2 names its own independent convergence with Western §3.2 — the corpus's most direct challenge to this map's organising metaphor (§4.2) |
 | 3 | `lower-sky-control` | Control of the lower sky sets how close you can stand | **KEEP + rewrite** | CONVERGENT-2 / numbers SINGLE-SOURCE | Attribute the 1–1.5 km/7 km figures to Markin; fix or drop the broken tank contrast (§3.3) |
 | 4 | `kill-chain-compression` | Reconnaissance and fires fused into one function | **KEEP + rewrite** | CONVERGENT-2 / timing UNSUPPORTED | Lead with the supported fusion finding; demote the unsourced clock to a caveated illustration; swap HIMARS for a responsive gun (§3.1) |
 | 5 | `distributed-kill-chains` | Kill chains pushed to squad level — and command culture hasn't followed | **KEEP + rewrite** | CONVERGENT-2 | Restore the friction half both references insist on; make the asset set one side's loop (§3.7, §4.3) |
-| 6 | `logistics-is-counter-uas` | Logistics risk became a subset of counter-drone risk | **NEW** (absorbs `drone-dense-corridor`) | CONVERGENT-2 | Promotes a stated corpus finding out of a lesson that only gestured at it; brings in the UGVs the corpus names (§3.10, §4.4) |
-| 7 | `counter-uas-integration` | Counter-drone is an integration problem, not a hardware problem | **NEW** | CONVERGENT-2 | Named as the clearest capability gap by both finished references; six relevant assets already on the map, zero lessons (§4.6) |
-| 8 | `ew-invisible-battlefield` | EW is the invisible battlefield everything else depends on | **KEEP + amend** | CONVERGENT-2 | Add the Excalibur/GPS-degradation datapoint and an artillery asset; source or drop the 5–20 m figure (§3.5) |
-| 9 | `fiber-optic-immunity` | Fibre-optic links: when both sides reach the same fix, the adaptation is structural | **KEEP + rewrite** | CONVERGENT-2 | The convergence is the finding, not the trade-off; name the range disagreement with Western §3.4 (§3.6) |
+| 6 | `logistics-is-counter-uas` | Logistics risk became a subset of counter-drone risk | **NEW** (absorbs `drone-dense-corridor`) | **`[CORRECTED]` CONVERGENT-3** | Ukrainian §3.3 explicitly names its own parallel to Russian §3.3; brings in the UGVs the corpus names (§3.10, §4.4) |
+| 7 | `counter-uas-integration` | Counter-drone is an integration problem, not a hardware problem | **NEW** | **`[CORRECTED]` CONVERGENT-3** | Ukrainian §3.5 calls this "one of the stronger three-document convergences in the whole corpus"; six relevant assets already on the map, zero lessons (§4.6) |
+| 8 | `ew-invisible-battlefield` | EW is the invisible battlefield everything else depends on | **KEEP + amend** | **`[CORRECTED]` CONVERGENT-3** | Add the Excalibur/GPS-degradation datapoint, an artillery asset, and Ukrainian §3.4's analog-fallback-as-baseline finding; source or drop the 5–20 m figure (§3.5) |
+| 9 | `fiber-optic-immunity` | Fibre-optic links: when both sides reach the same fix, the adaptation is structural | **KEEP + rewrite** | **`[CORRECTED]` CONVERGENT-3**, best-evidenced lesson in the set | The convergence and its ~6-month replication speed is the finding, not the trade-off; Ukrainian §3.4 supplies the timeline (§3.6) |
 | 10 | `attrition-economics` | Consumption rates, not inventories, decide sustainment | **KEEP unchanged** | CONVERGENT-2 | No finding against it; add the missing `maintenance` edge or drop the declaration (§3.9) |
 | 11 | `cost-asymmetry` | The cheapest system destroys the most expensive | **RECAST** from `drone-attrition-share` | CONVERGENT-2 (asymmetry) | Keeps what the assets actually demonstrate; the 60–70% statistic moves to a `contested` caution (§3.2) |
 | 12 | `deep-rear-is-reachable` | The deep rear stopped being a sanctuary | **KEEP + downgrade confidence** | UNSUPPORTED in corpus | True and well-written but corpus-unsupported and resting on a bare `[web]` tag — must say so; drop the 80 km hub (§3.8) |
@@ -924,7 +1091,7 @@ fixes that need no new assets, because conflating them would inflate Pass 24's s
 | **Decoy / EM-signature-management set** (decoy antennas, simulated vehicle park) | #2, #8 | Western §3.2 names them as doctrine; Western §4 (defense companies) calls decoys/low-signature comms/mesh relays *"a persistent, source-corroborated capability gap at the unit level."* No decoy asset on the map. The corpus explicitly names this as an unmet need — an unusually well-warranted addition. | **High** |
 | **Counter-UAS battle-management / detect-track-defeat node** | #7 | Only `side_a-c2-integrated-air-defense-network` (60 km) approximates it, it is air-defence rather than C-UAS-specific, and **side_b has no `c2-battle-management` asset at all.** Western §4: training that assumes systems are fielded individually *"rather than as a networked detect-track-defeat chain is solving the wrong problem"* — the chain needs a node to be visible. | **High** |
 | **Strategic-rear logistics hub (200+ km)** | #12 | Only two `logistics-hub` assets exist (80 km, 18 km). `data/connections.json`'s `_note_unresolved_ids` already records `side_a-logistics-hub-strategic-rear` as a referenced-but-unbuilt stub. Logged by Pass 21. | Medium |
-| **Learning/adaptation institution** — a drone school, Brave1-style acceleration node, or unit training centre | #14 | `side_b-training-center-op-deep` is likewise a referenced-but-unbuilt stub in `connections.json`. Ukrainian §4 documents *"credited with training roughly 20,000+ drone operators via state-funded private schools since 2023."* Nothing on the map represents the loop. | Medium |
+| **Learning/adaptation institution** — a drone school, Brave1-style acceleration node, or unit training centre | #14 | `side_b-training-center-op-deep` is likewise a referenced-but-unbuilt stub in `connections.json`. `[CORRECTED]` the specific "20,000+ drone operators" figure previously cited here came from the superseded document and does not appear in the corrected one; the underlying need still stands on the corrected document's own terms — Ukrainian §3.6's e-Points/marketplace loop and §3.1's Unmanned Systems Forces stand-up are both institutional feedback/training mechanisms with nothing on the map representing them. | Medium |
 | **Dispersed sustainment task force** (as distinct from a static hub) | #6 | Western §3.3's named unit of analysis: *"smaller, dispersed logistics task forces that trade some efficiency for survivability."* The map has hubs only — a point, not a dispersed formation. | Medium |
 | **Mixed-standard ammunition point** | #13 | Western §3.5's fuze/propellant/shell-body divergence. `side_a-logistics-ammo-point-railhead` could carry it in content fields rather than needing a new asset — **flag as a content-field task first, escalate to a new asset only if the field treatment reads thin.** | Low |
 | **Guided-munition entity** (Excalibur / GMLRS as a distinguishable item) | #8 | The corpus's sharpest EW datapoint is about a *round*, not a launcher, and the roster models launchers. The `data/catalog/` swap layer may be the right home rather than a map asset. | Low |
@@ -977,29 +1144,50 @@ No, on both counts, and not marginally.
   warfighting function — is not taught at all**, and the platform's own category taxonomy is an
   instance of what that finding says is obsolete.
 - **The corpus's clearest self-identified capability gap — counter-UAS integration — is not taught
-  at all**, despite six relevant assets already on the map.
-- **The audit itself ran against a two-and-a-half-document corpus**, because the Ukrainian leg is a
-  source catalog rather than a synthesis (§1.2). No score in this report should be read as though a
-  three-way check was performed unless it says so explicitly.
+  at all**, despite six relevant assets already on the map, and is now, following the §0 correction,
+  the single best-evidenced missing lesson in this report (`CONVERGENT-3`, self-declared by the
+  Ukrainian document as one of the corpus's strongest convergences).
+
+**`[CORRECTED]`** The audit originally ran against a two-and-a-half-document corpus, because the
+first Ukrainian document supplied was a source catalog rather than a synthesis (§1.2, preserved for
+the record). That has been corrected: the corpus is now genuinely three documents, and five findings
+that were `CONVERGENT-2` in the original report — `ew-invisible-battlefield`,
+`fiber-optic-immunity`, and missing lessons 4.2 (`detectability-not-distance`), 4.4
+(`logistics-is-counter-uas`), and 4.6 (`counter-uas-integration`) — are genuine `CONVERGENT-3`. One
+claim (the training-flow-reversal finding at §4.9a) had to be walked back because it depended
+entirely on the wrong document. See §0 for the full before/after.
 
 Three things are genuinely in good shape and should not be touched in the rewrite:
-`attrition-economics`'s sourcing discipline, `fiber-optic-immunity`'s underlying convergence (the
-strongest-evidenced claim in the set), and Pass 21's practice of stating asset-mapping compromises
-in the lesson text rather than hiding them — both of the gaps it flagged were confirmed here, and
-both flags were accurate.
+`attrition-economics`'s sourcing discipline, `fiber-optic-immunity`'s underlying convergence (now
+the *most* strongly evidenced claim in the set, not merely the strongest of two), and Pass 21's
+practice of stating asset-mapping compromises in the lesson text rather than hiding them — both of
+the gaps it flagged were confirmed here, and both flags were accurate.
 
 ---
 
 ## 9. Verification record
 
-Per brief §7, the claim this pass makes is that its citations are real. The check performed:
+Per brief §7, the claim this pass makes is that its citations are real. The check performed, **now
+re-run after the §0 correction:**
 
 - Every italic-quoted passage in this report was extracted programmatically and matched, after
-  whitespace/quote-character/dash normalisation only, against the full text of the four input
-  documents plus the repo files cited (`data/doctrine_markers.json`, `docs/BACKLOG.md`).
-- **85 quoted passages, 85 verified verbatim, 0 unmatched.** By source: Western 32, Russian 29,
-  Ukrainian 21, `doctrine.md` 2, `doctrine_markers.json` 1.
-- Text I authored — the four proposed lesson statements in §4 and the candidate labels in §5.2 —
+  whitespace/quote-character/dash normalisation only, against the full text of the corrected input
+  documents (`docs/references/Russian-Side_Lessons_Learned_Reference.md`,
+  `docs/references/Western-Side_Lessons_Learned_Reference.md`,
+  `docs/references/Ukrainian-Side_Lessons_Learned_Reference.md`, `docs/doctrine.md`) plus the other
+  repo files cited (`data/doctrine_markers.json`, `docs/BACKLOG.md`).
+- **93 quoted passages, 93 verified verbatim, 0 unmatched.** By source: Western 32, Russian 29,
+  Ukrainian 25, `doctrine.md` 2, `doctrine_markers.json` 1, and 4 quotes in §1.2 that verify only
+  against the *superseded* Ukrainian document (kept as a session upload, not committed to the repo)
+  — expected, since §1.2 is a historical record of the document that was replaced. Every one of
+  those 4 is explicitly labelled as describing the superseded document at the point it appears.
+- Six citations that appeared in the pre-correction version of this report did not survive: they
+  depended on quotes that exist only in the superseded document and have no counterpart in the real
+  one (the JATEC/DELTA/Test-in-Ukraine training-reversal claims, the "~800 certified manufacturers"
+  and Fedorov 95%-domestic figures, a UAH-denominated Brave1 grant total, and the "20,000+ drone
+  operators" figure). Each is called out at the point it was removed, with the correction noted
+  rather than silently dropped.
+- Text I authored — the proposed lesson statements in §4 and the candidate labels in §5.2 —
   is deliberately *not* in quotation form, so it cannot be mistaken for a citation. Where §4 gives
   a proposed statement it is marked "my drafting, not a source quotation."
 
@@ -1014,7 +1202,9 @@ Non-citation factual claims, and how each was checked:
 | No fibre-optic FPV strike aircraft in the roster | `grep -ril "fiber\|fibre" data/assets/` → 4 files, none an FPV strike aircraft |
 | No interceptor-drone asset | Full category/name listing of all 103 assets reviewed; no interceptor or hard-kill counter-UAS drone present |
 | Asset distances quoted in §3.3 and §3.10 | Read directly from each asset's `distance_km_from_zero` field |
-| `docs/references/` absent | `ls docs/references/` → `No such file or directory` |
+| `docs/references/` absent (at first run), now populated | `ls docs/references/` → `No such file or directory` (first run); `ls docs/references/` → 3 files (after §0 correction) |
+| Real Ukrainian document has §3.1–§3.7 cross-cutting-lessons, matching Russian/Western structure | `grep -n "^### 3\." docs/references/Ukrainian-Side_Lessons_Learned_Reference.md` → 7 matches |
+| Withdrawn figures ("~800 certified manufacturers," Fedorov 95%, UAH grant total, JATEC, DELTA, Test in Ukraine, "20,000+ operators") absent from the real document | `grep -in` for each term against `docs/references/Ukrainian-Side_Lessons_Learned_Reference.md` → no matches for any |
 
 **Nothing was built, deployed, or rendered in this pass, and no visual claim is made.**
 `data/lessons.json`, `src/`, and all rendering code are unmodified — `git status` shows
