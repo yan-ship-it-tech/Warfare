@@ -198,6 +198,23 @@ export function validateAsset(
     push("info", "`gallery_images` is missing; the panel falls back to the generated icon.", subject);
   }
 
+  // ── hero image (Pass 20 — docs/imagery-sourcing-ledger.xlsx) ───────────
+  // Same "always show sourcing, never invent it" standard as `sources`:
+  // absent is fine (a custom/local asset has no ledger entry — falls back
+  // to the category symbol), but a `kind: "photo"` entry with no url/
+  // license is a half-filled record worth flagging, not a hard error.
+  if (a.image === undefined) {
+    push("info", "`image` is missing; the detail panel falls back to this asset's MIL-STD-2525 symbol.", subject);
+  } else if (a.image !== null && typeof a.image === "object") {
+    const img = a.image as Record<string, unknown>;
+    if (img.kind === "photo" && (typeof img.url !== "string" || img.url.trim() === "")) {
+      push("warning", "`image.kind` is \"photo\" but `image.url` is empty.", subject);
+    }
+    if (img.kind === "photo" && (typeof img.license !== "string" || img.license.trim() === "")) {
+      push("warning", "`image` has a photo but no `license` — every sourced image should carry one, even a generic 'see source page'.", subject);
+    }
+  }
+
   // ── sourcing (the credibility check) ──────────────────────────────────
   const sources = Array.isArray(a.sources) ? (a.sources as { label?: string; url?: string }[]) : [];
   if (sources.length === 0) {

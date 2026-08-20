@@ -12,6 +12,12 @@
   "representative_system": "Uran-6 — Ground robot (remote mine clearance)",
   "icon_image": "/icons/uran-6.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Uran-6_Army-2022_2022-08-20_2470.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Uran-6_Army-2022_2022-08-20_2470.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Not publicly disclosed",

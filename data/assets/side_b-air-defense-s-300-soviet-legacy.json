@@ -13,6 +13,12 @@
   "representative_system": "S-300 (Soviet-legacy) — Legacy long-range SAM",
   "icon_image": "/icons/s-300-soviet-legacy.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/S-300PM2_launch_vehicle%2C_2009_military_parade.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:S-300PM2_launch_vehicle%2C_2009_military_parade.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Soviet-legacy stock; no current market unit price",

@@ -12,6 +12,13 @@
   "representative_system": "FP-1 / FP-2 — One-way attack drone (deep strike)",
   "icon_image": "/icons/fp-1-fp-2.png",
   "gallery_images": [],
+  "image": {
+    "url": null,
+    "source_url": null,
+    "license": "n/a",
+    "kind": "placeholder",
+    "caption": "No open-licensed photograph found for this specific system — showing its category symbol."
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Not publicly disclosed",

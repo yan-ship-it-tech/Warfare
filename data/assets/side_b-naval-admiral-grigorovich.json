@@ -15,6 +15,13 @@
   "representative_system": "Admiral Grigorovich-class (Project 11356R) guided-missile frigate",
   "icon_image": "/icons/admiral-grigorovich.png",
   "gallery_images": [],
+  "image": {
+    "url": null,
+    "source_url": null,
+    "license": "n/a",
+    "kind": "placeholder",
+    "caption": "No open-licensed photograph found for this specific system — showing its category symbol."
+  },
   "cost": {
     "unit_cost_usd": 475000000,
     "display": "~$450-500M per hull",

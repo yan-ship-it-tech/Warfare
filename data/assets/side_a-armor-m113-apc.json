@@ -12,6 +12,12 @@
   "representative_system": "M113 APC — Tracked armored personnel carrier",
   "icon_image": "/icons/m113-apc.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Delivery_of_M113_to_Ukraine_by_Lithuania_02.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Delivery_of_M113_to_Ukraine_by_Lithuania_02.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Donated (no unit price disclosed)",

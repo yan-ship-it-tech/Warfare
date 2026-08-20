@@ -12,6 +12,12 @@
   "representative_system": "Switchblade 300 — Loitering munition (man-portable)",
   "icon_image": "/icons/switchblade-300.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Switchblade_300_launch.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Switchblade_300_launch.jpg",
+    "license": "Public domain",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 38000,
     "display": "Donated (unit cost historically cited around $6,000-70,000 depending on generation/source)",

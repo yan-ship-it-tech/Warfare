@@ -13,6 +13,12 @@
   "representative_system": "NASAMS — Medium-range SAM",
   "icon_image": "/icons/nasams.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/High_Mobility_Launcher.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:High_Mobility_Launcher.jpg",
+    "license": "Public domain (US Marines)",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 259500000,
     "display": "AIM-120 AMRAAM interceptor ~$1.0-1.2M each; battery cost $91-428M depending on configuration",

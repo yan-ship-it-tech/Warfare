@@ -13,6 +13,12 @@
   "representative_system": "Buk-M3 — Medium-range SAM",
   "icon_image": "/icons/buk-m3.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/9A317ME_Buk-M3-Viking_ARMY-2022.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:9A317ME_Buk-M3-Viking_ARMY-2022.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "No clean public unit price disclosed",

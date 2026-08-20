@@ -12,6 +12,12 @@
   "representative_system": "TOS-1A — Heavy flamethrower / thermobaric MLRS",
   "icon_image": "/icons/tos-1a.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/TZM-T_of_the_TOS-1A_system.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:TZM-T_of_the_TOS-1A_system.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "No current market price; Soviet/Russian design",

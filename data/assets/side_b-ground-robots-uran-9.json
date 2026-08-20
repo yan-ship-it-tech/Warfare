@@ -12,6 +12,12 @@
   "representative_system": "Uran-9 — Ground robot (armed, remotely controlled)",
   "icon_image": "/icons/uran-9.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Uran-9_Army-2018.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Uran-9_Army-2018.jpg",
+    "license": "CC BY-SA 4.0",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Not publicly disclosed",

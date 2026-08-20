@@ -12,6 +12,13 @@
   "representative_system": "Composite — a generic thermal/hydro generation plant and grid substation, not a named facility",
   "icon_image": "/icons/power-plant.png",
   "gallery_images": [],
+  "image": {
+    "url": null,
+    "source_url": null,
+    "license": "n/a",
+    "kind": "conceptual",
+    "caption": "Represents a category or network, not a single physical system — shown as its map symbol rather than a specific unit's photo."
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Not a procured unit — infrastructure whose value is measured in grid capacity and repair cost after a strike, not a purchase price",

@@ -12,6 +12,12 @@
   "representative_system": "BvS 10 Viking — Tracked all-terrain armored carrier",
   "icon_image": "/icons/bvs-10-viking.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Viking_BVS10_ATV_-_Warthog_(7527870668).jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Viking_BVS10_ATV_-_Warthog_(7527870668).jpg",
+    "license": "CC BY 2.0",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Donated (no unit price disclosed)",

@@ -13,6 +13,12 @@
   "representative_system": "IRIS-T SLM — Medium-range SAM",
   "icon_image": "/icons/iris-t-slm.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/IRIS-T_SLM_launcher_at_ILA-2024.JPG",
+    "source_url": "https://commons.wikimedia.org/wiki/File:IRIS-T_SLM_launcher_at_ILA-2024.JPG",
+    "license": "CC BY-SA 3.0",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "~€140M per fire unit (2022); missile ~€250-565K depending on variant/buyer",

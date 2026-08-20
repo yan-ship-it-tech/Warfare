@@ -18,6 +18,12 @@
   "gallery_images": [
     "https://commons.wikimedia.org/wiki/Special:FilePath/ZALA_Lancet_at_IDEX_2025.jpg"
   ],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/ZALA_Lancet_at_IDEX_2025.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:ZALA_Lancet_at_IDEX_2025.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 35000,
     "display": "~$35,000 per unit (export listing cites ~3M RUB / ~$37,000 for Lancet-3)",

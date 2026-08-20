@@ -12,6 +12,12 @@
   "representative_system": "BM-27 Uragan — Multiple launch rocket system (unguided, long-range)",
   "icon_image": "/icons/bm-27-uragan.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/BM-27_Uragan_MLRS.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:BM-27_Uragan_MLRS.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "No current market price; Soviet-era design",

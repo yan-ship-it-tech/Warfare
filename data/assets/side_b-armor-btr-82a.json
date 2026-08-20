@@ -12,6 +12,12 @@
   "representative_system": "BTR-82A — Wheeled armored personnel carrier",
   "icon_image": "/icons/btr-82a.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/BTR-82A.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:BTR-82A.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "No clean current unit price; 5,000+ units produced historically",

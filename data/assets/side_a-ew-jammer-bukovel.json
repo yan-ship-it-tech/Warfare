@@ -17,6 +17,12 @@
   "representative_system": "Proximus Bukovel-AD",
   "icon_image": "/icons/bukovel-ad.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Bukovel-AD%2C_Kyiv_2021%2C_11.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Bukovel-AD%2C_Kyiv_2021%2C_11.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Not publicly disclosed",

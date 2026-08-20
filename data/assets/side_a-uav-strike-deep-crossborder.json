@@ -15,6 +15,13 @@
   "representative_system": "Composite representation of Ukraine's 'Operation Spiderweb' method (June 1, 2025) — FPV drones smuggled by commercial truck and launched from inside Russian territory",
   "icon_image": "/icons/deep-strike-fpv.png",
   "gallery_images": [],
+  "image": {
+    "url": null,
+    "source_url": null,
+    "license": "n/a",
+    "kind": "conceptual",
+    "caption": "Represents a category or network, not a single physical system — shown as its map symbol rather than a specific unit's photo."
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Individual FPV airframes cost roughly the same as any other FPV drone (low thousands of dollars each); the operation's value is asymmetric — an estimated $7B in damage to a fleet of strategic bombers from a low-cost drone/logistics effort",

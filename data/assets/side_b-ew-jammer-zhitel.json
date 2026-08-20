@@ -17,6 +17,12 @@
   "representative_system": "R-330Zh Zhitel (NVP Protek)",
   "icon_image": "/icons/r330zh-zhitel.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/R-330Zh_Zhitel_jammer.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:R-330Zh_Zhitel_jammer.jpg",
+    "license": "CC BY 4.0",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Not publicly disclosed — described in reporting as one of the more sophisticated, expensive pieces of Russian EW equipment fielded",

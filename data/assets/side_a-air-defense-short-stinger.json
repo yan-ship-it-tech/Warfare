@@ -18,6 +18,12 @@
   "gallery_images": [
     "https://commons.wikimedia.org/wiki/Special:FilePath/Danish_soldier_with_a_Stinger_MANPAD.JPEG"
   ],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/FIM-92_Stinger_USMC.JPG",
+    "source_url": "https://commons.wikimedia.org/wiki/File:FIM-92_Stinger_USMC.JPG",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 150000,
     "display": "~$120–150K per missile at current production (NATO bulk-buy pricing has run far higher, ~$830K/round, reflecting scarce production capacity)",

@@ -19,6 +19,12 @@
   "gallery_images": [
     "https://commons.wikimedia.org/wiki/Special:FilePath/Pantsir-S1_SAM.jpg"
   ],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Pantsir-S1_SAM_on_KamAZ-6560-chassis.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Pantsir-S1_SAM_on_KamAZ-6560-chassis.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 14000000,
     "display": "~$13–15M per unit on the export market",

@@ -12,6 +12,12 @@
   "representative_system": "Varan — Ground robot (tracked, modular, combat-capable)",
   "icon_image": "/icons/varan.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Varan.png",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Varan.png",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Not publicly disclosed",

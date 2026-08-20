@@ -18,6 +18,12 @@
   "gallery_images": [
     "https://commons.wikimedia.org/wiki/Special:FilePath/Leopard_2_tank.JPG"
   ],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/UA_Leopard_2A6_06.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:UA_Leopard_2A6_06.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 9000000,
     "display": "~$9–10M per new-build unit (secondhand/refurbished transfers have run far lower, e.g. ~€2M/tank in bulk surplus deals)",

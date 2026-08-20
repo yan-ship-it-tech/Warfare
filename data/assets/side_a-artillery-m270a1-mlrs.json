@@ -12,6 +12,12 @@
   "representative_system": "M270A1 MLRS — Multiple launch rocket system (tracked)",
   "icon_image": "/icons/m270a1-mlrs.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/M270_MLRS_(1984).JPEG",
+    "source_url": "https://commons.wikimedia.org/wiki/File:M270_MLRS_(1984).JPEG",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Donated (no unit price disclosed)",

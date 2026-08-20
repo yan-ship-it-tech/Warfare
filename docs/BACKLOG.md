@@ -187,6 +187,47 @@ see item 21 below, which is now the actual remaining work.
 
 ---
 
+## Open after Pass 20 (detail page, imagery, symbology)
+
+### MIL-STD-2525 symbology is detail-panel only — the map still uses the old hand-drawn icon set
+Pass 20 replaced the "arbitrary" symbol the brief called out — the detail
+panel's header badge and hero-image fallback — with a real milsymbol.js SIDC
+(`src/symbology/`). `src/icons/registry.tsx`'s `resolveIcon()` is untouched
+and still drives every other consumer: both map renderers
+(`src/three/`, `src/scene/AssetNode.tsx`) and `AssetLibraryPage`'s list
+icons. Extending real symbology to the map itself is a real integration
+project, not a follow-on tweak — Pass 16's constraint that the 3D render
+loop must never touch React state per frame, and that per-frame DOM writes
+are the whole performance budget, means swapping ~89 markers to
+server-rendered SVG needs its own scoping (label-grid interaction, draw-call
+budget, the Pass 19 instancing work all touch the same surface). Worth
+doing once Pass 19's shader/instancing work lands, not before.
+
+### 2 assets still show the no-photo placeholder despite being GREEN in the ledger
+`side_b-naval-admiral-grigorovich` (Admiral Grigorovich-class frigate) and
+`side_b-uav-kub-1` (ZALA KUB-1) are both marked GREEN in
+`imagery-sourcing-ledger.xlsx`, but Pass 20 could not pin either to one
+specific still image: Grigorovich's ledger category
+(`Category:Admiral_Grigorovich_(ship,_2016)`, 5 files) never surfaced a
+specific filename through a direct re-check; Kub-1's only resolved match was
+a `.webm` video, not a still. Both fall back to the honest placeholder
+treatment rather than a guessed filename. A follow-up pass with a working
+`WebFetch`/browse path to `commons.wikimedia.org` (currently policy-blocked
+at the host level, not just for binaries — see `docs/DECISIONS.md` Pass 20)
+could resolve these directly from the category page instead of via search
+snippets.
+
+### `Asset.image`'s license string is often a generic fallback, not a specific tag
+Where the ledger's own notes named a license (`CC BY-SA 4.0`, `Public domain
+(US DoD)`, ...) it was carried through; where a category was only confirmed
+to exist without a per-file license note, `image.license` reads "See Commons
+file page for license" rather than a guessed tag — honest, but weaker than
+the specific tags roughly half the roster has. Closing this needs reading
+each individual file's own license template, which needs the same blocked
+`commons.wikimedia.org` fetch path above.
+
+---
+
 ## Open after Pass 16 (performance and interaction)
 
 ### Draw calls are the next ceiling — deferred to Pass 19 on purpose

@@ -110,6 +110,28 @@ export interface Asset {
   icon_image: string;                    // path/URL to the small map icon
   gallery_images: string[];              // path/URL(s) for the detail panel
 
+  /** The detail page's hero photo — sourced from docs/imagery-sourcing-ledger.xlsx
+   *  (Pass 20), tracked with the same license/attribution discipline as
+   *  `sources` tracks factual citations. `url`/`source_url` point at a stable
+   *  Wikimedia Commons `Special:FilePath` resolution and the file's own page;
+   *  neither is ever fetched by this app's build — the *visitor's* browser
+   *  resolves them, same reasoning as the Pass 4 real-photo decision in
+   *  docs/DECISIONS.md. `kind` drives how the detail page renders it:
+   *    photo         — a real photo of this specific system (url/source_url set)
+   *    conceptual     — an abstract node (network, category, sensitive subject)
+   *                      with no unit-specific photo; `caption` explains why
+   *    placeholder    — a real system with no free-licensed photo found;
+   *                      falls back to the category's NATO/APP-6 symbol
+   *  Optional only because a hand-built custom asset (Asset Editor) has no
+   *  ledger entry to draw from. */
+  image?: {
+    url: string | null;
+    source_url: string | null;
+    license: string;
+    kind: "photo" | "conceptual" | "placeholder";
+    caption?: string;
+  };
+
   cost: AssetCost;
   key_facts: KeyFact[];                  // exactly 3
 

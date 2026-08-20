@@ -12,6 +12,12 @@
   "representative_system": "Switchblade 600 — Loitering munition (anti-armor)",
   "icon_image": "/icons/switchblade-600.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Switchblade_600s_Loitering_Munitions_Training_(8767578).jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Switchblade_600s_Loitering_Munitions_Training_(8767578).jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Donated (unit cost not publicly disclosed; larger and more expensive than the 300 variant)",

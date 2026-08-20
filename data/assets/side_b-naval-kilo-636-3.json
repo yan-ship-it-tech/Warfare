@@ -15,6 +15,12 @@
   "representative_system": "Improved Kilo-class (Project 636.3) diesel-electric attack submarine",
   "icon_image": "/icons/kilo-636-3.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Kilo-Class_Russian_Submarine_MOD_45165129.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Kilo-Class_Russian_Submarine_MOD_45165129.jpg",
+    "license": "UK OGL v1.0 (attribution required)",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 350000000,
     "display": "~$300-350M per hull (derived from a six-boat export contract; Russia's own internal procurement cost is not publicly disclosed)",

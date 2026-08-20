@@ -12,6 +12,12 @@
   "representative_system": "M1126 ICV Stryker — Wheeled armored fighting vehicle",
   "icon_image": "/icons/m1126-icv-stryker.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/UA_M1126_Stryker_infantry_carrier_vehicle.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:UA_M1126_Stryker_infantry_carrier_vehicle.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Donated (no unit price disclosed)",

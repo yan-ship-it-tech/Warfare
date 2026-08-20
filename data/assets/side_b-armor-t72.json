@@ -18,6 +18,12 @@
   "gallery_images": [
     "https://commons.wikimedia.org/wiki/Special:FilePath/Tank_T-72.JPG"
   ],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/T-72B3_mod._2011_in_Mulino.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:T-72B3_mod._2011_in_Mulino.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 2250000,
     "display": "~$2.0–2.5M per modernized/refurbished unit (general open-source estimate — most T-72B3s are Soviet-era hulls overhauled, not newly built, so this is directional rather than a confirmed transaction price)",

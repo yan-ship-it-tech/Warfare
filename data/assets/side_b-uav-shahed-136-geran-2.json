@@ -12,6 +12,12 @@
   "representative_system": "Shahed-136 / Geran-2 — Long-range one-way attack drone",
   "icon_image": "/icons/shahed-136-geran-2.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Shahed-136_(Geran-2)_drawing_by_Defense_Intelligence_Agency.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Shahed-136_(Geran-2)_drawing_by_Defense_Intelligence_Agency.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": 45000,
     "display": "$20,000-70,000 depending on source and production generation (domestic Russian production estimated higher than original Iranian export cost)",

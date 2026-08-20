@@ -15,6 +15,13 @@
   "representative_system": "Point-of-injury care + forward Casualty Collection Point (CCP) — the first link in the evacuation chain",
   "icon_image": "/icons/casevac-ccp.png",
   "gallery_images": [],
+  "image": {
+    "url": null,
+    "source_url": null,
+    "license": "n/a",
+    "kind": "conceptual",
+    "caption": "Casualty/CASEVAC-adjacent subject — deliberately left without imagery rather than risk a graphic or misleading representative photo."
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Personnel- and process-driven, not a procured unit",

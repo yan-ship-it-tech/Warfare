@@ -12,6 +12,12 @@
   "representative_system": "Marder 1A3 — Infantry fighting vehicle",
   "icon_image": "/icons/marder-1a3.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Marder_1A3_1.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Marder_1A3_1.jpg",
+    "license": "CC BY 4.0",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Donated (no unit price disclosed)",

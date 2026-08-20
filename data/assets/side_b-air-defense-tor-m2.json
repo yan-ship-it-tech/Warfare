@@ -13,6 +13,12 @@
   "representative_system": "Tor-M2 — Short-range mobile SAM",
   "icon_image": "/icons/tor-m2.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Tor-M2DT.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Tor-M2DT.jpg",
+    "license": "CC BY-SA 2.0",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "No clean public unit price disclosed",

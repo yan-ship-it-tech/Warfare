@@ -13,6 +13,12 @@
   "representative_system": "S-300 / Buk-M1 (Soviet-legacy) — Legacy medium/long-range SAM",
   "icon_image": "/icons/s-300-buk-m1-soviet-legacy.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Buk-M1-2_air_defence_system_in_2010.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Buk-M1-2_air_defence_system_in_2010.jpg",
+    "license": "Public domain (own work)",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Soviet-legacy stock, not purchased; no current market unit price",

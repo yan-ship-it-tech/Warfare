@@ -185,7 +185,31 @@ X draw calls" needs the same rigor as "11.07ms → 1.67ms" did.
 
 ---
 
-## Pass 20 — Detail page, imagery, symbology
+## ✅ Pass 20 — Detail page, imagery, symbology — DONE
+
+**Ran out of order** (17/18/19 hadn't landed yet — this pass had no
+dependency on them and was explicitly requested next). Full writeup in
+`docs/DECISIONS.md`. Summary for later passes:
+
+- All 3 items shipped: 64/66 GREEN+AMBER assets now carry a real, spot-
+  checked Commons photo with license/attribution (`Asset.image`, additive);
+  the picture sits directly under the asset name; the key-facts grid's
+  permanently-empty 4th cell (3 facts in a 2-column grid) is fixed; every
+  asset's detail-panel symbol is now a real MIL-STD-2525C SIDC via
+  milsymbol.js, lazy-loaded so it doesn't touch the main bundle.
+- **Scope boundary, worth knowing before extending it:** the symbol swap is
+  detail-panel only. The map markers (`src/three/`, `src/scene/AssetNode.tsx`)
+  and `AssetLibraryPage`'s list icons still use the old hand-drawn
+  `resolveIcon()` set — swapping those is a real integration project (Pass
+  16's "never touch React state per frame" constraint applies), not a
+  follow-on line item. Logged in `docs/BACKLOG.md`.
+- 2 assets (`side_b-naval-admiral-grigorovich`, `side_b-uav-kub-1`) couldn't
+  be pinned to one specific still image even though the ledger lists them
+  GREEN — left on the honest placeholder treatment rather than guessed.
+
+---
+
+## Pass 20 (original brief, for reference)
 
 **Model: Sonnet 5, Medium effort.**
 
@@ -258,12 +282,11 @@ chain collapsed from hours to minutes" includes a Leleka, HIMARS, a howitzer (al
 17. World + terrain           ← needs 16 (done); enables 18 (Sonnet 5, High)
 18. Tactical placement        ← needs 17                    (Sonnet 5, High)
 19. Model integration         ← needs 16 for headroom       (Sonnet 5, High)
-20. Detail page + imagery     ← imagery already sourced      (Sonnet 5, Medium)
+20. Detail page + imagery     ← DONE, ran out of order        (Sonnet 5, Medium)
 21. Scenario rework           ← content only, after 16       (Sonnet 5, Medium)
 ```
 
 Passes 17–18 are the critical path now. 19 can run alongside 18 if you want two threads.
-20 has no remaining research dependency — the ledger is done.
 
 **Paste-in order:** Pass 17 next. **After each pass:** screenshot-verify per Pass 16's
 standard before moving on — a green build is not evidence.

@@ -12,6 +12,12 @@
   "representative_system": "Punisher — Strike UAV (domestic)",
   "icon_image": "/icons/punisher.png",
   "gallery_images": [],
+  "image": {
+    "url": "https://commons.wikimedia.org/wiki/Special:FilePath/PUNISHER_DRONE_held_by_Ukrainian_soldier.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:PUNISHER_DRONE_held_by_Ukrainian_soldier.jpg",
+    "license": "See Commons file page for license",
+    "kind": "photo"
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Domestic production, unit cost not publicly disclosed",
