@@ -103,6 +103,45 @@ export function validateAsset(
     }
   }
 
+  // ── air-layer altitude (Pass 24) ───────────────────────────────────────
+  // Same philosophy as everywhere else in this file: never a hard error, and
+  // the flag lives where a reader can find it rather than only in the JSON.
+  // An airborne platform drawn at the generic domain fallback is a real gap —
+  // it is a number the scene renders as if it meant something — so it is
+  // surfaced, and an `estimated` band is surfaced one notch quieter because
+  // it is a defensible class figure rather than a missing one.
+  {
+    const platform =
+      typeof a.domain === "string"
+        ? resolvePlatformDomain({
+            domain: a.domain as Domain,
+            platform_domain: a.platform_domain as Domain | undefined,
+            category: typeof a.category === "string" ? a.category : undefined,
+          })
+        : null;
+    const airborne = platform === "air" || platform === "space";
+    const band = a.altitude_band_m as Asset["altitude_band_m"];
+    if (airborne && !band) {
+      push(
+        "warning",
+        "Airborne platform with no `altitude_band_m`; drawn at the generic per-domain fallback height, which is not a claim about this system.",
+        subject,
+      );
+    } else if (airborne && band && band.basis === "unknown") {
+      push(
+        "info",
+        "Altitude flagged `unknown` — no defensible operating band was found, so the scene draws the generic per-domain fallback. Deliberate, not a gap in the file.",
+        subject,
+      );
+    } else if (airborne && band && band.basis === "estimated") {
+      push(
+        "info",
+        "Altitude is a class-typical estimate, not a published figure for this airframe.",
+        subject,
+      );
+    }
+  }
+
   if (typeof a.distance_km_from_zero !== "number" || !Number.isFinite(a.distance_km_from_zero)) {
     push("error", "`distance_km_from_zero` must be a finite number.", subject);
     placeable = false;

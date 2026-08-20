@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import type { WorldModel } from "../data/model";
 import { SIDE_LABELS } from "../config/ui";
+// The one-liner is generated from the axis constants themselves (Pass 24) so
+// this panel can never state a compression the renderer isn't applying.
+import { compressionSummary } from "../three/depthAxis";
 import { useViewState } from "../state/viewState";
 
 const MOBILE_QUERY = "(max-width: 680px)";
@@ -76,8 +79,8 @@ export function Legend({ world }: { world: WorldModel }) {
       </p>
       {view.renderMode === "terrain3d" && (
         <p className="legend__hint">
-          Synthetic representative terrain — a strip a few km wide, full depth rear-to-rear. Not real
-          geography; distance along the axis is band-compressed exactly as in the schematic view.
+          Synthetic representative terrain — a 12 km-wide strip, full depth rear-to-rear. Not real
+          geography. {compressionSummary()}
         </p>
       )}
       {/* Follows the camera, not the data (Pass 16 item 8). In the 3D view

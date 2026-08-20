@@ -75,3 +75,64 @@ export function hasSplitDomain(
 ): boolean {
   return resolvePlatformDomain(asset) !== asset.domain;
 }
+
+// ── air-layer altitude (Pass 24) ─────────────────────────────────────────
+/**
+ * How high off the deck, in METRES. The companion to resolvePlatformDomain():
+ * that answers "does this thing fly", this answers "how high", and both are
+ * deliberately in this file rather than in a renderer, because the 3D scene,
+ * the schematic view and the detail panel must never be able to disagree.
+ *
+ * Order of preference:
+ *   1. the asset's own `altitude_band_m`, at the band's GEOMETRIC mean. These
+ *      bands are wide and skewed low — a Shahed's published 60–4,000 m
+ *      envelope is flown near its floor far more often than its ceiling — and
+ *      an arithmetic mean would put it at 2,030 m, which is a claim the
+ *      sourcing does not support. The geometric mean lands at ~490 m.
+ *   2. `symbolic`: the band is real and unrenderable (an orbital asset), so
+ *      the platform-domain fallback is used and the caller is told the height
+ *      is a symbol, not a measurement.
+ *   3. `unknown` or no band at all: the platform-domain fallback, flagged.
+ *
+ * `fallbackFor` is injected rather than imported so this module stays free of
+ * any dependency on the 3D layer — src/three/worldMapping.ts owns the
+ * per-domain table and passes it in.
+ */
+export type AltitudeBasis = "sourced" | "estimated" | "symbolic" | "unknown" | "ground";
+
+export interface ResolvedAltitude {
+  /** Metres above mean ground. */
+  metres: number;
+  basis: AltitudeBasis;
+  /** True when `metres` is a legible stand-in rather than a physical claim —
+   *  the caller should say so wherever it shows the number. */
+  symbolic: boolean;
+}
+
+export function resolveAltitudeM(
+  asset: Pick<Asset, "domain"> &
+    Partial<Pick<Asset, "platform_domain" | "category" | "altitude_band_m">>,
+  fallbackFor: (domain: Domain) => number,
+): ResolvedAltitude {
+  const platform = resolvePlatformDomain(asset);
+  const fallback = fallbackFor(platform) ?? 0;
+  const band = asset.altitude_band_m;
+
+  if (band && band.basis !== "unknown" && band.min_m !== null && band.max_m !== null) {
+    if (band.basis === "symbolic") {
+      return { metres: fallback, basis: "symbolic", symbolic: true };
+    }
+    const lo = Math.max(1, band.min_m);
+    const hi = Math.max(lo, band.max_m);
+    return { metres: Math.sqrt(lo * hi), basis: band.basis, symbolic: false };
+  }
+
+  // Nothing to draw from. A ground/sea platform is not "unknown" — it is at
+  // grade, which is a fact, so only genuinely airborne platforms are flagged.
+  const airborne = platform === "air" || platform === "space" || fallback > 0;
+  return {
+    metres: fallback,
+    basis: airborne ? (band ? "unknown" : "estimated") : "ground",
+    symbolic: airborne && !band,
+  };
+}

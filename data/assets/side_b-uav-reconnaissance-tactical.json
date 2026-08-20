@@ -99,5 +99,11 @@
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]
+  },
+  "altitude_band_m": {
+    "min_m": 1000,
+    "max_m": 1500,
+    "basis": "sourced",
+    "note": "Typical reconnaissance working height; service ceiling is 5,000 m. Published figure for this airframe."
   }
 }

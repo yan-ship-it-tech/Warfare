@@ -89,5 +89,11 @@
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]
+  },
+  "altitude_band_m": {
+    "min_m": 150,
+    "max_m": 1000,
+    "basis": "estimated",
+    "note": "Class-typical loitering-munition band. No published operating altitude for this airframe was confirmed."
   }
 }

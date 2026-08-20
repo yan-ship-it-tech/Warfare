@@ -88,5 +88,11 @@
     "notes": [
       "Specs meet the bar but the unit cost is an estimate — cost is not verified."
     ]
+  },
+  "altitude_band_m": {
+    "min_m": 4000,
+    "max_m": 7000,
+    "basis": "estimated",
+    "note": "Class-typical medium-altitude long-endurance band. No published operating altitude for this airframe was confirmed."
   }
 }

@@ -11,11 +11,65 @@
 // gets demonstrated on the same objects the rest of the tool is built from
 // instead of being asserted alongside them. Exit via the banner, Escape, or
 // clicking empty battlefield.
+//
+// Pass 24 makes Pass 23's convergence audit legible. Pass 23 wrote
+// `corpus_support`, `contested` and `caution` into data/lessons.json but
+// deliberately touched no UI, which left an UNSUPPORTED lesson rendering at
+// exactly the same visual confidence as a CONVERGENT-3 one — the opposite of
+// what that audit was for. Two rules follow:
+//   * the support tier shows in the *collapsed* row, because a reader
+//     scanning the list is exactly who the tier is meant to warn; and
+//   * `caution` on a contested lesson shows in the collapsed row too. A
+//     caveat behind an expander is a caveat most readers never see.
+// The full `corpus_support` prose stays in the expanded body — the badge is a
+// lossy summary of it and is never the only thing on offer.
 import { useState } from "react";
 import { CONNECTION_STYLE, SIDE_ACCENT } from "../config/ui";
 import { useViewState } from "../state/viewState";
 import { useRouter } from "../state/router";
 import type { PageProps } from "./registry";
+
+/**
+ * Support tiers, strongest first. Ranked so a lesson whose prose names more
+ * than one tier can be badged with its headline tier *and* its weakest one —
+ * lesson 11's cost asymmetry is CONVERGENT-2 while the statistic it used to
+ * lead with is CONTRADICTED, and collapsing that to either token alone would
+ * misreport it.
+ */
+const SUPPORT_TIERS = [
+  { token: "CONVERGENT-3", mod: "c3", note: "all three reference documents, independently" },
+  { token: "CONVERGENT-2", mod: "c2", note: "two of the three reference documents" },
+  { token: "SINGLE-SOURCE", mod: "single", note: "one reference document only" },
+  { token: "CONTRADICTED", mod: "bad", note: "the corpus argues against it" },
+  { token: "UNSUPPORTED", mod: "bad", note: "no reference document carries it" },
+] as const;
+
+type SupportTier = (typeof SUPPORT_TIERS)[number];
+
+/**
+ * Read the tier tokens back out of a lesson's `corpus_support` prose, in the
+ * order they appear. Deliberately a parser over prose rather than an enum on
+ * the record: the audit's own finding is that one lesson can hold claims at
+ * different confidences, and flattening that into a single stored enum would
+ * throw away the part most worth showing.
+ */
+function supportTiers(
+  text: string | undefined,
+): { headline: SupportTier; also: SupportTier[] } | null {
+  if (!text) return null;
+  const seen: SupportTier[] = [];
+  const re = new RegExp(SUPPORT_TIERS.map((t) => t.token).join("|"), "g");
+  for (const m of text.matchAll(re)) {
+    const tier = SUPPORT_TIERS.find((t) => t.token === m[0]);
+    if (tier && !seen.includes(tier)) seen.push(tier);
+  }
+  if (seen.length === 0) return null;
+  const [headline, ...rest] = seen;
+  // Only *weaker* tiers earn a second badge. A stronger tier mentioned later
+  // in the prose is supporting detail, not a caveat.
+  const headlineRank = SUPPORT_TIERS.indexOf(headline);
+  return { headline, also: rest.filter((t) => SUPPORT_TIERS.indexOf(t) > headlineRank) };
+}
 
 export function LessonsPage({ world }: PageProps) {
   const view = useViewState();
@@ -43,10 +97,22 @@ export function LessonsPage({ world }: PageProps) {
         doctrine section and source tag behind it, and points at the assets on the map that
         demonstrate it. {world.lessons.length} lessons.
       </p>
+      <p className="lessons__key">
+        Each lesson carries the result of the convergence audit against the three
+        lessons-learned reference documents — Russian-side, Western-side, Ukrainian-side.
+        Read the badge before the claim:
+        {SUPPORT_TIERS.map((t) => (
+          <span key={t.token} className={`support support--${t.mod}`} title={t.note}>
+            {t.token}
+            <i>{t.note}</i>
+          </span>
+        ))}
+      </p>
 
       <ol className="lessons">
         {world.lessons.map((lesson) => {
           const open = expanded === lesson.id;
+          const support = supportTiers(lesson.corpus_support);
           const linked = lesson.asset_ids
             .map((id) => world.assetsById.get(id))
             .filter((a): a is NonNullable<typeof a> => Boolean(a));
@@ -62,13 +128,42 @@ export function LessonsPage({ world }: PageProps) {
                 <span className="lessons__title">
                   <b>{lesson.title}</b>
                   <em>{lesson.summary}</em>
+                  {support && (
+                    <span className="lessons__support">
+                      <span className={`support support--${support.headline.mod}`}>
+                        {support.headline.token}
+                      </span>
+                      {support.also.map((t) => (
+                        <span key={t.token} className={`support support--${t.mod} support--part`}>
+                          part {t.token}
+                        </span>
+                      ))}
+                      {lesson.contested && (
+                        <span className="support support--contested">CONTESTED</span>
+                      )}
+                    </span>
+                  )}
                 </span>
                 <span className="lessons__chev">{open ? "▾" : "▸"}</span>
               </button>
 
+              {lesson.contested && lesson.caution && (
+                <p className="lessons__caution">
+                  <b>Caution</b>
+                  {lesson.caution}
+                </p>
+              )}
+
               {open && (
                 <div className="lessons__body">
                   <p>{lesson.detail}</p>
+
+                  {lesson.corpus_support && (
+                    <div className="lessons__corpus">
+                      <span className="lessons__links-label">Corpus support</span>
+                      <p>{lesson.corpus_support}</p>
+                    </div>
+                  )}
 
                   <div className="lessons__meta">
                     <span className="tag tag--info">{lesson.doctrine_ref}</span>
