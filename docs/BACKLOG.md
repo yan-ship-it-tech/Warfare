@@ -39,27 +39,54 @@ behavior, not a bug). Every rail feature keeps its original `railway=*`
 value in `tags`, so a renderer that wants to distinguish "still operating"
 from "disused yard" can.
 
-### ODbL attribution is owed the moment anything renders
-OSM data requires a visible "© OpenStreetMap contributors" credit. The
-string ships inside every output file's `source` block, but nothing draws
-it yet. Whoever does the integration pass owes it a place on screen —
-`AboutPage` and/or a corner credit in the view that draws the lines.
+### ODbL attribution — resolved (Pass 17)
+Read off the loaded file's own `source.attribution`, rendered as a
+persistent corner credit in the 3D view (`.scene3d__osm-credit`) and stated
+again in `AboutPage.tsx`. Verified visible with the exact attribution text
+against a running build, not just present in the source.
 
-### Real geography vs. the band-compressed X axis — a product decision
-The scene's X axis is non-linear distance-from-the-zero-line, not metres
-(`src/three/worldMapping.ts`, `docs/DECISIONS.md` Pass 5/6). A 17 km AOI
-laid over it at the default bands crosses band boundaries and stretches
-non-uniformly, which visibly bends a straight rail line. Three ways out —
-metric inset inside one band, lateral-only (Z) use, or a separate
-real-geography view — are laid out in `docs/OSM_PIPELINE.md`. This needs
-picking *before* extrusion/instancing code is written, and it is a
-different question from the renderer diagnostic (3D meshes vs. 2.5D
-sprites) the integration prompt is already waiting on.
+### Real geography vs. the band-compressed X axis — resolved (Pass 17), Option 1
+Metric inset, per the decision already recorded in `PLANNING.md`'s
+do-not-relitigate table: the AOI draws at its own true scale (derived live
+from the projection at one anchor point, not the compressed axis) inside
+`op_near`, side_a, 17 km — a local patch, not a claim about the whole map.
+`src/three/osmTerrain.ts`; anchor/scale derivation and clipping approach in
+`docs/DECISIONS.md` Pass 17.
 
 ### Multipolygon forests are not fetched
 The brief's queries select ways only, and the script follows that. Large
 forests mapped as OSM *relations* will be missing. Worth revisiting once
 there is real data to look at and the tree coverage can be judged.
+
+---
+
+## Open after Pass 17 (world and terrain)
+
+### Draw calls: 845/865 (Pass 16) → 1140 — the new ceiling for Pass 19
+Not from the OSM inset (disciplined by design: 4 draw calls total for the
+whole rail/road/river/tree layer). From the destroyed bridge, pontoon
+crossing, and ten new `TERRAIN_FEATURES` — each a handful of individually-
+authored meshes, the same hand-placed-landmark convention `LANDMARKS`
+already used for every village and power plant, just ~40 more of them.
+Recorded rather than fixed here, matching Pass 16's own precedent of
+deferring instancing to Pass 19 alongside the shader/material-palette work
+it needs. See `docs/DECISIONS.md` Pass 17 for the full before/after.
+
+### Kramatorsk still needs fetching
+`data/osm/kramatorsk.json` doesn't exist yet (same egress block as always —
+see the Pass 11 entry above). The Pass 17 integration (`osmTerrain.ts`) is
+written against Pokrovsk specifically (one hardcoded anchor/AOI); a second
+inset would need at minimum a second anchor point and probably a second
+`buildOsmInset()` call parameterized by AOI, not a code change to the
+clipping/ribbon-building logic itself.
+
+### `terrain3d.ts`'s river is a second hardcoded fixed-world-X feature
+Same convention as the Pass 10 coastal basin and the destruction gradient —
+deliberate (`terrainHeight()` has to stay a pure `(x,z)` function; see that
+file's header) but worth naming: a future band-editing UI that lets users
+reshape the strip more dramatically would need to reconsider whether the
+river's world-X placement should track live bands the way `worldXFor`-based
+landmarks already do.
 
 ---
 

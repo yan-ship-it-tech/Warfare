@@ -25,7 +25,15 @@
 import * as THREE from "three";
 import type { Side } from "../types";
 import type { Projection } from "../scene/projection";
-import { terrainHeight, buildWater } from "./terrain3d";
+import {
+  terrainHeight,
+  buildWater,
+  buildRiverWater,
+  isInWater,
+  riverCenterAt,
+  RIVER_HALF_WIDTH,
+  RIVER_WATER_LEVEL_Y,
+} from "./terrain3d";
 import { worldXFor, STRIP_HALF_Z } from "./worldMapping";
 
 const CONCRETE = new THREE.MeshStandardMaterial({ color: "#6b6d63", flatShading: true, roughness: 0.92 });
@@ -220,6 +228,58 @@ function buildUrbanCluster(seed: number): THREE.Group {
   return g;
 }
 
+// ── tactical terrain features (Pass 17 item 6, for Pass 18 to build into) ──
+// PLANNING.md's Pass 18 brief needs these to exist before it can site assets
+// "where they'd actually sit" — artillery hidden in forest, a drone team on
+// an elevated treeline, infantry holding a built-up block. This pass builds
+// the ground truth; Pass 18 owns deciding which asset goes where. See
+// TERRAIN_FEATURES below for the exported, Pass-18-facing list.
+const CANOPY = new THREE.MeshStandardMaterial({ color: "#3f5330", flatShading: true, roughness: 1 });
+const EARTH_MOUND = new THREE.MeshStandardMaterial({ color: "#4a4230", flatShading: true, roughness: 1 });
+
+/** Intact-canopy trees, distinct from props.ts's shattered near-line
+ *  treeline on purpose — a forest patch offered as artillery cover has to
+ *  actually read as cover (still standing, canopy overhead), not as more of
+ *  the same bare-trunk battle damage already scattered everywhere else. */
+function buildTreeCluster(r: () => number, count: number, spreadX: number, spreadZ: number): THREE.Group {
+  const g = new THREE.Group();
+  for (let i = 0; i < count; i++) {
+    const x = (r() - 0.5) * spreadX;
+    const z = (r() - 0.5) * spreadZ;
+    const h = 2.6 + r() * 2.2;
+    const trunk = cyl(0.08, 0.22, h, 5, WOOD);
+    trunk.position.set(x, h / 2, z);
+    g.add(trunk);
+    const canopy = new THREE.Mesh(new THREE.ConeGeometry(0.9 + r() * 0.6, 1.6 + r() * 1.2, 6), CANOPY);
+    canopy.position.set(x, h + 0.4, z);
+    g.add(canopy);
+  }
+  return g;
+}
+
+/** A forest patch — artillery cover: dense canopy a battery can hide a tube
+ *  and its resupply track under without digging a full firing pit. */
+function buildForestPatch(seed: number): THREE.Group {
+  return buildTreeCluster(rngLocal(seed), 22, 11, 9);
+}
+
+/** An elevated treeline — a raised earthen ridge (a real fold in the ground,
+ *  not just taller trees) topped with a treeline, the high-and-covered
+ *  combination a drone team actually wants for a launch/recovery position:
+ *  line of sight over the surrounding ground plus overhead concealment. */
+function buildElevatedTreeline(seed: number): THREE.Group {
+  const g = new THREE.Group();
+  const r = rngLocal(seed);
+  const ridge = box(9, 1.1, 3, EARTH_MOUND);
+  ridge.position.y = 0.55;
+  ridge.rotation.y = (r() - 0.5) * 0.6;
+  g.add(ridge);
+  const trees = buildTreeCluster(r, 12, 9, 2.4);
+  trees.position.y = 1.05;
+  g.add(trees);
+  return g;
+}
+
 /** A small harbour: a couple of warehouse volumes on the dry side plus a
  *  pier reaching out over the water — this is the "place to build out the
  *  Russia-naval category" item 2 asked for, sitting right at the coastline
@@ -297,6 +357,124 @@ function rngLocal(seed: number) {
   };
 }
 
+// ── river crossings (Pass 17 item 5) ──────────────────────────────────────
+// Positioned directly from the river's own geometry (terrain3d.ts's
+// riverCenterAt/RIVER_HALF_WIDTH), in world-X/Z, not through the LANDMARKS
+// side+km convention below — a crossing has no "distance from the zero line"
+// of its own to author; it sits wherever the river actually is at the Z it's
+// placed at.
+const BRIDGE_DECK = new THREE.MeshStandardMaterial({ color: "#5a5850", flatShading: true, roughness: 0.85 });
+const BRIDGE_DECK_BROKEN = new THREE.MeshStandardMaterial({ color: "#3d3b35", flatShading: true, roughness: 0.9 });
+const REBAR = new THREE.MeshStandardMaterial({ color: "#4a453e", flatShading: true, roughness: 0.6, metalness: 0.5 });
+const PONTOON_MAT = new THREE.MeshStandardMaterial({ color: "#3c4a3a", flatShading: true, roughness: 0.85 });
+const SMOKE_MAT = new THREE.MeshStandardMaterial({
+  color: "#57585a",
+  transparent: true,
+  opacity: 0.32,
+  flatShading: true,
+  roughness: 1,
+  depthWrite: false,
+});
+
+/** A rising smoke plume: a handful of overlapping soft spheres, larger and
+ *  more transparent higher up. Cheap and legible at any zoom without a real
+ *  particle system — reused at the destroyed bridge and available to any
+ *  future wreck placement. Item 6 named "craters, burnt vehicle hulks,
+ *  smoke, damaged treelines" as the contested-zone dressing; craters, hulks
+ *  and thinned/damaged treelines already existed on this map (props.ts,
+ *  and this file's trench/obstacle/fighting-position belt) — smoke was the
+ *  one actually missing, not a retune. */
+function buildSmokePlume(seed: number): THREE.Group {
+  const g = new THREE.Group();
+  const r = rngLocal(seed);
+  let y = 0.3;
+  for (let i = 0; i < 4; i++) {
+    const s = 0.5 + i * 0.35 + r() * 0.2;
+    const puff = new THREE.Mesh(new THREE.SphereGeometry(s, 6, 5), SMOKE_MAT);
+    puff.position.set((r() - 0.5) * 0.8 * i, y, (r() - 0.5) * 0.8 * i);
+    g.add(puff);
+    y += s * 1.1;
+  }
+  return g;
+}
+
+/** A destroyed river bridge: two deck approaches from each bank that don't
+ *  meet, tilted down toward the gap rather than merely stopping short (what
+ *  actually reads as "destroyed" instead of "under construction"); a
+ *  collapsed span fallen into the water between them; exposed rebar; a
+ *  smoke plume. Deck height is measured from the water surface, not from
+ *  terrainHeight() at the channel centre — that call already includes the
+ *  river's own depression, so anchoring to it would put the deck barely
+ *  above the riverbed instead of above the water. */
+function buildDestroyedBridge(z: number): THREE.Group {
+  const g = new THREE.Group();
+  const cx = riverCenterAt(z);
+  const deckY = RIVER_WATER_LEVEL_Y + 2.4;
+  const span = RIVER_HALF_WIDTH * 2 + 5; // reaches a little past each bank
+  const r = rngLocal(0x8271 ^ Math.round(z * 97));
+
+  for (const dir of [-1, 1] as const) {
+    const bankX = cx + dir * span * 0.5;
+    const gapX = cx + dir * RIVER_HALF_WIDTH * 0.5;
+    const len = Math.abs(bankX - gapX);
+    const deck = box(len, 0.5, 4.2, BRIDGE_DECK);
+    deck.position.set((bankX + gapX) / 2, deckY, z);
+    deck.rotation.z = -dir * 0.15;
+    g.add(deck);
+
+    for (let p = 0; p < 3; p++) {
+      const px = bankX - dir * (((p + 0.5) / 3) * len);
+      const groundY = terrainHeight(px, z);
+      const pier = cyl(0.4, 0.55, Math.max(0.6, deckY - groundY), 6, CONCRETE_DARK);
+      pier.position.set(px, (deckY + groundY) / 2, z);
+      g.add(pier);
+    }
+  }
+
+  const fallen = box(span * 0.3, 0.45, 4, BRIDGE_DECK_BROKEN);
+  fallen.position.set(cx, RIVER_WATER_LEVEL_Y + 0.2, z + 1.1);
+  fallen.rotation.set(0.5, 0.22, 0.3);
+  g.add(fallen);
+
+  for (let i = 0; i < 5; i++) {
+    const bar = cyl(0.04, 0.04, 1.4 + r() * 0.8, 4, REBAR);
+    bar.position.set(cx + (i - 2) * 0.5, RIVER_WATER_LEVEL_Y + 0.6, z - 1.4 + i * 0.3);
+    bar.rotation.set(0.9 + r() * 0.2, 0, 0.3);
+    g.add(bar);
+  }
+
+  g.add(buildSmokePlume(0x9a01 ^ Math.round(z * 31)));
+  return g;
+}
+
+/** An improvised pontoon crossing: a chain of low floating segments riding
+ *  at the water line, plus a single guide-rope line — the one detail that
+ *  sells "improvised" against the destroyed bridge's collapsed permanence.
+ *  Placed at a distinct Z from the bridge so the two read as separate
+ *  crossings, the way a real unit would build a second route rather than
+ *  queue at the one the enemy has already ranged. */
+function buildPontoonCrossing(z: number): THREE.Group {
+  const g = new THREE.Group();
+  const cx = riverCenterAt(z);
+  const halfW = RIVER_HALF_WIDTH * 0.82;
+  const segCount = 7;
+  for (let i = 0; i < segCount; i++) {
+    const t = i / (segCount - 1);
+    const x = cx - halfW + t * halfW * 2;
+    const seg = box(0.9, 0.22, 1.1, PONTOON_MAT);
+    seg.position.set(x, RIVER_WATER_LEVEL_Y + 0.14, z + Math.sin(t * Math.PI) * 0.3);
+    seg.rotation.y = (t - 0.5) * 0.1;
+    g.add(seg);
+  }
+  // A thin box, not a Line — every other piece of geometry in this file is a
+  // Mesh, and disposeScenery() below only walks Mesh/InstancedMesh. A Line
+  // here would leak its geometry on every terrain rebuild.
+  const rope = box(halfW * 2, 0.04, 0.04, WOOD);
+  rope.position.set(cx, RIVER_WATER_LEVEL_Y + 0.5, z);
+  g.add(rope);
+  return g;
+}
+
 const villageRuined = () => buildVillage("ruined", 0xb17e, 5);
 const villageDamaged = () => buildVillage("damaged", 0xc0de, 6);
 const villageIntact = () => buildVillage("intact", 0xfeed, 7);
@@ -312,6 +490,16 @@ const LANDMARK_BUILDERS = {
   port_harbor: buildPortHarbor,
   ruined_infrastructure: buildRuinedInfrastructure,
   wreck_marker: () => buildWreckMarker(0x9a11),
+} as const;
+
+const TACTICAL_FEATURE_BUILDERS = {
+  forest_patch: () => buildForestPatch(0x513e),
+  elevated_treeline: () => buildElevatedTreeline(0xd7a2),
+  // Same builder as the deep-rear "urban_cluster" landmark — a built-up
+  // block is the same kind of ground at a different, tactically relevant
+  // distance from the line, not a different shape. Placement is what makes
+  // it read as "a block a squad could hold" rather than "a town."
+  built_up_block: () => buildUrbanCluster(0xb10c),
 } as const;
 
 interface LandmarkSpec {
@@ -378,6 +566,46 @@ const LANDMARKS: LandmarkSpec[] = [
   { kind: "wreck_marker", side: "side_a", km: 4, z: -26, rotationY: 1.1 },
 ];
 
+/** A terrain feature Pass 18 can site an asset "into" — exported (unlike
+ *  `LANDMARKS` above) specifically so that pass can read `TERRAIN_FEATURES`
+ *  and place an asset at/near a real `(side, km, z)` this ground actually
+ *  supports, rather than continuing to pick coordinates blind. `radius` is
+ *  the rough usable extent, world units, for "does this asset sit inside the
+ *  feature" — not a hard boundary, a siting hint. `use` states the intent in
+ *  words so Pass 18 doesn't have to infer it from the geometry or the kind
+ *  name alone. */
+export interface TerrainFeature {
+  id: string;
+  kind: keyof typeof TACTICAL_FEATURE_BUILDERS;
+  side: Side;
+  km: number;
+  z: number;
+  radius: number;
+  use: string;
+}
+
+export const TERRAIN_FEATURES: TerrainFeature[] = [
+  // Forest patches — artillery cover, per item 6. Sited in the 5-20 km band
+  // where a tube would actually be dug in, not the open 0-5 km scar.
+  { id: "forest-a-1", kind: "forest_patch", side: "side_a", km: 8, z: 24, radius: 6, use: "artillery firing position under canopy" },
+  { id: "forest-a-2", kind: "forest_patch", side: "side_a", km: 16, z: -34, radius: 6, use: "artillery firing position under canopy" },
+  { id: "forest-b-1", kind: "forest_patch", side: "side_b", km: 10, z: -22, radius: 6, use: "artillery firing position under canopy" },
+  { id: "forest-b-2", kind: "forest_patch", side: "side_b", km: 15, z: 38, radius: 6, use: "artillery firing position under canopy" },
+
+  // Elevated treelines — drone team observation/launch positions. Closer to
+  // the line than the forest patches: a drone team needs line of sight to
+  // the contact area, not deep cover.
+  { id: "ridge-a-1", kind: "elevated_treeline", side: "side_a", km: 4, z: 12, radius: 5, use: "drone launch/observation position" },
+  { id: "ridge-a-2", kind: "elevated_treeline", side: "side_a", km: 6, z: -18, radius: 5, use: "drone launch/observation position" },
+  { id: "ridge-b-1", kind: "elevated_treeline", side: "side_b", km: 5, z: 6, radius: 5, use: "drone launch/observation position" },
+  { id: "ridge-b-2", kind: "elevated_treeline", side: "side_b", km: 4.5, z: -30, radius: 5, use: "drone launch/observation position" },
+
+  // Built-up blocks — infantry-holdable ground, closer to the line than the
+  // existing deep-rear "urban_cluster" villages/towns.
+  { id: "block-a-1", kind: "built_up_block", side: "side_a", km: 7, z: -10, radius: 9, use: "infantry-held built-up block" },
+  { id: "block-b-1", kind: "built_up_block", side: "side_b", km: 6, z: 16, radius: 9, use: "infantry-held built-up block" },
+];
+
 // ── near-line belt (instanced: trench segments, wire, fighting positions) ─
 
 function rng(seed: number) {
@@ -405,6 +633,12 @@ function buildTrenchLine(proj: Projection, side: Side): THREE.Group {
   while (z < STRIP_HALF_Z - 6) {
     const jog = (r() - 0.5) * (x1 - x0) * 0.6;
     const x = x0 + (x1 - x0) * 0.5 + jog;
+    if (isInWater(x, z)) {
+      // The river cuts a real gap in the line here rather than a trench
+      // dug straight through open water — the march continues past it.
+      z += segLen * 0.85;
+      continue;
+    }
     const trench = box(1.6, 0.9, segLen, trenchMat);
     trench.position.set(x, terrainHeight(x, z) + 0.1, z);
     trench.rotation.y = (r() - 0.5) * 0.5;
@@ -431,15 +665,19 @@ function buildObstacleBelt(proj: Projection, side: Side, count: number): THREE.I
   const r = rng(side === "side_a" ? 0x0bad : 0xf00d);
   const xCenter = worldXFor(side, 0.15, proj);
 
+  let placed = 0;
   for (let i = 0; i < count; i++) {
     const z = -STRIP_HALF_Z + (i / count) * STRIP_HALF_Z * 2;
     const x = xCenter + (r() - 0.5) * 2.2;
+    if (isInWater(x, z)) continue; // no dragon's teeth in the river
     dummy.position.set(x, terrainHeight(x, z) + 0.3, z);
     dummy.rotation.set(0, r() * Math.PI, 0);
     dummy.scale.setScalar(0.8 + r() * 0.5);
     dummy.updateMatrix();
-    mesh.setMatrixAt(i, dummy.matrix);
+    mesh.setMatrixAt(placed, dummy.matrix);
+    placed++;
   }
+  mesh.count = placed;
   mesh.instanceMatrix.needsUpdate = true;
   mesh.name = `scenery:obstacles:${side}`;
   return mesh;
@@ -458,6 +696,7 @@ function buildFightingPositions(proj: Projection, side: Side, count: number): TH
   for (let i = 0; i < count; i++) {
     const x = xNear + (xFar - xNear) * r();
     const z = (r() * 2 - 1) * STRIP_HALF_Z;
+    if (isInWater(x, z)) continue; // no dug-in pit sits in the river
     const pit = cyl(1.1, 1.3, 0.5, 6, DIRT_WALL);
     pit.position.set(x, terrainHeight(x, z) - 0.1, z);
     g.add(pit);
@@ -499,6 +738,16 @@ export function buildScenery(proj: Projection, budget: SceneryBudget, halfWidthX
     g.add(model);
   }
 
+  // Pass 17 item 6 / Pass 18 dependency: real ground for the tactical siting
+  // TERRAIN_FEATURES describes, not just data with nothing standing on it.
+  for (const feature of TERRAIN_FEATURES) {
+    const model = TACTICAL_FEATURE_BUILDERS[feature.kind]();
+    const x = worldXFor(feature.side, feature.km, proj);
+    model.position.set(x, terrainHeight(x, feature.z), feature.z);
+    model.name = `scenery:feature:${feature.id}`;
+    g.add(model);
+  }
+
   for (const side of ["side_a", "side_b"] as Side[]) {
     g.add(buildTrenchLine(proj, side));
     g.add(buildObstacleBelt(proj, side, budget.obstaclesPerSide));
@@ -507,6 +756,17 @@ export function buildScenery(proj: Projection, budget: SceneryBudget, halfWidthX
 
   const water = buildWater(halfWidthX);
   if (water) g.add(water);
+
+  g.add(buildRiverWater());
+  // Bridge dead centre of the strip (z=0); pontoon offset 14 units along Z
+  // so the two crossings never overlap (bridge span ≈ RIVER_HALF_WIDTH*2+5
+  // ≈ 17, well clear of a 14-unit offset).
+  const bridge = buildDestroyedBridge(0);
+  bridge.name = "scenery:river-bridge";
+  g.add(bridge);
+  const pontoon = buildPontoonCrossing(14);
+  pontoon.name = "scenery:pontoon-crossing";
+  g.add(pontoon);
 
   return g;
 }

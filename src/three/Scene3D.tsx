@@ -24,6 +24,7 @@ import { resolveAssetDisplay } from "../data/catalog";
 import { buildTerrain, terrainHeight } from "./terrain3d";
 import { buildProps, PROP_BUDGET } from "./props";
 import { buildScenery, disposeScenery, SCENERY_BUDGET } from "./scenery";
+import { loadOsmData, buildOsmInset, disposeOsmInset } from "./osmTerrain";
 import { buildHeroModel, hasHeroModel } from "./models";
 import { perf } from "./perfMonitor";
 import {
@@ -285,6 +286,10 @@ export function Scene3D({ world }: { world: WorldModel }) {
   /** Transient confirmation for a completed drag. A drag no longer opens the
    *  detail panel (item 4) — this is what tells you the drop landed. */
   const [dropNote, setDropNote] = useState<string | null>(null);
+  /** ODbL credit string, read off the loaded OSM file itself rather than
+   *  hardcoded — set once, the one time the inset finishes loading (Pass 17
+   *  item 2: the attribution is non-optional the moment the data renders). */
+  const [osmAttribution, setOsmAttribution] = useState<string | null>(null);
   // Catalog swaps must show through here too, or the same asset would carry
   // two different names depending on which view you were looking at.
   const swapNames = useMemo(() => {
@@ -951,26 +956,44 @@ export function Scene3D({ world }: { world: WorldModel }) {
     const stripeMat = new THREE.LineBasicMaterial({ color: "#ffffff", transparent: true, opacity: 0.55 });
     zero.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(stripePts), stripeMat));
 
-    // Distance graticule: one standing gate per band edge, both sides. These
-    // are the 3D equivalent of the 2D ruler's band boundaries and are placed
-    // through the identical projection call, so the two views cannot drift.
-    const gateMat = new THREE.LineBasicMaterial({ color: "#7d8798", transparent: true, opacity: 0.35 });
-    for (const span of proj.spans) {
-      for (const side of ["side_a", "side_b"] as const) {
-        const x = worldXFor(side, span.band.max_km, proj);
-        const pts = [
-          new THREE.Vector3(x, terrainHeight(x, -70) - 1, -70),
-          new THREE.Vector3(x, terrainHeight(x, -70) + 13, -70),
-          new THREE.Vector3(x, terrainHeight(x, 70) + 13, 70),
-          new THREE.Vector3(x, terrainHeight(x, 70) - 1, 70),
-        ];
-        zero.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), gateMat));
-      }
-    }
+    // Pass 17 item 0/6: the "distance graticule" that used to live here — one
+    // open-frame line per band edge, standing 14 units tall and spanning the
+    // full ±70 Z width of the strip — is REMOVED, not retuned. Confirmed by an
+    // A/B screenshot test (docs/DECISIONS.md Pass 17): from most oblique
+    // camera angles these open picture-frames stack up and read as broken
+    // rectangular wireframes floating in the sky — exactly the "hard border/
+    // seam artifact" this pass's item 0 was sent to find. They were also
+    // already redundant: Pass 16 built the real equivalent, the DOM `ruler3d`
+    // overlay, which shows the same band boundaries as an actual banded ruler
+    // with a live km-per-100px readout instead of a standing line nobody could
+    // read distance off of. Do not re-add a 3D-space graticule here — extend
+    // the 2D ruler overlay instead if band boundaries need a stronger cue.
 
     scene.add(terrain, props, scenery, zero);
 
+    // The OSM metric inset (Pass 17 item 1) loads asynchronously — its data
+    // file is a dynamic import specifically so it gets its own chunk instead
+    // of bloating the always-loaded Scene3D bundle (see osmTerrain.ts's
+    // header). `cancelled` guards against this exact effect having already
+    // been cleaned up (a band edit, a fast unmount) by the time the import
+    // resolves — without it, a stale build could add geometry to a scene
+    // this effect no longer owns.
+    let cancelled = false;
+    let osmGroup: THREE.Group | null = null;
+    loadOsmData().then((osm) => {
+      if (cancelled) return;
+      const built = buildOsmInset(osm, proj);
+      osmGroup = built.group;
+      scene.add(osmGroup);
+      setOsmAttribution(built.attribution);
+    });
+
     return () => {
+      cancelled = true;
+      if (osmGroup) {
+        scene.remove(osmGroup);
+        disposeOsmInset(osmGroup);
+      }
       scene.remove(terrain, props, scenery, zero);
       terrain.geometry.dispose();
       (terrain.material as THREE.Material).dispose();
@@ -986,7 +1009,6 @@ export function Scene3D({ world }: { world: WorldModel }) {
       });
       zeroMat.dispose();
       stripeMat.dispose();
-      gateMat.dispose();
     };
   }, [proj, ready]);
 
@@ -1627,6 +1649,12 @@ export function Scene3D({ world }: { world: WorldModel }) {
       <div className="scene3d__dropnote" role="status" aria-live="polite">
         {dropNote ? <span>{dropNote}</span> : null}
       </div>
+
+      {/* ODbL credit (Pass 17 item 2) — non-optional the moment the OSM
+          inset's rail/tree/road geometry is actually on screen. Read off the
+          loaded file's own `source.attribution`, not hardcoded, so it can
+          never drift from what the data file itself declares. */}
+      {osmAttribution && <div className="scene3d__osm-credit">{osmAttribution}</div>}
     </div>
   );
 }

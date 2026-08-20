@@ -125,6 +125,22 @@ export function AboutPage({ world }: PageProps) {
         dependency-line overlay.
       </p>
 
+      <h3>One real patch inside the synthetic terrain</h3>
+      <p>
+        Since Pass 17, one small area of the 3D terrain draws real coordinates — rail lines, tree
+        rows and roads from an OpenStreetMap extract around a real Donbas rail junction — rather than
+        the generated value-noise ground everywhere else. It sits as a <em>metric inset</em>: drawn at
+        its own true, undistorted scale inside one distance band, a local patch rather than a claim
+        about the whole map, because the band-compressed axis above cannot host real geography without
+        visibly bending a straight rail line. The UI never names the source town, on purpose — it's an
+        illustrative composite, not a claim that any specific real place sits at that point on the
+        strip. Wider terrain patterns (tree-row spacing and orientation, field parcel size) are tuned
+        from the same dataset's real statistics rather than picked by eye — see
+        <code> scripts/analyze-osm-patterns.mjs</code>. OpenStreetMap data is ODbL-licensed, which
+        requires a visible credit wherever it renders — shown in the corner of the 3D view itself, not
+        only here.
+      </p>
+
       <h3>Equipment photography — sourced, not generated</h3>
       <p>
         12 of 27 assets — the most recognizable named systems on each side — carry a real, licensed

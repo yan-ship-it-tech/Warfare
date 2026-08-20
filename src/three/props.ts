@@ -16,7 +16,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 import * as THREE from "three";
 import { STRIP_HALF_Z, hashId } from "./worldMapping";
-import { terrainHeight, damageIntensity } from "./terrain3d";
+import { terrainHeight, damageIntensity, isInWater, BELT_X_FREQ } from "./terrain3d";
 
 /** Deterministic RNG so the scatter is identical on every load. */
 function rng(seed: number) {
@@ -55,10 +55,15 @@ function buildTrees(halfWidthX: number, count: number): THREE.InstancedMesh {
 
     // Treelines in this landscape follow field boundaries, not open ground —
     // banding on z keeps them in belts instead of dusting them everywhere.
-    const belt = Math.abs(Math.sin(z * 0.09 + x * 0.004));
+    // BELT_X_FREQ (terrain3d.ts) is derived from data/osm/pokrovsk.json's
+    // real windbreak-row orientation, not picked by eye — see that file's
+    // header and docs/DECISIONS.md Pass 17 for the worked derivation.
+    const belt = Math.abs(Math.sin(z * 0.09 + x * BELT_X_FREQ));
     if (belt < 0.72 && r() > 0.12) continue;
     // Thinned out right at the line, where nothing is left standing.
     if (Math.abs(x) < 16 && r() > 0.25) continue;
+    // Nothing grows in the river or the coastal basin.
+    if (isInWater(x, z)) continue;
 
     const dmg = damageIntensity(x);
     // A damaged belt also skews shorter — storm-broken trunks, not full height.
@@ -91,18 +96,24 @@ function buildCraters(count: number): THREE.InstancedMesh {
   const mesh = new THREE.InstancedMesh(geo, mat, count);
   const r = rng(0xc4a7e5);
 
-  for (let i = 0; i < count; i++) {
+  let placed = 0;
+  let guard = 0;
+  while (placed < count && guard < count * 40) {
+    guard++;
     // Gaussian-ish clustering on x via summed uniforms.
     const g = (r() + r() + r() - 1.5) / 1.5;
     const x = g * 34;
     const z = (r() * 2 - 1) * STRIP_HALF_Z;
+    if (isInWater(x, z)) continue; // no shell craters mid-river
     const s = 0.7 + r() * 1.9;
     dummy.position.set(x, terrainHeight(x, z) - 0.16, z);
     dummy.rotation.set(0, r() * Math.PI, 0);
     dummy.scale.set(s, 0.5 + r() * 0.5, s);
     dummy.updateMatrix();
-    mesh.setMatrixAt(i, dummy.matrix);
+    mesh.setMatrixAt(placed, dummy.matrix);
+    placed++;
   }
+  mesh.count = placed;
   mesh.instanceMatrix.needsUpdate = true;
   mesh.name = "props:craters";
   return mesh;
@@ -115,16 +126,22 @@ function buildScrub(halfWidthX: number, count: number): THREE.InstancedMesh {
   const mesh = new THREE.InstancedMesh(geo, mat, count);
   const r = rng(0x9b1d);
 
-  for (let i = 0; i < count; i++) {
+  let placed = 0;
+  let guard = 0;
+  while (placed < count && guard < count * 40) {
+    guard++;
     const x = (r() * 2 - 1) * halfWidthX;
     const z = (r() * 2 - 1) * STRIP_HALF_Z;
+    if (isInWater(x, z)) continue;
     const s = 0.4 + r() * 1.1;
     dummy.position.set(x, terrainHeight(x, z) + 0.1, z);
     dummy.rotation.set(r() * Math.PI, r() * Math.PI, r() * Math.PI);
     dummy.scale.setScalar(s);
     dummy.updateMatrix();
-    mesh.setMatrixAt(i, dummy.matrix);
+    mesh.setMatrixAt(placed, dummy.matrix);
+    placed++;
   }
+  mesh.count = placed;
   mesh.instanceMatrix.needsUpdate = true;
   mesh.name = "props:scrub";
   return mesh;
@@ -147,19 +164,25 @@ function buildWreckHusks(count: number): THREE.InstancedMesh {
   const mesh = new THREE.InstancedMesh(geo, mat, count);
   const r = rng(0xdead10cc);
 
-  for (let i = 0; i < count; i++) {
+  let placed = 0;
+  let guard = 0;
+  while (placed < count && guard < count * 40) {
+    guard++;
     // Tighter clustering than craters — wrecks are rarer and belong closer
     // to the line, inside roughly the 0-10 km destruction band.
     const g = (r() + r() + r() - 1.5) / 1.5;
     const x = g * 20;
     const z = (r() * 2 - 1) * STRIP_HALF_Z;
+    if (isInWater(x, z)) continue; // a burnt hull can sit on a riverbank, not in the channel
     const s = 0.7 + r() * 0.6;
     dummy.position.set(x, terrainHeight(x, z) + 0.28, z);
     dummy.rotation.set((r() - 0.5) * 0.4, r() * Math.PI, (r() - 0.5) * 0.5);
     dummy.scale.setScalar(s);
     dummy.updateMatrix();
-    mesh.setMatrixAt(i, dummy.matrix);
+    mesh.setMatrixAt(placed, dummy.matrix);
+    placed++;
   }
+  mesh.count = placed;
   mesh.instanceMatrix.needsUpdate = true;
   mesh.name = "props:wrecks";
   return mesh;

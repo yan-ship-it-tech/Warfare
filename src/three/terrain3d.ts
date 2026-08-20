@@ -74,6 +74,29 @@ export function damageIntensity(x: number): number {
   return DESTRUCTION_V[DESTRUCTION_V.length - 1];
 }
 
+// ── OSM-derived pattern constants (Pass 17 item 3) ────────────────────────
+// Numbers below come from `scripts/analyze-osm-patterns.mjs` run against
+// data/osm/pokrovsk.json, not from eyeballing a value that looked plausible
+// — see docs/DECISIONS.md Pass 17 for the script's printed output and the
+// exact derivation. This file's field-patchwork tint gets the block-size
+// anisotropy; props.ts's `buildTrees()` belt banding gets the orientation
+// (BELT_X_FREQ, re-exported for that file to import rather than duplicating
+// the derivation there).
+/** Field-cell noise frequency along X — unchanged from the pre-Pass-17
+ *  isotropic 0.05, since only the anisotropy (the Z/X ratio) is what the OSM
+ *  data actually informs; the base wavelength has no real-km analogue to
+ *  derive it from (see the analysis script's header). */
+export const FIELD_CELL_X_FREQ = 0.05;
+/** = FIELD_CELL_X_FREQ / (median closed-ring √area ÷ median open-row length)
+ *  = 0.05 / 0.486 ≈ 0.103 — real OSM parcels measure smaller, relative to the
+ *  windbreak rows bordering them, than one isotropic frequency implies. */
+export const FIELD_CELL_Z_FREQ = 0.103;
+/** = 0.09 (props.ts's unchanged z-frequency) × tan(180° − 157.5°) ≈ 0.0373 —
+ *  the x-frequency that makes the belt pattern's own contour line match the
+ *  dominant orientation measured across Pokrovsk's real windbreak rows,
+ *  instead of the un-derived 0.004 it shipped with before this pass. */
+export const BELT_X_FREQ = 0.0373;
+
 // ── coastal basin (Black Sea, side_b deep rear only) ────────────────────
 // Same fixed-world-X convention as the destruction gradient above. Chosen so
 // the existing side_b-strategic-target-power-plant asset (250 km, x≈122)
@@ -98,6 +121,56 @@ function coastalDepression(x: number, z: number): number {
   return t * COAST_DEPTH;
 }
 
+// ── river (crosses the front — Pass 17 item 4) ────────────────────────────
+// Chosen over "wrap the coastal basin forward to meet the front", the other
+// option the brief posed. A river crossing the contact line is far more
+// characteristic of this specific war (Dnipro/Kherson) than extending the
+// existing Black Sea inlet, and it explains *why* the front sits where it
+// does rather than only decorating the deep rear — see docs/DECISIONS.md
+// Pass 17 for the full reasoning. The existing coastal basin ~130+ world-X
+// out is untouched: it isn't "the front," it's Pass 10's already-shipped
+// Black Sea Fleet / port-harbor setting, and nothing here moves it.
+//
+// Runs along Z (crossing the strip, not along it) at a wobbling X near the
+// zero line, biased slightly onto side_b's bank — the same near/far-bank
+// asymmetry the real Kherson front has (Ukraine holding the near bank,
+// Russia the far one). The offset and half-width were sized against the
+// actual shipped roster, not guessed: the closest any current asset sits to
+// the line is exactly 2 km on both sides (worldX ±18.83 under the default
+// projection — docs/DECISIONS.md Pass 17), so a channel whose water width
+// stays under ~16 world units can never put a real asset underwater.
+export const RIVER_CENTER_X = 3;
+export const RIVER_HALF_WIDTH = 6;
+export const RIVER_DEPTH = 3.2;
+export const RIVER_WATER_LEVEL_Y = -3;
+
+/** Wobbling channel centre — same low-frequency-noise shoreline technique
+ *  coastalDepression() already uses, applied along Z instead of X since this
+ *  channel runs the other way across the strip. */
+export function riverCenterAt(z: number): number {
+  return RIVER_CENTER_X + (valueNoise(z * 0.05, 91.5, 53) - 0.5) * 10;
+}
+
+/** How far below the undepressed terrain (x, z) sits inside the river
+ *  channel, 0 outside it. Same smooth falloff shape as coastalDepression. */
+function riverDepression(x: number, z: number): number {
+  const d = Math.abs(x - riverCenterAt(z));
+  if (d >= RIVER_HALF_WIDTH) return 0;
+  return smooth(1 - d / RIVER_HALF_WIDTH) * RIVER_DEPTH;
+}
+
+/** True wherever the coastal basin or the river genuinely holds water.
+ *  props.ts's scatter and scenery.ts's near-line dressing both skip
+ *  instancing here, so a tree, crater or trench segment never lands
+ *  underwater — a gap that existed for the coastal basin even before this
+ *  pass (nothing previously excluded it either) and is fixed here as the
+ *  same check now has two basins to guard instead of one. The 0.15
+ *  threshold is a small margin past the visible shoreline so a prop's own
+ *  footprint doesn't overhang the bank. */
+export function isInWater(x: number, z: number): boolean {
+  return coastalDepression(x, z) > 0.15 || riverDepression(x, z) > 0.15;
+}
+
 /**
  * Ground height at a world (x, z).
  *
@@ -105,7 +178,8 @@ function coastalDepression(x: number, z: number): number {
  * and inventing mountains to make a 3D view look dramatic would be the same
  * dishonesty the terrain-exaggeration note called out in Pass 4. Relief here
  * is ridges and shallow draws, plus the one feature that genuinely dominates
- * the ground near the line — churn — and, past Pass 10, the coastal basin.
+ * the ground near the line — churn — and, past Pass 10, the coastal basin
+ * and (Pass 17) the river.
  */
 export function terrainHeight(x: number, z: number): number {
   const broad = valueNoise(x * 0.012, z * 0.012, 1) * 5.2;
@@ -125,6 +199,9 @@ export function terrainHeight(x: number, z: number): number {
 
   // Coastal basin — carves the Black Sea inlet on the side_b deep rear.
   h -= coastalDepression(x, z);
+
+  // The river — carves the channel crossing the front (Pass 17).
+  h -= riverDepression(x, z);
 
   return h;
 }
@@ -179,10 +256,20 @@ export function buildTerrain(halfWidthX: number): THREE.Mesh {
     c.lerp(x < 0 ? COLOR_A : COLOR_B, sideMix);
 
     // Field patchwork: only where damage is already low (item 3's "fields")
-    // — coarse cells so it reads as parcels, not noise.
+    // — coarse cells so it reads as parcels, not noise. Frequencies are
+    // anisotropic rather than a uniform 0.05/0.05: FIELD_CELL_Z_FREQ is
+    // derived from data/osm/pokrovsk.json (scripts/analyze-osm-patterns.mjs)
+    // rather than picked by eye — see docs/DECISIONS.md Pass 17 for the
+    // worked numbers. Real closed parcels there measure smaller, relative to
+    // the open windbreak rows bordering them, than a single isotropic
+    // frequency implies; scaling Z alone (not X) makes the patchwork read
+    // narrower crossing the strip laterally than running along the depth
+    // axis, the same elongation props.ts's retuned belt orientation gives
+    // the treeline bands — one consistent "which way the land is parcelled"
+    // story between the two files instead of two unrelated guesses.
     const dmg = damageIntensity(x);
     if (dmg < 0.5) {
-      const cell = valueNoise(x * 0.05, z * 0.05, 61);
+      const cell = valueNoise(x * FIELD_CELL_X_FREQ, z * FIELD_CELL_Z_FREQ, 61);
       const fieldMix = (1 - dmg * 2) * 0.4;
       c.lerp(cell > 0.5 ? COLOR_FIELD_DRY : COLOR_FIELD_GREEN, Math.max(0, fieldMix));
     }
@@ -201,6 +288,14 @@ export function buildTerrain(halfWidthX: number): THREE.Mesh {
     const depression = coastalDepression(x, z);
     if (depression > 0.05) {
       c.lerp(COLOR_WATER_SHALLOW, Math.min(1, depression / COAST_DEPTH * 1.6));
+    }
+    // Same wet-fringe treatment for the river channel — a separate check
+    // since it has its own depth scale and can be true where the coastal one
+    // never is (they never overlap in practice, given how far apart they sit
+    // in X, but each is independent so neither depends on that staying true).
+    const riverWet = riverDepression(x, z);
+    if (riverWet > 0.05) {
+      c.lerp(COLOR_WATER_SHALLOW, Math.min(1, (riverWet / RIVER_DEPTH) * 1.6));
     }
 
     colors[i * 3] = c.r;
@@ -267,5 +362,54 @@ export function buildWater(halfWidthX: number): THREE.Mesh | null {
   const mesh = new THREE.Mesh(geo, mat);
   mesh.position.set(0, WATER_LEVEL_Y, 0);
   mesh.name = "water";
+  return mesh;
+}
+
+// ── river water (Pass 17 item 4) ──────────────────────────────────────────
+// A winding ribbon rather than a rotated PlaneGeometry — the channel's centre
+// wobbles with Z (riverCenterAt()), so a flat rectangle can't follow it. Built
+// as one indexed BufferGeometry, one draw call, matching the "instance from
+// the start, don't retrofit" budget discipline the rest of this pass follows.
+export function buildRiverWater(): THREE.Mesh {
+  const steps = 72;
+  const zMin = -STRIP_HALF_Z - 8;
+  const zMax = STRIP_HALF_Z + 8;
+  const positions: number[] = [];
+  const colors: number[] = [];
+  const indices: number[] = [];
+  const c = new THREE.Color();
+  // Slightly inset from the carved bank so the visible water sits inside the
+  // depression rather than exactly on its (already-smooth) edge.
+  const halfW = RIVER_HALF_WIDTH * 0.82;
+
+  for (let i = 0; i <= steps; i++) {
+    const z = zMin + (i / steps) * (zMax - zMin);
+    const center = riverCenterAt(z);
+    // left bank vertex, then right bank vertex — two per step.
+    positions.push(center - halfW, RIVER_WATER_LEVEL_Y, z, center + halfW, RIVER_WATER_LEVEL_Y, z);
+    c.copy(COLOR_WATER_SHALLOW).lerp(COLOR_WATER_DEEP, 0.55);
+    colors.push(c.r, c.g, c.b, c.r, c.g, c.b);
+    if (i > 0) {
+      const prevLeft = (i - 1) * 2;
+      const prevRight = prevLeft + 1;
+      const curLeft = i * 2;
+      const curRight = curLeft + 1;
+      // Winding chosen so the cross product faces +Y (see docs/DECISIONS.md
+      // Pass 17 for the worked check) — this is a hand-built ribbon, not a
+      // PlaneGeometry, so nothing sets that for us automatically.
+      indices.push(prevLeft, curRight, prevRight, prevLeft, curLeft, curRight);
+    }
+  }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+  geo.setIndex(indices);
+  geo.computeVertexNormals();
+
+  const mat = WATER_MAT.clone();
+  mat.vertexColors = true;
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.name = "river-water";
   return mesh;
 }

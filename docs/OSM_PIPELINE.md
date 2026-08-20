@@ -203,11 +203,11 @@ carries a license nobody in the session can actually read. Coordinates from a
 named source under a known, attributed, share-alike license are the case the
 rule was drawn around — but the credit is the price, so it is not optional.
 
-## Integration — deliberately not done here
+## Integration — done (Pass 17), Option 1: metric inset
 
-Turning this JSON into geometry is blocked on the renderer diagnostic (real 3D
-meshes vs. 2.5D layered sprites), per the brief. One finding from this repo
-that the integration prompt will need either way:
+Was blocked on the renderer diagnostic; that resolved to real 3D meshes
+(`src/three/`), which unblocked this. One finding from this repo that shaped
+the integration:
 
 **The scene's X axis is not geographic distance.** `src/three/worldMapping.ts`
 maps X to *band-compressed* distance from the zero line — a non-linear
@@ -218,8 +218,8 @@ real geography (`src/pages/AboutPage.tsx`, "Why this isn't a real map").
 
 So a 17 km metric AOI cannot simply be laid over the existing world: at the
 default bands, 17 km of real ground spans two band boundaries and would be
-stretched non-uniformly, which visibly warps a straight rail line. The
-plausible resolutions — pick one *before* writing extrusion code:
+stretched non-uniformly, which visibly warps a straight rail line. Three
+resolutions were on the table:
 
 1. **Metric inset.** Draw the AOI at true 1:1 scale inside one band's span, as
    a local patch rather than a world-spanning layer. Geometry stays honest;
@@ -231,6 +231,11 @@ plausible resolutions — pick one *before* writing extrusion code:
    metric, alongside the existing band-compressed one — the honest option, and
    the most work.
 
-The projection this script emits (metric km east/south of the AOI centre) is
-the input all three need, which is why the script stops there and does not
-pretend to emit scene units.
+**Option 1 shipped in Pass 17** — `src/three/osmTerrain.ts`. Real rail, road,
+river and tree-row geometry, clipped to a ±10 km patch and drawn at a single
+scale derived from the live projection at one anchor point (side_a, 17 km,
+inside `op_near`), not the compressed axis itself. See `docs/DECISIONS.md`
+Pass 17 for the anchor/scale derivation, the clipping approach, and the
+measured before/after draw-call cost. `data/osm/kramatorsk.json` still needs
+fetching (see "Status" above) before a second inset could use the same
+pipeline.
