@@ -3501,3 +3501,108 @@ real app for every claim above:
   silently ship a half-filled record.
 - No new console/page errors beyond the expected, already-understood
   `commons.wikimedia.org` network failures in this sandbox.
+
+---
+
+## Pass 20 merge — reconciliation, and the 14-asset gap Pass 20 couldn't have known about
+
+Pass 20's branch (`claude/detail-page-imagery-symbology-vlnlic`, tip `441196c`) was cut
+from `5b45d6e`, before Passes 17–19 landed on the deploy branch
+(`claude/warfare-digital-twin-scaffold-19u7kt`). It sat unmerged through all three of
+those passes — confirmed by a prior diagnostic pass (`RECONCILIATION_DIAGNOSTIC.md`,
+commit `f267bfa`) that found the divergence and stopped short of resolving it. This entry
+covers that resolution.
+
+**The merge itself was clean.** `git merge --no-ff origin/claude/detail-page-imagery-symbology-vlnlic`
+against deploy-branch tip `e3dc40a` produced exactly two conflicts, both prose docs:
+`docs/DECISIONS.md` (this file — two independent chronological additions, resolved by
+keeping both in order: Pass 17–19's entries then Pass 20's, separated by the same `---`
+rule every other pass boundary uses) and `docs/PLANNING.md` (two versions of the same
+"suggested sequencing" status table — HEAD's said 20 was next, incoming's said 17–18 were
+the critical path; resolved by writing the table fresh to reflect what's actually true
+post-merge: 17/18/19/20 all done, 21 next). Every `data/assets/*.json` file — including
+all 89 files Pass 20 touched to add `image`, and the 14 Pass 18 added that Pass 20's
+branch never saw — merged with **zero conflicts**: git's line-level merge cleanly
+interleaved Pass 20's inserted `"image": {...}` blocks with Pass 18's separately-added
+fields because they touched different lines. `src/types.ts`, `src/data/validate.ts`,
+`src/components/DetailPanel.tsx`, `src/styles.css`, and `CLAUDE.md` all auto-merged too —
+Pass 17–19 never touched the detail panel or the `Asset.image` schema, so there was no
+real overlap to resolve, only textually-adjacent changes.
+
+**The gap:** Pass 20's image-wiring script ran against its own branch's data, which
+predates Pass 18's 14 first-class human/positional assets (dismounted squad, dugout,
+observation post, forward casualty collection point, command post, artillery firing
+position, ammunition point — ×2 sides). Post-merge, all 89 of Pass 20's original assets
+had an `image` field; those 14 had none — not a null value, an absent key, which is
+exactly the kind of silent gap this app's conventions (`CLAUDE.md`: "costs and confidence
+are always shown, never omitted") exist to catch.
+
+Closed by hand-applying Pass 20's own two fallback conventions, chosen per asset per the
+same reasoning Pass 20 used for its RED/CONCEPTUAL/CONCEPTUAL-SENSITIVE ledger rows:
+- The 2 casualty-adjacent assets (`medical-point-forward`, ×2 sides — a forward
+  point-of-injury/casualty-collection position, the same subject matter as the existing
+  `medical-casevac-chain` asset) got the identical CONCEPTUAL-SENSITIVE treatment already
+  shipped for `medical-casevac-chain`: `kind: "conceptual"`, `url: null`, and the same
+  caption verbatim ("Casualty/CASEVAC-adjacent subject — deliberately left without
+  imagery rather than risk a graphic or misleading representative photo.") — not a new
+  caption, the *same* one, since it's the same editorial call for the same reason.
+- The other 12 (dismounted squad, dugout, observation post, command post, ammo point,
+  artillery firing position — ×2 sides) got `kind: "conceptual"` with a per-category
+  caption on the same template Pass 20 used for its other composite/non-procured nodes
+  (`logistics-hub`, `strategic-infrastructure-target`): "Represents a generic
+  \<thing\>, not a single sourced physical system — shown as its map symbol rather than
+  a specific photo." `"conceptual"` over `"placeholder"` because these aren't a specific
+  fieldable system with a photo search that came up empty (what `"placeholder"` means) —
+  they're generic tactical constructs, the same category of thing as the composite nodes
+  Pass 20 already called conceptual, never a single sourced unit to begin with.
+
+All 103 assets carry an `image` field now (was 89/103 immediately post-merge).
+
+**SIDC symbology for the same 14** was checked separately, since a dismounted squad or an
+observation post isn't a vehicle/weapon system 2525C's Unit scheme was built around.
+`resolveSpec()`'s existing group-level fallback (`BY_GROUP.infantry` → `UCI---` Infantry,
+`BY_GROUP.c2` → `UUS---` Signal, `BY_GROUP.logistics` → `USS---` Supply, `BY_GROUP.medical`
+→ `USM---` Medical, `BY_GROUP.artillery` → `EWH---` Howitzer) already produced a symbol for
+all 14 with zero code changes — nothing was unrendered. But two of those group fallbacks
+were checked against milsymbol's own tables (`node_modules/milsymbol/src/lettersidc/sidc/
+ground.js`) and a closer real code existed for the win: `UH1---` "Headquarters or
+headquarters element" for `c2-position-command-post` (a command post is not generically
+"Signal"), and `USS5--` "Supply, Class V (ammunition)" for `logistics-ammo-point` (an ammo
+point is a specific, real, dedicated 2525C class-of-supply code, not generic "Supply").
+Both added to `BY_CATEGORY` in `src/symbology/sidc.ts`. The remaining 5 categories
+(dismounted squad, dugout, observation post, artillery firing position — the position-type
+ones) were also checked against milsymbol's tables and confirmed to have **no** dedicated
+code in the Unit/Warfighting ("S") scheme this app's SIDC builder uses — 2525C's real
+Observation Post / Command Post / Fighting Position codes (`TACGRP.C2GM.DEF.PNT.OBSPST`
+etc., found in `node_modules/milsymbol/src/lettersidc/sidc/tactical-points-2525.js`) exist
+only in the **Tactical Graphics** coding scheme ("G", point/graphic symbols with a
+different SIDC anatomy entirely — no battle-dimension letter, no "Present" status slot),
+which nothing else in this app uses; mixing it in for 5 categories out of 30-odd would be
+a one-off inconsistency, not a real second scheme. Explicit `BY_CATEGORY` entries were
+added for these 5 anyway (all still resolving to the same functionId the group fallback
+already gave), purely so the choice and its reasoning live next to the code instead of
+being implicit in a fallback chain — see the inline comment in `sidc.ts`.
+
+**Verified, full regression, not just this merge's own deliverables** (headless Chromium,
+`npm run preview` + `?perf=1`, 1440×900, per the standard every pass since 16 has used):
+- Pass 17: terrain, river, and the OSM metric inset render correctly; "© OpenStreetMap
+  contributors" credit visible bottom-left.
+- Pass 18: bottom-right roster counter reads **"103 assets · 45 links"** — all 103
+  present, `tacticalSiting.ts` placements visually unchanged from Pass 19's own
+  screenshots (positional assets sit where Pass 18 sited them, e.g. Forward Casualty
+  Collection Point and Tactical Command Post both rendering near their sourced
+  `distance_km_from_zero`).
+- Pass 19: perf HUD read **767 draw calls** fresh off this merged tree — identical to
+  Pass 19's own number, confirming the merge didn't regress instancing.
+- Pass 20: opened three detail panels — a Hero-tier asset (`Kurier`, a Pass 19 UGV model,
+  showing the RED/placeholder fallback + its category symbol), an Icon-tier asset
+  (`T-14 Armata`, showing the "sourced photo could not be loaded" runtime-fallback path +
+  its own SIDC), and one of the 14 newly-covered positional assets (`Point of Injury /
+  Casualty Collection Point`, showing the CONCEPTUAL-SENSITIVE no-imagery caption and the
+  Medical SIDC; `Tactical Command Post` also opened, showing the new `UH1---` Headquarters
+  SIDC rendering distinctly from the generic Signal icon). All three showed a picture (or
+  its fallback) under the asset name, a real MIL-STD-2525C icon top-left, and a 3-column
+  key-facts grid.
+- One pre-existing, already-understood benign console 404 (the same `icon_image`
+  placeholder-path 404 logged in Pass 19's own entry above); no new console or page
+  errors from the merge or the gap-closing edits.

@@ -22,6 +22,13 @@
   "representative_system": "Dug-in tube-artillery firing position under tree cover — composite, not a specific site",
   "icon_image": "/icons/artillery-position.png",
   "gallery_images": [],
+  "image": {
+    "url": null,
+    "source_url": null,
+    "license": "n/a",
+    "kind": "conceptual",
+    "caption": "Represents a generic artillery firing position, not a single sourced physical system — shown as its map symbol rather than a specific photo."
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Not a procurement item — a prepared position, not equipment",

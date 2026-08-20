@@ -107,7 +107,26 @@ const BY_CATEGORY: Record<string, SymbolSpec> = {
 
   // logistics / medical — composite nodes, coded as the unit function they represent
   "logistics-hub": symbol("G", "USS---", "Supply"),
+  "logistics-ammo-point": symbol("G", "USS5--", "Supply, Class V (ammunition)"),
   "medical-casevac": symbol("G", "USM---", "Medical"),
+  "medical-point-forward": symbol("G", "USM---", "Medical"),
+
+  // Pass 18's 14 first-class human/positional assets (dismounted squad, dugout,
+  // observation post, command post, artillery firing position — ×2 sides) —
+  // these are positions/formations, not procured platforms, and 2525C's only
+  // dedicated codes for "observation post"/"command post"/"fighting position"
+  // (TACGRP.C2GM.DEF.PNT.OBSPST etc.) live in the Tactical Graphics coding
+  // scheme ("G", point/graphic symbols), not the Warfighting/Unit scheme
+  // ("S") this file's fixed `S${aff}${dim}P${functionId}-----` template
+  // builds — a different SIDC anatomy this app doesn't otherwise use, so
+  // mixing it in for just these 7 would be a one-off, not a real mapping.
+  // Closest real functional equivalent within the Unit scheme instead; see
+  // docs/DECISIONS.md's Pass 20 merge note.
+  "infantry-dismounted-squad": symbol("G", "UCI---", "Infantry"),
+  "infantry-position-dugout": symbol("G", "UCI---", "Infantry (fighting position — no Unit-scheme code)"),
+  "infantry-position-observation": symbol("G", "UCI---", "Infantry (observation post — no Unit-scheme code)"),
+  "c2-position-command-post": symbol("G", "UH1---", "Headquarters / headquarters element"),
+  "artillery-position-firing": symbol("G", "EWH---", "Howitzer (firing position — no Unit-scheme code)"),
 
   // naval
   "naval-frigate": symbol("S", "CLFF--", "Frigate"),

@@ -26,6 +26,13 @@
   "representative_system": "Forward ammunition supply point on a rail spur — composite, sited on real OSM rail geometry",
   "icon_image": "/icons/ammo-point.png",
   "gallery_images": [],
+  "image": {
+    "url": null,
+    "source_url": null,
+    "license": "n/a",
+    "kind": "conceptual",
+    "caption": "Represents a generic ammunition supply point, not a single sourced physical system — shown as its map symbol rather than a specific photo."
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Not a procurement item — a supply node, not equipment",

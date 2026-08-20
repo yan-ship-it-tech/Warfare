@@ -25,6 +25,13 @@
   "representative_system": "Tactical/combat-trains command post — composite, not a specific named HQ",
   "icon_image": "/icons/command-post.png",
   "gallery_images": [],
+  "image": {
+    "url": null,
+    "source_url": null,
+    "license": "n/a",
+    "kind": "conceptual",
+    "caption": "Represents a generic command post, not a single sourced physical system — shown as its map symbol rather than a specific photo."
+  },
   "cost": {
     "unit_cost_usd": null,
     "display": "Not a procurement item — a staffed position, not equipment",
