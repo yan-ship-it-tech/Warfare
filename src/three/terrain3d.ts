@@ -38,7 +38,7 @@
 // reads as arriving somewhere different rather than as detail draining away.
 // ─────────────────────────────────────────────────────────────────────────
 import * as THREE from "three";
-import { TERRAIN_HALF_Z, TERRAIN_X_OVERRUN, worldXFor } from "./worldMapping";
+import { TERRAIN_HALF_X, TERRAIN_HALF_Z, TERRAIN_X_OVERRUN, worldXFor } from "./worldMapping";
 import { METRES_PER_KM, HALF_EXTENT_M, ZONE_GAPS, zoneAtSaturating } from "./zones";
 
 function hash2(ix: number, iz: number, seed: number): number {
@@ -348,6 +348,18 @@ const COLOR_SCAR = new THREE.Color("#3a352b");
 const COLOR_A = new THREE.Color("#3f5068");
 const COLOR_B = new THREE.Color("#65403c");
 const COLOR_SCORCHED = new THREE.Color("#2a2620");
+/**
+ * ASH — Pass 26.
+ *
+ * Deliberately a mid grey-brown rather than the near-black COLOR_SCORCHED
+ * above. Burnt ground photographs pale, not dark: a field that has burned out
+ * is ash and bare subsoil over stubble, and it reads LIGHTER than the crop it
+ * replaced. Painting it near-black instead reads as shadow, which the eye
+ * discounts as terrain relief and which therefore adds no visible disorder at
+ * all — the trap this pass exists to get out of. */
+const COLOR_ASH = new THREE.Color("#5c5546");
+/** The burnt-out core of a blotch — sooted, and used sparingly. */
+const COLOR_BURN = new THREE.Color("#332e26");
 // Pass 25 pushed these apart. A parcel patchwork is the only thing carrying
 // ground legibility in the open field between shelterbelts at a 1-3 km
 // framing, and at the old separation the two tones were within a few percent
@@ -485,6 +497,97 @@ function gradedX(segments: number, halfX: number): number[] {
   return xs;
 }
 
+// ── the surface the mesh ACTUALLY draws (Pass 26) ────────────────────────
+/**
+ * `terrainHeight` is the continuous height FIELD. It is not the ground.
+ *
+ * The ground is a triangulated sample of it — `SEG_X` x `SEG_Z` vertices,
+ * graded, so the drawn surface is the linear interpolant between samples and
+ * NOT the function. Everything standing on the ground was nonetheless being
+ * placed at `terrainHeight()`, which is a different surface, and the gap
+ * between the two is not small: measured over the real grid it is 0.9 m at
+ * p95 across the open zones and **12.6 m at worst in the churn band along the
+ * zero line**, where terrainHeight adds a 182 m-period, +/-11 m churn octave
+ * that a grid with ~90 m Z spacing cannot represent at all.
+ *
+ * Against a crater apron that sits 0.12 m proud, a farm track at 0.35 m and
+ * scrub at 0.15 m, a 0.9 m error is the difference between a prop being on
+ * the ground and being under it — and the 12.6 m worst case is exactly where
+ * the crater field is densest. This is the second half of the "no craters,
+ * no damage anywhere" report: they were being drawn, in the right places, and
+ * buried.
+ *
+ * `surfaceHeight` samples the same grid the mesh is built from and
+ * interpolates across the same two triangles, so a prop placed at
+ * `surfaceHeight(x, z)` sits on the drawn ground by construction rather than
+ * by tolerance. It is the function every placement loop should call;
+ * `terrainHeight` remains correct for building the mesh itself and for
+ * anything asking about the height FIELD.
+ */
+const SEG_X = 520;
+const SEG_Z = 140;
+const SURFACE_XS = gradedX(SEG_X, TERRAIN_HALF_X);
+const SURFACE_ZS = (() => {
+  const zs: number[] = [];
+  for (let i = 0; i <= SEG_Z; i++) {
+    const t = (i / SEG_Z) * 2 - 1;
+    zs.push(Math.sign(t) * TERRAIN_HALF_Z * Math.pow(Math.abs(t), 1.8));
+  }
+  return zs;
+})();
+
+/** Index of the cell containing `v` in a sorted, non-uniform axis. */
+function cellIndex(axis: number[], v: number): number {
+  let lo = 0;
+  let hi = axis.length - 1;
+  if (v <= axis[0]) return 0;
+  if (v >= axis[hi]) return hi - 1;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (axis[mid] <= v) lo = mid;
+    else hi = mid;
+  }
+  return lo;
+}
+
+/**
+ * Vertex-height memo. `surfaceHeight` needs four corner heights per query and
+ * the placement loops fire tens of thousands of queries into a few thousand
+ * cells, so without this every scatter refill would evaluate `terrainHeight`
+ * — six noise octaves apiece — four times per prop. 521 x 141 doubles is
+ * 588 kB held for the life of the page, against a mesh that is already 73k
+ * vertices; NaN is the "not yet computed" sentinel because a real height
+ * never is one.
+ */
+const VERT_H = new Float64Array((SEG_X + 1) * (SEG_Z + 1)).fill(Number.NaN);
+function vertexHeight(i: number, j: number): number {
+  const k = j * (SEG_X + 1) + i;
+  const cached = VERT_H[k];
+  if (cached === cached) return cached; // NaN !== NaN
+  const h = terrainHeight(SURFACE_XS[i], SURFACE_ZS[j]);
+  VERT_H[k] = h;
+  return h;
+}
+
+export function surfaceHeight(x: number, z: number): number {
+  const i = cellIndex(SURFACE_XS, x);
+  const j = cellIndex(SURFACE_ZS, z);
+  const x0 = SURFACE_XS[i];
+  const x1 = SURFACE_XS[i + 1];
+  const z0 = SURFACE_ZS[j];
+  const z1 = SURFACE_ZS[j + 1];
+  const u = THREE.MathUtils.clamp((x - x0) / (x1 - x0), 0, 1);
+  const v = THREE.MathUtils.clamp((z - z0) / (z1 - z0), 0, 1);
+  const ha = vertexHeight(i, j);
+  const hb = vertexHeight(i + 1, j);
+  const hc = vertexHeight(i, j + 1);
+  const hd = vertexHeight(i + 1, j + 1);
+  // Same split as the index buffer below: (a, c, b) and (b, c, d).
+  return u + v <= 1
+    ? ha + (hb - ha) * u + (hc - ha) * v
+    : hd + (hc - hd) * (1 - u) + (hb - hd) * (1 - v);
+}
+
 /**
  * Builds the terrain mesh. Vertex-coloured rather than textured: a flat-shaded
  * facet palette is the whole visual language here, and it costs one geometry
@@ -496,22 +599,18 @@ function gradedX(segments: number, halfX: number): number[] {
  * the subject of the tool.
  */
 export function buildTerrain(halfWidthX: number): THREE.Mesh {
-  const segX = 520;
   // 520 x 140 = 73k vertices / 145k triangles for the whole ground. Both
-  // counts are graded (see gradedX and the zs loop) so the density is spent
+  // counts are graded (see gradedX and SURFACE_ZS) so the density is spent
   // inside the represented sector rather than on the hazed lateral filler.
-  const segZ = 140;
-  const halfZ = TERRAIN_HALF_Z;
-  const xs = gradedX(segX, halfWidthX);
-  // Z is graded the same way X is, and for the same reason: the sector is
-  // 6 km either side and the ground runs to 16, so a uniform grid would spend
-  // over half its vertices on deliberately-hazed ground. `^1.8` puts ~90 m
-  // spacing inside the sector and ~500 m at the outer edge.
-  const zs: number[] = [];
-  for (let i = 0; i <= segZ; i++) {
-    const t = (i / segZ) * 2 - 1;
-    zs.push(Math.sign(t) * halfZ * Math.pow(Math.abs(t), 1.8));
-  }
+  //
+  // Pass 26: the grid comes from the SHARED arrays surfaceHeight() samples,
+  // so the mesh and the "where is the ground" answer every prop uses cannot
+  // drift apart. They were the same numbers written twice before, which is
+  // the kind of duplication that stays correct right up until it doesn't.
+  const segX = SEG_X;
+  const segZ = SEG_Z;
+  const xs = halfWidthX === TERRAIN_HALF_X ? SURFACE_XS : gradedX(segX, halfWidthX);
+  const zs = SURFACE_ZS;
 
   const nx = segX + 1;
   const nz = segZ + 1;
@@ -580,6 +679,37 @@ export function buildTerrain(halfWidthX: number): THREE.Mesh {
       const scar = Math.exp(-Math.pow(x / 700, 2));
       c.lerp(COLOR_SCAR, scar * 0.75);
       c.lerp(COLOR_SCORCHED, dmg * 0.5);
+
+      // ── burn blotches and ash (Pass 26) ────────────────────────────────
+      //
+      // The reported symptom was "clean fields, no damage anywhere", and the
+      // paint stack above is most of why: it is a smooth destruction ramp plus
+      // a smooth Gaussian scar, so at any framing wider than a few hundred
+      // metres the fought-over ground is one flat tone with no INCIDENT in it.
+      // Real ground that has been shelled for three years is blotchy at the
+      // scale of a field, not smoothly graded at the scale of a front.
+      //
+      // Frequencies are bounded by what this grid can actually carry, which is
+      // the constraint that decides them rather than taste: the Z spacing is
+      // ~90 m inside the sector, so anything with a Z period under ~180 m
+      // aliases into noise instead of resolving as a blotch. 420 m in Z (and a
+      // finer 190 m in X, where the spacing is 12-60 m) is comfortably above
+      // that and still fine enough to vary several times across one screen at
+      // a 6-8 km framing — which is exactly the range that read as empty.
+      const burn = valueNoise(x * 0.005_26, z * 0.002_38, 907);
+      const burnEdge = valueNoise(x * 0.014, z * 0.004_4, 241);
+      // Only where there is damage to explain it, and strongest at the line.
+      const burnAmt = Math.max(0, burn - 0.42) * 1.7 * dmg;
+      c.lerp(COLOR_ASH, Math.min(0.85, burnAmt));
+      // A smaller, darker core inside the worst of the blotches — soot rather
+      // than ash. Kept well under the ash layer so the ground never goes
+      // black.
+      c.lerp(COLOR_BURN, Math.min(0.5, Math.max(0, burnEdge - 0.62) * 1.5 * burnAmt));
+      // Flat ash wash across the whole of The Line zone, on top of the
+      // blotches: this is the brief's "pulled toward ash/scorched rather than
+      // clean tilled-field colour", and it is what stops the near ground
+      // reading as working farmland between the blotches.
+      if (zoneAtSaturating(x).id === "line") c.lerp(COLOR_ASH, 0.22 + dmg * 0.16);
 
       // The transition seam, painted last on the ground layer: a flat neutral
       // band with a bright rule on each edge. Deliberately visible — the

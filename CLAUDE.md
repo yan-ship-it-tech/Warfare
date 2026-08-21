@@ -141,6 +141,16 @@ headless Playwright smoke pass (Chromium is pre-installed at
   also skips its whole layout pass when nothing moved, so anything that
   invalidates label positions without moving the camera (selection, hover,
   focus, a pin node mounting, a drag) must bump `layoutDirtyRef`.
+- **`terrainHeight()` is the height FIELD; `surfaceHeight()` is the ground.**
+  The terrain mesh is a graded triangulation of the field, so the two disagree
+  by ~0.9 m at p95 across the open zones and up to 12.6 m in the churn band at
+  the zero line, where the field carries a 182 m-period octave the grid cannot
+  represent. **Anything being placed ON the ground — props, scenery, OSM
+  lines, asset anchors — must use `surfaceHeight()`**; `terrainHeight()` is
+  for building the mesh and for asking about the field. Pass 26 found a whole
+  crater field buried this way, drawn correctly and invisible. Related: a
+  group placed at one terrain sample does not ground its children — see
+  `groundChildren()` in `scenery.ts`.
 - **Instance-buffer capacity is a real bug class here, not a theoretical one.**
   Pass 24 found `buildFightingPositions()` allocating for one side and writing
   both, latent since Pass 19 and invisible until the world got big enough for
