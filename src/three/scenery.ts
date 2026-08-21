@@ -300,24 +300,70 @@ function buildVillage(condition: Condition, seed: number, count: number): THREE.
   return g;
 }
 
-/** A small town skyline — the "urban cluster" tier, reserved for the intact
- *  50 km+ bands per item 1's gradient. A handful of taller rectangular
- *  volumes rather than a real streetscape; the point is silhouette, viewed
- *  from the distance this always renders at. */
+/**
+ * A small town skyline / built-up block — the "urban cluster" tier, used both
+ * for the deep-rear towns and (via TACTICAL_FEATURE_BUILDERS) for the
+ * infantry-held blocks at km 6-7.
+ *
+ * **This is the builder behind the grey volumes, and it is a completely
+ * separate path from `buildHouse`** — worth stating because Pass 26 fixed
+ * `buildHouse` to real scale and these did not change with it, which is
+ * exactly why they still read as undersized afterwards.
+ *
+ * Pass 27 rebuilt the proportions against what actually stands on this
+ * ground. Before, it drew nine 12-24 m CUBES over a 300 x 220 m area: the
+ * footprints were not unreasonable in isolation, but a cube is the wrong
+ * shape and 100 m between neighbours is the wrong spacing, so it read as
+ * scattered boxes on open ground rather than as a built-up block — and the
+ * largest dimension anywhere in it, 24 m, was smaller than a Pass 26 crater
+ * apron (median 35 m, max 64 m) sitting beside it.
+ *
+ * What is actually there is Soviet-era panel housing: five-storey slabs
+ * roughly 45-80 m long and 11-15 m deep, the occasional nine-storey tower,
+ * and low infill between them, laid on a street grid at a shared angle rather
+ * than each rotated at random. The long slab is the important part — it is
+ * the dimension that makes a block read as a block, and at 45-80 m it is
+ * unambiguously larger than any crater in the field beside it (bowls 2-5 m,
+ * heavy-bomb outliers to 18 m — see props.ts's craterRadiusM).
+ *
+ * Note this is a shape and spacing correction, not an inflation: the
+ * FOOTPRINT AREA per building is close to what it was; the mass is simply
+ * distributed as a real building is rather than as a cube.
+ */
 function buildUrbanCluster(seed: number): THREE.Group {
   const g = new THREE.Group();
   const r = rngLocal(seed);
   const mats = [URBAN_WALL_A, URBAN_WALL_B];
-  for (let i = 0; i < 9; i++) {
-    // Metres (Pass 24). 12-24 m footprints, 9-42 m tall, scattered over a
-    // 300 x 220 m block — a small town's silhouette at real size, which is
-    // what "viewed from the distance this always renders at" now means.
-    const w = 12 + r() * 12;
-    const d = 12 + r() * 12;
-    const h = 9 + r() * 33;
+  // One street grid for the whole block, with only a few degrees of jitter
+  // per building. Random per-building yaw is what made this read as rubble
+  // scattered on a field rather than as a planned settlement.
+  const grid = r() * Math.PI;
+  for (let i = 0; i < 12; i++) {
+    const t = r();
+    let w: number; // long axis, metres
+    let d: number; // depth
+    let h: number;
+    if (t < 0.58) {
+      // Five-storey panel slab — the dominant building type.
+      w = 45 + r() * 35;
+      d = 11 + r() * 4;
+      h = 12 + r() * 6;
+    } else if (t < 0.83) {
+      // Nine-storey tower block.
+      w = 22 + r() * 12;
+      d = 14 + r() * 4;
+      h = 24 + r() * 10;
+    } else {
+      // Low infill: shops, a school, a boiler house.
+      w = 14 + r() * 10;
+      d = 9 + r() * 4;
+      h = 6 + r() * 3;
+    }
     const b = box(w, h, d, mats[i % 2]);
-    b.position.set((r() - 0.5) * 300, h / 2, (r() - 0.5) * 220);
-    b.rotation.y = r() * 0.3;
+    // 210 x 150 m rather than 300 x 220 — a block, not a district.
+    b.position.set((r() - 0.5) * 210, h / 2, (r() - 0.5) * 150);
+    // Most buildings on the grid; every fourth one on the cross street.
+    b.rotation.y = grid + (r() < 0.25 ? Math.PI / 2 : 0) + (r() - 0.5) * 0.12;
     g.add(b);
   }
   return g;
