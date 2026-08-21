@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import type { Side } from "../types";
 import type { WorldModel, SceneNode } from "../data/model";
 import { nodeSide, nodeDomain, nodePlatformDomain, nodeDistance, nodeAltitude } from "../data/model";
 import { LabelGrid } from "../scene/labelGrid";
@@ -37,14 +38,19 @@ import {
   ELEVATED_ALTITUDE_M,
   STRIP_HALF_Z,
   TERRAIN_HALF_Z,
+  TERRAIN_HALF_X,
 } from "./worldMapping";
 import {
-  TRUE_SCALE_DEPTH_KM,
-  MAX_DEPTH_KM,
-  compressionAt,
-  modelScaleFor,
-  compressionSummary,
-} from "./depthAxis";
+  ZONES,
+  ZONE_GAPS,
+  ZONE_TRANSITION_NOTE,
+  HALF_EXTENT_M,
+  buildDepthLayout,
+  depthMForKm,
+  drawAltitudeM,
+  zonesSummary,
+  type DepthLayout,
+} from "./zones";
 
 // ── Pass 24: the axis is locked, and everything below is in metres ────────
 /** Yaw is constrained to this half-range, in degrees, about the base azimuth.
@@ -65,13 +71,14 @@ const YAW_LIMIT_DEG = 25;
  *  right — the same handedness the 2D schematic view has always had. */
 const BASE_AZIMUTH = 0;
 
-/** Camera framing, metres. The default position (set below) frames the whole
- *  true-scale register plus the start of the compression, which is the
- *  framing that actually shows what this scene is; minDistance lets the
- *  camera get down among 7 m vehicles, maxDistance pulls back past the
- *  deepest rear. */
-const CAM_MIN_DISTANCE = 120;
-const CAM_MAX_DISTANCE = 165_000;
+/** Camera framing, metres. The default position (set below) frames all three
+ *  zones at once, which is the framing that actually shows what this scene
+ *  is; minDistance lets the camera get right down among 7 m vehicles (30 m is
+ *  four hull lengths), maxDistance pulls back to roughly twice the world's
+ *  own width and no further — there is nothing out there to look at, and a
+ *  zoom range that ends in empty fog is a zoom range users get lost in. */
+const CAM_MIN_DISTANCE = 30;
+const CAM_MAX_DISTANCE = 44_000;
 
 /** Default facing per side, radians about Y. models.ts authors every hero
  *  model nose-toward +X (a tank's barrel is at +x, a UAV's nose likewise), so
@@ -80,6 +87,20 @@ const CAM_MAX_DISTANCE = 165_000;
  *  which meant every side_b model faced its own rear. Per-asset overrides are
  *  Pass 25's; this is the derivation the axis lock makes possible. */
 const FACING_Y: Record<string, number> = { side_a: 0, side_b: Math.PI };
+
+/** Which way along X a side lies. side_a is negative, side_b positive — the
+ *  same handedness the 2D schematic has always had. */
+const sideSign = (side: Side): number => (side === "side_a" ? -1 : 1);
+
+/** Height of the zone marker posts' caps, metres — scenery.ts's
+ *  ZONE_POST_HEIGHT plus its cap. The transition chip is anchored there so it
+ *  reads as attached to the posts rather than floating over the ground. */
+const ZONE_POST_TOP_M = 50;
+/** Below this orbit radius the transition chips are hidden entirely, metres. */
+const SEAM_CHIP_MIN_ORBIT_M = 900;
+/** ...and beyond this multiple of the orbit radius, in world X, a seam is too
+ *  far off to be worth labelling over the ground actually in frame. */
+const SEAM_CHIP_MAX_DIST_FACTOR = 2.6;
 
 /** Marker/ring/fill hold a roughly constant SCREEN size EVERYWHERE — they are
  *  symbology rather than objects, the same reasoning that keeps the labels in
@@ -118,10 +139,14 @@ const MARKER_SCALE_MAX = 4_000;
  * So model scale gets a floor: a hero model is drawn at true scale whenever
  * true scale is legible (closer than ~300 m), and beyond that is scaled up
  * just enough to keep subtending MODEL_MIN_APPARENT_PX, capped at
- * MODEL_MAX_BOOST. This is the same trade depthAxis.ts's `modelScaleFor()`
- * already makes in the far register (FAR_MODEL_SCALE_MAX = 16) — a model's
- * size is decoupled from the axis so it stays readable — extended to camera
- * distance, which is the other axis the problem lives on.
+ * MODEL_MAX_BOOST.
+ *
+ * Pass 25 leaves this in place and it does much less work than it used to.
+ * Against the retired 140 km axis a tank at the default framing was 0.1 px
+ * and needed the full 12x boost just to exist; against a 19.2 km world it is
+ * a few px and the boost is a legibility aid rather than the only thing
+ * keeping the geometry on screen. The arithmetic below is unchanged, so this
+ * is a claim the screenshots can check rather than one to take on trust.
  *
  * It is an explicit, disclosed departure from "model size is physically
  * correct in the near register": past ~300 m the model is deliberately drawn
@@ -129,20 +154,19 @@ const MARKER_SCALE_MAX = 4_000;
  * visible at any framing a reader actually uses.
  */
 const MODEL_MIN_APPARENT_PX = 26;
-const MODEL_MAX_BOOST = 12;
-
-/** Symbolic altitude ceiling for far-register assets, metres. A deep-strike
- *  UAV 4,300 km out sits where 1 world unit is ~1 km of real ground; drawing
- *  its true 1,200 m there would put it flat on the deck. Its height is scaled
- *  by the local compression (clamped) so it still reads as airborne — a
- *  legible symbolic altitude, exactly as the brief scopes it. */
-const FAR_SYMBOLIC_ALT_MAX = 6_000;
-/** Ceiling on the compression multiplier applied to a far-register altitude.
- *  8 keeps a deep-strike UAV's stalk comparable to a Bayraktar's genuinely
- *  true 6.7 km one, rather than making the abstracted assets the tallest
- *  thing in the frame — which is the "absurd stalks" complaint in a new
- *  costume. */
-const FAR_SYMBOLIC_ALT_GAIN_MAX = 8;
+/**
+ * Pass 25 cut this from 12 to 4.
+ *
+ * 12 was sized against a 140 km axis where a tank at the default framing was
+ * 0.1 px and only a twelvefold boost kept it on screen at all. Against a
+ * 19.2 km world the same floor asks for a 10x boost at the whole-zone framing
+ * — an 80 m tank standing next to 3 m houses, which is a scale lie big enough
+ * to see. At 4 a vehicle never exceeds ~31 m: visibly larger than life when
+ * the camera is far, never larger than the buildings around it, and true
+ * scale from about 900 m in. Past that the screen-constant marker is what
+ * says "something is here", which is its job.
+ */
+const MODEL_MAX_BOOST = 4;
 
 const BG = HORIZON_COLOR;
 /** Scenario-focus mode's "not in this scenario" treatment for the WebGL
@@ -324,15 +348,20 @@ interface Entry {
    *  guessed per category, so a Shahed and a tank each get their own answer.
    *  0 when the asset has no hero model. */
   modelRadius: number;
-  /** The axis-derived model scale (`modelScaleFor(km)`): 1 in the near
-   *  register, up to FAR_MODEL_SCALE_MAX past it. layout() multiplies the
-   *  camera-driven legibility boost on top of this, never replaces it. */
+  /** Placed depth along the axis, world-metre magnitude (zones.ts's
+   *  `buildDepthLayout`). Kept so a drag can re-place without re-running the
+   *  whole layout. */
+  depthM: number;
+  /** Always 1 as of Pass 25 — hero models are authored at metre scale and
+   *  drawn at it. The old axis-derived far-register multiplier is retired
+   *  along with the axis. layout() multiplies the camera-driven legibility
+   *  boost on top of this, never replaces it. */
   baseModelScale: number;
   /** Grounded assets can be hidden behind terrain; elevated ones effectively
    *  cannot, so they skip the occlusion probe entirely. */
   grounded: boolean;
-  /** The altitude actually DRAWN, metres — true in the near register, a
-   *  clamped symbolic lift past it. A drag re-places through this. */
+  /** The altitude actually DRAWN, metres — true below ALT_TRUE_CEILING_M,
+   *  softly ceilinged above it (zones.ts). A drag re-places through this. */
   altitudeM: number;
   /** The marker/ring/fill's real colour, so scenario-focus dimming (which
    *  desaturates toward grey per frame) has something to restore to without
@@ -582,6 +611,11 @@ export function Scene3D({ world }: { world: WorldModel }) {
     target: HTMLElement | null;
   } | null>(null);
   const dragRaycasterRef = useRef(new THREE.Raycaster());
+  /** The current roster's placed depth ladder (zones.ts). Written by the
+   *  asset-objects effect, read by the drag handlers — which need the
+   *  ladder's own inverse, not the pure zone curve, so a drop resolves to a
+   *  km that puts the asset back where it was dropped. */
+  const depthLayoutRef = useRef<DepthLayout | null>(null);
   /** Scratch for repositioning the dragged asset's marker/ring/fill instance
    *  rows — reused across every pointermove of a drag, same reasoning as
    *  dragHitRef below: a drag can fire this dozens of times a second. */
@@ -615,6 +649,9 @@ export function Scene3D({ world }: { world: WorldModel }) {
   const pinDomRef = useRef(new Map<string, PinDom>());
   /** Ruler segment elements, keyed `${side}:${bandId}` (item 9). */
   const rulerElsRef = useRef(new Map<string, HTMLDivElement>());
+  /** The four in-world zone transition labels, keyed `side:outerZoneId`. */
+  const seamRootRef = useRef<HTMLDivElement | null>(null);
+  const seamElsRef = useRef(new Map<string, HTMLDivElement>());
   const rulerRootRef = useRef<HTMLDivElement | null>(null);
   /** Pointer position over the canvas, in CSS px relative to the mount, and
    *  whether the pointer is actually over it. Drives proximity labelling. */
@@ -624,24 +661,10 @@ export function Scene3D({ world }: { world: WorldModel }) {
   const setAxisFlippedRef = useRef(view.setAxisFlipped);
   setAxisFlippedRef.current = view.setAxisFlipped;
 
-  // Pass 24: no `Projection` here any more. km -> world X goes through
-  // depthAxis.ts, which is a constant of the build, so nothing in this scene
-  // has to be rebuilt or re-read when a band is edited. `bands` is still used
-  // — by the ruler, to draw band boundaries at their compressed positions —
-  // but it annotates the axis rather than defining it.
-  const bands = useMemo(
-    () => [...world.bands].sort((a, b) => a.min_km - b.min_km),
-    [world.bands],
-  );
-
-  // The render loop is set up once on mount and must see the CURRENT band
-  // set when one is edited later — same reason the old `projRef` existed.
-  const bandsRef = useRef(bands);
-  useEffect(() => {
-    bandsRef.current = bands;
-    layoutDirtyRef.current++;
-  }, [bands]);
-
+  // Pass 25: no `Projection` and no band set here any more. km → world X goes
+  // through zones.ts, which is a constant of the build, so nothing in this
+  // scene has to be rebuilt or re-read when a band is edited — a band is a
+  // 2D-view annotation and the 3D axis does not read it.
   const nodes = useMemo<SceneNode[]>(() => {
     const list: SceneNode[] = world.assets
       .filter((a) => !view.hiddenGroups.has(a.group))
@@ -651,6 +674,45 @@ export function Scene3D({ world }: { world: WorldModel }) {
     }
     return list.filter((n) => view.visibleSides.has(nodeSide(n)));
   }, [world.assets, world.stubs, view.showPending, view.visibleSides, view.hiddenGroups]);
+
+  /**
+   * The placed depth ladder (zones.ts), built from the WHOLE roster rather
+   * than from the visible subset.
+   *
+   * Deliberate: with the zone model a zone's spread depends on how many
+   * assets share it, so a layout built from `nodes` would slide every
+   * remaining asset sideways every time a group was hidden or a side toggled
+   * — a filter would look like an animation. Building it from the full roster
+   * makes position stable under filtering, at the cost of leaving a gap where
+   * a hidden asset used to be, which is the correct trade for a tool whose
+   * whole job is showing where things are.
+   *
+   * It also means the scenery, which is built once and reads this ladder for
+   * its own km→X, does not have to be rebuilt when a filter changes.
+   */
+  const depthLayout = useMemo<DepthLayout>(() => {
+    const items = [
+      ...world.assets.map((a) => ({ id: a.id, side: nodeSide({ kind: "asset", id: a.id, asset: a }), km: a.distance_km_from_zero })),
+      ...world.stubs.map((st) => ({ id: st.id, side: nodeSide({ kind: "stub", id: st.id, stub: st }), km: st.distance_km_from_zero })),
+    ];
+    return buildDepthLayout(items);
+  }, [world.assets, world.stubs]);
+  depthLayoutRef.current = depthLayout;
+
+  /** World X → true km, through the placed ladder when there is one. */
+  const kmAtWorldX = useCallback((side: Side, worldX: number): number => {
+    const layout = depthLayoutRef.current;
+    return layout ? layout.kmAtWorldX(side, worldX) : worldXToKm(side, worldX);
+  }, []);
+
+  /** km → signed world X for NON-ASSET geometry (landmarks, terrain features,
+   *  the tactical-siting search). Reads the same ladder the assets were
+   *  placed on — see zones.ts's `depthAtKm`. */
+  const xForKm = useCallback(
+    (side: Side, km: number): number =>
+      (side === "side_a" ? -1 : 1) * depthLayout.depthAtKm(side, km),
+    [depthLayout],
+  );
 
   // ── one-time engine setup ─────────────────────────────────────────────
   useEffect(() => {
@@ -673,15 +735,15 @@ export function Scene3D({ world }: { world: WorldModel }) {
     // the geography is schematic" fade is baked into the terrain's own vertex
     // colour instead (terrain3d.ts's atmosphericHaze). The two share
     // HORIZON_COLOR so they can never disagree about what the air looks like.
-    // Deliberately weak and very long-range. An earlier tuning at
-    // 22 km / 150 km put 61% fog on the near register at the DEFAULT framing —
-    // the camera is 100 km from the subject there, so a camera-distance fog
-    // greys out exactly the ground the pass just made true. This range leaves
-    // the near register essentially clear and exists only to keep scenery and
-    // models out in the compressed rear from popping unhazed against terrain
-    // that is hazed (they use shared materials and cannot carry the
-    // per-vertex haze attribute the ground does).
-    scene.fog = new THREE.Fog(BG, 40_000, 380_000);
+    // Deliberately weak and long-range relative to the world's own size. The
+    // default framing sits ~17 km from the target and the plate's far lateral
+    // edge is ~33 km away, so this leaves everything a reader is looking at
+    // essentially clear and exists only to keep scenery and models out at the
+    // plate's edges from popping unhazed against terrain that is hazed (they
+    // use shared materials and cannot carry the per-vertex haze attribute the
+    // ground does). Pass 25 pulled it in from 40/380 km — those were sized
+    // against a 140 km axis and would never have engaged at all here.
+    scene.fog = new THREE.Fog(BG, 21_000, 62_000);
     sceneRef.current = scene;
 
     // Near and far are NOT constants — see updateDepthRange in the tick loop.
@@ -693,15 +755,16 @@ export function Scene3D({ world }: { world: WorldModel }) {
     // dropped the terrain out of the scene entirely at close range while the
     // scenery still drew, i.e. it traded a precision problem for a
     // correctness one. The range is derived from the orbit radius instead.
-    const camera = new THREE.PerspectiveCamera(46, mount.clientWidth / mount.clientHeight, 1, 200_000);
-    // Azimuth ~-10 degrees (inside the +/-25 lock), elevation ~23 degrees, at
-    // ~102 km. Chosen so the DEFAULT framing shows the whole axis — both
-    // compressed horizons in frame at once — because the structure of the
-    // scene is the thing a first look has to communicate: the true-scale
-    // register takes the middle 57% of the depth and 4,260 km of rear is
-    // folded into the outer 43%. Zooming in is how you get to a place; this
-    // is what the place is inside.
-    camera.position.set(-16_000, 40_000, 92_000);
+    const camera = new THREE.PerspectiveCamera(46, mount.clientWidth / mount.clientHeight, 1, 90_000);
+    // Azimuth ~-10 degrees (inside the +/-25 lock), elevation ~26 degrees, at
+    // ~17 km. Derived rather than eyeballed: the world is 19.2 km wide along
+    // X, a 46-degree vertical FOV at 16:9 gives ~74 degrees horizontally, and
+    // (19,200 / 2) / tan(37 degrees) is 12.7 km — plus margin for the oblique
+    // angle and the strip's own depth. So the DEFAULT framing shows all six
+    // zone segments and both transition seams at once, which is the structure
+    // a first look has to communicate. Zooming in is how you get to a place;
+    // this is what the places are.
+    camera.position.set(-2_600, 7_400, 15_000);
     cameraRef.current = camera;
 
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -730,7 +793,12 @@ export function Scene3D({ world }: { world: WorldModel }) {
     controls.zoomSpeed = 0.7;
     controlsRef.current = controls;
 
-    scene.add(new THREE.HemisphereLight(0xa8c0e0, 0x2a2a20, 1.15));
+    // Pass 25 lifted the hemisphere's GROUND colour from 0x2a2a20. With the
+    // shelterbelts and zone posts added, every vertical face turned away from
+    // the sun was falling to near-black — measured on a screenshot where a
+    // 900 m hedgerow read as a scorch mark rather than as a treeline. The sky
+    // term and the two directionals are unchanged.
+    scene.add(new THREE.HemisphereLight(0xa8c0e0, 0x3d3b2d, 1.2));
     // Directional lights carry no position-dependent falloff, so these are
     // directions, not places — scaled with everything else only so nothing
     // ends up inside the geometry it is meant to be lighting.
@@ -759,6 +827,10 @@ export function Scene3D({ world }: { world: WorldModel }) {
       controls,
       scene,
       worldXFor,
+      /** Frame-time / draw-call snapshot — the same numbers PerfOverlay shows,
+       *  exposed so a headless pass can record them before and after a
+       *  rendering change, which CLAUDE.md requires of every such change. */
+      perf: () => perf.snapshot(),
       dirty: () => layoutDirtyRef.current++,
       /** Every placed asset's id, true distance and world anchor — what a
        *  cross-check of the depth mapping actually needs in order to compare
@@ -913,22 +985,23 @@ export function Scene3D({ world }: { world: WorldModel }) {
       }
     };
 
-    /** The depth ruler. Positions one segment per band per side by projecting
-     *  that band's real world-X edges to the screen — so equal km spans
-     *  visibly occupy unequal screen width, which IS the compression the axis
-     *  applies. A linear ruler here would lie.
+    /** The depth ruler and the zone transition labels.
      *
-     *  Pass 24 kept the mechanism and changed what it is measuring. The bands
-     *  no longer define the axis; they annotate it, and their screen widths
-     *  are now a direct readout of the two-register function — the 0-5 km
-     *  band is wide because it is true-scale, and the 500+ km band is a sliver
-     *  because it is compressed ~979x. The per-band readout states the local
-     *  scale as a compression factor rather than as km-per-100px, because a
-     *  factor is the thing the viewer needs in order to read the picture. */
+     *  Pass 25 rebuilt this around zones. It no longer reads the band set at
+     *  all — a band is a 2D-view annotation, and the 3D axis is made of three
+     *  authored zones. One segment per zone per side, positioned by
+     *  projecting that zone's real world-X edges, so what the ruler shows is
+     *  exactly the footprint the zone actually occupies.
+     *
+     *  What it must NOT show, and what the previous two passes' rulers did
+     *  show, is a compression factor. There is no compression to state, and a
+     *  ÷979 readout invited exactly the reading this pass exists to remove —
+     *  that the picture is a continuous scale you can measure against. Each
+     *  segment states its zone's NAME and its APPROXIMATE km range, and the
+     *  transition between two zones is labelled in the world itself. */
     const layoutRuler = (w: number, h: number) => {
       const root = rulerRootRef.current;
       if (!root) return;
-      const rulerBands = bandsRef.current;
       const groundZ = THREE.MathUtils.clamp(controls.target.z, -STRIP_HALF_Z, STRIP_HALF_Z);
       const screenXAt = (worldX: number): number | null => {
         axisProbe.set(worldX, terrainHeight(worldX, groundZ) + 60, groundZ);
@@ -952,12 +1025,11 @@ export function Scene3D({ world }: { world: WorldModel }) {
       if (!readable) return;
 
       for (const side of ["side_a", "side_b"] as const) {
-        for (const band of rulerBands) {
-          const el = rulerElsRef.current.get(`${side}:${band.id}`);
+        for (const zone of ZONES) {
+          const el = rulerElsRef.current.get(`${side}:${zone.id}`);
           if (!el) continue;
-          const displayMaxKm = Math.min(band.max_km, MAX_DEPTH_KM);
-          const x1 = screenXAt(worldXFor(side, band.min_km));
-          const x2 = screenXAt(worldXFor(side, displayMaxKm));
+          const x1 = screenXAt(sideSign(side) * zone.innerM);
+          const x2 = screenXAt(sideSign(side) * zone.outerM);
           if (x1 === null || x2 === null) {
             if (el.dataset.on !== "0") {
               el.dataset.on = "0";
@@ -970,20 +1042,56 @@ export function Scene3D({ world }: { world: WorldModel }) {
           if (el.dataset.on !== "1") el.dataset.on = "1";
           el.style.transform = `translateX(${l.toFixed(1)}px)`;
           el.style.width = `${Math.max(0, width).toFixed(1)}px`;
-          // "Wide enough for its text" is a live question — a band that is
-          // 8px across on screen must not print a label over its neighbour.
-          const roomy = width > 46 ? "1" : "0";
+          // "Wide enough for its text" is a live question — a zone seen
+          // edge-on from a low camera must not print its label over its
+          // neighbour's.
+          const roomy = width > 92 ? "1" : "0";
           if (el.dataset.roomy !== roomy) el.dataset.roomy = roomy;
-          // Compression at the band's own midpoint — 1x through the whole
-          // true-scale register, then rising fast. Stated as "1:1" where it
-          // is genuinely true scale, because that is the claim being made.
-          const mid = (band.min_km + displayMaxKm) / 2;
-          const c = compressionAt(mid);
-          const text = c < 1.05 ? "1:1" : `÷${c < 10 ? c.toFixed(1) : Math.round(c)}`;
-          const readout = el.querySelector<HTMLElement>(".ruler3d__scale");
-          if (readout && readout.textContent !== text) readout.textContent = text;
         }
       }
+
+      // ── zone transition labels ─────────────────────────────────────────
+      // Anchored to the ground at the middle of each gap, on each side, so
+      // they sit exactly where the terrain's own painted seam is rather than
+      // floating over it. Four in total.
+      // Two gates, both found by looking at screenshots. Below
+      // SEAM_CHIP_MIN_ORBIT_M the reader is inspecting a vehicle and the zone
+      // structure is not what they are reading — four chips in that frame are
+      // pure clutter. Beyond SEAM_CHIP_MAX_DIST_FACTOR times the orbit radius
+      // the seam is somewhere else entirely and its chip has no business
+      // sitting over the ground the camera IS looking at.
+      const orbitR = camera.position.distanceTo(controls.target);
+      const seamChipsOn = orbitR > SEAM_CHIP_MIN_ORBIT_M;
+      for (const side of ["side_a", "side_b"] as const) {
+        for (const gap of ZONE_GAPS) {
+          const el = seamElsRef.current.get(`${side}:${gap.outer.id}`);
+          if (!el) continue;
+          if (!seamChipsOn) {
+            if (el.dataset.on !== "false") el.dataset.on = "false";
+            continue;
+          }
+          const wx = sideSign(side) * gap.centreM;
+          // Anchored ON the seam's own ground, at the marker posts' height,
+          // and the chip hangs BELOW that point (see the CSS transform) —
+          // labels hang above theirs, so the two never fight for the same
+          // band of screen. Found by looking at a screenshot where four zone
+          // chips sat squarely across the asset labels.
+          axisProbe.set(wx, terrainHeight(wx, groundZ) + ZONE_POST_TOP_M, groundZ);
+          axisProbe.project(camera);
+          const behind = axisProbe.z > 1;
+          const sx = (axisProbe.x * 0.5 + 0.5) * w;
+          const sy = (-axisProbe.y * 0.5 + 0.5) * h;
+          const nearEnough =
+            Math.abs(sideSign(side) * gap.centreM - controls.target.x) <
+            orbitR * SEAM_CHIP_MAX_DIST_FACTOR;
+          const on =
+            !behind && nearEnough && sx > -160 && sx < w + 160 && sy > -40 && sy < h + 40;
+          if (el.dataset.on !== String(on)) el.dataset.on = String(on);
+          if (!on) continue;
+          el.style.transform = `translate(-50%, 0) translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px)`;
+        }
+      }
+
       void h;
     };
 
@@ -1437,7 +1545,11 @@ export function Scene3D({ world }: { world: WorldModel }) {
     const scene = sceneRef.current;
     if (!scene || !ready) return;
 
+    // Pan bounds stop at the deepest zone's outer edge; the GROUND runs on
+    // past it (TERRAIN_HALF_X) so the rear zone never ends on the plate's cut
+    // edge — see worldMapping.ts's TERRAIN_X_OVERRUN.
     const halfX = worldHalfWidth();
+    const terrainHalfX = TERRAIN_HALF_X;
     panBoundXRef.current = halfX;
     // Prop budget follows device capability rather than being a fixed number
     // that is either wasteful on a laptop or unusable on a phone.
@@ -1445,11 +1557,11 @@ export function Scene3D({ world }: { world: WorldModel }) {
       (navigator.hardwareConcurrency ?? 4) <= 4 ||
       window.matchMedia("(max-width: 820px)").matches;
 
-    const terrain = buildTerrain(halfX);
+    const terrain = buildTerrain(terrainHalfX);
     const props = buildProps(PROP_BUDGET[lowPower ? "low" : "high"]);
     propsRef.current = props;
     propsBubbleRef.current = { x: Number.NaN, z: Number.NaN, half: 0 };
-    const scenery = buildScenery(SCENERY_BUDGET[lowPower ? "low" : "high"], halfX);
+    const scenery = buildScenery(SCENERY_BUDGET[lowPower ? "low" : "high"], terrainHalfX, xForKm);
 
     // Zero line — a standing marker plane rather than a painted stripe, so it
     // stays readable from an oblique angle instead of foreshortening away.
@@ -1463,10 +1575,12 @@ export function Scene3D({ world }: { world: WorldModel }) {
       depthWrite: false,
     });
     // Metres: a translucent curtain the full width of the strip, standing
-    // 260 m proud of the ground — tall enough to read from the default 62 km
-    // framing, short enough that it never competes with an airborne asset.
+    // 150 m proud of the ground. Pass 24 had it at 260 against a 140 km-wide
+    // world; against a 19.2 km one that read, from a 150 m camera, as a huge
+    // pale wedge filling the sky. 150 m still resolves at the default framing
+    // and never competes with an airborne asset.
     const zeroPlane = new THREE.Mesh(
-      new THREE.PlaneGeometry(TERRAIN_HALF_Z * 2, 260),
+      new THREE.PlaneGeometry(TERRAIN_HALF_Z * 2, 150),
       zeroMat,
     );
     zeroPlane.rotation.y = Math.PI / 2;
@@ -1538,7 +1652,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
       zeroMat.dispose();
       stripeMat.dispose();
     };
-  }, [ready]);
+  }, [ready, xForKm]);
 
   // ── asset objects ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -1560,16 +1674,22 @@ export function Scene3D({ world }: { world: WorldModel }) {
       if (typeof z === "number") manualZ.set(node.id, z);
     }
 
-    // Breadth layout first: every asset needs to know its cohort before any of
-    // them can be positioned, so this cannot be folded into the loop below.
+    // Breadth layout second: every asset needs to know its cohort AND its
+    // placed depth before any of them can be positioned, so neither of these
+    // can be folded into the loop below.
     const autoNodes = nodes.filter((n) => !manualZ.has(n.id));
     const lateral = lateralLayout(
-      autoNodes.map((n) => ({
-        id: n.id,
-        side: nodeSide(n),
-        km: nodeDistance(n),
-        platformDomain: nodePlatformDomain(n),
-      })),
+      autoNodes.map((n) => {
+        const side = nodeSide(n);
+        const depth = depthLayout.depthFor(n.id) ?? depthMForKm(nodeDistance(n));
+        return {
+          id: n.id,
+          side,
+          km: nodeDistance(n),
+          x: (side === "side_a" ? -1 : 1) * depth,
+          platformDomain: nodePlatformDomain(n),
+        };
+      }),
     );
     // Pass 18: nudge terrain-affine categories (artillery, drone teams,
     // logistics, air-defense, command posts) toward the real ground Pass 17
@@ -1585,9 +1705,12 @@ export function Scene3D({ world }: { world: WorldModel }) {
           id: n.id,
           side: nodeSide(n),
           category: n.asset.category,
-          x: worldXFor(nodeSide(n), nodeDistance(n)),
+          x:
+            (nodeSide(n) === "side_a" ? -1 : 1) *
+            (depthLayout.depthFor(n.id) ?? depthMForKm(nodeDistance(n))),
         })),
       lateral,
+      xForKm,
     );
 
     // Pass 19: the marker/ring/fill trio for every asset — previously three
@@ -1621,20 +1744,16 @@ export function Scene3D({ world }: { world: WorldModel }) {
       // it has one and from the platform-domain fallback where it doesn't —
       // never from the engagement domain (src/data/placement.ts).
       const alt = nodeAltitude(node, (d) => DOMAIN_ALTITUDE[d] ?? 0);
-      // In the compressed register a true altitude reads as "on the deck",
-      // because 1 world unit out there is up to a kilometre of real ground.
-      // The height is scaled by the LOCAL compression, clamped, so a
-      // deep-strike UAV still reads as airborne — a legible symbolic
-      // altitude, which is what the brief scopes for the far register.
-      const symbolicLift = Math.min(compressionAt(km), FAR_SYMBOLIC_ALT_GAIN_MAX);
-      const drawAltitude =
-        km <= TRUE_SCALE_DEPTH_KM
-          ? alt.metres
-          : Math.min(FAR_SYMBOLIC_ALT_MAX, alt.metres * symbolicLift);
+      // True below ALT_TRUE_CEILING_M, softly ceilinged above it, so the
+      // symbolic 25 km orbit cannot be drawn as a stalk two and a half times
+      // taller than the world is deep. Ordering between air layers survives
+      // exactly; see zones.ts's drawAltitudeM.
+      const drawAltitude = drawAltitudeM(alt.metres);
 
+      const depthM = depthLayout.depthFor(node.id) ?? depthMForKm(km);
       const pos = worldPlacement({
         side,
-        km,
+        depthM,
         z: manualZ.get(node.id) ?? sited.get(node.id) ?? lateral.get(node.id) ?? 0,
         altitudeM: drawAltitude,
         terrainHeightAt: terrainHeight,
@@ -1657,13 +1776,15 @@ export function Scene3D({ world }: { world: WorldModel }) {
       if (!isStub && hasHeroModel(node.id)) {
         const model = buildHeroModel(node.id, sideColor);
         if (model) {
-          // Model scale is TRUE in the near register — models.ts has always
-          // authored at roughly metre scale, and depthAxis.ts is what finally
-          // makes that correct rather than coincidental. Past the boundary it
-          // is decoupled from position and clamped (modelScaleFor), because
-          // the alternative is a 7 m hull compressed by up to 979x.
-          const ms = modelScaleFor(km);
-          if (ms !== 1) model.scale.setScalar(ms);
+          // Model scale is TRUE, everywhere. models.ts authors hero geometry
+          // at metre scale and Z/Y are metres, so a 7.7 m hull is 7.7 units
+          // wherever it stands. Pass 24's far-register multiplier existed
+          // only because the axis compressed position by up to 979x out
+          // there; there is no compression to compensate for any more, so
+          // there is nothing left to decouple. The camera-distance
+          // legibility floor in layout() is the only thing that ever scales
+          // a model, and it is disclosed.
+          const ms = 1;
           // Largest horizontal half-extent at scale 1 — what the legibility
           // floor in layout() divides into the pixel target.
           const bbox = new THREE.Box3().setFromObject(model);
@@ -1768,6 +1889,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
         idx: k,
         padWorldY,
         km,
+        depthM,
         lod,
         modelRadius,
         baseModelScale,
@@ -1969,12 +2091,14 @@ export function Scene3D({ world }: { world: WorldModel }) {
       const side = nodeSide(entry.node);
       // Clamped to this asset's own side: a drag repositions where a real
       // system stands, not which side of the war it's on, so crossing the
-      // zero line clamps to it rather than reassigning `side`.
-      const km = worldXToKm(side, dragHitRef.current.x);
+      // zero line clamps to it rather than reassigning `side`. Clamped to the
+      // world's own outer edge too, so an asset cannot be parked in the
+      // terrain overrun past the deepest zone.
+      const dragDepth = Math.min(HALF_EXTENT_M, Math.abs(dragHitRef.current.x));
       const z = THREE.MathUtils.clamp(dragHitRef.current.z, -STRIP_HALF_Z, STRIP_HALF_Z);
       const next = worldPlacement({
         side,
-        km,
+        depthM: dragDepth,
         z,
         altitudeM: entry.altitudeM,
         terrainHeightAt: terrainHeight,
@@ -2051,7 +2175,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
       const entry = entriesRef.current.find((x) => x.id === drag.id);
       if (!entry) return;
       const side = nodeSide(entry.node);
-      const km = Math.max(0, Math.round(worldXToKm(side, entry.group.position.x) * 10) / 10);
+      const km = Math.max(0, Math.round(kmAtWorldX(side, entry.group.position.x) * 10) / 10);
       // Committed to the SAME overrides store every other edit in this app
       // uses (src/state/overridesState.tsx) — a dropped asset is a placement
       // edit, not a new kind of state. This is what makes the drop survive the
@@ -2200,6 +2324,13 @@ export function Scene3D({ world }: { world: WorldModel }) {
     };
   }, []);
 
+  const setSeamEl = useCallback((key: string) => {
+    return (el: HTMLDivElement | null) => {
+      if (el) seamElsRef.current.set(key, el);
+      else seamElsRef.current.delete(key);
+    };
+  }, []);
+
   // Left/right rear labels follow the camera, not the data (item 8).
   const leftSide = view.axisFlipped ? "side_b" : "side_a";
   const rightSide = view.axisFlipped ? "side_a" : "side_b";
@@ -2258,47 +2389,67 @@ export function Scene3D({ world }: { world: WorldModel }) {
         ))}
       </div>
 
-      {/* The depth ruler. Each segment is positioned from the real projected
-          screen-X of its band's edges, so a band the axis compresses hard is
-          visibly narrower than one it doesn't — the ruler SHOWS the
-          compression rather than papering over it with an even scale that
-          would be a lie. Pass 24 changed the per-band readout from
-          "km per 100px" (a fact about the screen) to the local compression
-          factor (a fact about the axis), and marks the true-scale register
-          explicitly, because "1:1" is the load-bearing claim of the whole
-          design and deserves to be stated rather than inferred. */}
+      {/* ── zone transition labels ───────────────────────────────────────
+          Four DOM chips, one per gap per side, anchored to the ground at the
+          middle of the painted seam. They exist because the brief's word for
+          the transition is "visible, labelled" — and because the single most
+          important thing this pass has to say is said here, at the place a
+          reader is most likely to misread: crossing this is not crossing out
+          of range. */}
+      <div className="zoneseam3d" ref={seamRootRef} aria-hidden="true">
+        {(["side_a", "side_b"] as const).map((side) =>
+          ZONE_GAPS.map((gap) => (
+            <div
+              key={`${side}:${gap.outer.id}`}
+              ref={setSeamEl(`${side}:${gap.outer.id}`)}
+              className="zoneseam3d__chip"
+              data-on="false"
+            >
+              <span className="zoneseam3d__name">{gap.outer.name}</span>
+              <span className="zoneseam3d__km">{gap.outer.rangeLabel}</span>
+              <span className="zoneseam3d__note">{ZONE_TRANSITION_NOTE}</span>
+            </div>
+          )),
+        )}
+      </div>
+
+      {/* The depth ruler. One segment per ZONE per side (Pass 25 — it used to
+          be one per band), positioned from the real projected screen-X of
+          that zone's world-space edges. Each zone has the same physical
+          footprint whatever span of real ground it stands for, so the ruler's
+          segments come out roughly equal — which is the honest picture, and
+          the reason the old per-segment compression readout is gone rather
+          than restated. */}
       <div className="ruler3d" ref={rulerRootRef} data-readable="true" aria-hidden="true">
         <span className="ruler3d__zero" />
         {(["side_a", "side_b"] as const).map((side) =>
-          bands.map((band) => (
+          ZONES.map((zone) => (
             <div
-              key={`${side}:${band.id}`}
-              ref={setRulerEl(`${side}:${band.id}`)}
-              className={`ruler3d__band ruler3d__band--${side}${
-                band.min_km < TRUE_SCALE_DEPTH_KM ? " is-true-scale" : ""
-              }`}
+              key={`${side}:${zone.id}`}
+              ref={setRulerEl(`${side}:${zone.id}`)}
+              className={`ruler3d__band ruler3d__band--${side} ruler3d__band--${zone.id}`}
               style={{ ["--side" as string]: SIDE_ACCENT[side].base }}
               data-on="0"
               data-roomy="0"
             >
-              <span className="ruler3d__label">{band.label}</span>
-              <span className="ruler3d__scale" />
+              <span className="ruler3d__label">{zone.name}</span>
+              <span className="ruler3d__scale">{zone.rangeLabel}</span>
             </div>
           )),
         )}
         <span className="ruler3d__caption">
-          <b>{TRUE_SCALE_DEPTH_KM} km either side is drawn 1:1</b>
+          <b>Three bounded zones, not one continuous scale</b>
           <span>
-            {" "}— past that the axis compresses toward the horizon, and every label still
-            states true distance
+            {" "}— zone boundaries are a rendering-budget decision, not a safety line.
+            Position inside a zone carries near-to-far order; every label states true
+            distance.
           </span>
         </span>
       </div>
 
       {/* Screen-reader equivalent of the ruler, and the one-line explanation
-          of the compression the info affordance points at. The compression is
-          a fact about the data, not only about the picture. */}
-      <p className="sr-only">{compressionSummary()}</p>
+          the info affordance points at. */}
+      <p className="sr-only">{zonesSummary()}</p>
 
       <div className="scene3d__legend">
         <span className={`scene3d__side scene3d__side--${leftSide === "side_a" ? "a" : "b"}`}>

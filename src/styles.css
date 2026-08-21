@@ -2517,11 +2517,24 @@ code { font-family: var(--mono); font-size: 0.92em; }
   text-transform: uppercase;
   color: var(--text-3);
 }
-/* The true-scale register is the claim, so it gets a visible weight the
-   compressed bands don't: a brighter baseline and a faint fill. */
-.ruler3d__band.is-true-scale {
-  border-bottom-color: color-mix(in srgb, var(--side) 70%, transparent);
-  background: color-mix(in srgb, var(--side) 9%, transparent);
+/* Pass 25: the segments are ZONES now, and the near one is not privileged by
+   being "true scale" — there is no true scale to privilege. What the weight
+   marks instead is zone character: The Line is where the density is, so it
+   reads heaviest, and the two rear zones step back without ever going faint
+   enough to read as "nothing out here". */
+.ruler3d__band--line {
+  border-bottom-color: color-mix(in srgb, var(--side) 78%, transparent);
+  background: color-mix(in srgb, var(--side) 11%, transparent);
+  color: var(--text-2);
+}
+.ruler3d__band--depth {
+  border-bottom-color: color-mix(in srgb, var(--side) 56%, transparent);
+  background: color-mix(in srgb, var(--side) 7%, transparent);
+  color: var(--text-2);
+}
+.ruler3d__band--rear {
+  border-bottom-color: color-mix(in srgb, var(--side) 44%, transparent);
+  background: color-mix(in srgb, var(--side) 5%, transparent);
   color: var(--text-2);
 }
 .ruler3d__band[data-on="0"] { display: none; }
@@ -2531,7 +2544,59 @@ code { font-family: var(--mono); font-size: 0.92em; }
 .ruler3d__band[data-roomy="0"] .ruler3d__scale { display: none; }
 .ruler3d__label { overflow: hidden; text-overflow: ellipsis; }
 .ruler3d__scale { font-family: var(--mono); color: var(--text-2); flex: none; }
-.ruler3d__band.is-true-scale .ruler3d__scale { color: var(--ok); }
+.ruler3d__band--line .ruler3d__scale { color: var(--text-2); }
+
+/* ── zone transition labels (Pass 25) ──────────────────────────────────────
+   Four DOM chips anchored to the ground at the middle of each painted
+   transition seam, positioned per frame by Scene3D's layout pass. They carry
+   the single most important sentence in the whole view, so they are readable
+   type on a solid plate rather than a faint watermark — and they are
+   pointer-transparent so they can never eat a click meant for the scene. */
+.zoneseam3d {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 3;
+}
+.zoneseam3d__chip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 168px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px 7px;
+  border-radius: 5px;
+  border: 1px solid rgba(142, 151, 168, 0.45);
+  border-top: 2px solid rgba(180, 189, 205, 0.8);
+  background: rgba(16, 20, 27, 0.88);
+  backdrop-filter: blur(2px);
+  will-change: transform;
+}
+.zoneseam3d__chip[data-on="false"] { display: none; }
+.zoneseam3d__name {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-1);
+}
+.zoneseam3d__km {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--text-2);
+}
+.zoneseam3d__note {
+  font-size: 9px;
+  line-height: 1.35;
+  color: var(--text-3);
+}
+@media (max-width: 620px) {
+  .zoneseam3d__chip { width: 132px; padding: 4px 6px 5px; }
+  .zoneseam3d__note { display: none; }
+}
 
 /* Its own row above the bands — never overlapping them, at any width. */
 .ruler3d__caption {
@@ -2561,6 +2626,7 @@ code { font-family: var(--mono); font-size: 0.92em; }
   .ruler3d__caption { bottom: 28px; font-size: 8.5px; left: 8px; right: 8px; }
   .ruler3d__caption span { display: none; }
   .ruler3d__band { font-size: 8px; height: 18px; bottom: 5px; gap: 4px; padding: 0 3px 2px; }
+  .ruler3d__band .ruler3d__scale { display: none; }
   .ruler3d__zero { height: 23px; }
   .app.has-detail .ruler3d { right: 0; }
 }
@@ -2671,4 +2737,33 @@ code { font-family: var(--mono); font-size: 0.92em; }
   clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
+}
+
+/* ── About page: the zone model (Pass 25) ────────────────────────────────
+   The callout carries the one sentence this pass may not ship without —
+   "range and cost, not a boundary line" — so it is set apart from the body
+   copy rather than buried in it. */
+.about__callout {
+  border-left: 3px solid var(--accent, #8e97a8);
+  background: rgba(142, 151, 168, 0.08);
+  padding: 10px 14px;
+  border-radius: 0 6px 6px 0;
+}
+.about__zones {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.about__zones li {
+  padding-left: 12px;
+  border-left: 2px solid rgba(142, 151, 168, 0.35);
+  line-height: 1.55;
+}
+.about__zonekm {
+  font-family: var(--mono);
+  font-size: 0.86em;
+  color: var(--text-2);
 }

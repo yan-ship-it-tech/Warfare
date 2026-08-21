@@ -99,8 +99,8 @@ const DEFENDED_LANDMARK_KINDS: LandmarkSpec["kind"][] = ["power_plant", "fuel_de
  *  in the compressed register the same threshold spans far more real km,
  *  which is correct: what matters is whether two things read as co-located in
  *  the picture, and out there they do. */
-const AFFINITY_SEARCH_RADIUS_WORLD = 4_000;
-const DEFENDED_SEARCH_RADIUS_WORLD = 22_000;
+const AFFINITY_SEARCH_RADIUS_WORLD = 1_200;
+const DEFENDED_SEARCH_RADIUS_WORLD = 5_000;
 
 /** Fraction of the way from lateralLayout's own Z toward the feature's Z.
  *  A full snap would put every artillery piece sharing a patch at one
@@ -142,6 +142,13 @@ interface FeaturePoint {
 export function applyTacticalSiting(
   items: SitedItem[],
   zMap: Map<string, number>,
+  /** km → world X for NON-ASSET geometry. Pass 25: this has to be the placed
+   *  ladder (`DepthLayout.depthAtKm`), not the pure zone curve, or a forest
+   *  patch authored at 8 km sits several hundred metres from the artillery
+   *  piece authored at 10 km that is supposed to hide in it — see zones.ts's
+   *  `depthAtKm`. Defaults to the pure curve so a caller without a layout
+   *  still gets sane behaviour. */
+  xForKm: (side: Side, km: number) => number = worldXFor,
 ): Map<string, number> {
   const out = new Map(zMap);
   if (items.length === 0) return out;
@@ -149,11 +156,11 @@ export function applyTacticalSiting(
   const featuresByKind = new Map<TerrainFeature["kind"], FeaturePoint[]>();
   for (const f of TERRAIN_FEATURES) {
     const list = featuresByKind.get(f.kind) ?? [];
-    list.push({ x: worldXFor(f.side, f.km), z: f.z, radius: f.radius, side: f.side });
+    list.push({ x: xForKm(f.side, f.km), z: f.z, radius: f.radius, side: f.side });
     featuresByKind.set(f.kind, list);
   }
   const defended: FeaturePoint[] = LANDMARKS.filter((l) => DEFENDED_LANDMARK_KINDS.includes(l.kind)).map((l) => ({
-    x: worldXFor(l.side, l.km),
+    x: xForKm(l.side, l.km),
     z: l.z,
     radius: 480,
     side: l.side,

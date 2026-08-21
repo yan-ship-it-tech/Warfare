@@ -51,6 +51,7 @@ import {
   RIVER_WATER_LEVEL_Y,
 } from "./terrain3d";
 import { worldXFor, SCENERY_HALF_Z } from "./worldMapping";
+import { ZONE_GAPS } from "./zones";
 
 // ── material palette (Pass 19 — governance) ───────────────────────────────
 // Pass 12 flagged 19 ungoverned one-off materials here with no shared,
@@ -448,11 +449,23 @@ const SMOKE_MAT = new THREE.MeshStandardMaterial({
  *  The next scenery addition reaching for a new colour should check this
  *  list — and docs/MODEL_STYLE_GUIDE.md's real RGB-distance numbers —
  *  before declaring #28. */
+/** Pass 25's two additions, and they are deliberately OUTSIDE the landscape
+ *  palette rather than reusing CONCRETE: a zone marker is a mark on a drawing,
+ *  not an object in the world, and it should not share a colour with anything
+ *  that is. Cool neutral grey with an emissive cap so the row stays readable
+ *  against dark ground at a whole-world framing. */
+const ZONE_MARKER_POST = new THREE.MeshStandardMaterial({
+  color: "#6d7686", flatShading: true, roughness: 0.7, metalness: 0.1,
+});
+const ZONE_MARKER_CAP = new THREE.MeshStandardMaterial({
+  color: "#c3ccdb", emissive: "#5d667a", flatShading: true, roughness: 0.5,
+});
+
 export const SCENERY_MATERIALS = [
   CONCRETE, CONCRETE_DARK, METAL_RUST, METAL_TANK, DIRT_WALL, WIRE,
   WALL_DAMAGED, RUBBLE, ROOF_INTACT, ROOF_DAMAGED, URBAN_WALL_A, URBAN_WALL_B,
   PIER_WOOD, WRECK_HULL, EMBER, CANOPY, EARTH_MOUND, BRIDGE_DECK, REBAR,
-  PONTOON_MAT, SMOKE_MAT,
+  PONTOON_MAT, SMOKE_MAT, ZONE_MARKER_POST, ZONE_MARKER_CAP,
 ];
 for (const m of SCENERY_MATERIALS) m.userData.shared = true;
 
@@ -946,7 +959,15 @@ const LANDMARK_FOOTPRINT_SCALE: Partial<Record<LandmarkSpec["kind"], number>> = 
   ruined_infrastructure: 3,
 };
 
-export function buildScenery(budget: SceneryBudget, halfWidthX: number): THREE.Group {
+export function buildScenery(
+  budget: SceneryBudget,
+  halfWidthX: number,
+  /** km → world X. Pass 25: the roster's placed ladder
+   *  (`DepthLayout.depthAtKm`) rather than the pure zone curve, so a landmark
+   *  or terrain feature authored at a distance lands beside the assets
+   *  authored at the same distance. Defaults to the pure curve. */
+  xForKm: (side: Side, km: number) => number = worldXFor,
+): THREE.Group {
   const g = new THREE.Group();
   g.name = "scenery";
 
@@ -954,7 +975,7 @@ export function buildScenery(budget: SceneryBudget, halfWidthX: number): THREE.G
     const model = LANDMARK_BUILDERS[spec.kind]();
     const scale = LANDMARK_FOOTPRINT_SCALE[spec.kind];
     if (scale) model.scale.setScalar(scale);
-    const x = worldXFor(spec.side, spec.km);
+    const x = xForKm(spec.side, spec.km);
     model.position.set(x, terrainHeight(x, spec.z), spec.z);
     model.rotation.y = spec.rotationY;
     model.name = `scenery:landmark:${spec.kind}:${spec.side}`;
@@ -965,7 +986,7 @@ export function buildScenery(budget: SceneryBudget, halfWidthX: number): THREE.G
   // TERRAIN_FEATURES describes, not just data with nothing standing on it.
   for (const feature of TERRAIN_FEATURES) {
     const model = TACTICAL_FEATURE_BUILDERS[feature.kind]();
-    const x = worldXFor(feature.side, feature.km);
+    const x = xForKm(feature.side, feature.km);
     model.position.set(x, terrainHeight(x, feature.z), feature.z);
     model.name = `scenery:feature:${feature.id}`;
     g.add(model);
@@ -979,6 +1000,8 @@ export function buildScenery(budget: SceneryBudget, halfWidthX: number): THREE.G
   for (const side of ["side_a", "side_b"] as Side[]) {
     g.add(buildObstacleBelt(side, budget.obstaclesPerSide));
   }
+
+  g.add(buildZoneTransitions());
 
   const water = buildWater(halfWidthX);
   if (water) g.add(water);
@@ -994,6 +1017,68 @@ export function buildScenery(budget: SceneryBudget, halfWidthX: number): THREE.G
   pontoon.name = "scenery:pontoon-crossing";
   g.add(pontoon);
 
+  return g;
+}
+
+/**
+ * ZONE TRANSITION MARKERS — Pass 25.
+ *
+ * The brief's requirement for the transition between two zones is that it be
+ * "visible, labelled … not blended, not hidden". The ground carries a painted,
+ * dashed seam (terrain3d.ts) and a DOM chip names the zone being entered
+ * (Scene3D). This is the third piece and the one that survives an oblique
+ * camera: a row of marker posts standing on each edge of the gap, of a kind
+ * that exists nowhere else in this scene.
+ *
+ * They are deliberately drawn as SURVEY MARKERS, not as anything military —
+ * no wire, no dragon's teeth, no fence. A reader must never be able to read
+ * this as a fortification, a border or a line beyond which they are out of
+ * range; it is a mark on a drawing, and it should look like one.
+ */
+const ZONE_POST_PITCH_M = 700;
+const ZONE_POST_HEIGHT = 40;
+
+function buildZoneTransitions(): THREE.Group {
+  const g = new THREE.Group();
+  g.name = "scenery:zone-transitions";
+
+  const postGeo = new THREE.CylinderGeometry(1.6, 1.9, ZONE_POST_HEIGHT, 6);
+  postGeo.translate(0, ZONE_POST_HEIGHT / 2, 0);
+  const capGeo = new THREE.OctahedronGeometry(5.2, 0);
+  capGeo.translate(0, ZONE_POST_HEIGHT + 5.2, 0);
+
+  const rows = Math.floor((SCENERY_HALF_Z * 2) / ZONE_POST_PITCH_M) + 1;
+  // Two edges per gap, two sides, one row of posts each.
+  const total = ZONE_GAPS.length * 2 * 2 * rows;
+  const postMesh = new THREE.InstancedMesh(postGeo, ZONE_MARKER_POST, total);
+  const capMesh = new THREE.InstancedMesh(capGeo, ZONE_MARKER_CAP, total);
+  postMesh.name = "scenery:zone-post";
+  capMesh.name = "scenery:zone-cap";
+
+  let n = 0;
+  for (const gap of ZONE_GAPS) {
+    for (const edge of [gap.startM, gap.endM]) {
+      for (const sign of [-1, 1]) {
+        for (let i = 0; i < rows; i++) {
+          const x = sign * edge;
+          const z = -SCENERY_HALF_Z + i * ZONE_POST_PITCH_M;
+          if (isInWater(x, z)) continue;
+          dummy.position.set(x, terrainHeight(x, z), z);
+          dummy.rotation.set(0, 0, 0);
+          dummy.scale.setScalar(1);
+          dummy.updateMatrix();
+          postMesh.setMatrixAt(n, dummy.matrix);
+          capMesh.setMatrixAt(n, dummy.matrix);
+          n++;
+        }
+      }
+    }
+  }
+  postMesh.count = n;
+  capMesh.count = n;
+  postMesh.instanceMatrix.needsUpdate = true;
+  capMesh.instanceMatrix.needsUpdate = true;
+  g.add(postMesh, capMesh);
   return g;
 }
 

@@ -5,3 +5,9 @@ dist/
 .vite/
 tsconfig.tsbuildinfo
 .wrangler/
+
+# Pass 25 headless verification harness — local only, not part of the app.
+.shoot.mjs
+.probe.mjs
+.probe2.mjs
+.verify.mjs
