@@ -21,9 +21,9 @@ import { DOMAIN_ACCENT, SIDE_ACCENT, SIDE_LABELS } from "../config/ui";
 import { useViewState } from "../state/viewState";
 import { useOverrides } from "../state/overridesState";
 import { resolveAssetDisplay } from "../data/catalog";
-import { buildTerrain, buildSky, terrainHeight, HORIZON_COLOR } from "./terrain3d";
+import { buildTerrain, buildSky, surfaceHeight, HORIZON_COLOR } from "./terrain3d";
 import { buildProps, recentreLocalProps, PROP_BUDGET } from "./props";
-import { buildScenery, disposeScenery, SCENERY_BUDGET } from "./scenery";
+import { buildScenery, disposeScenery, SCENERY_BUDGET, damageSites } from "./scenery";
 import { loadOsmData, buildOsmInset, disposeOsmInset } from "./osmTerrain";
 import { applyTacticalSiting } from "./tacticalSiting";
 import { buildHeroModel, hasHeroModel } from "./models";
@@ -230,7 +230,7 @@ const OCCLUSION_SAMPLES = 6;
 /** Ceiling on occlusion probes per layout. An asset rejected for being
  *  behind a ridge does not consume label budget, so it stays a candidate and
  *  gets re-probed on the next frame — which meant a low camera over the
- *  churned zero-line terrain could still spend hundreds of terrainHeight()
+ *  churned zero-line terrain could still spend hundreds of surfaceHeight()
  *  calls a frame rejecting the same assets. Past this ceiling the probe is
  *  skipped and the label is allowed: showing one label that a rise would
  *  have hidden is a far cheaper error than a frame-time spike. */
@@ -529,7 +529,7 @@ function makeInstancedMesh(geo: THREE.BufferGeometry, mat: THREE.Material, name:
  * label for something sitting in dead ground behind a rise, drawn as if it
  * were in front of it.
  *
- * terrainHeight() is genuinely expensive — three octaves of value noise plus
+ * surfaceHeight() is genuinely expensive — three octaves of value noise plus
  * a handful of exp/pow terms — so this is now called only for the handful of
  * candidates that are actually about to be titled, not for every asset in
  * the scene every frame (which is what ~500 terrainHeight calls per frame
@@ -542,7 +542,7 @@ function occludedByTerrain(cam: THREE.Vector3, target: THREE.Vector3): boolean {
     const px = cam.x + (target.x - cam.x) * t;
     const py = cam.y + (target.y - cam.y) * t;
     const pz = cam.z + (target.z - cam.z) * t;
-    if (terrainHeight(px, pz) > py + 25) return true;
+    if (surfaceHeight(px, pz) > py + 25) return true;
   }
   return false;
 }
@@ -645,7 +645,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
   /** The scatter group and where its camera-local bubble currently sits, so
    *  layout() can recentre it as the camera moves (see props.ts's header). */
   const propsRef = useRef<THREE.Group | null>(null);
-  const propsBubbleRef = useRef({ x: Number.NaN, z: Number.NaN, half: 0 });
+  const propsBubbleRef = useRef({ x: Number.NaN, z: Number.NaN, half: 0, agg: 0 });
   /** Live DOM handle + last-written state for every mounted pin. */
   const pinDomRef = useRef(new Map<string, PinDom>());
   /** Ruler segment elements, keyed `${side}:${bandId}` (item 9). */
@@ -1012,7 +1012,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
       if (!root) return;
       const groundZ = THREE.MathUtils.clamp(controls.target.z, -STRIP_HALF_Z, STRIP_HALF_Z);
       const screenXAt = (worldX: number): number | null => {
-        axisProbe.set(worldX, terrainHeight(worldX, groundZ) + 60, groundZ);
+        axisProbe.set(worldX, surfaceHeight(worldX, groundZ) + 60, groundZ);
         axisProbe.project(camera);
         if (axisProbe.z > 1) return null; // behind the camera
         return (axisProbe.x * 0.5 + 0.5) * w;
@@ -1084,7 +1084,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
           // labels hang above theirs, so the two never fight for the same
           // band of screen. Found by looking at a screenshot where four zone
           // chips sat squarely across the asset labels.
-          axisProbe.set(wx, terrainHeight(wx, groundZ) + ZONE_POST_TOP_M, groundZ);
+          axisProbe.set(wx, surfaceHeight(wx, groundZ) + ZONE_POST_TOP_M, groundZ);
           axisProbe.project(camera);
           const behind = axisProbe.z > 1;
           const sx = (axisProbe.x * 0.5 + 0.5) * w;
@@ -1127,12 +1127,19 @@ export function Scene3D({ world }: { world: WorldModel }) {
       // Slide the scatter bubble to wherever the camera is looking. Cheap and
       // self-throttling — see recentreLocalProps.
       if (propsRef.current) {
+        // World metres per screen pixel at the orbit radius — the scatter's
+        // aggregation is a target size in PIXELS, so it has to be told about
+        // the viewport rather than inferring one. Same derivation as
+        // `pxToWorld` below, hoisted because the scatter is updated first.
+        const mPerPx =
+          orbitRadius * ((Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * 2) / Math.max(1, h));
         recentreLocalProps(
           propsRef.current,
           controls.target.x,
           controls.target.z,
           orbitRadius,
           propsBubbleRef.current,
+          mPerPx,
         );
       }
       const farDist = LABEL_FAR_DIST(orbitRadius);
@@ -1566,9 +1573,20 @@ export function Scene3D({ world }: { world: WorldModel }) {
       window.matchMedia("(max-width: 820px)").matches;
 
     const terrain = buildTerrain(terrainHalfX);
-    const props = buildProps(PROP_BUDGET[lowPower ? "low" : "high"]);
+    // Where the roster actually stands along the axis, so the crater field can
+    // be denser where the labelled assets are (props.ts's craterDensityAt).
+    // Depth only — see that function's note on why lateral position is
+    // deliberately not used here.
+    const anchorXs = [
+      ...world.assets.map((a) => xForKm(nodeSide({ kind: "asset", id: a.id, asset: a }), a.distance_km_from_zero)),
+      ...world.stubs.map((st) => xForKm(nodeSide({ kind: "stub", id: st.id, stub: st }), st.distance_km_from_zero)),
+    ];
+    const props = buildProps(PROP_BUDGET[lowPower ? "low" : "high"], {
+      anchorXs,
+      damageSites: damageSites(xForKm),
+    });
     propsRef.current = props;
-    propsBubbleRef.current = { x: Number.NaN, z: Number.NaN, half: 0 };
+    propsBubbleRef.current = { x: Number.NaN, z: Number.NaN, half: 0, agg: 0 };
     const scenery = buildScenery(SCENERY_BUDGET[lowPower ? "low" : "high"], terrainHalfX, xForKm);
 
     // Zero line — a standing marker plane rather than a painted stripe, so it
@@ -1601,7 +1619,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
     // The zero line runs to the horizon, not to the sector's edge: the front
     // does not stop where this scene's roster does.
     for (let z = -TERRAIN_HALF_Z; z <= TERRAIN_HALF_Z; z += 400) {
-      stripePts.push(new THREE.Vector3(0, terrainHeight(0, z) + 6, z));
+      stripePts.push(new THREE.Vector3(0, surfaceHeight(0, z) + 6, z));
     }
     const stripeMat = new THREE.LineBasicMaterial({ color: "#ffffff", transparent: true, opacity: 0.55 });
     zero.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(stripePts), stripeMat));
@@ -1764,7 +1782,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
         depthM,
         z: manualZ.get(node.id) ?? sited.get(node.id) ?? lateral.get(node.id) ?? 0,
         altitudeM: drawAltitude,
-        terrainHeightAt: terrainHeight,
+        terrainHeightAt: surfaceHeight,
       });
 
       const g = new THREE.Group();
@@ -1850,7 +1868,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
       // domains skip it entirely: their marker already sits right at the
       // surface, and drawing a stalk down to a point 1.4 units below it would
       // just be visual noise, not a corrected version of the same cue.
-      const groundY = terrainHeight(pos.x, pos.z) - pos.y; // local, i.e. relative to the group
+      const groundY = surfaceHeight(pos.x, pos.z) - pos.y; // local, i.e. relative to the group
       if (elevated) {
         const tether = new THREE.Line(
           new THREE.BufferGeometry().setFromPoints([
@@ -1873,7 +1891,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
       // asset above it is flying. layout() rewrites both matrices every pass
       // to hold them screen-constant; these initial writes just mean a frame
       // before the first layout is not blank.
-      const padWorldY = terrainHeight(pos.x, pos.z) + 1.5;
+      const padWorldY = surfaceHeight(pos.x, pos.z) + 1.5;
 
       dummyMatrix.compose(new THREE.Vector3(pos.x, padWorldY + 0.02, pos.z), ringQuat, ONE);
       ringInstanced.setMatrixAt(k, dummyMatrix);
@@ -2109,12 +2127,12 @@ export function Scene3D({ world }: { world: WorldModel }) {
         depthM: dragDepth,
         z,
         altitudeM: entry.altitudeM,
-        terrainHeightAt: terrainHeight,
+        terrainHeightAt: surfaceHeight,
       });
       entry.group.position.set(next.x, next.y, next.z);
       const markerY = entry.grounded ? 4 : 0;
       entry.anchor.set(next.x, next.y + markerY, next.z);
-      entry.padWorldY = terrainHeight(next.x, next.z) + 1.5;
+      entry.padWorldY = surfaceHeight(next.x, next.z) + 1.5;
 
       // Pass 19: marker/ring/fill are shared InstancedMesh rows, not this
       // entry's own children — moving `entry.group` (above) no longer moves

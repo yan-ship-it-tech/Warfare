@@ -4054,3 +4054,168 @@ re-implemented in a separate Node process (not imported from the app), six asset
 position were recomputed by hand — the latter with a from-scratch look-at basis and
 perspective divide rather than three.js's projection. Worst absolute discrepancy across all
 twelve comparisons: **4.0 × 10⁻¹³**. The table is in `PASS24_HANDOFF.md`.
+
+# Pass 26 — damage and disorder, and the two grounding bugs underneath it
+
+Brief: no damage or disorder anywhere (clean fields, intact buildings, no
+craters/rubble/debris), and terrain detail that only renders at the ~3.2 km
+default framing — pull back one step and the ground reads as empty. Plus a
+grounding check on structure props, prompted by "disconnected grey boxes" in a
+real-device screenshot. The Line zone only; additive dressing, no camera,
+scale or positioning changes.
+
+The two halves turned out to be one problem wearing two coats, and underneath
+both was a pair of grounding bugs neither of them named.
+
+## Part 1 — the grounding check found two bugs, not one
+
+**Bug 1: a group is not its children.** `buildScenery` placed each landmark
+and terrain feature at a SINGLE terrain sample taken at the group's origin,
+while every builder authors its pieces on a flat local plane — a village's
+houses over a 170 m radius, an urban block's nine volumes over 300 x 220 m, a
+forest patch's trees over 380 x 300 m. Measured across the real placements:
+
+| site | km | footprint | sink | float | span |
+|---|---|---|---|---|---|
+| village_ruined | 3.5 | 170 m | −5.84 m | +6.27 m | **12.12 m** |
+| forest_patch | 8 | 240 m | −6.73 m | +3.59 m | 10.32 m |
+| built_up_block | 7 | 190 m | −4.23 m | +2.69 m | 6.92 m |
+| urban_cluster | 130 | 190 m | −3.25 m | +2.01 m | 5.26 m |
+
+Against houses that are themselves ~1.8 m tall. The built-up blocks at km 6–7
+are the reported "disconnected grey boxes" — their taller volumes visibly
+float clear of the ground. It is **not** an LOD artefact: nothing in
+`scenery.ts` has an LOD, and `THREE.LOD` is used only for hero asset models in
+`Scene3D`. It was a single-sample grounding bug present since the first pass
+that placed these groups, invisible while the world was compressed enough for
+7 m to be sub-pixel. Fixed by `groundChildren()`, which samples under each
+direct child's own world position (rotating local offsets by the group's yaw
+and dividing the correction back out by its scale). Direct children only —
+a house's roof is authored relative to its own walls and must stay there.
+
+**Bug 2, found while fixing the first, and the more consequential one:
+`terrainHeight` is not the ground.** It is the continuous height *field*. The
+ground is a graded triangulation of it, and everything standing on the ground
+was being placed at `terrainHeight()` — a different surface. Measured against
+the surface the mesh actually draws:
+
+| band | mean err | p95 | max |
+|---|---|---|---|
+| 0–500 m (churn) | 0.87 m | 3.09 m | **12.63 m** |
+| 500–1500 m | 0.27 m | 1.02 m | 3.43 m |
+| open zones | ~0.25 m | ~0.9 m | ~2.8 m |
+
+The churn band is worst because `terrainHeight` adds a 182 m-period, ±11 m
+churn octave there and the grid's ~90 m Z spacing cannot represent it at all.
+Against a crater apron sitting 0.12 m proud, a farm track at 0.35 m and scrub
+at 0.15 m, even the 0.9 m open-ground figure is the difference between a prop
+being on the ground and being under it — and the 12.6 m worst case is exactly
+where the crater field is densest. **This is the other half of "no craters
+anywhere": they were being drawn, in the right places, and buried.**
+
+`surfaceHeight(x, z)` samples the same grid the mesh is built from and
+interpolates across the same two triangles, so a prop placed with it sits on
+the drawn ground by construction rather than by tolerance. Every placement
+call in `props.ts`, `scenery.ts`, `osmTerrain.ts` and `Scene3D.tsx` now uses
+it; `terrainHeight` remains correct for building the mesh and for anything
+asking about the height field. `buildTerrain` now reads the same shared grid
+arrays, so the mesh and the "where is the ground" answer cannot drift apart —
+they were the same numbers written twice before.
+
+A vertex-height memo (521 × 141 doubles, 588 kB) keeps the four-corner lookup
+from re-evaluating six noise octaves per corner per prop.
+
+## Part 2 — density across a range of zoom, not one point
+
+The cause was `LOCAL_HALF_MAX_M = 3_200`. The default framing orbits at
+3,200 m, so **the scatter bubble was already at its ceiling at the default** —
+one zoom-out step grew the visible ground while the scatter stayed pinned in a
+fixed 6.4 × 6.4 km box. The sweet spot was not a sweet spot; it was the last
+framing where the bubble still covered the frame.
+
+Raising the ceiling alone cannot fix it, and the arithmetic says why: at an
+8 km orbit the frame covers ground from ~3 km to the horizon, and a 5 m tree
+is 0.6 px. Spreading a fixed budget over more ground can only thin it. So:
+
+- **Scatter aggregation.** Past the range where an individual tree resolves,
+  one instance becomes a copse of `agg` trees. Linear scale grows as
+  `sqrt(agg)`, which holds the ground-coverage *fraction* constant — the layer
+  thins in instance count and coarsens in shape without thinning in coverage,
+  which is the difference between an LOD and a fade-out. Target is a size in
+  *pixels*, so `Scene3D` passes real metres-per-pixel rather than the module
+  guessing a viewport. Disclosed departure from 1:1, and a different thing
+  from the marker/model boost: a copse is an honest aggregate of wood that
+  ground really carries, and it only engages beyond the range at which the
+  individual trees could be told apart.
+- **Belt grid at half the measured pitch.** Only ~21 full-pitch belt lines
+  intersect the plate at all, so the grid put a line every 1.4 km — two or
+  three across a 6–8 km frame. The measured OSM rows stay exactly where they
+  were; the intermediate rows are the minor field divisions between them,
+  drawn shorter and thinner so the measured grid still dominates.
+- **Farm tracks 7 m → 11 m** (0.9 px → 2.2 px at 8 km) and a tighter pitch. A
+  field road is a worn pair of ruts plus verges and turn-out, not a bare
+  carriageway.
+
+## Part 3 — damage and disorder, The Line only
+
+- **Craters rebuilt.** Were 1.4–5.2 m across in a 900 m Gaussian: correct, and
+  invisible at every framing a reader uses. Now 4–16 m bowls across the whole
+  Line zone, density `damageIntensity^2.6` (the old 1.6 gave only a 2.6:1
+  ratio between the line and km 16 — a uniform sprinkle, not a front) plus a
+  bump at each asset depth. Spread over `STRIP_HALF_Z`, not `SCENERY_HALF_Z`:
+  86 % of the field was landing on lateral filler the camera never looks at
+  (measured — 317 of 2,200 aprons were in the near frame).
+- **Scorch aprons — the load-bearing half.** A flat polygon-offset disc
+  3.0–4.0× the bowl, so 24–64 m of stained ground per hit. A crater bowl is a
+  *shape* and shapes need pixels; a scorch mark is a *tone*, and tone survives
+  being one pixel. First cut used colours within a few percent of the ground's
+  own value and the aprons, though drawn correctly and at 9 px, were
+  invisible; both ends are now deliberately darker than any value the ground
+  takes.
+- Bowls and aprons read from **one shared sample list**. The first cut drew
+  them in two loops off identically-seeded RNGs, which aligns for exactly one
+  crater and then diverges — every apron would have sat next to a crater
+  rather than under one.
+- **Rubble and debris**, clustered on sites derived from the same
+  `LANDMARKS`/`TERRAIN_FEATURES` this file already draws (`damageSites()`), so
+  debris can never drift away from the buildings it fell off.
+- **Villages are a mix, not a tier.** Every village used to be built at one
+  uniform condition. The tier now names the *dominant* condition; a ruined
+  village is still mostly ruins, but none of them is homogeneous.
+- **Standing dead trees** mixed into forest patches (20 %) and elevated
+  treelines (30 %) — bare, pale, one broken limb instead of a crown. One limb
+  and not two on purpose: these are un-instanced meshes in the scene's
+  draw-call hot spot, so trunk+limb exactly replaces trunk+canopy and the dead
+  trees cost nothing. Two limbs measured +34 draw calls.
+- **Ash and burn blotches in the ground tint.** The old paint stack was a
+  smooth destruction ramp plus a smooth Gaussian scar, so fought-over ground
+  was one flat tone with no incident in it at any framing wider than a few
+  hundred metres. Blotch frequencies are bounded by what the grid can carry
+  (Z period must exceed ~180 m or it aliases), which is what decides them
+  rather than taste. Ash is a mid grey-brown, not the near-black
+  `COLOR_SCORCHED`: burnt ground photographs *pale*, and painting it dark
+  reads as shadow, which the eye discounts as relief and which therefore adds
+  no visible disorder at all.
+
+## Cost
+
+| framing | draw calls | triangles | render ms |
+|---|---|---|---|
+| 3.2 km | 162 → 163 | 290k → 363k | 31.8 → 25.7 |
+| 8 km | 278 → 282 | 291k → 365k | 13.7 → 12.5 |
+| 22 km | 536 → 536 | 296k → 370k | 10.5 → 10.1 |
+
+Draw calls essentially flat (the dead-tree and debris budgets were trimmed
+until they were — octahedral rubble at 8 triangles rather than dodecahedral at
+36, 7-sided crater bowls). Triangles +25 %. `renderMs` is swiftshader and not
+a hardware prediction; it is recorded because CLAUDE.md requires before/after
+numbers on a rendering change, not because the absolute value means anything.
+
+## Found and deliberately NOT changed
+
+**Houses are shed-sized.** `buildHouse` builds 2.6–3.8 m wide, 1.6–2.1 m tall
+volumes; a rural house on this ground is ~8–12 m wide and 4–6 m to the eaves.
+Villages therefore read as specks at any framing past a couple of hundred
+metres, which blunts the condition mix this pass just added. It is a scale
+change, and this brief explicitly scoped scale changes out — flagged here
+rather than taken. One-line fix in `buildHouse` whenever it is wanted.

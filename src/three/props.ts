@@ -24,8 +24,9 @@
 import * as THREE from "three";
 import { STRIP_HALF_Z, SCENERY_HALF_Z, TERRAIN_HALF_X, hashId } from "./worldMapping";
 import { zoneAtSaturating } from "./zones";
+import type { DamageSite } from "./scenery";
 import {
-  terrainHeight,
+  surfaceHeight,
   damageIntensity,
   isInWater,
   groundFidelity,
@@ -122,10 +123,63 @@ const CELL_MAX_M = 2_400;
  *  140 and not a round number picked by feel. The ceiling is the old global
  *  extent, so fully zoomed out behaves exactly as before. */
 const LOCAL_HALF_MIN_M = 140;
-/** Ceiling on the bubble — see recentreLocalProps. 3.2 km puts the whole
- *  budget over 6.4 x 6.4 km at maximum spread, which is one tree every ~99 m:
- *  thin, but still a scatter, and past this framing the belts carry it. */
-const LOCAL_HALF_MAX_M = 3_200;
+/** Ceiling on the bubble — see recentreLocalProps.
+ *
+ *  Pass 26 raised this from 3,200 m, which was the direct cause of the
+ *  reported "detail only renders at one camera distance". The default framing
+ *  orbits at 3,200 m, so the bubble was ALREADY at its ceiling there: one
+ *  deliberate zoom-out step to 6-8 km grew the visible ground to 3.1 x 6.8 km
+ *  while the scatter stayed pinned inside a fixed 6.4 x 6.4 km box centred on
+ *  the target, and everything past that box was bare. The sweet spot was not a
+ *  sweet spot, it was the last framing where the bubble still covered the
+ *  frame.
+ *
+ *  9,000 m covers the visible ground out to roughly a 6.7 km orbit, and past
+ *  that the aggregation below — not a bigger bubble — is what keeps the ground
+ *  populated, because spreading a fixed budget over more ground can only ever
+ *  thin it. */
+const LOCAL_HALF_MAX_M = 9_000;
+
+/**
+ * SCATTER AGGREGATION — Pass 26, and the "coarser but still-populated
+ * fallback" the brief asks for.
+ *
+ * A 5 m tree is 0.6 px at an 8 km orbit. That is not a budget problem and no
+ * instance count fixes it: sub-pixel is sub-pixel, and 4,200 invisible trees
+ * cost exactly as much as 4,200 visible ones. The only way a scatter layer
+ * survives a wide framing is for each drawn instance to stand for MORE THAN
+ * ONE plant.
+ *
+ * So past the range where an individual tree resolves, an instance becomes a
+ * COPSE: `agg` trees drawn as one mass. The linear scale grows as sqrt(agg),
+ * which is what keeps the ground-coverage FRACTION constant — a copse of 16
+ * trees covers 16x the area of one tree, so it is 4x wider. The layer thins
+ * in instance count and coarsens in shape without ever thinning in coverage,
+ * which is the difference between an LOD and a fade-out.
+ *
+ * This is a disclosed departure from 1:1 scale, and it is a different thing
+ * from the marker/model boost in Scene3D: a marker is a symbol standing in
+ * for one object whose real size a reader can check against the tank beside
+ * it, whereas a copse is an honest aggregate — that ground really does carry
+ * that much wood, drawn as one mass instead of sixteen sub-pixel ones. It
+ * only ever engages beyond the range at which the individual trees could be
+ * told apart anyway.
+ */
+const SCATTER_MIN_PX = 3.2;
+const SCATTER_MAX_AGG = 60;
+/** Nominal width of one drawn plant, metres — the canopy is the widest part
+ *  and the thing whose apparent size decides legibility. */
+const SCATTER_BASE_W_M = 5.5;
+
+/** How many plants one instance should stand for at this zoom. 1 means "draw
+ *  real individual trees", which is what happens at every framing where a
+ *  real individual tree is actually resolvable. */
+function aggregationFor(metresPerPixel: number): number {
+  if (!(metresPerPixel > 0)) return 1;
+  const wantW = SCATTER_MIN_PX * metresPerPixel;
+  const agg = Math.pow(wantW / SCATTER_BASE_W_M, 2);
+  return THREE.MathUtils.clamp(agg, 1, SCATTER_MAX_AGG);
+}
 
 /** Integer hash -> [0,1). Deterministic per cell, decorrelated between the
  *  three draws we take from each cell. */
@@ -182,8 +236,12 @@ const CANOPY_AUTUMN = new THREE.Color("#6b5f2c");
  *  belt at the line and an intact windbreak in the rear, and it is now
  *  carried by presence/absence of mass rather than by a tint on a 0.4 px
  *  pole. */
-export function fillCanopies(mesh: THREE.InstancedMesh, cx: number, cz: number, half: number): void {
+export function fillCanopies(mesh: THREE.InstancedMesh, cx: number, cz: number, half: number, agg = 1): void {
   const cap = mesh.instanceMatrix.count;
+  // sqrt(agg) — see aggregationFor. One instance stands for `agg` crowns and
+  // is therefore sqrt(agg) times wider, which holds the covered ground area
+  // constant as the camera pulls back.
+  const spread = Math.sqrt(agg);
   const halfZ = Math.min(half, SCENERY_HALF_Z);
   const cell = THREE.MathUtils.clamp((half * 2) / CELLS_ACROSS, CELL_MIN_M, CELL_MAX_M);
   const i0 = Math.floor((cx - half) / cell);
@@ -217,9 +275,12 @@ export function fillCanopies(mesh: THREE.InstancedMesh, cx: number, cz: number, 
         // Crown sits on the top two thirds of the trunk and is a little wider
         // than tall, which is what a shelterbelt poplar/acacia actually looks
         // like from above.
-        dummy.position.set(x, terrainHeight(x, z) - 0.1 + h * 0.45, z);
+        dummy.position.set(x, surfaceHeight(x, z) - 0.1 + h * 0.45 * spread, z);
         dummy.rotation.set(0, rb * Math.PI, 0);
-        dummy.scale.set(2.4 + rd * 1.8, h * 0.68, 2.4 + ra * 1.8);
+        // Height grows more slowly than width: a copse is a broad low mass,
+        // not a single enormous tree. Capping the vertical growth is what
+        // keeps the aggregate reading as woodland rather than as a scale bug.
+        dummy.scale.set((2.4 + rd * 1.8) * spread, h * 0.68 * Math.min(spread, 2.2), (2.4 + ra * 1.8) * spread);
         dummy.updateMatrix();
         mesh.setMatrixAt(placed, dummy.matrix);
         tmpColor.copy(CANOPY_HEALTHY).lerp(CANOPY_AUTUMN, rd * 0.7);
@@ -261,8 +322,9 @@ function buildTrees(count: number): THREE.InstancedMesh {
  * at the line, the fidelity thin-out toward the rear, the lateral thin-out and
  * the water test. Only *where the candidates come from* has changed.
  */
-export function fillTrees(mesh: THREE.InstancedMesh, cx: number, cz: number, half: number): void {
+export function fillTrees(mesh: THREE.InstancedMesh, cx: number, cz: number, half: number, agg = 1): void {
   const cap = mesh.instanceMatrix.count;
+  const spread = Math.sqrt(agg);
   const halfZ = Math.min(half, SCENERY_HALF_Z);
   const cell = THREE.MathUtils.clamp((half * 2) / CELLS_ACROSS, CELL_MIN_M, CELL_MAX_M);
   const i0 = Math.floor((cx - half) / cell);
@@ -302,9 +364,11 @@ export function fillTrees(mesh: THREE.InstancedMesh, cx: number, cz: number, hal
         // 4-11 m: a shelterbelt poplar or acacia, which is what these are.
         // Pass 24's 2.2-5.6 m described a sapling.
         const h = (4 + rc * 7) * (1 - dmg * 0.35);
-        dummy.position.set(x, terrainHeight(x, z) - 0.1, z);
+        dummy.position.set(x, surfaceHeight(x, z) - 0.1, z);
         dummy.rotation.set((ra - 0.5) * 0.22, rb * Math.PI, (rd - 0.5) * 0.22);
-        dummy.scale.set(1.7, h, 1.7);
+        // Trunks thicken with the aggregate but do not grow taller with it —
+        // a stand of trees is not a taller tree.
+        dummy.scale.set(1.7 * spread, h * Math.min(spread, 1.6), 1.7 * spread);
         dummy.updateMatrix();
         mesh.setMatrixAt(placed, dummy.matrix);
         tmpColor.copy(TREE_BARE).lerp(TREE_HEALTHY, 1 - dmg);
@@ -319,40 +383,235 @@ export function fillTrees(mesh: THREE.InstancedMesh, cx: number, cz: number, hal
 }
 
 /**
- * Shell craters, concentrated on the zero line. The density falloff either
- * side is doing real explanatory work — it is the visual answer to "why is
- * everything pushed back from the line." The Gaussian's width is 560 world
- * metres, which under The Line zone's own mapping stands for roughly the
- * first 15 km of real ground. Pass 24's 3,400 was a real 3.4 km against a
- * metric axis; carried across unchanged it would have spread the crater field
- * across all three zones and said the deep rear is shelled like the line is.
+ * SHELL CRATERS — rebuilt in Pass 26.
+ *
+ * Craters existed before this pass and were reported, from a real device, as
+ * "no craters anywhere". Both are true, and the arithmetic says why: they were
+ * drawn 1.4-5.2 m across and 0.2-0.4 m proud, in a Gaussian only 900 m wide
+ * around the zero line. At the 3.2 km default framing that is 0.6 px on a
+ * feature with almost no tonal contrast against the ground it sits in — so the
+ * layer was being drawn, and correctly, and could not be seen at any framing a
+ * reader actually uses.
+ *
+ * Two things change. The bowls are now REAL SIZE — a 152 mm round digs a
+ * 4-7 m crater and a heavy air-dropped bomb considerably more, so 4-16 m
+ * across is the honest range and it is also 2-5x more legible. And each bowl
+ * gets a SCORCH APRON: a flat, dark, polygon-offset disc 2.6-3.4x the bowl's
+ * radius, which is what actually reads at a kilometre because it is 20-50 m
+ * across and has real tonal contrast against the field.
+ *
+ * The apron is the load-bearing half. A crater bowl is a shape, and shapes
+ * need pixels; a scorch mark is a TONE, and tone survives being one pixel.
+ * Together they give the pockmarked ground the reference imagery shows, at
+ * every framing from a few tens of metres out to the whole zone.
+ *
+ * Density: driven by `damageIntensity`, so it covers the whole of The Line
+ * rather than a 900 m band, and boosted near the depths where assets actually
+ * stand (`anchorXs`) — the brief's "denser near labelled assets". The anchor
+ * term keys on DEPTH only, not on each asset's exact lateral position: the
+ * lateral layout is owned by Scene3D and re-runs on filter changes, and
+ * rebuilding the crater field whenever a filter moved an asset sideways would
+ * be a far worse trade than a crater field that is right about depth and
+ * spread across the frontage.
  */
-function buildCraters(count: number): THREE.InstancedMesh {
-  const geo = new THREE.CylinderGeometry(1, 0.55, 0.36, 9);
-  const mat = new THREE.MeshStandardMaterial({ color: "#2f2b22", flatShading: true, roughness: 1 });
-  const mesh = new THREE.InstancedMesh(geo, mat, count);
+const CRATER_SPAN_M = 3_000;
+
+/** Rejection-sampled density for one crater at world x, in [0,1].
+ *
+ *  The exponent is doing real work: at 1.6 the acceptance ratio between the
+ *  ground at the line and the ground at km 16 was only 2.6:1, which put the
+ *  median crater at km ~16 and read as a uniform sprinkle rather than as a
+ *  front. 2.6 makes it ~8:1, which is the concentration the reference imagery
+ *  actually shows. */
+function craterDensityAt(x: number, anchorXs: readonly number[]): number {
+  let d = Math.pow(damageIntensity(x), 2.6);
+  // Plus a bump near each asset depth — 240 m of world either side.
+  for (let i = 0; i < anchorXs.length; i++) {
+    const dx = (x - anchorXs[i]) / 240;
+    if (dx > -3 && dx < 3) d += 0.4 * Math.exp(-dx * dx);
+  }
+  return Math.min(1, d);
+}
+
+interface CraterSample {
+  x: number;
+  z: number;
+  /** Bowl radius, metres. */
+  s: number;
+  rot: number;
+  depth: number;
+  apron: number;
+  apronRot: number;
+  apronAspect: number;
+  scorch: number;
+}
+
+/**
+ * Sample the crater field ONCE and let both meshes read the same list.
+ *
+ * The first cut of this drew the bowls and the aprons in two separate loops
+ * off two RNGs seeded identically, on the theory that the same seed replays
+ * the same positions. It does not: the two loops draw different numbers of
+ * values per iteration, so the sequences align for exactly one crater and
+ * then diverge, which would have put every apron on bare ground next to a
+ * crater rather than under one. Sampling once removes the failure mode
+ * instead of tuning around it.
+ */
+function sampleCraters(count: number, anchorXs: readonly number[]): CraterSample[] {
   const r = rng(0xc4a7e5);
+  const out: CraterSample[] = [];
+  let guard = 0;
+  while (out.length < count && guard < count * 60) {
+    guard++;
+    const x = (r() * 2 - 1) * CRATER_SPAN_M;
+    // STRIP_HALF_Z, not SCENERY_HALF_Z: 86% of the field was landing on the
+    // lateral filler outside the represented sector, where the camera never
+    // looks. Measured, not assumed — 317 of 2,200 aprons were inside the
+    // near frame before this changed.
+    const z = (r() * 2 - 1) * STRIP_HALF_Z;
+    if (r() > craterDensityAt(x, anchorXs)) continue;
+    if (isInWater(x, z)) continue; // no shell craters mid-river
+    // 4-16 m across: a 152 mm round through to a heavy glide bomb.
+    const s = 2 + r() * 6;
+    out.push({
+      x,
+      z,
+      s,
+      rot: r() * Math.PI,
+      depth: 0.5 + r() * 0.7,
+      // 3.0-4.0x the bowl: 24-64 m of stained ground per hit, which is what
+      // a km-range framing actually resolves.
+      apron: s * (3 + r()),
+      apronRot: r() * Math.PI,
+      apronAspect: 0.8 + r() * 0.4,
+      scorch: 0.55 + r() * 0.45,
+    });
+  }
+  return out;
+}
+
+function buildCraters(samples: readonly CraterSample[]): THREE.InstancedMesh {
+  // Wider and shallower than the old bowl: a real crater is a saucer, and a
+  // saucer is what reads from above. 7 sides keeps a 2,200-crater field
+  // under 31k triangles.
+  const geo = new THREE.CylinderGeometry(1, 0.42, 0.5, 7);
+  const mat = new THREE.MeshStandardMaterial({ color: "#241f18", flatShading: true, roughness: 1 });
+  const mesh = new THREE.InstancedMesh(geo, mat, Math.max(1, samples.length));
+  for (let i = 0; i < samples.length; i++) {
+    const c = samples[i];
+    dummy.position.set(c.x, surfaceHeight(c.x, c.z) - 0.22, c.z);
+    dummy.rotation.set(0, c.rot, 0);
+    dummy.scale.set(c.s, c.depth, c.s);
+    dummy.updateMatrix();
+    mesh.setMatrixAt(i, dummy.matrix);
+  }
+  mesh.count = samples.length;
+  mesh.instanceMatrix.needsUpdate = true;
+  mesh.name = "props:craters";
+  return mesh;
+}
+
+/** Both ends deliberately DARKER than the ground they sit on.
+ *
+ *  The first cut used #4a4133 / #2b241c against ground that the ash wash in
+ *  terrain3d.ts had just lifted to roughly #524c3c — so the weathered end of
+ *  the range was within a few percent of the ground's own value and the
+ *  aprons, though drawn correctly and at 9 px, were invisible at the default
+ *  framing. A burn mark's whole job here is tonal contrast; it has to be a
+ *  value the ground never is. */
+const COLOR_SCORCH_HOT = new THREE.Color("#1f1a13");
+const COLOR_SCORCH_OLD = new THREE.Color("#39311f");
+
+/** The scorch aprons — read straight off the same sample list as the bowls,
+ *  so an apron is always centred on a crater by construction. Flat discs with
+ *  polygon offset, exactly like the farm tracks: a burn is a stain on a
+ *  surface, and giving it height would make it a disc standing on edge at the
+ *  grazing angles this camera spends its time at. */
+function buildCraterScorch(samples: readonly CraterSample[]): THREE.InstancedMesh {
+  const geo = new THREE.CircleGeometry(1, 10);
+  geo.rotateX(-Math.PI / 2);
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    vertexColors: true,
+    roughness: 1,
+    flatShading: true,
+    polygonOffset: true,
+    polygonOffsetFactor: -3,
+    polygonOffsetUnits: -3,
+    transparent: true,
+    opacity: 0.93,
+    depthWrite: false,
+  });
+  const mesh = new THREE.InstancedMesh(geo, mat, Math.max(1, samples.length));
+  for (let i = 0; i < samples.length; i++) {
+    const c = samples[i];
+    dummy.position.set(c.x, surfaceHeight(c.x, c.z) + 0.12, c.z);
+    dummy.rotation.set(0, c.apronRot, 0);
+    dummy.scale.set(c.apron, 1, c.apron * c.apronAspect);
+    dummy.updateMatrix();
+    mesh.setMatrixAt(i, dummy.matrix);
+    // Fresher (darker) nearer the line, weathered further back.
+    tmpColor.copy(COLOR_SCORCH_OLD).lerp(COLOR_SCORCH_HOT, damageIntensity(c.x) * c.scorch);
+    mesh.setColorAt(i, tmpColor);
+  }
+  mesh.count = samples.length;
+  mesh.instanceMatrix.needsUpdate = true;
+  if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+  mesh.name = "props:crater-scorch";
+  return mesh;
+}
+
+/**
+ * RUBBLE AND DEBRIS — Pass 26.
+ *
+ * Scattered around the structure sites that scenery.ts draws in a damaged or
+ * ruined condition, because that is where rubble comes from: a collapsed
+ * building throws its own mass 20-60 m in every direction, and ground that
+ * has been fought through is littered with it well beyond the wall line.
+ *
+ * Sites come from scenery.ts's own `DAMAGE_SITES` rather than from a second
+ * hand-written coordinate table, so debris can never drift away from the
+ * buildings it fell off.
+ */
+function buildDebris(count: number, sites: readonly DamageSite[]): THREE.InstancedMesh {
+  // Octahedron, not dodecahedron: 8 triangles against 36, for a chunk of
+  // broken slab whose silhouette is angular either way. At 1,100-2,600
+  // instances that is 30-94k triangles saved for no visible difference.
+  const geo = new THREE.OctahedronGeometry(1, 0);
+  const mat = new THREE.MeshStandardMaterial({ color: "#3b362d", flatShading: true, roughness: 1 });
+  const mesh = new THREE.InstancedMesh(geo, mat, count);
+  const r = rng(0x0deb815);
+  if (!sites.length) {
+    mesh.count = 0;
+    mesh.name = "props:debris";
+    return mesh;
+  }
 
   let placed = 0;
   let guard = 0;
   while (placed < count && guard < count * 40) {
     guard++;
-    // Gaussian-ish clustering on x via summed uniforms.
-    const g = (r() + r() + r() - 1.5) / 1.5;
-    const x = g * 900;
-    const z = (r() * 2 - 1) * SCENERY_HALF_Z;
-    if (isInWater(x, z)) continue; // no shell craters mid-river
-    const s = 0.7 + r() * 1.9;
-    dummy.position.set(x, terrainHeight(x, z) - 0.16, z);
-    dummy.rotation.set(0, r() * Math.PI, 0);
-    dummy.scale.set(s, 0.5 + r() * 0.5, s);
+    const site = sites[Math.floor(r() * sites.length) % sites.length];
+    if (r() > site.severity) continue;
+    // Clustered hard against the structures, with a long tail outward.
+    const t = Math.pow(r(), 0.55);
+    const ang = r() * Math.PI * 2;
+    const rad = site.radius * (0.35 + t * 1.5);
+    const x = site.x + Math.cos(ang) * rad;
+    const z = site.z + Math.sin(ang) * rad * 0.8;
+    if (isInWater(x, z)) continue;
+    // 0.8-3.4 m chunks: broken slab and collapsed masonry, not gravel.
+    const s = 0.4 + r() * 1.3;
+    dummy.position.set(x, surfaceHeight(x, z) + s * 0.35, z);
+    dummy.rotation.set(r() * Math.PI, r() * Math.PI, r() * Math.PI);
+    dummy.scale.set(s * (0.7 + r() * 0.9), s * (0.4 + r() * 0.5), s * (0.7 + r() * 0.9));
     dummy.updateMatrix();
     mesh.setMatrixAt(placed, dummy.matrix);
     placed++;
   }
   mesh.count = placed;
   mesh.instanceMatrix.needsUpdate = true;
-  mesh.name = "props:craters";
+  mesh.name = "props:debris";
   return mesh;
 }
 
@@ -378,8 +637,9 @@ function buildScrub(count: number): THREE.InstancedMesh {
 }
 
 /** Scrub, same camera-local cell grid as the trees. */
-export function fillScrub(mesh: THREE.InstancedMesh, cx: number, cz: number, half: number): void {
+export function fillScrub(mesh: THREE.InstancedMesh, cx: number, cz: number, half: number, agg = 1): void {
   const cap = mesh.instanceMatrix.count;
+  const spread = Math.sqrt(agg);
   const halfZ = Math.min(half, SCENERY_HALF_Z);
   const cell = THREE.MathUtils.clamp((half * 2) / CELLS_ACROSS, CELL_MIN_M, CELL_MAX_M);
   const i0 = Math.floor((cx - half) / cell);
@@ -404,9 +664,13 @@ export function fillScrub(mesh: THREE.InstancedMesh, cx: number, cz: number, hal
         // Flatter than it is wide: a clump of rank weed or low scrub, not a
         // boulder. An earlier tuning at 1.6-4 m on all three axes filled the
         // close framing with what read as a field of traffic cones.
-        dummy.position.set(x, terrainHeight(x, z) + 0.15, z);
+        dummy.position.set(x, surfaceHeight(x, z) + 0.15, z);
         dummy.rotation.set(ra * 0.3, rb * Math.PI, rc * 0.3);
-        dummy.scale.set(1.4 + rc * 1.6, 0.7 + ra * 1.0, 1.4 + rb * 1.6);
+        dummy.scale.set(
+          (1.4 + rc * 1.6) * spread,
+          (0.7 + ra * 1.0) * Math.min(spread, 2),
+          (1.4 + rb * 1.6) * spread,
+        );
         dummy.updateMatrix();
         mesh.setMatrixAt(placed, dummy.matrix);
         placed++;
@@ -440,7 +704,7 @@ function buildWreckHusks(count: number): THREE.InstancedMesh {
     const z = (r() * 2 - 1) * SCENERY_HALF_Z;
     if (isInWater(x, z)) continue; // a burnt hull can sit on a riverbank, not in the channel
     const s = 0.7 + r() * 0.6;
-    dummy.position.set(x, terrainHeight(x, z) + 0.28, z);
+    dummy.position.set(x, surfaceHeight(x, z) + 0.28, z);
     dummy.rotation.set((r() - 0.5) * 0.4, r() * Math.PI, (r() - 0.5) * 0.5);
     dummy.scale.setScalar(s);
     dummy.updateMatrix();
@@ -461,6 +725,18 @@ export interface PropBudget {
   wrecks: number;
   belts: number;
   tracks: number;
+  debris: number;
+}
+
+/** What the prop layer needs to know about the rest of the world in order to
+ *  put damage where damage belongs. Both are optional: with neither, the
+ *  crater field falls back to the pure destruction gradient and the debris
+ *  layer is empty, which is exactly the old behaviour. */
+export interface PropContext {
+  /** World-X of every placed asset — craters cluster around these. */
+  anchorXs?: readonly number[];
+  /** Structure sites that have shed rubble — see scenery.ts's damageSites(). */
+  damageSites?: readonly DamageSite[];
 }
 
 /** Pass 25 raised the crater and wreck counts and added the two new layers.
@@ -470,20 +746,26 @@ export interface PropBudget {
  *  mode was arithmetic rather than tuning. Still one draw call per type, and
  *  still tuned down on low-power devices — see Scene3D's quality detection. */
 export const PROP_BUDGET: Record<"high" | "low", PropBudget> = {
-  high: { trees: 4200, canopies: 3400, craters: 1800, scrub: 3000, wrecks: 320, belts: 900, tracks: 700 },
-  low: { trees: 1400, canopies: 1100, craters: 650, scrub: 900, wrecks: 120, belts: 420, tracks: 340 },
+  high: { trees: 4200, canopies: 3400, craters: 4200, scrub: 3000, wrecks: 320, belts: 2600, tracks: 1900, debris: 2600 },
+  low: { trees: 1400, canopies: 1100, craters: 2200, scrub: 900, wrecks: 120, belts: 1300, tracks: 950, debris: 1100 },
 };
 
-export function buildProps(budget: PropBudget): THREE.Group {
+export function buildProps(budget: PropBudget, ctx: PropContext = {}): THREE.Group {
   const g = new THREE.Group();
   g.name = "props";
+  const craters = sampleCraters(budget.craters, ctx.anchorXs ?? []);
   g.add(buildTrees(budget.trees));
   g.add(buildCanopies(budget.canopies));
-  g.add(buildCraters(budget.craters));
+  // Aprons before bowls: both are near-flat and near-coincident, and drawing
+  // the stained ground first lets the bowl's own depth-tested rim sit on top
+  // of it rather than fight it.
+  g.add(buildCraterScorch(craters));
+  g.add(buildCraters(craters));
   g.add(buildScrub(budget.scrub));
   g.add(buildWreckHusks(budget.wrecks));
   g.add(buildShelterBelts(budget.belts));
   g.add(buildFarmTracks(budget.tracks));
+  g.add(buildDebris(budget.debris, ctx.damageSites ?? []));
   return g;
 }
 
@@ -507,7 +789,11 @@ export function buildProps(budget: PropBudget): THREE.Group {
  * height would make it a wall at grazing angles, which is exactly the artifact
  * the low camera finds first.
  */
-const TRACK_WIDTH_M = 7;
+/** Pass 26: 7 m was the bare carriageway. A field road on this ground is a
+ *  worn pair of ruts plus its verges and turn-out — 8-20 m of paler, compacted
+ *  ground — and at a 6-8 km framing the difference is 0.9 px against 2.2 px,
+ *  i.e. between invisible and legible. */
+const TRACK_WIDTH_M = 11;
 const TRACK_COLOR = new THREE.Color("#7c7458");
 const TRACK_COLOR_WORN = new THREE.Color("#5f5a45");
 
@@ -544,8 +830,8 @@ function buildFarmTracks(count: number): THREE.InstancedMesh {
   // sits down the middle of a field rather than under a hedge), one cutting
   // across them at the field-block pitch.
   const families: Array<{ dx: number; dz: number; sx: number; sz: number; heading: number; pitch: number; offset: number }> = [
-    { dx: px, dz: pz, sx: ux, sz: uz, heading: alongHeading, pitch: BELT_SPACING_M, offset: BELT_SPACING_M * 0.5 },
-    { dx: ux, dz: uz, sx: px, sz: pz, heading: acrossHeading, pitch: BELT_SPACING_M * 1.35, offset: BELT_SPACING_M * 0.18 },
+    { dx: px, dz: pz, sx: ux, sz: uz, heading: alongHeading, pitch: BELT_SPACING_M * 0.5, offset: BELT_SPACING_M * 0.25 },
+    { dx: ux, dz: uz, sx: px, sz: pz, heading: acrossHeading, pitch: BELT_SPACING_M * 0.7, offset: BELT_SPACING_M * 0.18 },
   ];
 
   outer: for (const fam of families) {
@@ -567,7 +853,7 @@ function buildFarmTracks(count: number): THREE.InstancedMesh {
         // Churned ground has no legible track network left on it.
         if (r() < dmg * 0.7) continue;
 
-        dummy.position.set(x, terrainHeight(x, z) + 0.35, z);
+        dummy.position.set(x, surfaceHeight(x, z) + 0.35, z);
         dummy.rotation.set(0, fam.heading, 0);
         dummy.scale.set(TRACK_WIDTH_M * (0.75 + r() * 0.8), 1, segLen);
         dummy.updateMatrix();
@@ -631,6 +917,18 @@ function buildShelterBelts(count: number): THREE.InstancedMesh {
   // A belt line is the set of points where x·Bx + z·Bz is a constant. Walk
   // along each line in segments, leaving gaps — a real shelterbelt runs the
   // length of a field and stops, it is not an infinite hedge.
+  //
+  // Pass 26 walks the grid at HALF the measured spacing. Only ~21 of the
+  // full-spacing lines intersect the plate at all (the support width of a
+  // 25.2 x 18 km box in the belt normal is 15.4 km against a 1,421 m pitch),
+  // so the old grid put a belt line every 1.4 km — 17 screen px apart at a
+  // 6-8 km framing, i.e. two or three lines across the whole frame, which is
+  // structure a reader cannot read as structure. Halving the pitch is not a
+  // change to the MEASURED pattern: the primary rows stay exactly where the
+  // OSM-derived frequencies put them, and the intermediate rows are the minor
+  // field divisions between them, which is how a real shelterbelt grid is
+  // laid out. The intermediate rows are drawn shorter and thinner (see
+  // `minor` below) so the measured grid still dominates.
   const bx = BELT_X_FREQ;
   const bz = BELT_Z_FREQ;
   const norm = Math.hypot(bx, bz);
@@ -642,18 +940,22 @@ function buildShelterBelts(count: number): THREE.InstancedMesh {
   const px = bx / norm;
   const pz = bz / norm;
 
-  // Enough lines to cross the whole plate diagonally.
+  // Enough lines to cross the whole plate diagonally, at half the measured
+  // pitch — see above.
   const reach = Math.hypot(PROP_EXTENT, SCENERY_HALF_Z);
-  const lines = Math.ceil((2 * reach) / BELT_SPACING_M);
+  const pitch = BELT_SPACING_M / 2;
+  const lines = Math.ceil((2 * reach) / pitch);
 
   let placed = 0;
   outer: for (let li = -lines; li <= lines; li++) {
-    const d = li * BELT_SPACING_M;
+    const d = li * pitch;
+    // Odd indices are the intermediate rows: shorter runs, more gaps.
+    const minor = li % 2 !== 0;
     let t = -reach;
     while (t < reach) {
       if (placed >= count) break outer;
-      const segLen = 260 + r() * 620;
-      const gap = 90 + r() * 340;
+      const segLen = (260 + r() * 620) * (minor ? 0.7 : 1);
+      const gap = (90 + r() * 340) * (minor ? 1.5 : 1);
       const midT = t + segLen / 2;
       const x = px * d + ux * midT;
       const z = pz * d + uz * midT;
@@ -665,11 +967,11 @@ function buildShelterBelts(count: number): THREE.InstancedMesh {
       const dmg = damageIntensity(x);
       if (r() < dmg * 0.62) continue;
       const len = segLen * (1 - dmg * 0.45);
-      const h = BELT_HEIGHT_M * (1 - dmg * 0.5);
+      const h = BELT_HEIGHT_M * (1 - dmg * 0.5) * (minor ? 0.8 : 1);
 
-      dummy.position.set(x, terrainHeight(x, z) - 0.4, z);
+      dummy.position.set(x, surfaceHeight(x, z) - 0.4, z);
       dummy.rotation.set(0, heading, 0);
-      dummy.scale.set(BELT_WIDTH_M * (0.8 + r() * 0.5), h, len);
+      dummy.scale.set(BELT_WIDTH_M * (0.8 + r() * 0.5) * (minor ? 0.7 : 1), h, len);
       dummy.updateMatrix();
       mesh.setMatrixAt(placed, dummy.matrix);
       tmpColor.copy(BELT_SHOT).lerp(BELT_GREEN, 1 - dmg);
@@ -701,7 +1003,14 @@ export function recentreLocalProps(
   cx: number,
   cz: number,
   orbitRadius: number,
-  state: { x: number; z: number; half: number },
+  state: { x: number; z: number; half: number; agg: number },
+  /** World metres per screen pixel AT THE ORBIT RADIUS — Scene3D already
+   *  derives this for its symbology (`orbitRadius * pxToWorld`). Passed in
+   *  rather than guessed from `half` so the aggregation tracks the real
+   *  viewport: the same orbit radius is a very different framing on a 390 px
+   *  phone and a 1,600 px desktop, and the whole point of the aggregation is
+   *  to hit a target size in PIXELS. */
+  metresPerPixel = 0,
 ): boolean {
   // Bubble tracks the orbit radius: enough ground to fill the frame, never so
   // little that the edge is visible, never more than the old global extent.
@@ -713,18 +1022,26 @@ export function recentreLocalProps(
   // instead (both static, both global). Keeping the bubble tight means the
   // ground the camera is actually near always has real density in it.
   const half = THREE.MathUtils.clamp(orbitRadius * 1.35, LOCAL_HALF_MIN_M, LOCAL_HALF_MAX_M);
+  const agg = aggregationFor(metresPerPixel);
   const moved = Math.hypot(cx - state.x, cz - state.z);
-  // Refill on a quarter of the bubble's travel, or on any real zoom change.
-  if (moved < half * 0.25 && Math.abs(half - state.half) < half * 0.2) return false;
+  // Refill on a quarter of the bubble's travel, on any real zoom change, or
+  // when the aggregation tier has moved enough to change what is drawn.
+  if (
+    moved < half * 0.25 &&
+    Math.abs(half - state.half) < half * 0.2 &&
+    Math.abs(agg - state.agg) < Math.max(0.35, state.agg * 0.22)
+  )
+    return false;
 
   const trees = group.getObjectByName("props:trees") as THREE.InstancedMesh | undefined;
   const canopies = group.getObjectByName("props:canopies") as THREE.InstancedMesh | undefined;
   const scrub = group.getObjectByName("props:scrub") as THREE.InstancedMesh | undefined;
-  if (trees) fillTrees(trees, cx, cz, half);
-  if (canopies) fillCanopies(canopies, cx, cz, half);
-  if (scrub) fillScrub(scrub, cx, cz, half);
+  if (trees) fillTrees(trees, cx, cz, half, agg);
+  if (canopies) fillCanopies(canopies, cx, cz, half, agg);
+  if (scrub) fillScrub(scrub, cx, cz, half, agg);
   state.x = cx;
   state.z = cz;
   state.half = half;
+  state.agg = agg;
   return Boolean(trees || canopies || scrub);
 }

@@ -36,7 +36,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 import * as THREE from "three";
 import type { Side } from "../types";
-import { terrainHeight } from "./terrain3d";
+import { surfaceHeight } from "./terrain3d";
 import { worldXFor } from "./worldMapping";
 import { METRES_PER_KM } from "./zones";
 
@@ -215,7 +215,7 @@ class RibbonBuilder {
       // Perpendicular in the XZ plane: (-dz, dx).
       const nx = -dz * (this.width / 2);
       const nz = dx * (this.width / 2);
-      const y = terrainHeight(p.x, p.z) + this.yOffset;
+      const y = surfaceHeight(p.x, p.z) + this.yOffset;
       this.positions.push(p.x - nx, y, p.z - nz, p.x + nx, y, p.z + nz);
       this.colors.push(this.color.r, this.color.g, this.color.b, this.color.r, this.color.g, this.color.b);
       if (i > 0) {
@@ -338,7 +338,7 @@ export function buildOsmInset(osm: OsmFile): OsmBuildResult {
         const w = toWorld([x, z]);
         treePositions.push({
           x: w.x,
-          y: terrainHeight(w.x, w.z),
+          y: surfaceHeight(w.x, w.z),
           z: w.z,
           scale: 2.4 + r() * 2.6,
           rotY: r() * Math.PI * 2,
@@ -359,7 +359,7 @@ export function buildOsmInset(osm: OsmFile): OsmBuildResult {
             const x = a.x + (b.x - a.x) * u;
             const z = a.z + (b.z - a.z) * u;
             const r = rng(hashFeature(f) ^ (i * 7919) ^ Math.round(t * 100));
-            treePositions.push({ x, y: terrainHeight(x, z), z, scale: 3 + r() * 3.4, rotY: r() * Math.PI * 2 });
+            treePositions.push({ x, y: surfaceHeight(x, z), z, scale: 3 + r() * 3.4, rotY: r() * Math.PI * 2 });
           }
           acc = t - segLen;
         }

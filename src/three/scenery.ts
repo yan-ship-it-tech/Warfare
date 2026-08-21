@@ -42,7 +42,7 @@
 import * as THREE from "three";
 import type { Side } from "../types";
 import {
-  terrainHeight,
+  surfaceHeight,
   buildWater,
   buildRiverWater,
   isInWater,
@@ -244,15 +244,42 @@ function buildHouse(condition: Condition, r: () => number): THREE.Group {
   return g;
 }
 
-/** A cluster of houses at one condition tier — the "rural village" unit
- *  item 3 asked for, reused at each of the three damage tiers rather than
- *  three separate builders, since only the material/completeness choice
- *  actually differs. */
+/**
+ * Condition MIX per village tier — Pass 26.
+ *
+ * Every village used to be built at one uniform condition: a "ruined" village
+ * was seven identically-ruined houses, an "intact" one seven identically-
+ * intact houses. Real settlements on this ground are not uniform and the
+ * reference imagery is emphatic about it — a struck village is a few gutted
+ * shells, several roofless or part-collapsed houses, and a surprising number
+ * still standing, often side by side on the same street.
+ *
+ * The tier now names the DOMINANT condition rather than the only one. Weights
+ * are [ruined, damaged, intact] and each is still recognisably its own tier —
+ * a ruined village is still mostly ruins — but none of them is homogeneous.
+ */
+const VILLAGE_MIX: Record<Condition, [number, number, number]> = {
+  ruined: [0.55, 0.32, 0.13],
+  damaged: [0.24, 0.5, 0.26],
+  intact: [0.06, 0.24, 0.7],
+};
+
+function pickCondition(mix: [number, number, number], t: number): Condition {
+  if (t < mix[0]) return "ruined";
+  if (t < mix[0] + mix[1]) return "damaged";
+  return "intact";
+}
+
+/** A cluster of houses around one dominant condition tier — the "rural
+ *  village" unit item 3 asked for, reused at each of the three damage tiers
+ *  rather than three separate builders, since only the material/completeness
+ *  choice actually differs. */
 function buildVillage(condition: Condition, seed: number, count: number): THREE.Group {
   const g = new THREE.Group();
   const r = rngLocal(seed);
+  const mix = VILLAGE_MIX[condition];
   for (let i = 0; i < count; i++) {
-    const house = buildHouse(condition, r);
+    const house = buildHouse(pickCondition(mix, r()), r);
     const angle = (i / count) * Math.PI * 2 + r() * 0.6;
     // Metres (Pass 24): a 60-170 m scatter, i.e. a hamlet's footprint. The
     // houses themselves stay house-sized — only the spread was authored
@@ -295,21 +322,50 @@ function buildUrbanCluster(seed: number): THREE.Group {
 // the ground truth; Pass 18 owns deciding which asset goes where. See
 // TERRAIN_FEATURES below for the exported, Pass-18-facing list.
 const CANOPY = new THREE.MeshStandardMaterial({ color: "#3f5330", flatShading: true, roughness: 1 });
+/** Standing dead wood — bleached grey-brown, deliberately LIGHTER than the
+ *  living trunks and than props.ts's shattered near-line stems, so a dead tree
+ *  reads as dead rather than as a shadow. */
+const DEAD_WOOD = new THREE.MeshStandardMaterial({ color: "#7d735e", flatShading: true, roughness: 1 });
 const EARTH_MOUND = new THREE.MeshStandardMaterial({ color: "#4a4230", flatShading: true, roughness: 1 });
 
 /** Intact-canopy trees, distinct from props.ts's shattered near-line
  *  treeline on purpose — a forest patch offered as artillery cover has to
  *  actually read as cover (still standing, canopy overhead), not as more of
  *  the same bare-trunk battle damage already scattered everywhere else. */
-function buildTreeCluster(r: () => number, count: number, spreadX: number, spreadZ: number): THREE.Group {
+function buildTreeCluster(
+  r: () => number,
+  count: number,
+  spreadX: number,
+  spreadZ: number,
+  /** Fraction of the stand that is standing DEAD — bare, pale, no crown.
+   *  Pass 26: a wood inside artillery range is not uniformly healthy, and a
+   *  few bare grey stems among the green is the cheapest, most recognisable
+   *  way to say so. 0 keeps a stand entirely intact where that is the point. */
+  deadFraction = 0,
+): THREE.Group {
   const g = new THREE.Group();
   for (let i = 0; i < count; i++) {
     const x = (r() - 0.5) * spreadX;
     const z = (r() - 0.5) * spreadZ;
     const h = 2.6 + r() * 2.2;
-    const trunk = cyl(0.08, 0.22, h, 5, WOOD);
-    trunk.position.set(x, h / 2, z);
+    const dead = r() < deadFraction;
+    const trunk = cyl(0.08, 0.22, h * (dead ? 1.1 : 1), 5, dead ? DEAD_WOOD : WOOD);
+    trunk.position.set(x, (h * (dead ? 1.1 : 1)) / 2, z);
+    if (dead) trunk.rotation.z = (r() - 0.5) * 0.24;
     g.add(trunk);
+    if (dead) {
+      // ONE bare limb rather than a crown — a broken snag reads as dead from
+      // much further out than a missing cone does. One and not two on
+      // purpose: this file is the scene's draw-call hot spot and these are
+      // un-instanced meshes, so trunk+limb (2) exactly replaces the living
+      // trunk+canopy (2) and the dead trees cost no draw calls at all. Two
+      // limbs measured +34 draw calls at the wide framings.
+      const limb = cyl(0.05, 0.09, 1.1 + r() * 0.9, 4, DEAD_WOOD);
+      limb.position.set(x, h * 0.8, z);
+      limb.rotation.set((r() - 0.5) * 0.5, r() * Math.PI, (r() < 0.5 ? 1 : -1) * (0.7 + r() * 0.5));
+      g.add(limb);
+      continue;
+    }
     const canopy = new THREE.Mesh(new THREE.ConeGeometry(0.9 + r() * 0.6, 1.6 + r() * 1.2, 6), CANOPY);
     canopy.position.set(x, h + 0.4, z);
     g.add(canopy);
@@ -324,7 +380,8 @@ function buildForestPatch(seed: number): THREE.Group {
   // unchanged: each tree here is two un-instanced meshes, and this file is
   // already the scene's draw-call hot spot, so the patch gets its real
   // footprint by spreading the trees it has, not by adding more.
-  return buildTreeCluster(rngLocal(seed), 22, 380, 300);
+  // A fifth of the stand standing dead: this is cover inside artillery range.
+  return buildTreeCluster(rngLocal(seed), 22, 380, 300, 0.2);
 }
 
 /** An elevated treeline — a raised earthen ridge (a real fold in the ground,
@@ -340,7 +397,7 @@ function buildElevatedTreeline(seed: number): THREE.Group {
   ridge.position.y = 7;
   ridge.rotation.y = (r() - 0.5) * 0.6;
   g.add(ridge);
-  const trees = buildTreeCluster(r, 12, 280, 70);
+  const trees = buildTreeCluster(r, 12, 280, 70, 0.3);
   trees.position.y = 13.5;
   g.add(trees);
   return g;
@@ -466,6 +523,7 @@ export const SCENERY_MATERIALS = [
   WALL_DAMAGED, RUBBLE, ROOF_INTACT, ROOF_DAMAGED, URBAN_WALL_A, URBAN_WALL_B,
   PIER_WOOD, WRECK_HULL, EMBER, CANOPY, EARTH_MOUND, BRIDGE_DECK, REBAR,
   PONTOON_MAT, SMOKE_MAT, ZONE_MARKER_POST, ZONE_MARKER_CAP,
+  DEAD_WOOD,
 ];
 for (const m of SCENERY_MATERIALS) m.userData.shared = true;
 
@@ -496,7 +554,7 @@ function buildSmokePlume(seed: number, scale = 1): THREE.Group {
  *  actually reads as "destroyed" instead of "under construction"); a
  *  collapsed span fallen into the water between them; exposed rebar; a
  *  smoke plume. Deck height is measured from the water surface, not from
- *  terrainHeight() at the channel centre — that call already includes the
+ *  surfaceHeight() at the channel centre — that call already includes the
  *  river's own depression, so anchoring to it would put the deck barely
  *  above the riverbed instead of above the water. */
 function buildDestroyedBridge(z: number): THREE.Group {
@@ -520,7 +578,7 @@ function buildDestroyedBridge(z: number): THREE.Group {
 
     for (let p = 0; p < 3; p++) {
       const px = bankX - dir * (((p + 0.5) / 3) * len);
-      const groundY = terrainHeight(px, z);
+      const groundY = surfaceHeight(px, z);
       const pier = cyl(2.6, 3.4, Math.max(4, deckY - groundY), 6, CONCRETE_DARK);
       pier.position.set(px, (deckY + groundY) / 2, z);
       g.add(pier);
@@ -717,6 +775,52 @@ export const TERRAIN_FEATURES: TerrainFeature[] = [
   { id: "block-b-1", kind: "built_up_block", side: "side_b", km: 6, z: 768, radius: 432, use: "infantry-held built-up block" },
 ];
 
+/**
+ * WHERE RUBBLE COMES FROM — Pass 26.
+ *
+ * props.ts scatters debris, and debris has to fall off something. Rather than
+ * hand-writing a second coordinate table that could drift away from the
+ * buildings, the sites are DERIVED from the same LANDMARKS/TERRAIN_FEATURES
+ * this file already draws: every structure kind gets a footprint radius and a
+ * severity, and the severity is what decides how much it has shed.
+ *
+ * `severity` is a plain 0-1 weight on the debris sampler, not a physical
+ * quantity — a ruined village sheds a great deal, an intact one at 140 km
+ * sheds essentially nothing, and the built-up blocks at km 6-7 sit in between
+ * because they are fought through rather than levelled.
+ */
+export interface DamageSite {
+  x: number;
+  z: number;
+  radius: number;
+  severity: number;
+}
+
+const SITE_DEBRIS: Partial<Record<string, { radius: number; severity: number }>> = {
+  village_ruined: { radius: 150, severity: 1 },
+  village_damaged: { radius: 150, severity: 0.62 },
+  village_intact: { radius: 140, severity: 0.16 },
+  urban_cluster: { radius: 170, severity: 0.3 },
+  built_up_block: { radius: 170, severity: 0.8 },
+  ruined_infrastructure: { radius: 40, severity: 0.9 },
+  command_post: { radius: 30, severity: 0.3 },
+  fuel_depot: { radius: 45, severity: 0.35 },
+  power_plant: { radius: 60, severity: 0.3 },
+  wreck_marker: { radius: 14, severity: 0.7 },
+};
+
+export function damageSites(xForKm: (side: Side, km: number) => number): DamageSite[] {
+  const out: DamageSite[] = [];
+  const push = (kind: string, side: Side, km: number, z: number) => {
+    const spec = SITE_DEBRIS[kind];
+    if (!spec) return;
+    out.push({ x: xForKm(side, km), z, radius: spec.radius, severity: spec.severity });
+  };
+  for (const l of LANDMARKS) push(l.kind, l.side, l.km, l.z);
+  for (const f of TERRAIN_FEATURES) push(f.kind, f.side, f.km, f.z);
+  return out;
+}
+
 // ── near-line belt (instanced: trench segments, wire, fighting positions) ─
 
 function rng(seed: number) {
@@ -790,7 +894,7 @@ function buildTrenchLines(): THREE.Group {
       }
       const rotY = (r() - 0.5) * 0.5;
 
-      dummy.position.set(x, terrainHeight(x, z) + 0.3, z);
+      dummy.position.set(x, surfaceHeight(x, z) + 0.3, z);
       dummy.rotation.set(0, rotY, 0);
       dummy.scale.setScalar(1);
       dummy.updateMatrix();
@@ -800,7 +904,7 @@ function buildTrenchLines(): THREE.Group {
       // shored with whatever's on hand, and it's the detail that reads as
       // "somebody dug in here" rather than "a rectangle was placed here".
       if (placed % 2 === 0) {
-        dummy.position.set(x + 2.1, terrainHeight(x, z) + 1.4, z);
+        dummy.position.set(x + 2.1, surfaceHeight(x, z) + 1.4, z);
         dummy.rotation.set(0, rotY, 0);
         dummy.updateMatrix();
         postMesh.setMatrixAt(posts++, dummy.matrix);
@@ -837,7 +941,7 @@ function buildObstacleBelt(side: Side, count: number): THREE.InstancedMesh {
     const z = -SCENERY_HALF_Z + (i / count) * SCENERY_HALF_Z * 2;
     const x = xCenter + (r() - 0.5) * 90;
     if (isInWater(x, z)) continue; // no dragon's teeth in the river
-    dummy.position.set(x, terrainHeight(x, z) + 0.5, z);
+    dummy.position.set(x, surfaceHeight(x, z) + 0.5, z);
     dummy.rotation.set(0, r() * Math.PI, 0);
     dummy.scale.setScalar(0.8 + r() * 0.5);
     dummy.updateMatrix();
@@ -896,7 +1000,7 @@ function buildFightingPositions(maxCount: number): THREE.Group {
       const x = xNear + (xFar - xNear) * r();
       const z = (r() * 2 - 1) * SCENERY_HALF_Z;
       if (isInWater(x, z)) continue; // no dug-in pit sits in the river
-      const y = terrainHeight(x, z);
+      const y = surfaceHeight(x, z);
 
       dummy.position.set(x, y - 0.2, z);
       dummy.rotation.set(0, 0, 0);
@@ -959,6 +1063,53 @@ const LANDMARK_FOOTPRINT_SCALE: Partial<Record<LandmarkSpec["kind"], number>> = 
   ruined_infrastructure: 3,
 };
 
+/**
+ * GROUND EVERY CHILD, NOT JUST THE GROUP — Pass 26.
+ *
+ * Every builder above authors its pieces on a flat local plane: a village's
+ * houses sit at local y=0 spread over a 170 m radius, an urban block's nine
+ * volumes over 300 x 220 m, a forest patch's trees over 380 x 300 m. Until
+ * this pass `buildScenery` then placed the whole GROUP at a SINGLE terrain
+ * sample taken at its origin — so every child away from that origin was
+ * planted at the origin's height on ground that is not at the origin's
+ * height.
+ *
+ * Measured across the real placements in LANDMARKS/TERRAIN_FEATURES, that
+ * left children up to 7.1 m in the air and up to 7.0 m underground, a 12.7 m
+ * spread at the worst site (village_ruined at km 3.5) — against houses that
+ * are themselves only ~1.8 m tall. That is the "disconnected grey boxes"
+ * reported from a real device: the urban blocks at km 6-7 span 5.2-7.0 m of
+ * terrain, so their taller volumes visibly float clear of the ground.
+ *
+ * It is NOT an LOD artefact — nothing in this file has an LOD, and THREE.LOD
+ * is used only for hero asset models in Scene3D. It was a single-sample
+ * grounding bug from the first pass that placed these groups, invisible while
+ * the world was compressed enough that 7 m was sub-pixel.
+ *
+ * The fix samples the terrain under each direct child's own world position.
+ * Local offsets are rotated by the group's yaw and multiplied by its scale
+ * first (landmarks carry both), and the correction is divided back out by the
+ * scale because the child's `position.y` is expressed in the group's own
+ * scaled space.
+ *
+ * Direct children only, deliberately: a house's roof is authored relative to
+ * its own walls and must stay there. One level down is exactly the level at
+ * which "this thing stands on the ground" is true.
+ */
+function groundChildren(model: THREE.Object3D, x: number, z: number): void {
+  const base = surfaceHeight(x, z);
+  const cos = Math.cos(model.rotation.y);
+  const sin = Math.sin(model.rotation.y);
+  const s = model.scale.x || 1;
+  for (const child of model.children) {
+    const lx = child.position.x * s;
+    const lz = child.position.z * s;
+    const wx = x + lx * cos + lz * sin;
+    const wz = z - lx * sin + lz * cos;
+    child.position.y += (surfaceHeight(wx, wz) - base) / s;
+  }
+}
+
 export function buildScenery(
   budget: SceneryBudget,
   halfWidthX: number,
@@ -976,8 +1127,9 @@ export function buildScenery(
     const scale = LANDMARK_FOOTPRINT_SCALE[spec.kind];
     if (scale) model.scale.setScalar(scale);
     const x = xForKm(spec.side, spec.km);
-    model.position.set(x, terrainHeight(x, spec.z), spec.z);
+    model.position.set(x, surfaceHeight(x, spec.z), spec.z);
     model.rotation.y = spec.rotationY;
+    groundChildren(model, x, spec.z);
     model.name = `scenery:landmark:${spec.kind}:${spec.side}`;
     g.add(model);
   }
@@ -987,7 +1139,8 @@ export function buildScenery(
   for (const feature of TERRAIN_FEATURES) {
     const model = TACTICAL_FEATURE_BUILDERS[feature.kind]();
     const x = xForKm(feature.side, feature.km);
-    model.position.set(x, terrainHeight(x, feature.z), feature.z);
+    model.position.set(x, surfaceHeight(x, feature.z), feature.z);
+    groundChildren(model, x, feature.z);
     model.name = `scenery:feature:${feature.id}`;
     g.add(model);
   }
@@ -1063,7 +1216,7 @@ function buildZoneTransitions(): THREE.Group {
           const x = sign * edge;
           const z = -SCENERY_HALF_Z + i * ZONE_POST_PITCH_M;
           if (isInWater(x, z)) continue;
-          dummy.position.set(x, terrainHeight(x, z), z);
+          dummy.position.set(x, surfaceHeight(x, z), z);
           dummy.rotation.set(0, 0, 0);
           dummy.scale.setScalar(1);
           dummy.updateMatrix();
