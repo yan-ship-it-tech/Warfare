@@ -71,12 +71,13 @@ const YAW_LIMIT_DEG = 25;
  *  right — the same handedness the 2D schematic view has always had. */
 const BASE_AZIMUTH = 0;
 
-/** Camera framing, metres. The default position (set below) frames all three
- *  zones at once, which is the framing that actually shows what this scene
- *  is; minDistance lets the camera get right down among 7 m vehicles (30 m is
- *  four hull lengths), maxDistance pulls back to roughly twice the world's
- *  own width and no further — there is nothing out there to look at, and a
- *  zoom range that ends in empty fog is a zoom range users get lost in. */
+/** Camera framing, metres. The default position (set below) opens inside The
+ *  Line at ~3.2 km, not pulled back to the whole three-zone strip — see the
+ *  default-position comment for why; minDistance lets the camera get right
+ *  down among 7 m vehicles (30 m is four hull lengths), maxDistance pulls
+ *  back to roughly twice the world's own width and no further — there is
+ *  nothing out there to look at, and a zoom range that ends in empty fog is
+ *  a zoom range users get lost in. */
 const CAM_MIN_DISTANCE = 30;
 const CAM_MAX_DISTANCE = 44_000;
 
@@ -736,13 +737,14 @@ export function Scene3D({ world }: { world: WorldModel }) {
     // colour instead (terrain3d.ts's atmosphericHaze). The two share
     // HORIZON_COLOR so they can never disagree about what the air looks like.
     // Deliberately weak and long-range relative to the world's own size. The
-    // default framing sits ~17 km from the target and the plate's far lateral
-    // edge is ~33 km away, so this leaves everything a reader is looking at
-    // essentially clear and exists only to keep scenery and models out at the
-    // plate's edges from popping unhazed against terrain that is hazed (they
-    // use shared materials and cannot carry the per-vertex haze attribute the
-    // ground does). Pass 25 pulled it in from 40/380 km — those were sized
-    // against a 140 km axis and would never have engaged at all here.
+    // default framing now sits ~3.2 km from the target (the old whole-strip
+    // default was ~17 km) and the plate's far lateral edge is ~33 km away, so
+    // this leaves everything a reader is looking at essentially clear and
+    // exists only to keep scenery and models out at the plate's edges from
+    // popping unhazed against terrain that is hazed (they use shared
+    // materials and cannot carry the per-vertex haze attribute the ground
+    // does). Pass 25 pulled it in from 40/380 km — those were sized against a
+    // 140 km axis and would never have engaged at all here.
     scene.fog = new THREE.Fog(BG, 21_000, 62_000);
     sceneRef.current = scene;
 
@@ -757,14 +759,20 @@ export function Scene3D({ world }: { world: WorldModel }) {
     // correctness one. The range is derived from the orbit radius instead.
     const camera = new THREE.PerspectiveCamera(46, mount.clientWidth / mount.clientHeight, 1, 90_000);
     // Azimuth ~-10 degrees (inside the +/-25 lock), elevation ~26 degrees, at
-    // ~17 km. Derived rather than eyeballed: the world is 19.2 km wide along
-    // X, a 46-degree vertical FOV at 16:9 gives ~74 degrees horizontally, and
-    // (19,200 / 2) / tan(37 degrees) is 12.7 km — plus margin for the oblique
-    // angle and the strip's own depth. So the DEFAULT framing shows all six
-    // zone segments and both transition seams at once, which is the structure
-    // a first look has to communicate. Zooming in is how you get to a place;
-    // this is what the places are.
-    camera.position.set(-2_600, 7_400, 15_000);
+    // ~3.2 km. Whole-strip framing (all six zone segments + both seams,
+    // ~17 km out) was the first value tried here and it was wrong for the
+    // device this scene is actually opened on: at 17 km every zone is
+    // legible but nothing reads as a place, which is precisely the failure
+    // the zone model exists to fix. 3.2 km is not a new number — it is the
+    // same "reads as a place" framing already validated for The Line (see
+    // ZONE_WIDTH_M's own note and props.ts's LOCAL_HALF_MAX_M), reused here
+    // as the opening shot instead of only as a zoom-in destination. The
+    // vector below is the old (-2_600, 7_400, 15_000) uniformly scaled to
+    // 3,200 m of orbit radius, so the elevation/azimuth are unchanged —
+    // only the distance is. The default now opens inside The Line;
+    // panning or zooming out is how a reader reaches Operational Depth and
+    // Strategic Rear, which is the right order for a first look.
+    camera.position.set(-491.5, 1_399, 2_835.7);
     cameraRef.current = camera;
 
     const controls = new OrbitControls(camera, renderer.domElement);
