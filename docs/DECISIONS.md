@@ -4211,11 +4211,14 @@ until they were — octahedral rubble at 8 triangles rather than dodecahedral at
 a hardware prediction; it is recorded because CLAUDE.md requires before/after
 numbers on a rendering change, not because the absolute value means anything.
 
-## Found and deliberately NOT changed
+## Found and deliberately NOT changed — then approved and fixed the same day
 
-**Houses are shed-sized.** `buildHouse` builds 2.6–3.8 m wide, 1.6–2.1 m tall
+**Houses were shed-sized.** `buildHouse` built 2.6–3.8 m wide, 1.6–2.1 m tall
 volumes; a rural house on this ground is ~8–12 m wide and 4–6 m to the eaves.
 Villages therefore read as specks at any framing past a couple of hundred
-metres, which blunts the condition mix this pass just added. It is a scale
-change, and this brief explicitly scoped scale changes out — flagged here
-rather than taken. One-line fix in `buildHouse` whenever it is wanted.
+metres, which blunted the condition mix this pass added. Flagged rather than
+taken above, since it is a scale change and this brief scoped scale changes
+out — approved as a follow-up and bundled into the same commit. `buildHouse`
+now builds 8–12 m wide, 6.5–9.5 m deep, 4–6 m-to-eaves houses; the roof radius/
+height and the rubble-pile size are derived from w/d/h rather than re-authored,
+so they stay proportional automatically.

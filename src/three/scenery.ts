@@ -209,12 +209,20 @@ type Condition = "ruined" | "damaged" | "intact";
 /** One small house, condition-dependent: fewer/tilted walls and a missing
  *  or askew roof the more damaged it is, with an occasional rubble pile
  *  beside anything that isn't intact. */
+/** A rural house on this ground is roughly 8-12 m wide and 4-6 m to the
+ *  eaves, not the 2.6-3.8 m / 1.6-2.1 m this builder used before Pass 26 —
+ *  shed-sized, which read as a speck at any framing past a couple hundred
+ *  metres and blunted the condition mix Pass 26 added. Flagged rather than
+ *  fixed in that pass since it is a scale change and that brief scoped scale
+ *  changes out; fixed here now that it's explicitly approved. Every
+ *  dependent measurement (roof radius/height, the rubble pile) is derived
+ *  from w/d/h rather than re-authored, so they stay proportional. */
 function buildHouse(condition: Condition, r: () => number): THREE.Group {
   const g = new THREE.Group();
   const wallMat = condition === "intact" ? WALL_INTACT : condition === "damaged" ? WALL_DAMAGED : WALL_RUINED;
-  const w = 2.6 + r() * 1.2;
-  const d = 2.2 + r() * 1;
-  const h = 1.6 + r() * 0.5;
+  const w = 8 + r() * 4;
+  const d = 6.5 + r() * 3;
+  const h = 4 + r() * 2;
   const body = box(w, h, d, wallMat);
   body.position.y = h / 2;
   if (condition === "ruined") {
@@ -228,16 +236,16 @@ function buildHouse(condition: Condition, r: () => number): THREE.Group {
   const hasRoof = condition === "intact" ? true : condition === "damaged" ? r() > 0.3 : r() > 0.78;
   if (hasRoof) {
     const roofMat = condition === "intact" ? ROOF_INTACT : ROOF_DAMAGED;
-    const roof = cyl(0, Math.max(w, d) * 0.75, 1.1, 4, roofMat);
+    const roof = cyl(0, Math.max(w, d) * 0.75, h * 0.34, 4, roofMat);
     roof.rotation.y = Math.PI / 4;
-    roof.position.y = h + 0.4;
+    roof.position.y = h + h * 0.12;
     if (condition !== "intact") roof.rotation.z = (r() - 0.5) * 0.3;
     g.add(roof);
   }
 
   if (condition !== "intact" && r() > 0.4) {
-    const rub = new THREE.Mesh(new THREE.DodecahedronGeometry(0.8 + r() * 0.5, 0), RUBBLE);
-    rub.position.set(w * 0.7, 0.3, (r() - 0.5) * d);
+    const rub = new THREE.Mesh(new THREE.DodecahedronGeometry(1.4 + r() * 1.1, 0), RUBBLE);
+    rub.position.set(w * 0.7, 0.5, (r() - 0.5) * d);
     rub.rotation.set(r() * Math.PI, r() * Math.PI, r() * Math.PI);
     g.add(rub);
   }
