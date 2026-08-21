@@ -22,7 +22,7 @@ import { useViewState } from "../state/viewState";
 import { useOverrides } from "../state/overridesState";
 import { resolveAssetDisplay } from "../data/catalog";
 import { buildTerrain, buildSky, surfaceHeight, HORIZON_COLOR } from "./terrain3d";
-import { buildProps, recentreLocalProps, PROP_BUDGET } from "./props";
+import { buildProps, recentreLocalProps, updateBeltFade, PROP_BUDGET } from "./props";
 import { buildScenery, disposeScenery, SCENERY_BUDGET, damageSites } from "./scenery";
 import { loadOsmData, buildOsmInset, disposeOsmInset } from "./osmTerrain";
 import { applyTacticalSiting } from "./tacticalSiting";
@@ -1141,6 +1141,9 @@ export function Scene3D({ world }: { world: WorldModel }) {
           propsBubbleRef.current,
           mPerPx,
         );
+        // Fade the windbreak grid out once a belt is under ~2.4 px wide —
+        // see props.ts's updateBeltFade for the measurement behind it.
+        updateBeltFade(propsRef.current, mPerPx);
       }
       const farDist = LABEL_FAR_DIST(orbitRadius);
       // Screen-constant symbology (Pass 24). `k` converts a camera distance

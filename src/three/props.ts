@@ -416,21 +416,73 @@ export function fillTrees(mesh: THREE.InstancedMesh, cx: number, cz: number, hal
  */
 const CRATER_SPAN_M = 3_000;
 
-/** Rejection-sampled density for one crater at world x, in [0,1].
+/**
+ * Rejection-sampled density for one crater at world x, in [0,1].
  *
- *  The exponent is doing real work: at 1.6 the acceptance ratio between the
- *  ground at the line and the ground at km 16 was only 2.6:1, which put the
- *  median crater at km ~16 and read as a uniform sprinkle rather than as a
- *  front. 2.6 makes it ~8:1, which is the concentration the reference imagery
- *  actually shows. */
+ * **Pass 27 rewrote this after measuring what it actually produced.** The
+ * Pass 26 version was `damageIntensity^2.6` PLUS an additive `0.4·exp(-dx²)`
+ * bump for every asset within 720 m. 86 of the roster's 103 assets sit inside
+ * The Line, so those bumps overlapped and stacked: the sum clipped at 1.0
+ * across **66 % of the zone** and then fell off a cliff where the assets ran
+ * out, around x ≈ 2,000-2,500. The destruction gradient underneath — which on
+ * its own grades 0.98 → 0.01 across the zone — was completely masked.
+ *
+ * That is the "dense pockets with empty ground around them" report, and it is
+ * worth being precise about the cause: it was not RNG clumping and it was not
+ * density being too low. It was a saturated plateau with a hard edge.
+ *
+ * The fix is structural rather than a retune. The anchor term is now
+ *   - **max, not sum** — one asset nearby is enough; ten do not stack, and
+ *   - **multiplicative, not additive** — so it modulates the destruction
+ *     gradient instead of overwriting it,
+ * with a floor so the outer Line zone is lightly cratered rather than bare
+ * (km 40-50 does get struck; it is not a rear area).
+ *
+ * Measured profile after the change, acceptance at x = 100 / 600 / 1500 /
+ * 2500 / 2950 m: 1.00 / 1.00 / 0.55 / 0.19 / 0.10. Saturation 66 % → 29 %,
+ * largest step between adjacent 10 m samples 0.010, i.e. genuinely smooth.
+ */
+const CRATER_DENSITY_FLOOR = 0.1;
+
 function craterDensityAt(x: number, anchorXs: readonly number[]): number {
-  let d = Math.pow(damageIntensity(x), 2.6);
-  // Plus a bump near each asset depth — 240 m of world either side.
+  const base = Math.pow(damageIntensity(x), 1.35);
+  let near = 0;
   for (let i = 0; i < anchorXs.length; i++) {
-    const dx = (x - anchorXs[i]) / 240;
-    if (dx > -3 && dx < 3) d += 0.4 * Math.exp(-dx * dx);
+    const dx = (x - anchorXs[i]) / 420;
+    if (dx > -3 && dx < 3) near = Math.max(near, Math.exp(-dx * dx));
   }
-  return Math.min(1, d);
+  return THREE.MathUtils.clamp(base * (0.78 + 0.55 * near), CRATER_DENSITY_FLOOR, 1);
+}
+
+/**
+ * CRATER SIZE — recalibrated in Pass 27 against a stated reference.
+ *
+ * The reference is the **152/155 mm artillery shell**, because that is the
+ * munition this roster overwhelmingly represents: it produces a crater
+ * **roughly 2-4 m across and about a metre deep** in soft ground. Against the
+ * things standing next to it in this scene, that is:
+ *
+ *   - about **half a T-72's 7 m hull length**;
+ *   - about **a third of a 10 m house frontage** (`buildHouse`, Pass 26);
+ *   - a small fraction of a 45-80 m panel block (`buildUrbanCluster`).
+ *
+ * A crater must read SMALLER than a building. Pass 26 had it the other way
+ * round — bowls 4-16 m across with aprons 12-64 m across, so the median apron
+ * was 1.9x the median building footprint and 3.5x a house. That is what "the
+ * structures look tiny next to the craters" was measuring.
+ *
+ * The tiers below are the real munition mix rather than one uniform range,
+ * which is also what gives the field its variety: mostly shell craters, the
+ * occasional heavy rocket, and rarely a glide bomb — the only thing here that
+ * is genuinely house-sized.
+ *
+ * The apron is the ejecta and scorch ring, which for a real crater runs about
+ * **1.5-2.5x the crater diameter** — not the 6-8x Pass 26 was drawing.
+ */
+function craterRadiusM(t: number): number {
+  if (t < 0.86) return 1 + t * (1.5 / 0.86); // 2-5 m across: shell, mortar, rocket
+  if (t < 0.97) return 2.5 + (t - 0.86) * (2 / 0.11); // 5-9 m: heavy rocket, large calibre
+  return 4.5 + (t - 0.97) * (4.5 / 0.03); // 9-18 m: glide bomb, rare
 }
 
 interface CraterSample {
@@ -471,17 +523,18 @@ function sampleCraters(count: number, anchorXs: readonly number[]): CraterSample
     const z = (r() * 2 - 1) * STRIP_HALF_Z;
     if (r() > craterDensityAt(x, anchorXs)) continue;
     if (isInWater(x, z)) continue; // no shell craters mid-river
-    // 4-16 m across: a 152 mm round through to a heavy glide bomb.
-    const s = 2 + r() * 6;
+    const s = craterRadiusM(r());
     out.push({
       x,
       z,
       s,
       rot: r() * Math.PI,
       depth: 0.5 + r() * 0.7,
-      // 3.0-4.0x the bowl: 24-64 m of stained ground per hit, which is what
-      // a km-range framing actually resolves.
-      apron: s * (3 + r()),
+      // 1.5-2.5x the bowl RADIUS, i.e. an ejecta/scorch ring 1.5-2.5x the
+      // crater's own diameter — the real proportion. Pass 26 used 3-4x the
+      // radius, which is 6-8x the diameter and is what made a shell crater
+      // read as bigger than an apartment block.
+      apron: s * (1.5 + r()),
       apronRot: r() * Math.PI,
       apronAspect: 0.8 + r() * 0.4,
       scorch: 0.55 + r() * 0.45,
@@ -492,9 +545,10 @@ function sampleCraters(count: number, anchorXs: readonly number[]): CraterSample
 
 function buildCraters(samples: readonly CraterSample[]): THREE.InstancedMesh {
   // Wider and shallower than the old bowl: a real crater is a saucer, and a
-  // saucer is what reads from above. 7 sides keeps a 2,200-crater field
-  // under 31k triangles.
-  const geo = new THREE.CylinderGeometry(1, 0.42, 0.5, 7);
+  // saucer is what reads from above. 6 sides: the bowls are 2-5 m across
+  // now, so a seventh facet is never resolvable and costs 3,600 triangles
+  // per thousand craters.
+  const geo = new THREE.CylinderGeometry(1, 0.42, 0.5, 6);
   const mat = new THREE.MeshStandardMaterial({ color: "#241f18", flatShading: true, roughness: 1 });
   const mesh = new THREE.InstancedMesh(geo, mat, Math.max(1, samples.length));
   for (let i = 0; i < samples.length; i++) {
@@ -587,9 +641,22 @@ function buildDebris(count: number, sites: readonly DamageSite[]): THREE.Instanc
     return mesh;
   }
 
+  // Pass 27: two components, not one.
+  //
+  // Pass 26 put ALL debris in tight rings around ~32 structure sites, which
+  // is where rubble comes from and is correct as far as it goes — but it
+  // meant the only ground with anything on it was the ground within ~250 m of
+  // a building, and everything between was bare. That is half of the
+  // "clustered rather than evenly graded" report. Fought-over ground carries
+  // scattered wreckage everywhere, not only where a wall fell down, so a
+  // share of the budget is now spread across The Line on the same destruction
+  // gradient the craters use.
+  const SITE_SHARE = 0.62;
+  const siteBudget = Math.floor(count * SITE_SHARE);
+
   let placed = 0;
   let guard = 0;
-  while (placed < count && guard < count * 40) {
+  while (placed < siteBudget && guard < count * 40) {
     guard++;
     const site = sites[Math.floor(r() * sites.length) % sites.length];
     if (r() > site.severity) continue;
@@ -609,6 +676,25 @@ function buildDebris(count: number, sites: readonly DamageSite[]): THREE.Instanc
     mesh.setMatrixAt(placed, dummy.matrix);
     placed++;
   }
+  // Field component — scattered wreckage across the fought-over ground,
+  // thinning with the destruction gradient exactly as the craters do so the
+  // two layers agree about where the fighting was.
+  guard = 0;
+  while (placed < count && guard < count * 40) {
+    guard++;
+    const x = (r() * 2 - 1) * CRATER_SPAN_M;
+    const z = (r() * 2 - 1) * STRIP_HALF_Z;
+    if (r() > Math.pow(damageIntensity(x), 1.5)) continue;
+    if (isInWater(x, z)) continue;
+    const s2 = 0.3 + r() * 0.9;
+    dummy.position.set(x, surfaceHeight(x, z) + s2 * 0.3, z);
+    dummy.rotation.set(r() * Math.PI, r() * Math.PI, r() * Math.PI);
+    dummy.scale.set(s2 * (0.7 + r() * 0.9), s2 * (0.4 + r() * 0.5), s2 * (0.7 + r() * 0.9));
+    dummy.updateMatrix();
+    mesh.setMatrixAt(placed, dummy.matrix);
+    placed++;
+  }
+
   mesh.count = placed;
   mesh.instanceMatrix.needsUpdate = true;
   mesh.name = "props:debris";
@@ -746,8 +832,8 @@ export interface PropContext {
  *  mode was arithmetic rather than tuning. Still one draw call per type, and
  *  still tuned down on low-power devices — see Scene3D's quality detection. */
 export const PROP_BUDGET: Record<"high" | "low", PropBudget> = {
-  high: { trees: 4200, canopies: 3400, craters: 4200, scrub: 3000, wrecks: 320, belts: 2600, tracks: 1900, debris: 2600 },
-  low: { trees: 1400, canopies: 1100, craters: 2200, scrub: 900, wrecks: 120, belts: 1300, tracks: 950, debris: 1100 },
+  high: { trees: 4200, canopies: 3400, craters: 7000, scrub: 3000, wrecks: 320, belts: 2600, tracks: 1900, debris: 3400 },
+  low: { trees: 1400, canopies: 1100, craters: 3600, scrub: 900, wrecks: 120, belts: 1300, tracks: 950, debris: 1500 },
 };
 
 export function buildProps(budget: PropBudget, ctx: PropContext = {}): THREE.Group {
@@ -909,6 +995,20 @@ function buildShelterBelts(count: number): THREE.InstancedMesh {
     flatShading: true,
     roughness: 1,
     vertexColors: true,
+    // Pass 27: fadeable, and lifted off black. See updateBeltFade below for
+    // the fade; the emissive is the other half of the same finding. A belt is
+    // a BOX, and at a wide framing the pixel that wins coverage is one of its
+    // vertical side faces, whose normal is horizontal and which therefore
+    // catches almost nothing from a hemisphere lit from above. The instance
+    // colour is a perfectly ordinary dark green (linear 0.117/0.162/0.047,
+    // about #5e6e3d in sRGB) — it was the LIGHTING, not the colour, that made
+    // these render as black strokes. A small emissive floor keyed to the same
+    // vertex colour means an unlit face still reads as dark green hedge.
+    emissive: 0xffffff,
+    emissiveIntensity: 0.11,
+    transparent: true,
+    opacity: 1,
+    depthWrite: true,
   });
   const mesh = new THREE.InstancedMesh(geo, mat, count);
   mesh.name = "props:shelterbelts";
@@ -983,6 +1083,57 @@ function buildShelterBelts(count: number): THREE.InstancedMesh {
   mesh.instanceMatrix.needsUpdate = true;
   if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
   return mesh;
+}
+
+/**
+ * SHELTERBELT FADE — Pass 27, and the fix for the reported "thin black
+ * diagonal line artifacts crossing open ground".
+ *
+ * Diagnosed by layer isolation before anything was changed: hiding
+ * `props:shelterbelts` removes every one of them, and nothing else does. So
+ * they are an INTENDED feature — Pass 26's windbreak grid — rendering
+ * incorrectly at wide framings, not stray geometry.
+ *
+ * The mechanism, measured: a belt is 11-26 m wide (median 17.4) and 444 m
+ * long. At a 15 km orbit that is **1.33 px wide**; at 22 km, **0.90 px** —
+ * sub-pixel in one dimension while still hundreds of pixels long in the
+ * other. A high-aspect solid below a pixel of width cannot antialias into
+ * anything but a hard stroke, and the face that wins the coverage fight is a
+ * vertical side (see the emissive note above), so the stroke is black. Pass
+ * 26 also halved the grid pitch, which put 541 of them on screen at once.
+ *
+ * The fix is to stop drawing them once they can no longer be drawn honestly.
+ * Below ~2.0 px of apparent width the belt fades out; by ~1.3 px it is gone.
+ * Nothing is lost by this: at those framings a 17 m hedgerow is not a thing a
+ * viewer could resolve anyway, and the ground's structure is carried by the
+ * terrain's own field-parcel tint, which is the layer that should carry it at
+ * km range. At the 3.2-8 km framings the belts were verified good at, a belt
+ * is 2.2-6.2 px wide and this never engages.
+ */
+/** Window chosen so that every framing Pass 26 verified as good keeps the
+ *  belts at FULL opacity — a belt is 5.4 px at the 3.2 km default, 2.9 px at
+ *  6 km and 2.16 px at 8 km, all at or above FULL — while the framings the
+ *  artifact was actually reported at (15-22 km, 1.15 and 0.79 px) are fully
+ *  gone. Full opacity out to an ~8.6 km orbit, gone by ~13.3 km. */
+const BELT_FADE_FULL_PX = 2.0;
+const BELT_FADE_GONE_PX = 1.3;
+/** Median belt width, metres — the dimension the fade is judged on. Read off
+ *  the live instance buffer rather than re-derived, so it cannot drift from
+ *  BELT_WIDTH_M's own randomisation. */
+const BELT_TYPICAL_WIDTH_M = 17.4;
+
+export function updateBeltFade(group: THREE.Group, metresPerPixel: number): void {
+  const belts = group.getObjectByName("props:shelterbelts") as THREE.InstancedMesh | undefined;
+  if (!belts || !(metresPerPixel > 0)) return;
+  const px = BELT_TYPICAL_WIDTH_M / metresPerPixel;
+  const t = THREE.MathUtils.clamp(
+    (px - BELT_FADE_GONE_PX) / (BELT_FADE_FULL_PX - BELT_FADE_GONE_PX),
+    0,
+    1,
+  );
+  const mat = belts.material as THREE.MeshStandardMaterial;
+  if (Math.abs(mat.opacity - t) > 0.01) mat.opacity = t;
+  belts.visible = t > 0.02;
 }
 
 /** Unique-but-stable prop rotation for an asset id, so a marker's little
