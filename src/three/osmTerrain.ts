@@ -16,26 +16,29 @@
 // terrain actually builds, same reasoning that makes Scene3D itself
 // React.lazy. loadOsmData() memoizes the promise so a re-render never
 // re-fetches it.
-// ── Pass 24 ──────────────────────────────────────────────────────────────
-// The "inset" is no longer an inset. It was one because the axis around it
-// was band-compressed and this patch had to opt out of that compression to
-// stay true to itself — a local patch at its own scale, sitting inside one
-// band. depthAxis.ts made the near register true-scale, so the patch's scale
-// and the scene's scale are now the SAME scale: `unitsPerKm()` returns the
-// axis's own UNITS_PER_KM, not a locally-derived exception to it. The anchor
-// stays where it was (side_a, 17 km) because that is where a town like this
-// plausibly sits, not because the geometry needed a home band.
+// ── Pass 25 ──────────────────────────────────────────────────────────────
+// The patch is still drawn at 1:1 — a real metre of rail is a world metre of
+// rail — and it is now WINDOWED rather than clipped only at the strip edge.
 //
-// The one new constraint: the AOI is +/-10 km and the represented strip is
-// +/-6 km, so the patch is clipped to the strip laterally. Drawing 10 km of
-// real geometry across a 6 km frontage would be the same category of lie the
-// whole pass exists to remove.
+// The reason is the zone model. The Line zone is 3,000 world metres wide and
+// stands for 50 km of real depth. The AOI is 20 km across. Drawing all of it
+// at 1:1 would put six and a half times the zone's entire width of real
+// geometry into it and spill through both transition seams; scaling it down
+// to fit would break the one thing this data is here for, which is being true
+// to itself next to a 7 m vehicle. So the patch keeps its scale and gives up
+// its extent: a PATCH_HALF_X_KM x PATCH_HALF_Z_KM window of the real extract,
+// centred on the AOI, drawn 1:1, anchored inside The Line.
+//
+// `ANCHOR_KM` is unchanged at 17, so the OSM-railhead ammo point's own
+// `placement_rationale` in data/assets/ still says something true — what
+// changed is only where 17 km lands in world space, which is the zone
+// model's business and not this file's.
 // ─────────────────────────────────────────────────────────────────────────
 import * as THREE from "three";
 import type { Side } from "../types";
 import { terrainHeight } from "./terrain3d";
-import { worldXFor, STRIP_HALF_Z } from "./worldMapping";
-import { UNITS_PER_KM } from "./depthAxis";
+import { worldXFor } from "./worldMapping";
+import { METRES_PER_KM } from "./zones";
 
 // ── anchor + scale ─────────────────────────────────────────────────────
 /** Where the inset sits: side_a's near-front band (op_near, 5-30 km) — real
@@ -49,25 +52,42 @@ import { UNITS_PER_KM } from "./depthAxis";
 // from this one.
 export const ANCHOR_SIDE: Side = "side_a";
 export const ANCHOR_KM = 17;
-/** Half-extent of the patch, in the OSM data's own km frame. A bit past the
- *  AOI's real half-extent (~8.9 km) so the whole fetched box is eligible,
- *  well short of the tens/hundreds of km some ways run to past the AOI
- *  (Overpass's bbox rule includes a way's full length if any node is
- *  inside — docs/OSM_PIPELINE.md) — clipping below is what keeps those from
- *  being drawn in full. */
-const PATCH_HALF_KM = 10;
-/** Lateral clip, km — the represented strip's own half-width, less a small
- *  margin so the cut falls inside the terrain plate rather than on its edge. */
-const PATCH_HALF_Z_KM = (STRIP_HALF_Z / UNITS_PER_KM) * 0.95;
+/**
+ * The window into the extract, in the OSM data's own km frame.
+ *
+ * 1.2 km either side along the depth axis: 2.4 km of the Line zone's 3,000 m,
+ * which still leaves the zone's inner sixth (the churned belt, the trench
+ * line, the river) clear and puts the patch where a town behind the immediate
+ * contact line would actually be.
+ *
+ * 2.5 km either side laterally: Z is genuine metres and the strip is +/-6 km,
+ * so this is a free choice rather than a forced one, and a 2.4 x 5 km patch
+ * reads as ONE PLACE. The full +/-5.7 km the strip allows drew a band of real
+ * geometry straight across the whole frontage, which reads as a texture
+ * rather than as a town.
+ *
+ * The window is OFFSET, not centred, and that offset was measured rather than
+ * guessed. Total vertex density across the extract is close to uniform along
+ * X, but the RAIL is not: 79% of rail vertices inside |z| < 2.5 km sit
+ * between x = -0.4 and x = +2.0 km — that is the freight yard, which is the
+ * one feature of this extract anyone will recognise as real. A window centred
+ * on the AOI captured 103 rail segments; this one captures roughly three
+ * times that, from the same data at the same 1:1 scale.
+ */
+const PATCH_HALF_X_KM = 1.2;
+const PATCH_HALF_Z_KM = 2.5;
+/** Centre of the window in the extract's own frame, km east of the AOI
+ *  centre. See above — this is where the yard is. */
+const PATCH_CENTER_X_KM = 0.8;
 
-/** World units per real km inside the patch. As of Pass 24 this is simply
- *  the axis's own scale: the anchor sits at 17 km, well inside the true-scale
- *  register, so "the patch's own scale" and "the scene's scale" are the same
- *  number and the function exists only so callers keep reading one source for
- *  it. tacticalSiting.ts sites the OSM-railhead ammo point through this, and
- *  must keep doing so rather than re-deriving a second answer. */
+/** World units per real km inside the patch — 1,000, i.e. 1:1, and that is
+ *  the whole point of the patch. It is NOT the scene's depth scale any more
+ *  (there isn't one — see zones.ts), which is exactly why the window above
+ *  has to be small. tacticalSiting.ts sites the OSM-railhead ammo point
+ *  through this and must keep doing so rather than re-deriving a second
+ *  answer. */
 export function unitsPerKm(): number {
-  return UNITS_PER_KM;
+  return METRES_PER_KM;
 }
 
 export function anchorXAt(): number {
@@ -96,7 +116,7 @@ export function loadOsmData(): Promise<OsmFile> {
 }
 
 // ── clipping ────────────────────────────────────────────────────────────
-/** Splits a polyline at wherever it leaves the ±PATCH_HALF_KM box, dropping
+/** Splits a polyline at wherever it leaves the ±PATCH_HALF_X_KM box, dropping
  *  the outside runs entirely. A vertex-level cut, not a true segment/box
  *  intersection (Liang-Barsky) — at this data's 5 m simplification, the
  *  difference is at most one vertex's worth of a line that would have kept
@@ -106,7 +126,7 @@ function clipPolyline(pts: [number, number][]): [number, number][][] {
   const out: [number, number][][] = [];
   let run: [number, number][] = [];
   const inside = (p: [number, number]) =>
-    Math.abs(p[0]) <= PATCH_HALF_KM && Math.abs(p[1]) <= PATCH_HALF_Z_KM;
+    Math.abs(p[0] - PATCH_CENTER_X_KM) <= PATCH_HALF_X_KM && Math.abs(p[1]) <= PATCH_HALF_Z_KM;
   for (const p of pts) {
     if (inside(p)) run.push(p);
     else if (run.length) {
@@ -224,7 +244,7 @@ class RibbonBuilder {
   }
 }
 
-const RAIL_COLOR = new THREE.Color("#6b6a62"); // ballast grey
+const RAIL_COLOR = new THREE.Color("#8a887c"); // ballast grey
 const ROAD_COLOR = new THREE.Color("#7a7260"); // packed dirt/gravel track
 const RIVER_COLOR = new THREE.Color("#2f5561");
 const TREE_TRUNK_COLOR = new THREE.Color("#4a4237");
@@ -265,12 +285,20 @@ export function buildOsmInset(osm: OsmFile): OsmBuildResult {
   // real terrain east of Pokrovsk is the direction Russian forces have
   // actually approached from on this front, so the mapping stays honest
   // rather than arbitrary.
-  const toWorld = (p: [number, number]) => ({ x: anchorX + p[0] * scale, z: p[1] * scale });
+  // The window's own centre lands on the anchor, so offsetting the window
+  // inside the extract does not slide the drawn patch out of its zone.
+  const toWorld = (p: [number, number]) => ({
+    x: anchorX + (p[0] - PATCH_CENTER_X_KM) * scale,
+    z: p[1] * scale,
+  });
 
   // Metres (Pass 24): a double-track rail corridor with its ballast is
   // ~6 m across, a rural road ~7, a minor river ~26. Before this pass the
   // same numbers were 0.4/0.7/1.6 of an undefined unit.
-  const rail = new RibbonBuilder(6, RAIL_COLOR, 0.35);
+  // 9 m rather than 6: this is a yard, not a single running line, and a 6 m
+  // ribbon is 2 px from a 1 km camera — measured on a screenshot where the
+  // patch was present in the scene graph and invisible in the frame.
+  const rail = new RibbonBuilder(9, RAIL_COLOR, 0.35);
   const road = new RibbonBuilder(7, ROAD_COLOR, 0.2);
   const river = new RibbonBuilder(26, RIVER_COLOR, -1.2);
 
@@ -288,7 +316,12 @@ export function buildOsmInset(osm: OsmFile): OsmBuildResult {
     // tree_row: closed = a wood/parcel to fill, open = a windbreak to follow.
     if (f.closed) {
       const bbox = ringBBox(f.xz);
-      if (bbox.x0 > PATCH_HALF_KM || bbox.x1 < -PATCH_HALF_KM || bbox.z0 > PATCH_HALF_Z_KM || bbox.z1 < -PATCH_HALF_Z_KM) {
+      if (
+        bbox.x0 > PATCH_CENTER_X_KM + PATCH_HALF_X_KM ||
+        bbox.x1 < PATCH_CENTER_X_KM - PATCH_HALF_X_KM ||
+        bbox.z0 > PATCH_HALF_Z_KM ||
+        bbox.z1 < -PATCH_HALF_Z_KM
+      ) {
         continue; // no overlap with the patch at all
       }
       const areaKm2 = ringArea(f.xz);
@@ -300,7 +333,7 @@ export function buildOsmInset(osm: OsmFile): OsmBuildResult {
         guard++;
         const x = bbox.x0 + r() * (bbox.x1 - bbox.x0);
         const z = bbox.z0 + r() * (bbox.z1 - bbox.z0);
-        if (Math.abs(x) > PATCH_HALF_KM || Math.abs(z) > PATCH_HALF_Z_KM) continue;
+        if (Math.abs(x - PATCH_CENTER_X_KM) > PATCH_HALF_X_KM || Math.abs(z) > PATCH_HALF_Z_KM) continue;
         if (!pointInRing(x, z, f.xz)) continue;
         const w = toWorld([x, z]);
         treePositions.push({

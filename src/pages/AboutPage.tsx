@@ -2,7 +2,7 @@
 // docs/DECISIONS.md Pass 9 for why this moved from a modal to a routed page.
 import type { PageProps } from "./registry";
 import { DISCLAIMER, SIDE_LABELS } from "../config/ui";
-import { compressionSummary } from "../three/depthAxis";
+import { ZONES, ZONE_WIDTH_M, ZONE_TRANSITION_GAP_M } from "../three/zones";
 
 export function AboutPage({ world }: PageProps) {
   return (
@@ -123,44 +123,82 @@ export function AboutPage({ world }: PageProps) {
         dependency-line overlay.
       </p>
 
-      <h3>Two scales, and where the boundary is</h3>
-      <p>
-        The 3D scene has a single spatial rule, and it is worth stating plainly because everything
-        else follows from it. {compressionSummary()} One world unit is one metre, so inside that
-        near band the terrain, the rail lines, tree rows and roads from the OpenStreetMap patch
-        below (it carries no building footprints — see "One real patch inside the synthetic
-        terrain" below for exactly what it does), the size of a tank and the altitude of a drone
-        are all physically correct against each other. Past it, ground position compresses and{" "}
-        <em>fidelity compresses with it</em> — the detail fades as the geography stops being true,
-        so the deep rear reads as an abstracted silhouette rather than as a place you could
-        navigate. That is deliberate: squashed 1:1 geometry at 200 km would be a worse lie than the
-        empty void this replaced.
+      <h3>Three zones, and what their boundaries are not</h3>
+      <p className="about__callout">
+        <b>Range and cost, not a boundary line.</b> The farther from the line you are, the fewer
+        platforms can reach you — but that threshold never drops to zero. A cheap FPV can hit almost
+        anything within a few kilometres; a long-range strike drone or a cruise missile can reach a
+        command post or a logistics hub a hundred kilometres back; a sustained campaign reaches
+        refineries, airfields and fleets a thousand kilometres back, and keeps reaching them.
+        Nowhere on this map is fully safe. What changes with distance is what is worth sending, not
+        whether anything can arrive.
       </p>
       <p>
-        The camera's yaw is constrained to a limited arc about that depth axis rather than free
-        360° orbit. With two registers and a fidelity gradient the axis has a direction, and a
-        camera that can swing behind the scene can put the compressed rear in the foreground —
-        which states the opposite of what the compression means. The constraint also buys something
-        back: because the orientation is guaranteed, each side's assets can be faced toward the
-        zero line by derivation rather than by hand.
+        The 3D scene divides the depth axis into three bounded zones, laid end to end with a
+        visible, labelled transition between them:
+      </p>
+      <ul className="about__zones">
+        {ZONES.map((z) => (
+          <li key={z.id}>
+            <b>{z.name}</b> <span className="about__zonekm">{z.rangeLabel}</span> — {z.character}
+          </li>
+        ))}
+      </ul>
+      <p>
+        <b>Those kilometre figures are a rendering-budget decision, not a safety or technical
+        claim.</b> They are not the edge of any platform's envelope and nothing changes character
+        at them. They are where the count of things that can plausibly reach you falls by roughly
+        an order of magnitude, which is the only thing a drawing budget can honestly track.
+      </p>
+      <p>
+        Each zone occupies the same physical footprint on screen — {ZONE_WIDTH_M.toLocaleString()}{" "}
+        metres of world space, with a {ZONE_TRANSITION_GAP_M} m gap between them — regardless of
+        whether it stands for fifty kilometres of ground or four thousand. So{" "}
+        <b>position inside a zone carries near-to-far order, not proportional distance</b>: an asset
+        drawn further from the line than another really is further from the line than the other, and
+        that is the whole of what the picture claims. Every asset is labelled with its true distance
+        in kilometres, and that label is the number to read.
+      </p>
+      <p>
+        This replaced a single continuous axis that ran from true metric scale at the line to a
+        logarithm four thousand kilometres out. That design was internally consistent and it failed
+        three times in live checks, always the same way: an axis that spans four orders of magnitude
+        of real distance cannot also hold objects sized in metres, so the vehicles the tool exists
+        to show came out sub-pixel and the ground came out empty. Bounding the span fixes that by
+        construction rather than by tuning. What was given up is proportionality within a zone; what
+        was bought is a scene in which a seven-metre vehicle, a fifteen-metre trench bay and a
+        twelve-kilometre frontage are all visible at once.
+      </p>
+      <p>
+        Lateral position and altitude are still genuine metres, with no compression at all. So is
+        every piece of authored geometry. The one disclosed exception is the very top of the sky:
+        the orbital ISR asset's real altitude is several hundred kilometres, which cannot be drawn
+        over a world nine kilometres deep, so altitudes above about 1,200 m approach a fixed ceiling
+        rather than being drawn true. Ordering between air layers is preserved exactly.
+      </p>
+      <p>
+        The camera's yaw is constrained to a limited arc about the depth axis rather than free 360°
+        orbit, so the axis stays left-to-right on screen and each side's assets can be faced toward
+        the zero line by derivation rather than by hand.
       </p>
       <p>
         The Schematic view is unchanged and still allocates screen width per distance band. The two
-        views no longer share one km-to-screen function, which is a deliberate split: they still
-        share the number that matters — every asset is drawn from its own{" "}
-        <code>distance_km_from_zero</code> and labelled in true kilometres in both — but a
-        schematic cross-section and a scene with real terrain in it cannot allocate depth the same
-        way.
+        views do not share one km-to-screen function, which is a deliberate split: they still share
+        the number that matters — every asset is drawn from its own{" "}
+        <code>distance_km_from_zero</code> and labelled in true kilometres in both — but a schematic
+        cross-section and a scene with real terrain in it cannot allocate depth the same way.
       </p>
 
       <h3>One real patch inside the synthetic terrain</h3>
       <p>
         Since Pass 17, one small area of the 3D terrain draws real coordinates — rail lines, tree
         rows and roads from an OpenStreetMap extract around a real Donbas rail junction — rather than
-        the generated value-noise ground everywhere else. It used to sit as a <em>metric inset</em>:
-        an island at its own true scale inside a band-compressed axis that could not have hosted it
-        otherwise. It is no longer an exception — it sits 17 km out, inside the true-scale band, so
-        the patch's scale and the scene's scale are now simply the same scale. The UI never names the source town, on purpose — it's an
+        the generated value-noise ground everywhere else. It is drawn at 1:1 — a real metre of rail
+        is a world metre of rail — which is exactly why it is now drawn as a <em>window</em>: the
+        extract is twenty kilometres across and The Line zone is three thousand metres wide, so a
+        1.8 × 5 km window of the real geometry is anchored inside that zone and the rest is
+        clipped. Keeping its scale and giving up its extent is the right way round; scaling it down
+        to fit would have destroyed the one thing the data is here for. The UI never names the source town, on purpose — it's an
         illustrative composite, not a claim that any specific real place sits at that point on the
         strip. Wider terrain patterns (tree-row spacing and orientation, field parcel size) are tuned
         from the same dataset's real statistics rather than picked by eye — see

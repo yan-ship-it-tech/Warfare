@@ -1,48 +1,47 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Battlefield → 3D world coordinates.
 //
-// Pass 24 changed the load-bearing rule in this file. It used to consume
-// `Projection.xFor()` — the 2D schematic view's per-band pixel allocation —
-// and only convert the result into world units. That coupling is gone: km →
-// world X now goes through `depthAxis.ts`, a pure two-register function with
-// no dependence on the live band set at all. Read that file's header first;
-// this one is downstream of it.
+// Pass 25 changed the load-bearing rule in this file for the second time.
+// Pass 24 had it consume `depthAxis.ts` — one continuous axis, true scale
+// near the line and a logarithm behind it, 140 km wide. That axis is retired
+// (three live-verification failures; see `zones.ts`'s header for the full
+// post-mortem). km → world X now goes through `zones.ts`: a small number of
+// bounded zones laid end to end, each with the same authored footprint
+// whatever span of real ground it stands for.
 //
 // What that costs, stated plainly because it is a real deviation from the
 // invariant CLAUDE.md records ("the 3D view reads the same underlying
 // projection so the two views can never disagree about where anything is"):
-// the two views no longer share one km→X function. What they still share —
-// and what that invariant was actually protecting — is the number itself.
-// Both draw an asset from `distance_km_from_zero`, both label it in true km,
-// and neither can move an asset without moving that field. What differs is
-// only how each *allocates screen depth* to a km, and it has to differ: the
-// 2D view is an explicitly schematic cross-section that gives each band a
-// legible slice, while a 3D scene with real terrain in it cannot claim two
-// scales at once. See docs/DECISIONS.md Pass 24.
+// the two views do not share one km→X function, and the 3D one is no longer
+// even monotone-proportional — inside a zone it carries ORDER, not distance.
+// What they still share is the number itself. Both draw an asset from
+// `distance_km_from_zero`, both label it in true km, and neither can move an
+// asset without moving that field.
 //
-// The other consequence, and it is an improvement: editing a band no longer
-// moves anything in the 3D scene. A band is an annotation on the axis now,
-// not the thing that defines it — which is what the stored-`band_id`-is-
-// informational rule already said about the data.
+// The other consequence, unchanged from Pass 24 and still an improvement:
+// editing a band moves nothing in the 3D scene. A band is an annotation on
+// the 2D axis; the 3D axis is made of zones, and zones are authored here.
 //
 // Axes:
-//   X  distance from the zero line. Zero line at X = 0, side_a negative,
-//      side_b positive — same handedness as the 2D view. True scale (1 unit
-//      = 1 m) out to TRUE_SCALE_DEPTH_KM, logarithmically compressed past it.
-//   Y  altitude, in metres above mean ground. Genuinely above the ground
-//      plane, and — inside the near register — genuinely correct.
-//   Z  lateral position across the represented strip, in metres. The scene is
-//      a strip ~12 km wide and the full rear-to-rear depth; Z separates
+//   X  depth. Zone-relative, NOT metric — see zones.ts. Zero line at X = 0,
+//      side_a negative, side_b positive, same handedness as the 2D view.
+//   Y  altitude in metres above mean ground, true up to
+//      ALT_TRUE_CEILING_M and softly ceilinged above it (zones.ts).
+//   Z  lateral position across the represented strip, in genuine metres with
+//      no compression at all. The scene is a strip ~12 km wide; Z separates
 //      co-located assets and carries no distance claim of its own.
 // ─────────────────────────────────────────────────────────────────────────
 import type { Domain, Side } from "../types";
 import {
-  UNITS_PER_KM,
-  depthUnitsFor,
-  kmForDepthUnits,
-  HALF_EXTENT_UNITS,
+  METRES_PER_KM,
+  HALF_EXTENT_M,
   MAX_DEPTH_KM,
-} from "./depthAxis";
+  worldXForKm,
+  depthMForKm,
+  zoneAtSaturating,
+  kmForZoneFraction,
+  ZONE_WIDTH_M,
+} from "./zones";
 
 /** Retained for the 2D schematic view's own scale note; the 3D axis no
  *  longer has a px-per-unit relationship to anything. */
@@ -122,24 +121,36 @@ export const STRIP_HALF_Z = 6_000;
  *   STRIP_HALF_Z     6 km  the REPRESENTED sector. Assets live here, and only
  *                          here: it is what the lateral layout spreads across
  *                          and what "a strip 12 km wide" in the UI means.
- *   SCENERY_HALF_Z  12 km  how far the dressing runs — trenches, obstacles,
+ *   SCENERY_HALF_Z   9 km  how far the dressing runs — trenches, obstacles,
  *                          treelines. A trench line that stops dead at the
  *                          sector boundary announces the boundary; one that
  *                          runs on past it and fades says the sector is a cut
  *                          from something larger, which is the truth.
- *   TERRAIN_HALF_Z  32 km  how far the GROUND runs. With yaw locked the camera
+ *   TERRAIN_HALF_Z  16 km  how far the GROUND runs. With yaw locked the camera
  *                          looks across the axis, so the near and far edges of
  *                          the plate are the two edges most often in frame;
  *                          at 6 km they were a visible cut a few degrees from
- *                          the subject. At 32 km, with the lateral haze fully
- *                          engaged well before it, the ground simply recedes.
+ *                          the subject.
  *
- * The cost is terrain vertices, and it is paid with a graded Z sampling the
- * same way the depth axis is graded (buildTerrain) rather than by uniformly
- * spending them on 26 km of deliberately-hazed ground.
+ * Pass 25 pulled the outer two in (12→9, 32→16 km). They were sized against a
+ * 140 km-wide depth axis; against a 19.2 km one, 32 km of lateral ground made
+ * the plate four times wider across than deep and spent most of the terrain's
+ * vertex budget on ground that is hazed out by design. 16 km still leaves the
+ * lateral haze (terrain3d.ts) fully engaged well before the cut edge.
  */
-export const SCENERY_HALF_Z = 12_000;
-export const TERRAIN_HALF_Z = 32_000;
+export const SCENERY_HALF_Z = 9_000;
+export const TERRAIN_HALF_Z = 16_000;
+
+/**
+ * How far past the deepest zone's outer edge the GROUND runs, metres.
+ *
+ * The rear zone must not end on the plate's cut edge — that would draw the
+ * rendering budget's own boundary as a landscape feature, which is precisely
+ * the reading "these boundaries are not a real line" has to defeat. The
+ * terrain runs on past it and hazes out.
+ */
+export const TERRAIN_X_OVERRUN = 3_000;
+export const TERRAIN_HALF_X = HALF_EXTENT_M + TERRAIN_X_OVERRUN;
 
 /** Deterministic per-id hash — the same asset always lands in the same spot
  *  instead of reshuffling on every render. */
@@ -169,18 +180,22 @@ const SPREAD_FILL = 0.86;
 const JITTER_FRACTION = 0.15;
 
 /** Minimum ground-plane separation between any two same-side assets, in
- *  metres. 400 m is a real dispersal distance rather than a marker footprint:
+ *  metres. 320 m is a real dispersal distance rather than a marker footprint:
  *  the markers are screen-constant symbols now (Scene3D), so this is about
  *  two systems not standing in each other's position, not about two discs
  *  overlapping. */
-const MIN_SEPARATION = 400;
+const MIN_SEPARATION = 320;
 const RELAX_ITERATIONS = 6;
 
-/** One asset's input to the lateral layout. */
+/** One asset's input to the lateral layout. `x` is the asset's ALREADY
+ *  PLACED signed world X (from zones.ts's `buildDepthLayout`), not something
+ *  this module can re-derive: with the zone model a distance in km no longer
+ *  determines a depth on its own — the rest of the roster does too. */
 export interface LateralItem {
   id: string;
   side: Side;
   km: number;
+  x: number;
   platformDomain: Domain;
 }
 
@@ -249,7 +264,7 @@ export function lateralLayout(items: LateralItem[]): Map<string, number> {
   // nudged for layout's sake.
   const all = items.map((item) => ({
     item,
-    x: worldXFor(item.side, item.km),
+    x: item.x,
     z: out.get(item.id) ?? 0,
   }));
   all.sort((a, b) => a.x - b.x || a.item.id.localeCompare(b.item.id));
@@ -299,14 +314,16 @@ function clamp(v: number, lo: number, hi: number): number {
  */
 export function worldPlacement(opts: {
   side: Side;
-  km: number;
+  /** Placed depth along the axis, world-metre magnitude — from zones.ts's
+   *  `buildDepthLayout`, or `depthMForKm` for anything that is not an asset. */
+  depthM: number;
   z: number;
   altitudeM: number;
   terrainHeightAt?: (x: number, z: number) => number;
 }): WorldPlacement {
-  const { side, km, z, altitudeM } = opts;
+  const { side, depthM, z, altitudeM } = opts;
 
-  const x = worldXFor(side, km);
+  const x = (side === "side_a" ? -1 : 1) * Math.abs(depthM);
 
   // Ground-bound assets ride the terrain surface; airborne ones are measured
   // from mean ground so they don't bob with the hills underneath them.
@@ -317,25 +334,42 @@ export function worldPlacement(opts: {
   return { x, y, z };
 }
 
-/** World-unit X of a given distance/side — used by the ruler ticks, the
- *  scenery/feature tables and the zero-line marker, so everything stays
- *  locked to the same axis as the assets. */
+/** World X of a given distance/side — used by the ruler ticks, the
+ *  scenery/feature tables and the zero-line marker. This is the
+ *  ROSTER-INDEPENDENT mapping (zones.ts's `depthMForKm`): correct for
+ *  anything that is not an asset, and the seed the asset spread starts from.
+ *  Assets themselves are positioned by `buildDepthLayout` instead. */
 export function worldXFor(side: Side, km: number): number {
-  return (side === "side_a" ? -1 : 1) * depthUnitsFor(km);
+  return worldXForKm(side, km);
 }
 
-/** Inverse of worldXFor — world-unit X (magnitude, either side) back to km.
- *  Closed form as of Pass 24: the old binary search existed because
- *  `Projection.xFor()` folded in a lane-oblique term and a zero-line gutter
- *  that could not be inverted in closed form. depthAxis.ts has neither. */
+/** Roster-independent depth magnitude for a distance — the same number
+ *  without the side's sign, for callers that already have one. */
+export function depthFor(km: number): number {
+  return depthMForKm(km);
+}
+
+/**
+ * Inverse of worldXFor — world X (magnitude, either side) back to km, using
+ * only the zone model.
+ *
+ * Drag-to-reposition does NOT use this: it uses the placed ladder
+ * (`DepthLayout.kmAtWorldX`), which knows where the roster actually ended up
+ * and therefore round-trips. This one is for callers with no layout in hand.
+ */
 export function worldXToKm(_side: Side, worldX: number): number {
-  return Math.min(MAX_DEPTH_KM, kmForDepthUnits(Math.abs(worldX)));
+  const d = Math.abs(worldX);
+  const zone = zoneAtSaturating(d);
+  const t = (d - zone.innerM) / ZONE_WIDTH_M;
+  return Math.min(MAX_DEPTH_KM, Math.max(0, kmForZoneFraction(zone, t)));
 }
 
-/** Total half-extent of the world along X, world units. */
+/** Total half-extent of the world along X, world metres. */
 export function worldHalfWidth(): number {
-  return HALF_EXTENT_UNITS;
+  return HALF_EXTENT_M;
 }
 
-/** Convenience for callers that think in km-per-unit. */
-export const METRES_PER_KM = UNITS_PER_KM;
+/** Metres per km — still 1,000, and still true for Y and Z and for every
+ *  piece of authored geometry. It is NOT a km→X conversion any more; see
+ *  zones.ts. */
+export { METRES_PER_KM };
