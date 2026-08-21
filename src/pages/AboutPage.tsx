@@ -2,6 +2,7 @@
 // docs/DECISIONS.md Pass 9 for why this moved from a modal to a routed page.
 import type { PageProps } from "./registry";
 import { DISCLAIMER, SIDE_LABELS } from "../config/ui";
+import { compressionSummary } from "../three/depthAxis";
 
 export function AboutPage({ world }: PageProps) {
   return (
@@ -104,17 +105,14 @@ export function AboutPage({ world }: PageProps) {
       <h3>Why this isn't a real map</h3>
       <p>
         A literal satellite-photo map was tried and reverted: real geography cannot put a 0–5 km
-        FPV envelope and a 500 km deep-strike target on one legible axis, which is exactly what the
-        non-linear distance bands exist to solve, and a photoreal basemap read as a
-        battle-management system rather than a teaching tool. The 3D view is a genuine WebGL scene
-        — orbitable perspective camera, real elevation geometry, distance fog — over a
+        FPV envelope and a 500 km deep-strike target on one legible axis, and a photoreal basemap
+        read as a battle-management system rather than a teaching tool. The 3D view is a genuine
+        WebGL scene — perspective camera, real elevation geometry, atmospheric haze — over a
         <em> synthetic</em> terrain strip: rolling steppe, a churned scar along the zero line, and
         instanced treelines and craters, all generated, none of it anywhere in particular. Relief is
         deliberately low, because the ground this depicts is open rolling steppe and inventing
-        mountains to make a 3D view look dramatic would be its own dishonesty. Distance along the
-        axis is band-compressed exactly as in the Schematic view — the 3D view reads the same
-        projection, so the two cannot disagree about where anything is. Scope is a representative
-        strip a few kilometres wide and the full rear-to-rear depth.
+        mountains to make a 3D view look dramatic would be its own dishonesty. Scope is a
+        representative strip 12 km wide and the full rear-to-rear depth.
       </p>
       <p>
         Eleven assets carry real low-poly 3D models, authored as geometry in this repository rather
@@ -125,14 +123,44 @@ export function AboutPage({ world }: PageProps) {
         dependency-line overlay.
       </p>
 
+      <h3>Two scales, and where the boundary is</h3>
+      <p>
+        The 3D scene has a single spatial rule, and it is worth stating plainly because everything
+        else follows from it. {compressionSummary()} One world unit is one metre, so inside that
+        near band the terrain, the rail lines, tree rows and roads from the OpenStreetMap patch
+        below (it carries no building footprints — see "One real patch inside the synthetic
+        terrain" below for exactly what it does), the size of a tank and the altitude of a drone
+        are all physically correct against each other. Past it, ground position compresses and{" "}
+        <em>fidelity compresses with it</em> — the detail fades as the geography stops being true,
+        so the deep rear reads as an abstracted silhouette rather than as a place you could
+        navigate. That is deliberate: squashed 1:1 geometry at 200 km would be a worse lie than the
+        empty void this replaced.
+      </p>
+      <p>
+        The camera's yaw is constrained to a limited arc about that depth axis rather than free
+        360° orbit. With two registers and a fidelity gradient the axis has a direction, and a
+        camera that can swing behind the scene can put the compressed rear in the foreground —
+        which states the opposite of what the compression means. The constraint also buys something
+        back: because the orientation is guaranteed, each side's assets can be faced toward the
+        zero line by derivation rather than by hand.
+      </p>
+      <p>
+        The Schematic view is unchanged and still allocates screen width per distance band. The two
+        views no longer share one km-to-screen function, which is a deliberate split: they still
+        share the number that matters — every asset is drawn from its own{" "}
+        <code>distance_km_from_zero</code> and labelled in true kilometres in both — but a
+        schematic cross-section and a scene with real terrain in it cannot allocate depth the same
+        way.
+      </p>
+
       <h3>One real patch inside the synthetic terrain</h3>
       <p>
         Since Pass 17, one small area of the 3D terrain draws real coordinates — rail lines, tree
         rows and roads from an OpenStreetMap extract around a real Donbas rail junction — rather than
-        the generated value-noise ground everywhere else. It sits as a <em>metric inset</em>: drawn at
-        its own true, undistorted scale inside one distance band, a local patch rather than a claim
-        about the whole map, because the band-compressed axis above cannot host real geography without
-        visibly bending a straight rail line. The UI never names the source town, on purpose — it's an
+        the generated value-noise ground everywhere else. It used to sit as a <em>metric inset</em>:
+        an island at its own true scale inside a band-compressed axis that could not have hosted it
+        otherwise. It is no longer an exception — it sits 17 km out, inside the true-scale band, so
+        the patch's scale and the scene's scale are now simply the same scale. The UI never names the source town, on purpose — it's an
         illustrative composite, not a claim that any specific real place sits at that point on the
         strip. Wider terrain patterns (tree-row spacing and orientation, field parcel size) are tuned
         from the same dataset's real statistics rather than picked by eye — see

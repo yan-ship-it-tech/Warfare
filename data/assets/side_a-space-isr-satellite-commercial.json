@@ -85,5 +85,11 @@
     "independent_sources": 3,
     "last_audit": "2026-08-20",
     "notes": []
+  },
+  "altitude_band_m": {
+    "min_m": 450000,
+    "max_m": 600000,
+    "basis": "symbolic",
+    "note": "Real low-Earth orbit is roughly 450-600 km - twelve times the depth of the entire true-scale register, so it cannot be drawn true on this axis at any zoom. Rendered at a stated symbolic 25 km and labelled as such."
   }
 }

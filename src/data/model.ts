@@ -12,7 +12,7 @@ import type {
   DomainLayer,
   Side,
 } from "../types";
-import { resolvePlatformDomain } from "./placement";
+import { resolvePlatformDomain, resolveAltitudeM, type ResolvedAltitude } from "./placement";
 
 export type IssueSeverity = "error" | "warning" | "info";
 
@@ -95,6 +95,21 @@ export interface Lesson {
   source_tag: string;
   asset_ids: string[];
   connection_types: string[];
+  /**
+   * Pass 23's convergence audit, made visible in Pass 24. `corpus_support` is
+   * prose, not an enum, because a real audit result is rarely one tier: a
+   * lesson's principle can be CONVERGENT-2 while the figure quoted inside it
+   * is SINGLE-SOURCE. `supportTiers()` in src/pages/LessonsPage.tsx reads the
+   * tier tokens back out of the prose for the badge; the prose itself is what
+   * the reader is ultimately shown, never a lossy summary of it.
+   *
+   * `contested` marks a lesson whose reading needs a caveat attached at all
+   * times — when it is true, `caution` carries that caveat and the page
+   * renders it next to the lesson rather than behind the expander.
+   */
+  corpus_support?: string;
+  contested?: boolean;
+  caution?: string;
 }
 
 export interface GroupDef {
@@ -156,6 +171,18 @@ export function nodePlatformDomain(n: SceneNode): Domain {
     ? resolvePlatformDomain(n.asset)
     : resolvePlatformDomain({ domain: n.stub.domain });
 }
+/** How high the node sits, in metres, and on what basis — Pass 24. A stub has
+ *  no altitude band of its own, so it falls back on its domain the same way
+ *  nodePlatformDomain() does. */
+export function nodeAltitude(
+  n: SceneNode,
+  fallbackFor: (domain: Domain) => number,
+): ResolvedAltitude {
+  return n.kind === "asset"
+    ? resolveAltitudeM(n.asset, fallbackFor)
+    : resolveAltitudeM({ domain: n.stub.domain }, fallbackFor);
+}
+
 export function nodeDistance(n: SceneNode): number {
   return n.kind === "asset"
     ? n.asset.distance_km_from_zero

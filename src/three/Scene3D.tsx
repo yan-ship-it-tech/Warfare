@@ -14,14 +14,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { WorldModel, SceneNode } from "../data/model";
-import { nodeSide, nodeDomain, nodePlatformDomain, nodeDistance } from "../data/model";
-import { buildProjection } from "../scene/projection";
+import { nodeSide, nodeDomain, nodePlatformDomain, nodeDistance, nodeAltitude } from "../data/model";
 import { LabelGrid } from "../scene/labelGrid";
 import { DOMAIN_ACCENT, SIDE_ACCENT, SIDE_LABELS } from "../config/ui";
 import { useViewState } from "../state/viewState";
 import { useOverrides } from "../state/overridesState";
 import { resolveAssetDisplay } from "../data/catalog";
-import { buildTerrain, terrainHeight } from "./terrain3d";
+import { buildTerrain, buildSky, terrainHeight, HORIZON_COLOR } from "./terrain3d";
 import { buildProps, PROP_BUDGET } from "./props";
 import { buildScenery, disposeScenery, SCENERY_BUDGET } from "./scenery";
 import { loadOsmData, buildOsmInset, disposeOsmInset } from "./osmTerrain";
@@ -35,20 +34,100 @@ import {
   worldXToKm,
   worldHalfWidth,
   DOMAIN_ALTITUDE,
+  ELEVATED_ALTITUDE_M,
   STRIP_HALF_Z,
+  TERRAIN_HALF_Z,
 } from "./worldMapping";
+import {
+  TRUE_SCALE_DEPTH_KM,
+  MAX_DEPTH_KM,
+  compressionAt,
+  modelScaleFor,
+  compressionSummary,
+} from "./depthAxis";
 
-/** Above this, a PLATFORM domain is genuinely off the deck (air, space, and
- *  the airborne members of the EW/C2 tiers) and gets the floating-marker-on-a-
- *  tether treatment. At or below it the group's own position is already on the
- *  terrain surface — see worldPlacement() — so the marker belongs right there.
+// ── Pass 24: the axis is locked, and everything below is in metres ────────
+/** Yaw is constrained to this half-range, in degrees, about the base azimuth.
+ *  Free 360-degree orbit is removed: with two registers and a fidelity
+ *  gradient the depth axis has a *direction*, and a camera that can swing
+ *  behind the scene can put the compressed rear in the foreground, which
+ *  states the opposite of what the compression means. +/-25 degrees keeps a
+ *  genuine sense of parallax and three-dimensionality — enough to walk around
+ *  a near-register asset and read its facing — while the axis stays
+ *  left-to-right on screen and both horizons stay where the art direction
+ *  assumes they are.
  *
- *  Pass 7 gated this on the *engagement* domain, which is why the fix appeared
- *  to work for tanks and ships and did nothing for the 16 assets whose
- *  engagement and platform domains differ. See src/data/placement.ts. */
-const ELEVATED_ALTITUDE_THRESHOLD = 2;
+ *  Because orientation is now guaranteed, default asset facing is derivable:
+ *  see FACING_Y below. */
+const YAW_LIMIT_DEG = 25;
+/** Azimuth the limit is centred on, radians. 0 puts the camera on +Z looking
+ *  toward -Z, which puts side_a's rear at screen left and side_b's at screen
+ *  right — the same handedness the 2D schematic view has always had. */
+const BASE_AZIMUTH = 0;
 
-const BG = new THREE.Color("#0a0d13");
+/** Camera framing, metres. The default position (set below) frames the whole
+ *  true-scale register plus the start of the compression, which is the
+ *  framing that actually shows what this scene is; minDistance lets the
+ *  camera get down among 7 m vehicles, maxDistance pulls back past the
+ *  deepest rear. */
+const CAM_MIN_DISTANCE = 120;
+const CAM_MAX_DISTANCE = 165_000;
+
+/** Default facing per side, radians about Y. models.ts authors every hero
+ *  model nose-toward +X (a tank's barrel is at +x, a UAV's nose likewise), so
+ *  side_a — which sits at negative X — already faces the zero line at 0, and
+ *  side_b needs a half turn. Before this pass no rotation was applied at all,
+ *  which meant every side_b model faced its own rear. Per-asset overrides are
+ *  Pass 25's; this is the derivation the axis lock makes possible. */
+const FACING_Y: Record<string, number> = { side_a: 0, side_b: Math.PI };
+
+/** Marker/ring/fill hold a roughly constant SCREEN size PAST TRUE_SCALE_DEPTH_KM
+ *  — the far register, where real geometry would be sub-pixel and these three
+ *  are symbology rather than objects, the same reasoning that keeps the labels
+ *  in DOM. `k` is derived from the camera: a marker of world radius `dist * k`
+ *  subtends a constant angle. Inside TRUE_SCALE_DEPTH_KM they instead hold
+ *  NEAR_REGISTER_MARKER_SCALE, a constant WORLD size — see that constant's own
+ *  comment for why a screen-constant marker doesn't belong there. */
+const MARKER_TARGET_PX = 7;
+const MARKER_GEO_RADIUS = 1.5;
+/** Ceiling so a marker can never swallow the screen at extreme zoom-out, and
+ *  floor so it never disappears when the camera is right on top of an asset.
+ *  Far register only — see MARKER_TARGET_PX. */
+const MARKER_SCALE_MIN = 0.6;
+const MARKER_SCALE_MAX = 4_000;
+/**
+ * Pass 24 remediation. Inside TRUE_SCALE_DEPTH_KM, depthAxis.ts already makes
+ * position, hero-model scale and altitude physically correct against the
+ * terrain — screen-constant marker sizing was the one piece of the near
+ * register still lying about scale, and at the shipped default framing it
+ * rendered a ~1.5 km symbol next to a 7.7 m tank (Leopard 2A6), reported as
+ * "badly broken" on the live site and confirmed from this exact code path.
+ *
+ * `1` is not a placeholder: MARKER_GEO_RADIUS(1.5m)/RING outer radius(2.9m)
+ * were already authored at roughly metre scale — the same coincidence
+ * depthAxis.ts's header describes for models.ts — so leaving the trio at its
+ * raw geometry size, with only the existing selection/hover emphasis on top,
+ * makes it read as a small anchor/click-target beside the model rather than a
+ * second, competing symbol. It is a constant WORLD size, not a constant
+ * SCREEN size: exactly what "true scale" means, and it shrinks with distance
+ * the same way the hero model beside it does.
+ */
+const NEAR_REGISTER_MARKER_SCALE = 1;
+
+/** Symbolic altitude ceiling for far-register assets, metres. A deep-strike
+ *  UAV 4,300 km out sits where 1 world unit is ~1 km of real ground; drawing
+ *  its true 1,200 m there would put it flat on the deck. Its height is scaled
+ *  by the local compression (clamped) so it still reads as airborne — a
+ *  legible symbolic altitude, exactly as the brief scopes it. */
+const FAR_SYMBOLIC_ALT_MAX = 6_000;
+/** Ceiling on the compression multiplier applied to a far-register altitude.
+ *  8 keeps a deep-strike UAV's stalk comparable to a Bayraktar's genuinely
+ *  true 6.7 km one, rather than making the abstracted assets the tallest
+ *  thing in the frame — which is the "absurd stalks" complaint in a new
+ *  costume. */
+const FAR_SYMBOLIC_ALT_GAIN_MAX = 8;
+
+const BG = HORIZON_COLOR;
 /** Scenario-focus mode's "not in this scenario" treatment for the WebGL
  *  marker/ring/fill trio: desaturate toward this flat grey rather than a
  *  literal blur (a real screen-space blur needs a post-processing pass this
@@ -75,7 +154,7 @@ const LABEL_LIFT_PX = 28;
  *  at 900, pulling all the way back put every asset past the cutoff and the
  *  scene lost its labels entirely instead of thinning. Scaling with the orbit
  *  radius means "far" always means far *for this framing*. */
-const LABEL_FAR_DIST = (camDist: number) => camDist * 2 + 140;
+const LABEL_FAR_DIST = (camDist: number) => camDist * 2 + 14_000;
 
 // ── proximity labelling (Pass 16 item 5) ─────────────────────────────────
 // "Don't render all of them all the time." Before this pass every asset
@@ -215,15 +294,26 @@ interface Entry {
    *  19) — `entries[k]`/`measured[k]`/instance row `k` are always the same
    *  asset, by construction (see the creation loop). */
   idx: number;
-  /** Local Y offset of the ring/fill pad above the group's own origin —
-   *  stored so a drag can recompute their world Y without re-deriving
-   *  `groundY`, matching what the old parent-child Mesh hierarchy did for
-   *  free. See onPinDragMove. */
-  padY: number;
+  /** ABSOLUTE world Y of the ring/fill pad (Pass 24 — it was a local offset
+   *  from the group origin). layout() now writes the pad's matrix every pass,
+   *  to keep it screen-constant, and doing that from a local offset would
+   *  mean re-deriving the group origin there too. */
+  padWorldY: number;
+  /** True distance from the zero line, km. layout() reads this to decide
+   *  whether the marker/ring/fill trio is symbology (far register — screen-
+   *  constant, since real geometry is sub-pixel out there) or a small,
+   *  true-scale anchor sitting beside a true-scale hero model (near register
+   *  — see the Pass 24 remediation note by MARKER_TARGET_PX's usage below).
+   *  Fixes the incident where a screen-constant marker rendered ~1.5 km
+   *  across next to a 7 m tank. */
+  km: number;
   lod: THREE.LOD | null;
   /** Grounded assets can be hidden behind terrain; elevated ones effectively
    *  cannot, so they skip the occlusion probe entirely. */
   grounded: boolean;
+  /** The altitude actually DRAWN, metres — true in the near register, a
+   *  clamped symbolic lift past it. A drag re-places through this. */
+  altitudeM: number;
   /** The marker/ring/fill's real colour, so scenario-focus dimming (which
    *  desaturates toward grey per frame) has something to restore to without
    *  re-reading it off the material each time. */
@@ -259,6 +349,12 @@ const MARKER_GEO = shared(new THREE.OctahedronGeometry(1.5, 0));
 const RING_GEO = shared(new THREE.RingGeometry(2.15, 2.9, 28));
 const FILL_GEO = shared(new THREE.CircleGeometry(2.15, 20));
 const LOD_PROXY_GEO = shared(new THREE.BoxGeometry(5, 2.4, 3));
+/** LOD switch distances, METRES (Pass 24). A 7 m hull resolves as geometry
+ *  out to roughly 1.5 km and as a silhouette to ~9 km; past that the
+ *  screen-constant marker is the whole representation, which is the honest
+ *  answer rather than a vehicle drawn a kilometre long. */
+const LOD_PROXY_DISTANCE = 1_500;
+const LOD_HIDE_DISTANCE = 9_000;
 const LOD_PROXY_MAT = new THREE.MeshStandardMaterial({
   color: "#4f5547",
   flatShading: true,
@@ -396,7 +492,7 @@ function occludedByTerrain(cam: THREE.Vector3, target: THREE.Vector3): boolean {
     const px = cam.x + (target.x - cam.x) * t;
     const py = cam.y + (target.y - cam.y) * t;
     const pz = cam.z + (target.z - cam.z) * t;
-    if (terrainHeight(px, pz) > py + 0.9) return true;
+    if (terrainHeight(px, pz) > py + 25) return true;
   }
   return false;
 }
@@ -449,7 +545,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
   // because the render loop is set up once on mount and proj can change
   // later if bands are edited live. Margin lets the target reach past the
   // strip's edge, just not disappear into empty fog.
-  const panBoundXRef = useRef(120);
+  const panBoundXRef = useRef(worldHalfWidth());
   /** In-progress drag-to-reposition state, read/written by the pin's
    *  pointerdown/move/up handlers below. A ref, not state, so a pointermove
    *  doesn't force a re-render 60 times a second — same reasoning as every
@@ -504,14 +600,23 @@ export function Scene3D({ world }: { world: WorldModel }) {
   const setAxisFlippedRef = useRef(view.setAxisFlipped);
   setAxisFlippedRef.current = view.setAxisFlipped;
 
-  const proj = useMemo(() => buildProjection(world.bands, world.domains), [world.bands, world.domains]);
-  // The engine-setup effect below runs once on mount; the drag handlers it
-  // registers need the CURRENT projection whenever a band edit changes it
-  // later, so they read this ref rather than closing over `proj` by value.
-  const projRef = useRef(proj);
+  // Pass 24: no `Projection` here any more. km -> world X goes through
+  // depthAxis.ts, which is a constant of the build, so nothing in this scene
+  // has to be rebuilt or re-read when a band is edited. `bands` is still used
+  // — by the ruler, to draw band boundaries at their compressed positions —
+  // but it annotates the axis rather than defining it.
+  const bands = useMemo(
+    () => [...world.bands].sort((a, b) => a.min_km - b.min_km),
+    [world.bands],
+  );
+
+  // The render loop is set up once on mount and must see the CURRENT band
+  // set when one is edited later — same reason the old `projRef` existed.
+  const bandsRef = useRef(bands);
   useEffect(() => {
-    projRef.current = proj;
-  }, [proj]);
+    bandsRef.current = bands;
+    layoutDirtyRef.current++;
+  }, [bands]);
 
   const nodes = useMemo<SceneNode[]>(() => {
     const list: SceneNode[] = world.assets
@@ -538,26 +643,59 @@ export function Scene3D({ world }: { world: WorldModel }) {
 
     const scene = new THREE.Scene();
     scene.background = BG;
-    // Atmospheric falloff. On an axis this compressed, haze is doing real
-    // work — it is the cue that separates "far down the rear" from "just
-    // over there", which parallax alone cannot sell.
-    scene.fog = new THREE.Fog(BG, 150, 640);
+    // Camera-distance haze, in metres. This is the ordinary near/far cue and
+    // it is deliberately NOT the depth cue: with yaw locked, camera distance
+    // and depth along the axis are close to uncorrelated, so the "beyond here
+    // the geography is schematic" fade is baked into the terrain's own vertex
+    // colour instead (terrain3d.ts's atmosphericHaze). The two share
+    // HORIZON_COLOR so they can never disagree about what the air looks like.
+    // Deliberately weak and very long-range. An earlier tuning at
+    // 22 km / 150 km put 61% fog on the near register at the DEFAULT framing —
+    // the camera is 100 km from the subject there, so a camera-distance fog
+    // greys out exactly the ground the pass just made true. This range leaves
+    // the near register essentially clear and exists only to keep scenery and
+    // models out in the compressed rear from popping unhazed against terrain
+    // that is hazed (they use shared materials and cannot carry the
+    // per-vertex haze attribute the ground does).
+    scene.fog = new THREE.Fog(BG, 40_000, 380_000);
     sceneRef.current = scene;
 
-    const camera = new THREE.PerspectiveCamera(46, mount.clientWidth / mount.clientHeight, 0.6, 2600);
-    camera.position.set(-74, 58, 104);
+    // Near and far are NOT constants — see updateDepthRange in the tick loop.
+    // A scene holding both a 7 m hull and 140 km of depth cannot be served by
+    // one fixed pair: a 1 m / 420 km range has a far/near ratio of 420,000,
+    // which a 24-bit depth buffer cannot resolve, and the first attempt at
+    // this pass papered over that with `logarithmicDepthBuffer: true`. That
+    // was measured and rejected — see docs/DECISIONS.md Pass 24 — because it
+    // dropped the terrain out of the scene entirely at close range while the
+    // scenery still drew, i.e. it traded a precision problem for a
+    // correctness one. The range is derived from the orbit radius instead.
+    const camera = new THREE.PerspectiveCamera(46, mount.clientWidth / mount.clientHeight, 1, 200_000);
+    // Azimuth ~-10 degrees (inside the +/-25 lock), elevation ~23 degrees, at
+    // ~102 km. Chosen so the DEFAULT framing shows the whole axis — both
+    // compressed horizons in frame at once — because the structure of the
+    // scene is the thing a first look has to communicate: the true-scale
+    // register takes the middle 57% of the depth and 4,260 km of rear is
+    // folded into the outer 43%. Zooming in is how you get to a place; this
+    // is what the place is inside.
+    camera.position.set(-16_000, 40_000, 92_000);
     cameraRef.current = camera;
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.075;
-    controls.minDistance = 14;
-    controls.maxDistance = 900;
+    controls.minDistance = CAM_MIN_DISTANCE;
+    controls.maxDistance = CAM_MAX_DISTANCE;
     // Never let the camera go under the ground plane or fully top-down —
     // both break the oblique read this view exists to give.
     controls.maxPolarAngle = Math.PI * 0.47;
     controls.minPolarAngle = Math.PI * 0.06;
-    controls.target.set(0, 5, 0);
+    // ── the axis lock (Pass 24) ──────────────────────────────────────────
+    // OrbitControls enforces this itself, every update, including mid-
+    // gesture — so this is a real constraint on the camera rather than a
+    // correction applied after the fact that a fast drag could outrun.
+    controls.minAzimuthAngle = BASE_AZIMUTH - THREE.MathUtils.degToRad(YAW_LIMIT_DEG);
+    controls.maxAzimuthAngle = BASE_AZIMUTH + THREE.MathUtils.degToRad(YAW_LIMIT_DEG);
+    controls.target.set(0, 0, 0);
     // Three's defaults (all 1) scale pan/rotate distance with camera
     // distance from the target — at this scene's default framing that reads
     // as wildly oversensitive: a small drag traverses a large fraction of
@@ -569,12 +707,48 @@ export function Scene3D({ world }: { world: WorldModel }) {
     controlsRef.current = controls;
 
     scene.add(new THREE.HemisphereLight(0xa8c0e0, 0x2a2a20, 1.15));
+    // Directional lights carry no position-dependent falloff, so these are
+    // directions, not places — scaled with everything else only so nothing
+    // ends up inside the geometry it is meant to be lighting.
     const sun = new THREE.DirectionalLight(0xfff0d8, 1.5);
-    sun.position.set(-140, 190, 90);
+    sun.position.set(-140_000, 190_000, 90_000);
     scene.add(sun);
     const rim = new THREE.DirectionalLight(0x6f88b8, 0.45);
-    rim.position.set(120, 60, -140);
+    rim.position.set(120_000, 60_000, -140_000);
     scene.add(rim);
+
+    // The horizon. One inverted unit sphere, vertex-coloured, meeting the
+    // terrain haze at exactly HORIZON_COLOR — see terrain3d.ts's buildSky.
+    // Repositioned and rescaled onto the camera every frame below.
+    const sky = buildSky();
+    scene.add(sky);
+
+    // ── headless verification handle ──────────────────────────────────────
+    // CLAUDE.md's standard for this repo is explicit that a green build is
+    // not evidence a rendering change works, and that verification means
+    // driving the real app and asserting on real geometry. That is not
+    // possible from outside without a stable way to put the camera somewhere
+    // specific, so the scene exposes one. Read-only handles to objects the
+    // app already owns; no behaviour depends on it existing.
+    (window as unknown as { __warfareScene?: unknown }).__warfareScene = {
+      camera,
+      controls,
+      scene,
+      worldXFor,
+      dirty: () => layoutDirtyRef.current++,
+      /** Every placed asset's id, true distance and world anchor — what a
+       *  cross-check of the depth mapping actually needs in order to compare
+       *  "where the renderer put it" against "where the compression function
+       *  says it goes", without having to guess an instance row. */
+      entries: () =>
+        entriesRef.current.map((e) => ({
+          id: e.id,
+          km: nodeDistance(e.node),
+          side: nodeSide(e.node),
+          altitudeM: e.altitudeM,
+          anchor: [e.anchor.x, e.anchor.y, e.anchor.z] as [number, number, number],
+        })),
+    };
 
     setReady(true);
 
@@ -635,6 +809,10 @@ export function Scene3D({ world }: { world: WorldModel }) {
     const layoutScratchMatrix = new THREE.Matrix4();
     const layoutScratchQuat = new THREE.Quaternion();
     const layoutScratchScale = new THREE.Vector3(1, 1, 1);
+    const layoutScratchPad = new THREE.Vector3();
+    const layoutScratchRingQuat = new THREE.Quaternion().setFromEuler(
+      new THREE.Euler(-Math.PI / 2, 0, 0),
+    );
     /** Set true whenever this pass wrote into an instanced buffer, so the
      *  needsUpdate flush at the end of layout() runs once, not per entry. */
     const instancedDirtyRef = { current: false };
@@ -711,27 +889,37 @@ export function Scene3D({ world }: { world: WorldModel }) {
       }
     };
 
-    /** Banded distance ruler (item 9). Positions one segment per band per
-     *  side by projecting that band's real world-X edges to the screen — so
-     *  equal km spans visibly occupy unequal screen width, which IS the
-     *  compression the axis applies. A linear ruler here would lie. */
+    /** The depth ruler. Positions one segment per band per side by projecting
+     *  that band's real world-X edges to the screen — so equal km spans
+     *  visibly occupy unequal screen width, which IS the compression the axis
+     *  applies. A linear ruler here would lie.
+     *
+     *  Pass 24 kept the mechanism and changed what it is measuring. The bands
+     *  no longer define the axis; they annotate it, and their screen widths
+     *  are now a direct readout of the two-register function — the 0-5 km
+     *  band is wide because it is true-scale, and the 500+ km band is a sliver
+     *  because it is compressed ~979x. The per-band readout states the local
+     *  scale as a compression factor rather than as km-per-100px, because a
+     *  factor is the thing the viewer needs in order to read the picture. */
     const layoutRuler = (w: number, h: number) => {
       const root = rulerRootRef.current;
       if (!root) return;
-      const projRuler = projRef.current;
+      const rulerBands = bandsRef.current;
       const groundZ = THREE.MathUtils.clamp(controls.target.z, -STRIP_HALF_Z, STRIP_HALF_Z);
       const screenXAt = (worldX: number): number | null => {
-        axisProbe.set(worldX, terrainHeight(worldX, groundZ) + 1.5, groundZ);
+        axisProbe.set(worldX, terrainHeight(worldX, groundZ) + 60, groundZ);
         axisProbe.project(camera);
         if (axisProbe.z > 1) return null; // behind the camera
         return (axisProbe.x * 0.5 + 0.5) * w;
       };
 
-      // Foreshortening guard: rotate until the axis points at the camera and
-      // every band edge lands on the same pixel. Showing a ruler then would
-      // be worse than showing none, so it fades out instead.
-      const left = screenXAt(-panBoundXRef.current + 40);
-      const right = screenXAt(panBoundXRef.current - 40);
+      // Foreshortening guard: with yaw locked this can no longer happen by
+      // rotating the axis end-on, but it still can by pitching to near
+      // top-down or zooming into a few hundred metres of ground, where the
+      // deep rear is off-screen and the ruler would claim a scale it cannot
+      // show. Fading out is better than lying.
+      const left = screenXAt(-panBoundXRef.current * 0.98);
+      const right = screenXAt(panBoundXRef.current * 0.98);
       const readable =
         left !== null && right !== null && Math.abs(right - left) > w * 0.22;
       if (root.dataset.readable !== String(readable)) {
@@ -740,11 +928,12 @@ export function Scene3D({ world }: { world: WorldModel }) {
       if (!readable) return;
 
       for (const side of ["side_a", "side_b"] as const) {
-        for (const span of projRuler.spans) {
-          const el = rulerElsRef.current.get(`${side}:${span.band.id}`);
+        for (const band of rulerBands) {
+          const el = rulerElsRef.current.get(`${side}:${band.id}`);
           if (!el) continue;
-          const x1 = screenXAt(worldXFor(side, span.band.min_km, projRuler));
-          const x2 = screenXAt(worldXFor(side, span.displayMaxKm, projRuler));
+          const displayMaxKm = Math.min(band.max_km, MAX_DEPTH_KM);
+          const x1 = screenXAt(worldXFor(side, band.min_km));
+          const x2 = screenXAt(worldXFor(side, displayMaxKm));
           if (x1 === null || x2 === null) {
             if (el.dataset.on !== "0") {
               el.dataset.on = "0";
@@ -759,13 +948,16 @@ export function Scene3D({ world }: { world: WorldModel }) {
           el.style.width = `${Math.max(0, width).toFixed(1)}px`;
           // "Wide enough for its text" is a live question — a band that is
           // 8px across on screen must not print a label over its neighbour.
-          const roomy = width > 54 ? "1" : "0";
+          const roomy = width > 46 ? "1" : "0";
           if (el.dataset.roomy !== roomy) el.dataset.roomy = roomy;
-          const kmSpan = span.displayMaxKm - span.band.min_km;
-          const perHundred = width > 1 ? (kmSpan / width) * 100 : 0;
-          const scale = perHundred >= 100 ? `${Math.round(perHundred)}` : perHundred.toFixed(perHundred < 10 ? 1 : 0);
+          // Compression at the band's own midpoint — 1x through the whole
+          // true-scale register, then rising fast. Stated as "1:1" where it
+          // is genuinely true scale, because that is the claim being made.
+          const mid = (band.min_km + displayMaxKm) / 2;
+          const c = compressionAt(mid);
+          const text = c < 1.05 ? "1:1" : `÷${c < 10 ? c.toFixed(1) : Math.round(c)}`;
           const readout = el.querySelector<HTMLElement>(".ruler3d__scale");
-          if (readout && readout.textContent !== `${scale} km`) readout.textContent = `${scale} km`;
+          if (readout && readout.textContent !== text) readout.textContent = text;
         }
       }
       void h;
@@ -793,6 +985,15 @@ export function Scene3D({ world }: { world: WorldModel }) {
       sizeMeasured(entries.length);
       const orbitRadius = camPos.distanceTo(controls.target);
       const farDist = LABEL_FAR_DIST(orbitRadius);
+      // Screen-constant symbology (Pass 24). `k` converts a camera distance
+      // into the world radius that subtends MARKER_TARGET_PX at this
+      // viewport height, so the marker is the same size on screen whether
+      // the camera is 300 m from a tank or 140 km from the whole axis. Per
+      // *asset* distance, not the orbit radius: at a 62 km framing the near
+      // and far ends of the axis are genuinely different distances away, and
+      // using one radius for all of them would put the far markers back to
+      // being specks.
+      const pxToWorld = (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * 2) / Math.max(1, h);
 
       for (let k = 0; k < entries.length; k++) {
         const entry = entries[k];
@@ -903,9 +1104,50 @@ export function Scene3D({ world }: { world: WorldModel }) {
             ringOpacity.setX(i, isSel ? 0.95 : isHov ? 0.7 : highlighted ? 0.62 : 0.42);
             fillOpacity.setX(i, isSel || isHov ? 0.13 : highlighted ? 0.2 : 0.13);
           }
-          layoutScratchScale.setScalar(isSel ? 1.6 : isHov ? 1.3 : 1);
+          const emphasis = isSel ? 1.6 : isHov ? 1.3 : 1;
+          // Pass 24 remediation. Screen-constant sizing is right where real
+          // geometry is sub-pixel (the far register) and wrong where it isn't
+          // (the near register, where depthAxis.ts already makes a hero model
+          // physically correct against the terrain under it). Applying the
+          // same dist-based formula everywhere is what put a ~1.5 km marker
+          // next to a 7.7 m tank at the shipped default framing — visible in
+          // this pass's own screenshots and reported as "badly broken" on the
+          // live site. Inside TRUE_SCALE_DEPTH_KM the trio now renders at its
+          // own true-scale geometry (NEAR_REGISTER_MARKER_SCALE = 1, i.e. a
+          // ~1.5 m marker / ~5.8 m ring — a small anchor beside the model, not
+          // a symbol competing with it) with only the existing selection/hover
+          // emphasis applied; past the boundary the screen-constant formula is
+          // unchanged, because a true-scale marker out there WOULD be sub-pixel.
+          const screenScale =
+            entry.km <= TRUE_SCALE_DEPTH_KM
+              ? NEAR_REGISTER_MARKER_SCALE
+              : THREE.MathUtils.clamp(
+                  (dist * pxToWorld * MARKER_TARGET_PX) / MARKER_GEO_RADIUS,
+                  MARKER_SCALE_MIN,
+                  MARKER_SCALE_MAX,
+                );
+          layoutScratchScale.setScalar(emphasis * screenScale);
           layoutScratchMatrix.compose(entry.anchor, layoutScratchQuat.identity(), layoutScratchScale);
           inst.marker.setMatrixAt(i, layoutScratchMatrix);
+          // The ground pad follows the same screen-constant rule — it is the
+          // marker's footprint cue, not a claim about how much ground the
+          // system occupies. Its matrix used to be written once at build
+          // time; it has to be maintained per layout now, which costs two
+          // extra compose() calls per entry on a pass that already runs only
+          // when something moved.
+          layoutScratchScale.setScalar(screenScale);
+          layoutScratchMatrix.compose(
+            layoutScratchPad.set(entry.anchor.x, entry.padWorldY + 0.02 * screenScale, entry.anchor.z),
+            layoutScratchRingQuat,
+            layoutScratchScale,
+          );
+          inst.ring.setMatrixAt(i, layoutScratchMatrix);
+          layoutScratchMatrix.compose(
+            layoutScratchPad.set(entry.anchor.x, entry.padWorldY, entry.anchor.z),
+            layoutScratchRingQuat,
+            layoutScratchScale,
+          );
+          inst.fill.setMatrixAt(i, layoutScratchMatrix);
           instancedDirtyRef.current = true;
         }
 
@@ -965,6 +1207,8 @@ export function Scene3D({ world }: { world: WorldModel }) {
         const inst = instancedRef.current;
         if (inst) {
           inst.marker.instanceMatrix.needsUpdate = true;
+          inst.ring.instanceMatrix.needsUpdate = true;
+          inst.fill.instanceMatrix.needsUpdate = true;
           if (inst.marker.instanceColor) inst.marker.instanceColor.needsUpdate = true;
           if (inst.ring.instanceColor) inst.ring.instanceColor.needsUpdate = true;
           if (inst.fill.instanceColor) inst.fill.instanceColor.needsUpdate = true;
@@ -985,9 +1229,24 @@ export function Scene3D({ world }: { world: WorldModel }) {
       // Which side is on the left is a question about the camera, not the
       // data. Probe both rears through the same projection the scene uses
       // and let the answer drive the header.
-      axisProbe.set(-100, 6, 0).project(camera);
+      // Pass 16's orientation probe. Under the Pass 24 yaw lock it can only
+      // ever report false — the camera cannot get behind the scene — but it
+      // stays live rather than being hardcoded: it is the camera that decides
+      // which rear is on the left, and if the lock is ever widened or
+      // re-centred this keeps telling the truth instead of being remembered.
+      //
+      // The probe points are LOCAL to the current target, not the axis's far
+      // ends. Absolute ±40 km probes were correct at the default framing and
+      // wrong the moment the camera came down to a few kilometres of ground:
+      // a point behind the camera projects with its sign flipped, so zooming
+      // into the near register reversed the header. Probing either side of
+      // wherever the camera is actually looking asks the same question — which
+      // way does increasing X run on screen — and can never sample a point
+      // behind the near plane.
+      const probeZ = controls.target.z;
+      axisProbe.set(controls.target.x - 400, controls.target.y, probeZ).project(camera);
       const aX = axisProbe.x;
-      axisProbe.set(100, 6, 0).project(camera);
+      axisProbe.set(controls.target.x + 400, controls.target.y, probeZ).project(camera);
       const flipped = aX > axisProbe.x;
       if (flipped !== lastFlipped) {
         lastFlipped = flipped;
@@ -1021,10 +1280,39 @@ export function Scene3D({ world }: { world: WorldModel }) {
       if (!flyRef.current) {
         const bx = panBoundXRef.current;
         controls.target.x = THREE.MathUtils.clamp(controls.target.x, -bx, bx);
-        controls.target.z = THREE.MathUtils.clamp(controls.target.z, -STRIP_HALF_Z - 30, STRIP_HALF_Z + 30);
+        // The camera target stays near the represented sector, not out over
+        // the hazed filler ground — panning into 26 km of deliberate haze is
+        // the "lost, not overshot" failure this clamp exists to prevent.
+        controls.target.z = THREE.MathUtils.clamp(
+          controls.target.z,
+          -STRIP_HALF_Z * 1.6,
+          STRIP_HALF_Z * 1.6,
+        );
       }
 
       controls.update();
+
+      // ── depth range + sky, per frame ─────────────────────────────────
+      // Derived from the orbit radius, so the depth buffer's precision is
+      // always spent on what is actually being looked at. The ceiling of
+      // 260 km comfortably contains the whole axis from any framing that can
+      // see it; the ratio never exceeds ~40,000 and is under 3,000 at the
+      // framings that matter, where a fixed 1 m / 420 km pair was 420,000.
+      // Anything beyond `far` is clipped to the sky, which at the horizon is
+      // the same HORIZON_COLOR the terrain haze fades to — so the clip plane
+      // lands inside the haze rather than as a visible cut.
+      const orbit = camera.position.distanceTo(controls.target);
+      const nextNear = THREE.MathUtils.clamp(orbit * 0.02, 0.5, 300);
+      const nextFar = THREE.MathUtils.clamp(orbit * 80, 20_000, 260_000);
+      if (nextNear !== camera.near || nextFar !== camera.far) {
+        camera.near = nextNear;
+        camera.far = nextFar;
+        camera.updateProjectionMatrix();
+      }
+      // The sky rides the camera: infinitely far, so it must never be a
+      // world-anchored object competing for depth range (see buildSky).
+      sky.position.copy(camera.position);
+      sky.scale.setScalar(nextFar * 0.35);
 
       // The markers idle-spin. Kept out of the layout pass so it survives a
       // skipped layout. Pass 19: the marker mesh is now one shared
@@ -1088,6 +1376,10 @@ export function Scene3D({ world }: { world: WorldModel }) {
       renderer.domElement.removeEventListener("pointermove", onPointerMove);
       renderer.domElement.removeEventListener("pointerleave", onPointerLeave);
       renderer.domElement.removeEventListener("pointerdown", onPointerDownDevice);
+      scene.remove(sky);
+      sky.geometry.dispose();
+      (sky.material as THREE.Material).dispose();
+      delete (window as unknown as { __warfareScene?: unknown }).__warfareScene;
       controls.dispose();
       renderer.dispose();
       if (renderer.domElement.parentNode) renderer.domElement.parentNode.removeChild(renderer.domElement);
@@ -1098,13 +1390,16 @@ export function Scene3D({ world }: { world: WorldModel }) {
     };
   }, []);
 
-  // ── terrain + props, rebuilt only when the axis geometry itself changes ─
+  // ── terrain + props ────────────────────────────────────────────────────
+  // Pass 24: this used to rebuild on every band edit, because the axis it was
+  // built against moved with the bands. It doesn't any more — the world is
+  // built once per mount and a band edit only moves the ruler.
   useEffect(() => {
     const scene = sceneRef.current;
     if (!scene || !ready) return;
 
-    const halfX = worldHalfWidth(proj);
-    panBoundXRef.current = halfX + 40;
+    const halfX = worldHalfWidth();
+    panBoundXRef.current = halfX;
     // Prop budget follows device capability rather than being a fixed number
     // that is either wasteful on a laptop or unusable on a phone.
     const lowPower =
@@ -1112,8 +1407,8 @@ export function Scene3D({ world }: { world: WorldModel }) {
       window.matchMedia("(max-width: 820px)").matches;
 
     const terrain = buildTerrain(halfX);
-    const props = buildProps(halfX, PROP_BUDGET[lowPower ? "low" : "high"]);
-    const scenery = buildScenery(proj, SCENERY_BUDGET[lowPower ? "low" : "high"], halfX);
+    const props = buildProps(PROP_BUDGET[lowPower ? "low" : "high"]);
+    const scenery = buildScenery(SCENERY_BUDGET[lowPower ? "low" : "high"], halfX);
 
     // Zero line — a standing marker plane rather than a painted stripe, so it
     // stays readable from an oblique angle instead of foreshortening away.
@@ -1126,15 +1421,25 @@ export function Scene3D({ world }: { world: WorldModel }) {
       side: THREE.DoubleSide,
       depthWrite: false,
     });
-    const zeroPlane = new THREE.Mesh(new THREE.PlaneGeometry(150, 9), zeroMat);
+    // Metres: a translucent curtain the full width of the strip, standing
+    // 260 m proud of the ground — tall enough to read from the default 62 km
+    // framing, short enough that it never competes with an airborne asset.
+    const zeroPlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(TERRAIN_HALF_Z * 2, 260),
+      zeroMat,
+    );
     zeroPlane.rotation.y = Math.PI / 2;
-    zeroPlane.position.set(0, 4.5, 0);
+    zeroPlane.position.set(0, 130, 0);
     zero.add(zeroPlane);
 
     // The line itself is carried by a bright stripe laid on the ground, which
     // stays legible from any orbit angle without occluding terrain behind it.
     const stripePts: THREE.Vector3[] = [];
-    for (let z = -72; z <= 72; z += 3) stripePts.push(new THREE.Vector3(0, terrainHeight(0, z) + 0.35, z));
+    // The zero line runs to the horizon, not to the sector's edge: the front
+    // does not stop where this scene's roster does.
+    for (let z = -TERRAIN_HALF_Z; z <= TERRAIN_HALF_Z; z += 400) {
+      stripePts.push(new THREE.Vector3(0, terrainHeight(0, z) + 6, z));
+    }
     const stripeMat = new THREE.LineBasicMaterial({ color: "#ffffff", transparent: true, opacity: 0.55 });
     zero.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(stripePts), stripeMat));
 
@@ -1164,7 +1469,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
     let osmGroup: THREE.Group | null = null;
     loadOsmData().then((osm) => {
       if (cancelled) return;
-      const built = buildOsmInset(osm, proj);
+      const built = buildOsmInset(osm);
       osmGroup = built.group;
       scene.add(osmGroup);
       setOsmAttribution(built.attribution);
@@ -1192,7 +1497,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
       zeroMat.dispose();
       stripeMat.dispose();
     };
-  }, [proj, ready]);
+  }, [ready]);
 
   // ── asset objects ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -1224,7 +1529,6 @@ export function Scene3D({ world }: { world: WorldModel }) {
         km: nodeDistance(n),
         platformDomain: nodePlatformDomain(n),
       })),
-      proj,
     );
     // Pass 18: nudge terrain-affine categories (artillery, drone teams,
     // logistics, air-defense, command posts) toward the real ground Pass 17
@@ -1240,10 +1544,9 @@ export function Scene3D({ world }: { world: WorldModel }) {
           id: n.id,
           side: nodeSide(n),
           category: n.asset.category,
-          x: worldXFor(nodeSide(n), nodeDistance(n), proj),
+          x: worldXFor(nodeSide(n), nodeDistance(n)),
         })),
       lateral,
-      proj,
     );
 
     // Pass 19: the marker/ring/fill trio for every asset — previously three
@@ -1269,21 +1572,38 @@ export function Scene3D({ world }: { world: WorldModel }) {
     for (const node of nodes) {
       const side = nodeSide(node);
       const domain = nodeDomain(node);
-      const platformDomain = nodePlatformDomain(node);
       const km = nodeDistance(node);
       const isStub = node.kind === "stub";
 
+      // ── altitude (Pass 24) ───────────────────────────────────────────
+      // A real height in metres, from the asset's own `altitude_band_m` where
+      // it has one and from the platform-domain fallback where it doesn't —
+      // never from the engagement domain (src/data/placement.ts).
+      const alt = nodeAltitude(node, (d) => DOMAIN_ALTITUDE[d] ?? 0);
+      // In the compressed register a true altitude reads as "on the deck",
+      // because 1 world unit out there is up to a kilometre of real ground.
+      // The height is scaled by the LOCAL compression, clamped, so a
+      // deep-strike UAV still reads as airborne — a legible symbolic
+      // altitude, which is what the brief scopes for the far register.
+      const symbolicLift = Math.min(compressionAt(km), FAR_SYMBOLIC_ALT_GAIN_MAX);
+      const drawAltitude =
+        km <= TRUE_SCALE_DEPTH_KM
+          ? alt.metres
+          : Math.min(FAR_SYMBOLIC_ALT_MAX, alt.metres * symbolicLift);
+
       const pos = worldPlacement({
         side,
-        platformDomain,
         km,
         z: manualZ.get(node.id) ?? sited.get(node.id) ?? lateral.get(node.id) ?? 0,
-        proj,
+        altitudeM: drawAltitude,
         terrainHeightAt: terrainHeight,
       });
 
       const g = new THREE.Group();
       g.position.set(pos.x, pos.y, pos.z);
+      // Derived facing (Pass 24). Guaranteed meaningful only because the yaw
+      // lock guarantees which way the axis runs on screen.
+      g.rotation.y = FACING_Y[side] ?? 0;
 
       const accent = DOMAIN_ACCENT[domain] ?? "#8b93a3";
       const sideColor = SIDE_ACCENT[side].base;
@@ -1294,11 +1614,19 @@ export function Scene3D({ world }: { world: WorldModel }) {
       if (!isStub && hasHeroModel(node.id)) {
         const model = buildHeroModel(node.id, sideColor);
         if (model) {
+          // Model scale is TRUE in the near register — models.ts has always
+          // authored at roughly metre scale, and depthAxis.ts is what finally
+          // makes that correct rather than coincidental. Past the boundary it
+          // is decoupled from position and clamped (modelScaleFor), because
+          // the alternative is a 7 m hull compressed by up to 979x.
+          const ms = modelScaleFor(km);
+          if (ms !== 1) model.scale.setScalar(ms);
           lod = new THREE.LOD();
           lod.addLevel(model, 0);
           const proxy = new THREE.Mesh(LOD_PROXY_GEO, LOD_PROXY_MAT);
-          lod.addLevel(proxy, 165);
-          lod.addLevel(new THREE.Group(), 420);
+          proxy.scale.setScalar(ms);
+          lod.addLevel(proxy, LOD_PROXY_DISTANCE * ms);
+          lod.addLevel(new THREE.Group(), LOD_HIDE_DISTANCE * ms);
           g.add(lod);
         }
       }
@@ -1311,9 +1639,12 @@ export function Scene3D({ world }: { world: WorldModel }) {
       // and sea assets briefly rendered as if airborne: their group origin
       // is already on the terrain surface (see worldPlacement()), so lifting
       // the marker on top of that put it floating over its own footprint.
-      const elevated = (DOMAIN_ALTITUDE[platformDomain] ?? 0) > ELEVATED_ALTITUDE_THRESHOLD;
+      const elevated = drawAltitude > ELEVATED_ALTITUDE_M;
       const markerColorHex = isStub ? "#8b93a3" : accent;
-      const markerY = elevated ? 7.5 : 1.4;
+      // An elevated asset's marker sits AT its altitude — the whole point of
+      // Pass 24's air layer — so it needs no lift of its own. A grounded one
+      // gets a small real lift so the symbol clears its own hull.
+      const markerY = elevated ? 0 : 4;
 
       const k = idx++;
       dummyMatrix.compose(
@@ -1336,7 +1667,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
       // domains skip it entirely: their marker already sits right at the
       // surface, and drawing a stalk down to a point 1.4 units below it would
       // just be visual noise, not a corrected version of the same cue.
-      const groundY = terrainHeight(pos.x, pos.z) - pos.y;
+      const groundY = terrainHeight(pos.x, pos.z) - pos.y; // local, i.e. relative to the group
       if (elevated) {
         const tether = new THREE.Line(
           new THREE.BufferGeometry().setFromPoints([
@@ -1355,14 +1686,18 @@ export function Scene3D({ world }: { world: WorldModel }) {
       // colour plus a dim fill inside it: the ring survives distance and
       // shallow angles (it is the shape, not the tint, that carries), and the
       // fill keeps the footprint readable when the ring is near edge-on.
-      const padY = (elevated ? groundY : 0) + 0.12;
+      // Absolute world Y of the pad: always on the ground, whether or not the
+      // asset above it is flying. layout() rewrites both matrices every pass
+      // to hold them screen-constant; these initial writes just mean a frame
+      // before the first layout is not blank.
+      const padWorldY = terrainHeight(pos.x, pos.z) + 1.5;
 
-      dummyMatrix.compose(new THREE.Vector3(pos.x, pos.y + padY + 0.02, pos.z), ringQuat, ONE);
+      dummyMatrix.compose(new THREE.Vector3(pos.x, padWorldY + 0.02, pos.z), ringQuat, ONE);
       ringInstanced.setMatrixAt(k, dummyMatrix);
       ringInstanced.setColorAt(k, dummyColor.set(sideColor));
       (ringInstanced.geometry.getAttribute("instanceOpacity") as THREE.InstancedBufferAttribute).setX(k, 0.42);
 
-      dummyMatrix.compose(new THREE.Vector3(pos.x, pos.y + padY, pos.z), ringQuat, ONE);
+      dummyMatrix.compose(new THREE.Vector3(pos.x, padWorldY, pos.z), ringQuat, ONE);
       fillInstanced.setMatrixAt(k, dummyMatrix);
       fillInstanced.setColorAt(k, dummyColor.set(sideColor));
       (fillInstanced.geometry.getAttribute("instanceOpacity") as THREE.InstancedBufferAttribute).setX(k, 0.13);
@@ -1377,8 +1712,10 @@ export function Scene3D({ world }: { world: WorldModel }) {
         // render loop, which is what stops it drifting off under camera tilt.
         anchor: new THREE.Vector3(pos.x, pos.y + markerY, pos.z),
         idx: k,
-        padY,
+        padWorldY,
+        km,
         lod,
+        altitudeM: drawAltitude,
         grounded: !elevated,
         baseColor: new THREE.Color(markerColorHex),
         sideColorHex: new THREE.Color(sideColor),
@@ -1451,7 +1788,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
       });
       entriesRef.current = [];
     };
-  }, [nodes, proj, ready, overrides.assetOverrides]);
+  }, [nodes, ready, overrides.assetOverrides]);
 
   // Selection/hover are read by the render loop from refs so that hovering a
   // node does not re-run the scene-building effects above.
@@ -1485,12 +1822,21 @@ export function Scene3D({ world }: { world: WorldModel }) {
     pts.forEach((p) => box.expandByPoint(p));
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
-    const span = Math.max(size.x, size.z, 26);
-    const dist = THREE.MathUtils.clamp(span * 1.5 + 46, 52, 620);
+    // Metres. The floor matters more than it used to: at true scale, framing
+    // one asset from 900 m renders a 7 m hull about 8 px across, so selecting
+    // a tank showed you a dot. 200 m puts it at ~35 px — inside the hero
+    // model's own LOD range, which is the point of having authored one.
+    const span = Math.max(size.x, size.z, 60);
+    const dist = THREE.MathUtils.clamp(span * 1.6 + 120, 200, CAM_MAX_DISTANCE * 0.7);
 
     flyRef.current = {
       from: camera.position.clone(),
-      to: center.clone().add(new THREE.Vector3(-dist * 0.5, dist * 0.62, dist * 0.75)),
+      // The offset keeps the same oblique shape as before AND stays inside
+      // the yaw lock: atan2(-0.5, 0.75) is about -34 degrees, outside the
+      // +/-25 window, so the X component is pulled in to -0.32 (about -23).
+      // OrbitControls would clamp a violating azimuth on the next update
+      // anyway, which would read as the camera sliding after it landed.
+      to: center.clone().add(new THREE.Vector3(-dist * 0.32, dist * 0.62, dist * 0.75)),
       tFrom: controls.target.clone(),
       tTo: center.clone(),
       t0: performance.now(),
@@ -1565,17 +1911,22 @@ export function Scene3D({ world }: { world: WorldModel }) {
       if (!raycaster.ray.intersectPlane(dragPlaneRef.current, dragHitRef.current)) return;
 
       const side = nodeSide(entry.node);
-      const platformDomain = nodePlatformDomain(entry.node);
-      const proj = projRef.current;
       // Clamped to this asset's own side: a drag repositions where a real
       // system stands, not which side of the war it's on, so crossing the
       // zero line clamps to it rather than reassigning `side`.
-      const km = worldXToKm(side, dragHitRef.current.x, proj);
+      const km = worldXToKm(side, dragHitRef.current.x);
       const z = THREE.MathUtils.clamp(dragHitRef.current.z, -STRIP_HALF_Z, STRIP_HALF_Z);
-      const next = worldPlacement({ side, platformDomain, km, z, proj, terrainHeightAt: terrainHeight });
+      const next = worldPlacement({
+        side,
+        km,
+        z,
+        altitudeM: entry.altitudeM,
+        terrainHeightAt: terrainHeight,
+      });
       entry.group.position.set(next.x, next.y, next.z);
-      const markerY = entry.grounded ? 1.4 : 7.5;
+      const markerY = entry.grounded ? 4 : 0;
       entry.anchor.set(next.x, next.y + markerY, next.z);
+      entry.padWorldY = terrainHeight(next.x, next.z) + 1.5;
 
       // Pass 19: marker/ring/fill are shared InstancedMesh rows, not this
       // entry's own children — moving `entry.group` (above) no longer moves
@@ -1589,9 +1940,9 @@ export function Scene3D({ world }: { world: WorldModel }) {
         const i = entry.idx;
         s.matrix.compose(entry.anchor, s.quat.identity(), s.scale.setScalar(1));
         inst.marker.setMatrixAt(i, s.matrix);
-        s.matrix.compose(new THREE.Vector3(next.x, next.y + entry.padY + 0.02, next.z), s.ringQuat, s.scale);
+        s.matrix.compose(new THREE.Vector3(next.x, entry.padWorldY + 0.02, next.z), s.ringQuat, s.scale);
         inst.ring.setMatrixAt(i, s.matrix);
-        s.matrix.compose(new THREE.Vector3(next.x, next.y + entry.padY, next.z), s.ringQuat, s.scale);
+        s.matrix.compose(new THREE.Vector3(next.x, entry.padWorldY, next.z), s.ringQuat, s.scale);
         inst.fill.setMatrixAt(i, s.matrix);
         inst.marker.instanceMatrix.needsUpdate = true;
         inst.ring.instanceMatrix.needsUpdate = true;
@@ -1644,7 +1995,7 @@ export function Scene3D({ world }: { world: WorldModel }) {
       const entry = entriesRef.current.find((x) => x.id === drag.id);
       if (!entry) return;
       const side = nodeSide(entry.node);
-      const km = Math.max(0, Math.round(worldXToKm(side, entry.group.position.x, projRef.current) * 10) / 10);
+      const km = Math.max(0, Math.round(worldXToKm(side, entry.group.position.x) * 10) / 10);
       // Committed to the SAME overrides store every other edit in this app
       // uses (src/state/overridesState.tsx) — a dropped asset is a placement
       // edit, not a new kind of state. This is what makes the drop survive the
@@ -1851,42 +2202,47 @@ export function Scene3D({ world }: { world: WorldModel }) {
         ))}
       </div>
 
-      {/* Banded distance ruler (item 9). Each segment is positioned from the
-          real projected screen-X of its band's edges, so a band that the axis
-          compresses hard is visibly narrower than one it doesn't — the ruler
-          SHOWS the compression rather than papering over it with an even
-          scale that would be a lie. The per-band "km per 100px" readout is
-          the same fact stated numerically. */}
+      {/* The depth ruler. Each segment is positioned from the real projected
+          screen-X of its band's edges, so a band the axis compresses hard is
+          visibly narrower than one it doesn't — the ruler SHOWS the
+          compression rather than papering over it with an even scale that
+          would be a lie. Pass 24 changed the per-band readout from
+          "km per 100px" (a fact about the screen) to the local compression
+          factor (a fact about the axis), and marks the true-scale register
+          explicitly, because "1:1" is the load-bearing claim of the whole
+          design and deserves to be stated rather than inferred. */}
       <div className="ruler3d" ref={rulerRootRef} data-readable="true" aria-hidden="true">
+        <span className="ruler3d__zero" />
         {(["side_a", "side_b"] as const).map((side) =>
-          proj.spans.map((span) => (
+          bands.map((band) => (
             <div
-              key={`${side}:${span.band.id}`}
-              ref={setRulerEl(`${side}:${span.band.id}`)}
-              className={`ruler3d__band ruler3d__band--${side}`}
+              key={`${side}:${band.id}`}
+              ref={setRulerEl(`${side}:${band.id}`)}
+              className={`ruler3d__band ruler3d__band--${side}${
+                band.min_km < TRUE_SCALE_DEPTH_KM ? " is-true-scale" : ""
+              }`}
               style={{ ["--side" as string]: SIDE_ACCENT[side].base }}
               data-on="0"
               data-roomy="0"
             >
-              <span className="ruler3d__label">{span.band.label}</span>
+              <span className="ruler3d__label">{band.label}</span>
               <span className="ruler3d__scale" />
             </div>
           )),
         )}
         <span className="ruler3d__caption">
-          band scale — segments are equal in km only within a band
+          <b>{TRUE_SCALE_DEPTH_KM} km either side is drawn 1:1</b>
+          <span>
+            {" "}— past that the axis compresses toward the horizon, and every label still
+            states true distance
+          </span>
         </span>
       </div>
 
-      {/* Screen-reader equivalent of the ruler: the compression is a fact
-          about the data, not only about the picture. */}
-      <p className="sr-only">
-        The horizontal axis is compressed differently per distance band:{" "}
-        {proj.spans
-          .map((s) => `${s.band.label}, ${s.band.min_km} to ${s.displayMaxKm} km`)
-          .join("; ")}
-        .
-      </p>
+      {/* Screen-reader equivalent of the ruler, and the one-line explanation
+          of the compression the info affordance points at. The compression is
+          a fact about the data, not only about the picture. */}
+      <p className="sr-only">{compressionSummary()}</p>
 
       <div className="scene3d__legend">
         <span className={`scene3d__side scene3d__side--${leftSide === "side_a" ? "a" : "b"}`}>
