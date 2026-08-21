@@ -21,7 +21,7 @@ import { useViewState } from "../state/viewState";
 import { useOverrides } from "../state/overridesState";
 import { resolveAssetDisplay } from "../data/catalog";
 import { buildTerrain, buildSky, terrainHeight, HORIZON_COLOR } from "./terrain3d";
-import { buildProps, PROP_BUDGET } from "./props";
+import { buildProps, recentreLocalProps, PROP_BUDGET } from "./props";
 import { buildScenery, disposeScenery, SCENERY_BUDGET } from "./scenery";
 import { loadOsmData, buildOsmInset, disposeOsmInset } from "./osmTerrain";
 import { applyTacticalSiting } from "./tacticalSiting";
@@ -81,38 +81,55 @@ const CAM_MAX_DISTANCE = 165_000;
  *  Pass 25's; this is the derivation the axis lock makes possible. */
 const FACING_Y: Record<string, number> = { side_a: 0, side_b: Math.PI };
 
-/** Marker/ring/fill hold a roughly constant SCREEN size PAST TRUE_SCALE_DEPTH_KM
- *  — the far register, where real geometry would be sub-pixel and these three
- *  are symbology rather than objects, the same reasoning that keeps the labels
- *  in DOM. `k` is derived from the camera: a marker of world radius `dist * k`
- *  subtends a constant angle. Inside TRUE_SCALE_DEPTH_KM they instead hold
- *  NEAR_REGISTER_MARKER_SCALE, a constant WORLD size — see that constant's own
- *  comment for why a screen-constant marker doesn't belong there. */
+/** Marker/ring/fill hold a roughly constant SCREEN size EVERYWHERE — they are
+ *  symbology rather than objects, the same reasoning that keeps the labels in
+ *  DOM. `k` is derived from the camera: a marker of world radius `dist * k`
+ *  subtends a constant angle.
+ *
+ *  This was briefly changed to a constant WORLD size inside the near register,
+ *  on the theory that a screen-constant marker "lies about scale" next to a
+ *  true-scale model. That shipped and broke the live site far worse than the
+ *  problem it addressed: a 1.5 m marker is 0.014 px at the default framing's
+ *  ~100 km camera distance, so every near-register asset lost its marker and
+ *  its ring and became an unfindable floating label. Restored deliberately —
+ *  a marker's job is to be findable at every zoom, which is exactly what a
+ *  screen-constant size buys and a world-constant size cannot. The genuine
+ *  "model is invisible" problem is a MODEL-scale problem and is fixed by
+ *  MODEL_MIN_APPARENT_PX below, not by shrinking the marker. */
 const MARKER_TARGET_PX = 7;
 const MARKER_GEO_RADIUS = 1.5;
 /** Ceiling so a marker can never swallow the screen at extreme zoom-out, and
  *  floor so it never disappears when the camera is right on top of an asset.
- *  Far register only — see MARKER_TARGET_PX. */
-const MARKER_SCALE_MIN = 0.6;
+ *  MARKER_SCALE_MIN is deliberately small: at a few tens of metres the camera
+ *  is close enough that a hero model should carry the frame, and a 0.6 floor
+ *  put a ~3.5 m ring around a 3 m dugout. */
+const MARKER_SCALE_MIN = 0.18;
 const MARKER_SCALE_MAX = 4_000;
 /**
- * Pass 24 remediation. Inside TRUE_SCALE_DEPTH_KM, depthAxis.ts already makes
- * position, hero-model scale and altitude physically correct against the
- * terrain — screen-constant marker sizing was the one piece of the near
- * register still lying about scale, and at the shipped default framing it
- * rendered a ~1.5 km symbol next to a 7.7 m tank (Leopard 2A6), reported as
- * "badly broken" on the live site and confirmed from this exact code path.
+ * A LEGIBILITY FLOOR for hero geometry, in screen pixels.
  *
- * `1` is not a placeholder: MARKER_GEO_RADIUS(1.5m)/RING outer radius(2.9m)
- * were already authored at roughly metre scale — the same coincidence
- * depthAxis.ts's header describes for models.ts — so leaving the trio at its
- * raw geometry size, with only the existing selection/hover emphasis on top,
- * makes it read as a small anchor/click-target beside the model rather than a
- * second, competing symbol. It is a constant WORLD size, not a constant
- * SCREEN size: exactly what "true scale" means, and it shrinks with distance
- * the same way the hero model beside it does.
+ * This is the fix for the thing actually reported as broken — "vehicles render
+ * as generic markers, not tank geometry" — and it is a model problem, not a
+ * marker problem. The arithmetic that forces it: at 1 unit = 1 m a 7.7 m tank
+ * subtends 7.8 px at 1 km of camera distance, 1.6 px at 5 km and 0.1 px at the
+ * ~100 km default framing. No marker policy changes that. True metre scale and
+ * a 140 km axis simply cannot both be honoured while a vehicle stays visible.
+ *
+ * So model scale gets a floor: a hero model is drawn at true scale whenever
+ * true scale is legible (closer than ~300 m), and beyond that is scaled up
+ * just enough to keep subtending MODEL_MIN_APPARENT_PX, capped at
+ * MODEL_MAX_BOOST. This is the same trade depthAxis.ts's `modelScaleFor()`
+ * already makes in the far register (FAR_MODEL_SCALE_MAX = 16) — a model's
+ * size is decoupled from the axis so it stays readable — extended to camera
+ * distance, which is the other axis the problem lives on.
+ *
+ * It is an explicit, disclosed departure from "model size is physically
+ * correct in the near register": past ~300 m the model is deliberately drawn
+ * larger than life. The alternative is a scene whose vehicles are never
+ * visible at any framing a reader actually uses.
  */
-const NEAR_REGISTER_MARKER_SCALE = 1;
+const MODEL_MIN_APPARENT_PX = 26;
+const MODEL_MAX_BOOST = 12;
 
 /** Symbolic altitude ceiling for far-register assets, metres. A deep-strike
  *  UAV 4,300 km out sits where 1 world unit is ~1 km of real ground; drawing
@@ -299,15 +316,18 @@ interface Entry {
    *  to keep it screen-constant, and doing that from a local offset would
    *  mean re-deriving the group origin there too. */
   padWorldY: number;
-  /** True distance from the zero line, km. layout() reads this to decide
-   *  whether the marker/ring/fill trio is symbology (far register — screen-
-   *  constant, since real geometry is sub-pixel out there) or a small,
-   *  true-scale anchor sitting beside a true-scale hero model (near register
-   *  — see the Pass 24 remediation note by MARKER_TARGET_PX's usage below).
-   *  Fixes the incident where a screen-constant marker rendered ~1.5 km
-   *  across next to a 7 m tank. */
+  /** True distance from the zero line, km. */
   km: number;
   lod: THREE.LOD | null;
+  /** Half the hero model's largest horizontal dimension at scale 1, world
+   *  units (= metres). Measured once from the built geometry rather than
+   *  guessed per category, so a Shahed and a tank each get their own answer.
+   *  0 when the asset has no hero model. */
+  modelRadius: number;
+  /** The axis-derived model scale (`modelScaleFor(km)`): 1 in the near
+   *  register, up to FAR_MODEL_SCALE_MAX past it. layout() multiplies the
+   *  camera-driven legibility boost on top of this, never replaces it. */
+  baseModelScale: number;
   /** Grounded assets can be hidden behind terrain; elevated ones effectively
    *  cannot, so they skip the occlusion probe entirely. */
   grounded: boolean;
@@ -587,6 +607,10 @@ export function Scene3D({ world }: { world: WorldModel }) {
    *  value it last laid out at — that comparison plus the camera check is
    *  what lets an idle frame skip the layout entirely. */
   const layoutDirtyRef = useRef(0);
+  /** The scatter group and where its camera-local bubble currently sits, so
+   *  layout() can recentre it as the camera moves (see props.ts's header). */
+  const propsRef = useRef<THREE.Group | null>(null);
+  const propsBubbleRef = useRef({ x: Number.NaN, z: Number.NaN, half: 0 });
   /** Live DOM handle + last-written state for every mounted pin. */
   const pinDomRef = useRef(new Map<string, PinDom>());
   /** Ruler segment elements, keyed `${side}:${bandId}` (item 9). */
@@ -984,6 +1008,17 @@ export function Scene3D({ world }: { world: WorldModel }) {
       const entries = entriesRef.current;
       sizeMeasured(entries.length);
       const orbitRadius = camPos.distanceTo(controls.target);
+      // Slide the scatter bubble to wherever the camera is looking. Cheap and
+      // self-throttling — see recentreLocalProps.
+      if (propsRef.current) {
+        recentreLocalProps(
+          propsRef.current,
+          controls.target.x,
+          controls.target.z,
+          orbitRadius,
+          propsBubbleRef.current,
+        );
+      }
       const farDist = LABEL_FAR_DIST(orbitRadius);
       // Screen-constant symbology (Pass 24). `k` converts a camera distance
       // into the world radius that subtends MARKER_TARGET_PX at this
@@ -1105,27 +1140,31 @@ export function Scene3D({ world }: { world: WorldModel }) {
             fillOpacity.setX(i, isSel || isHov ? 0.13 : highlighted ? 0.2 : 0.13);
           }
           const emphasis = isSel ? 1.6 : isHov ? 1.3 : 1;
-          // Pass 24 remediation. Screen-constant sizing is right where real
-          // geometry is sub-pixel (the far register) and wrong where it isn't
-          // (the near register, where depthAxis.ts already makes a hero model
-          // physically correct against the terrain under it). Applying the
-          // same dist-based formula everywhere is what put a ~1.5 km marker
-          // next to a 7.7 m tank at the shipped default framing — visible in
-          // this pass's own screenshots and reported as "badly broken" on the
-          // live site. Inside TRUE_SCALE_DEPTH_KM the trio now renders at its
-          // own true-scale geometry (NEAR_REGISTER_MARKER_SCALE = 1, i.e. a
-          // ~1.5 m marker / ~5.8 m ring — a small anchor beside the model, not
-          // a symbol competing with it) with only the existing selection/hover
-          // emphasis applied; past the boundary the screen-constant formula is
-          // unchanged, because a true-scale marker out there WOULD be sub-pixel.
-          const screenScale =
-            entry.km <= TRUE_SCALE_DEPTH_KM
-              ? NEAR_REGISTER_MARKER_SCALE
-              : THREE.MathUtils.clamp(
-                  (dist * pxToWorld * MARKER_TARGET_PX) / MARKER_GEO_RADIUS,
-                  MARKER_SCALE_MIN,
-                  MARKER_SCALE_MAX,
-                );
+          // Screen-constant in BOTH registers — see MARKER_TARGET_PX for why
+          // the near-register exception was reverted.
+          const screenScale = THREE.MathUtils.clamp(
+            (dist * pxToWorld * MARKER_TARGET_PX) / MARKER_GEO_RADIUS,
+            MARKER_SCALE_MIN,
+            MARKER_SCALE_MAX,
+          );
+
+          // ── hero-model legibility floor ────────────────────────────────
+          // True scale while true scale is readable; scaled up past that so a
+          // vehicle never silently becomes sub-pixel. See MODEL_MIN_APPARENT_PX
+          // for the arithmetic that forces this. Applied here rather than at
+          // build time because it depends on where the camera is, which is the
+          // whole point — the model is drawn true whenever the camera is close
+          // enough for true to mean anything.
+          if (entry.lod && entry.modelRadius > 0) {
+            const wantWorld = MODEL_MIN_APPARENT_PX * dist * pxToWorld;
+            const haveWorld = 2 * entry.modelRadius * entry.baseModelScale;
+            const boost = THREE.MathUtils.clamp(
+              haveWorld > 0 ? wantWorld / haveWorld : 1,
+              1,
+              MODEL_MAX_BOOST,
+            );
+            entry.lod.scale.setScalar(entry.baseModelScale * boost);
+          }
           layoutScratchScale.setScalar(emphasis * screenScale);
           layoutScratchMatrix.compose(entry.anchor, layoutScratchQuat.identity(), layoutScratchScale);
           inst.marker.setMatrixAt(i, layoutScratchMatrix);
@@ -1408,6 +1447,8 @@ export function Scene3D({ world }: { world: WorldModel }) {
 
     const terrain = buildTerrain(halfX);
     const props = buildProps(PROP_BUDGET[lowPower ? "low" : "high"]);
+    propsRef.current = props;
+    propsBubbleRef.current = { x: Number.NaN, z: Number.NaN, half: 0 };
     const scenery = buildScenery(SCENERY_BUDGET[lowPower ? "low" : "high"], halfX);
 
     // Zero line — a standing marker plane rather than a painted stripe, so it
@@ -1611,6 +1652,8 @@ export function Scene3D({ world }: { world: WorldModel }) {
       // Hero geometry where it exists, behind an LOD so it stops costing
       // anything once the camera pulls back past the range it reads at.
       let lod: THREE.LOD | null = null;
+      let modelRadius = 0;
+      let baseModelScale = 1;
       if (!isStub && hasHeroModel(node.id)) {
         const model = buildHeroModel(node.id, sideColor);
         if (model) {
@@ -1621,12 +1664,23 @@ export function Scene3D({ world }: { world: WorldModel }) {
           // the alternative is a 7 m hull compressed by up to 979x.
           const ms = modelScaleFor(km);
           if (ms !== 1) model.scale.setScalar(ms);
+          // Largest horizontal half-extent at scale 1 — what the legibility
+          // floor in layout() divides into the pixel target.
+          const bbox = new THREE.Box3().setFromObject(model);
+          const bs = new THREE.Vector3();
+          bbox.getSize(bs);
+          modelRadius = Math.max(bs.x, bs.z) / 2 / (ms || 1);
+          baseModelScale = ms;
           lod = new THREE.LOD();
           lod.addLevel(model, 0);
           const proxy = new THREE.Mesh(LOD_PROXY_GEO, LOD_PROXY_MAT);
           proxy.scale.setScalar(ms);
-          lod.addLevel(proxy, LOD_PROXY_DISTANCE * ms);
-          lod.addLevel(new THREE.Group(), LOD_HIDE_DISTANCE * ms);
+          // Thresholds are multiplied by MODEL_MAX_BOOST because layout() may
+          // be drawing this model up to that much larger to hold the
+          // legibility floor — swapping it for a proxy box at the un-boosted
+          // distance would hide the very geometry the floor exists to show.
+          lod.addLevel(proxy, LOD_PROXY_DISTANCE * ms * MODEL_MAX_BOOST);
+          lod.addLevel(new THREE.Group(), LOD_HIDE_DISTANCE * ms * MODEL_MAX_BOOST);
           g.add(lod);
         }
       }
@@ -1715,6 +1769,8 @@ export function Scene3D({ world }: { world: WorldModel }) {
         padWorldY,
         km,
         lod,
+        modelRadius,
+        baseModelScale,
         altitudeM: drawAltitude,
         grounded: !elevated,
         baseColor: new THREE.Color(markerColorHex),

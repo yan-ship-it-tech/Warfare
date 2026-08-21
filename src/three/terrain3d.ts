@@ -431,11 +431,29 @@ export function buildTerrain(halfWidthX: number): THREE.Mesh {
       c.lerp(x < 0 ? COLOR_A : COLOR_B, sideMix);
 
       const dmg = damageIntensity(x);
-      if (dmg < 0.5) {
-        const cell = valueNoise(x * FIELD_CELL_X_FREQ, z * FIELD_CELL_Z_FREQ, 61);
-        const fieldMix = (1 - dmg * 2) * 0.4;
-        c.lerp(cell > 0.5 ? COLOR_FIELD_DRY : COLOR_FIELD_GREEN, Math.max(0, fieldMix));
-      }
+      // Parcel patchwork. Two octaves, and it no longer switches off over the
+      // fought-over ground near the line.
+      //
+      // It used to vanish entirely at dmg >= 0.5, which left the whole
+      // near-register band — the part of the map anyone actually reads — a
+      // single flat olive tone. That was invisible before Pass 24 because the
+      // band was a few hundred world units wide; at 1 unit = 1 m it is tens of
+      // kilometres of unbroken colour, and it is the main reason the ground
+      // reads as "no terrain features" at the km-scale zooms this tool is used
+      // at. Individual props cannot fill that gap: a 0.22 m trunk is sub-pixel
+      // beyond ~250 m of camera distance, measured, so at these ranges tonal
+      // variation in the ground itself is the only thing that can carry it.
+      //
+      // Churned ground still reads as churned — the patchwork is damped by
+      // damage rather than cut, and the scar/scorch layers below still paint
+      // over the top of it.
+      const cellA = valueNoise(x * FIELD_CELL_X_FREQ, z * FIELD_CELL_Z_FREQ, 61);
+      const cellB = valueNoise(x * FIELD_CELL_X_FREQ * 2.7, z * FIELD_CELL_Z_FREQ * 2.7, 131);
+      const fieldMix = (1 - dmg * 0.6) * 0.4;
+      c.lerp(cellA > 0.5 ? COLOR_FIELD_DRY : COLOR_FIELD_GREEN, Math.max(0, fieldMix));
+      // Finer second octave, half strength — breaks the ~1.6 km parcels into
+      // something that still varies inside one screen at a 2-4 km framing.
+      c.lerp(cellB > 0.5 ? COLOR_FIELD_DRY : COLOR_FIELD_GREEN, Math.max(0, fieldMix * 0.45));
 
       const scar = Math.exp(-Math.pow(x / 2_400, 2));
       c.lerp(COLOR_SCAR, scar * 0.75);
