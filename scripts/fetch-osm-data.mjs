@@ -60,7 +60,17 @@ const AOIS = {
 const FEATURE_CLASSES = {
   rail: {
     type: "rail_line",
-    selectors: ['way["railway"="rail"]'],
+    // Bare `way["railway"]` (any value), not `="rail"`. Pass 15 (see
+    // docs/DECISIONS.md) found Pokrovsk's rail layer was a single 5 m
+    // fragment because a real freight yard was tagged `railway=disused`, not
+    // `rail` — RAIL_TRACK_VALUES below was widened to classify disused/
+    // abandoned/construction/narrow_gauge track as rail_line too, but that
+    // fix only ever landed in classify(); the query itself still only asked
+    // for `="rail"` and always under-fetched. Pokrovsk's real 303-feature
+    // rail layer exists only because a human ran a second manual query
+    // outside this script and merged it in by hand. Widening the selector
+    // here so a live/print-query run finds it in one pass.
+    selectors: ['way["railway"]'],
   },
   trees: {
     type: "tree_row",
@@ -77,11 +87,29 @@ const FEATURE_CLASSES = {
   },
   roads: {
     type: "road",
-    selectors: ['way["highway"~"^(primary|secondary|tertiary)$"]'],
+    // Widened from primary/secondary/tertiary-only (the original rural rail-
+    // and-tree-row AOIs) to include residential streets — a dense urban
+    // district's road grid is mostly `highway=residential`, and excluding it
+    // there means "roads" is nearly empty for exactly the AOIs that need it
+    // most. classify() needed no change: it already returns "road" for any
+    // truthy `highway` tag, so this was a query-selector gap, not a
+    // classification gap.
+    selectors: ['way["highway"~"^(primary|secondary|tertiary|residential)$"]'],
   },
   rivers: {
     type: "river",
     selectors: ['way["waterway"="river"]'],
+  },
+  buildings: {
+    type: "building",
+    // Opt-in, not in DEFAULT_FEATURES: a rural rail/tree-row AOI (Pokrovsk,
+    // Kramatorsk) has no need for building footprints and they'd dwarf the
+    // rest of the file; a dense residential/mixed-use district AOI does.
+    // Pass `--features=rail,trees,roads,rivers,buildings` explicitly for
+    // those. Building ways are frequently closed rings (polygons) — no extra
+    // handling needed, `reduce()` already derives `closed` generically from
+    // first-point/last-point equality for any feature type.
+    selectors: ['way["building"]'],
   },
 };
 
@@ -325,6 +353,7 @@ function classify(tags = {}) {
   if (tags.natural === "tree_row") return "tree_row";
   if (tags.landuse === "forest" || tags.natural === "wood") return "tree_row";
   if (tags.highway) return "road";
+  if (tags.building) return "building";
   return null;
 }
 

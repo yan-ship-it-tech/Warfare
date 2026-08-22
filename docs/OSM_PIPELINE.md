@@ -118,6 +118,18 @@ out geom;
 `node scripts/fetch-osm-data.mjs --aoi=<id> --print-query` regenerates either
 one, so the copy above can never be the only source of truth.
 
+**Pass 27 added two more feature classes, both opt-in** (not in
+`DEFAULT_FEATURES`, so the two queries above are unaffected): `buildings`
+(`way["building"]`) and residential streets, folded into the existing `roads`
+class (`highway` regex widened to include `residential`). For a dense
+urban/residential AOI — as opposed to Pokrovsk/Kramatorsk's rural rail-and-
+tree-row scope — pass `--features=rail,trees,roads,rivers,buildings`
+explicitly. Pass 27 also fixed a standing gap: the `rail` selector had stayed
+`way["railway"="rail"]` even after Pass 15 widened `classify()` to accept
+disused/abandoned/construction/narrow_gauge track, so every `--print-query`
+since then under-asked for rail. It's now the bare `way["railway"]`, matching
+what `classify()` has accepted since Pass 15.
+
 Deviations from the query in the brief, both deliberate:
 
 - **`timeout:180`, not `25`.** Four feature classes over a 17 km box regularly
